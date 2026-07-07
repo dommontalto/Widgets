@@ -94,6 +94,8 @@ extension CGFloat {
 
     static var cornerRadius24: CGFloat = 24
 
+    static let cornerRadius40: CGFloat = 40
+
     static let cornerRadius50: CGFloat = 50
 
     static let largePillCornerRadius: CGFloat = 27

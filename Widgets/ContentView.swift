@@ -9,10 +9,13 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var showingOrder = false
+    @State private var showingVaultTests = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
+                findTestsButton
+
                 section("Genome") {
                     widgetLabel("GenomeOrderWidget")
                     Button { showingOrder = true } label: {
@@ -60,6 +63,28 @@ struct ContentView: View {
         .sheet(isPresented: $showingOrder) {
             GenomeOrderSheet()
         }
+        .sheet(isPresented: $showingVaultTests) {
+            VaultTestsSheet(onDismiss: {
+                showingVaultTests = false
+            })
+        }
+    }
+
+    private var findTestsButton: some View {
+        Button {
+            withAnimation(.brightBouncy) {
+                showingVaultTests = true
+            }
+        } label: {
+            BrightText("Find tests", size: .body2, weight: .regular)
+                .padding(.horizontal, .spacing3x)
+                .padding(.vertical, .spacing105x)
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
