@@ -1,0 +1,8 @@
+{
+  "images" : [
+    { "filename" : "genome_order_mental.png", "idiom" : "universal", "scale" : "1x" },
+    { "filename" : "genome_order_mental@2x.png", "idiom" : "universal", "scale" : "2x" },
+    { "filename" : "genome_order_mental@3x.png", "idiom" : "universal", "scale" : "3x" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}

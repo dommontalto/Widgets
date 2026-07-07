@@ -213,7 +213,7 @@ struct VaultDatapointsWidget: View {
 
         let bubbleW: CGFloat = 160
         let bubbleH: CGFloat = 70
-        let gap: CGFloat = .spacing8x
+        let gap: CGFloat = .spacing5x
 
         let dotHalf = dpCell * 1.05
         let minX = cellPitch + dpCell / 2 + CGFloat.spacing3x

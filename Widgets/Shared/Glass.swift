@@ -11,8 +11,18 @@ struct GlassEffect: ViewModifier {
     var shape: GlassShape = .capsule
     var cornerRadius: CGFloat = .cornerRadius22
     var tint: Color = .clear
+    /// When true, uses the more transparent `.clear` glass (no frosted fill).
+    var isClear: Bool = false
+    /// When true, the glass reacts to touch (liquid-glass interactivity).
+    var interactive: Bool = true
 
     @Environment(\.colorScheme) private var colorScheme
+
+    @available(iOS 26.0, *)
+    private var glassStyle: Glass {
+        let base = (isClear ? Glass.clear : Glass.regular).tint(tint)
+        return interactive ? base.interactive() : base
+    }
 
     enum GlassShape {
         case capsule
@@ -39,21 +49,23 @@ struct GlassEffect: ViewModifier {
             switch shape {
             case .capsule:
                 content
-                    .glassEffect(Glass.regular.tint(tint).interactive(), in: .capsule)
+                    .glassEffect(glassStyle, in: .capsule)
                     .id(colorScheme)
             case .circle:
                 content
-                    .glassEffect(Glass.regular.tint(tint).interactive(), in: .circle)
+                    .glassEffect(glassStyle, in: .circle)
                     .id(colorScheme)
             case .roundedRect:
                 content
-                    .glassEffect(Glass.regular.tint(tint).interactive(), in: .rect(cornerRadius: cornerRadius))
+                    .glassEffect(glassStyle, in: .rect(cornerRadius: cornerRadius))
                     .id(colorScheme)
             case .unevenRoundedRect:
                 content
-                    .glassEffect(Glass.regular.tint(tint).interactive(), in: unevenRect)
+                    .glassEffect(glassStyle, in: unevenRect)
                     .id(colorScheme)
             }
+        } else if isClear {
+            content
         } else {
             switch shape {
             case .capsule:

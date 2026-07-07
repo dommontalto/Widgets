@@ -30,4 +30,15 @@ class ImageNames {
     static let genomeOrderV5               = "Genome/genome_order_v5"
     static let genomeDnaV5                 = "Genome/genome_dna_v5"
     static let genomeClockV5               = "Genome/genome_clock_v5"
+    static let genomeBackgroundV5          = "Genome/genome_background_v5"
+
+    // Order panel
+    static let genomeOrderDnaHeroV5        = "Genome/genome_order_dna_hero_v5"
+    static let genomeOrderDnaV5            = "Genome/genome_order_dna_v5"
+    static let genomeOrderRiskV5           = "Genome/genome_order_risk_v5"
+    static let genomeOrderInsightsV5       = "Genome/genome_order_insights_v5"
+    static let genomeOrderCancerV5         = "Genome/genome_order_cancer_v5"
+    static let genomeOrderMentalV5         = "Genome/genome_order_mental_v5"
+    static let genomeOrderNutritionV5      = "Genome/genome_order_nutrition_v5"
+    static let genomeOrderFitnessV5        = "Genome/genome_order_fitness_v5"
 }

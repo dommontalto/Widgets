@@ -8,10 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showingOrder = false
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Genome") {
+                    widgetLabel("GenomeOrderWidget")
+                    Button { showingOrder = true } label: {
+                        GenomeOrderWidget()
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, .spacing3x)
+
                     widgetLabel("GenomePercentileGraphWidget")
                     GenomePercentileGraphWidget()
                         .padding(.bottom, .spacing3x)
@@ -26,10 +35,6 @@ struct ContentView: View {
 
                     widgetLabel("GenomeContributorWidget")
                     GenomeContributorWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomeOrderWidget")
-                    GenomeOrderWidget()
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("GenomeOrderStatusWidget")
@@ -52,6 +57,9 @@ struct ContentView: View {
             .padding(.spacing3x)
         }
         .background(Color.bG.ignoresSafeArea())
+        .sheet(isPresented: $showingOrder) {
+            GenomeOrderSheet()
+        }
     }
 
     @ViewBuilder
@@ -63,7 +71,44 @@ struct ContentView: View {
     }
 
     private func widgetLabel(_ name: String) -> some View {
-        BrightText(name, size: .body1, color: Color.lightTextColor, weight: .regular)
+        WidgetLabelRow(name: name)
+    }
+}
+
+private struct WidgetLabelRow: View {
+    let name: String
+    @AppStorage private var isTicked: Bool
+
+    init(name: String) {
+        self.name = name
+        _isTicked = AppStorage(wrappedValue: false, "widgetTicked_\(name)")
+    }
+
+    var body: some View {
+        HStack(spacing: .spacing1x) {
+            Button {
+                isTicked.toggle()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(isTicked ? Color.defaultSkyBlue : Color.clear)
+                    Circle()
+                        .strokeBorder(
+                            isTicked ? Color.clear : Color.lightTextColor.opacity(.semiLowOpacity),
+                            lineWidth: 1.5
+                        )
+                    if isTicked {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .frame(width: .spacing4x, height: .spacing4x)
+            }
+            .buttonStyle(.plain)
+
+            BrightText(name, size: .body1, color: Color.lightTextColor, weight: .regular)
+        }
     }
 }
 
