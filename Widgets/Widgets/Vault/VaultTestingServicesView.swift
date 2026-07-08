@@ -11,22 +11,66 @@ struct VaultTestingClinic: Identifiable {
     let id = UUID()
     let name: String
     let address: String
-    let distance: String
+    let distanceKm: Double
     let services: [String]
     let pricing: [(option: String, price: String)]
 
-    static let demo: [VaultTestingClinic] = (0 ..< 3).map { _ in
+    var distance: String {
+        String(format: "%.1f km away", distanceKm)
+    }
+
+    static let demo: [VaultTestingClinic] = [
         VaultTestingClinic(
             name: "Longevity clinic",
             address: "121 Norton St, Leichhardt NSW 2040",
-            distance: "5.3 km away",
+            distanceKm: 5.3,
             services: ["BLOOD / CBC", "ELECTROLYTES", "LIVER", "LIPIDS", "METABOLIC HEALTH", "INFLAMMATION"],
             pricing: [
-                (option: "Option 1", price: "$150"),
-                (option: "Option 1", price: "Enquire"),
+                (option: "Full panel", price: "$150"),
+                (option: "Custom panel", price: "Enquire"),
             ]
-        )
-    }
+        ),
+        VaultTestingClinic(
+            name: "Meridian Health Labs",
+            address: "88 Pirrama Rd, Pyrmont NSW 2009",
+            distanceKm: 2.1,
+            services: ["HORMONES", "THYROID", "VITAMIN D", "IRON STUDIES", "CORTISOL"],
+            pricing: [
+                (option: "Hormone panel", price: "$220"),
+                (option: "Single marker", price: "$45"),
+            ]
+        ),
+        VaultTestingClinic(
+            name: "Harbour Diagnostics",
+            address: "45 Miller St, North Sydney NSW 2060",
+            distanceKm: 8.7,
+            services: ["GENOMICS", "MICROBIOME", "FOOD SENSITIVITY", "HEAVY METALS"],
+            pricing: [
+                (option: "Genome sequence", price: "$399"),
+                (option: "Microbiome kit", price: "$180"),
+            ]
+        ),
+        VaultTestingClinic(
+            name: "Apex Wellness Centre",
+            address: "312 Crown St, Surry Hills NSW 2010",
+            distanceKm: 3.9,
+            services: ["CARDIAC", "LIPIDS", "GLUCOSE / HbA1c", "BLOOD PRESSURE", "ECG"],
+            pricing: [
+                (option: "Heart health", price: "$275"),
+                (option: "Metabolic add-on", price: "$60"),
+            ]
+        ),
+        VaultTestingClinic(
+            name: "Coastal Pathology",
+            address: "17 Bronte Rd, Bondi Junction NSW 2022",
+            distanceKm: 11.4,
+            services: ["FERTILITY", "HORMONES", "VITAMIN PANEL", "AMH", "SEMEN ANALYSIS"],
+            pricing: [
+                (option: "Fertility panel", price: "$340"),
+                (option: "Follow-up", price: "Enquire"),
+            ]
+        ),
+    ]
 }
 
 enum VaultTestingSortOrder: String, CaseIterable, Identifiable {
@@ -34,12 +78,24 @@ enum VaultTestingSortOrder: String, CaseIterable, Identifiable {
     case alphabetical = "Alphabetical"
 
     var id: String { rawValue }
+
+    func sorted(_ clinics: [VaultTestingClinic]) -> [VaultTestingClinic] {
+        switch self {
+        case .proximity:
+            return clinics.sorted { $0.distanceKm < $1.distanceKm }
+        case .alphabetical:
+            return clinics.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        }
+    }
 }
 
 struct VaultTestingServicesView: View {
-    private let clinics = VaultTestingClinic.demo
     @State private var sortOrder: VaultTestingSortOrder = .proximity
     @State private var showingMap = false
+
+    private var clinics: [VaultTestingClinic] {
+        sortOrder.sorted(VaultTestingClinic.demo)
+    }
 
     var body: some View {
         ScrollView {
@@ -66,7 +122,7 @@ struct VaultTestingServicesView: View {
                 Menu {
                     ForEach(VaultTestingSortOrder.allCases) { order in
                         Button {
-                            sortOrder = order
+                            withAnimation(.brightEaseInOut) { sortOrder = order }
                         } label: {
                             Label {
                                 Text(order.rawValue)

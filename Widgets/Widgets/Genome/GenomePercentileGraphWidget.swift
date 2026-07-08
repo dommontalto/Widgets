@@ -8,8 +8,6 @@
 import SwiftUI
 import Charts
 
-// MARK: - Widget
-
 struct GenomePercentileGraphWidget: View {
     private let percentile = 72
 
@@ -30,7 +28,7 @@ struct GenomePercentileGraphWidget: View {
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                    BrightText("\(percentile)", size: .huge2, weight: .light)
+                    BrightText("\(percentile)", size: .huge2)
                     BrightText("nd percentile", size: .body2, color: Color.textColor, weight: .regular)
                 }
 

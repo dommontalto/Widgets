@@ -17,17 +17,20 @@ private struct MapClinic: Identifiable {
         MapClinic(clinic: .demo[0], coordinate: .init(latitude: 47.6145, longitude: -122.3418)),
         MapClinic(clinic: .demo[1], coordinate: .init(latitude: 47.6097, longitude: -122.3331)),
         MapClinic(clinic: .demo[2], coordinate: .init(latitude: 47.6028, longitude: -122.3286)),
-        MapClinic(clinic: .demo[0], coordinate: .init(latitude: 47.6082, longitude: -122.3400)),
-        MapClinic(clinic: .demo[1], coordinate: .init(latitude: 47.6169, longitude: -122.3253)),
+        MapClinic(clinic: .demo[3], coordinate: .init(latitude: 47.6082, longitude: -122.3400)),
+        MapClinic(clinic: .demo[4], coordinate: .init(latitude: 47.6169, longitude: -122.3253)),
     ]
 }
 
 struct VaultClinicsMapView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedClinic: MapClinic?
     @State private var sheetHeight: CGFloat = 320
     @State private var position: MapCameraPosition = .region(Self.seattle)
 
     private let clinics = MapClinic.demo
+
+    private static let sheetDismissDuration = 0.35
 
     private static let seattle = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 47.6090, longitude: -122.3330),
@@ -47,7 +50,14 @@ struct VaultClinicsMapView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: goBack) {
+                    Image(systemName: "chevron.backward")
+                }
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     withAnimation(.brightEaseInOut) {
@@ -73,6 +83,17 @@ struct VaultClinicsMapView: View {
                     .presentationDragIndicator(.hidden)
                     .presentationBackgroundInteraction(.enabled)
             }
+        }
+    }
+
+    private func goBack() {
+        guard selectedClinic != nil else {
+            dismiss()
+            return
+        }
+        withAnimation(.brightEaseInOut) { selectedClinic = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.sheetDismissDuration) {
+            dismiss()
         }
     }
 

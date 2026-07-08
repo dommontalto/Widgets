@@ -2,6 +2,14 @@
 
 iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always use the tokens below — never use raw hex values, magic numbers, or system fonts.
 
+**Never build (xcodebuild or otherwise) unless explicitly asked.**
+
+---
+
+## Comments
+
+Do not add pointless comments. Never write a comment that merely restates what the code or a symbol name already says (e.g. `/// Returns the sorted clinics` above `func sorted(...)`). Only comment when it explains *why* — non-obvious intent, a workaround, or a constraint the code can't express on its own.
+
 ---
 
 ## File Structure
@@ -50,6 +58,9 @@ Color.homeCards            // darker card fill (near-black in dark mode)
 Color.lightTextColor       // 60% opacity text
 Color.semiLightTextColor   // 80% opacity text
 
+// Never write .textColor.opacity(...) for dimmed black/white text:
+// 80% is .semiLightTextColor, 60% is .lightTextColor.
+
 // Fixed accent colours
 Color.defaultSkyBlue       // #3DAEFF — highlighted heatmap cells
 Color.defaultLighthouseBlue // #CFEBFF — muted heatmap cells
@@ -94,6 +105,8 @@ Defined in `Double+StylingExtensions.swift` as `static` properties on `Double`.
 
 Use `Font.standard(size:weight:)` (SFCompactRounded) for all body/UI text.
 Use `Font.standardSFPro(size:weight:)` only when explicitly matching SF Pro designs.
+
+**`BrightText` defaults to `weight: .light`** (and `color: .textColor`) — never pass `weight: .light` or `color: .textColor` explicitly; only pass them when different.
 
 Available weights via `Font.standard`: `.regular`, `.light`, `.medium`.
 

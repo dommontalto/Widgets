@@ -141,7 +141,7 @@ struct GenomeOrderSheet: View {
     }
 
     private var purchaseButton: some View {
-        BrightFullWidthButton("Purchase") { dismiss() }
+        BrightFullWidthButton("Purchase", horizontalPadding: .spacing6x) { dismiss() }
             .padding(.horizontal, .spacing3x)
     }
 

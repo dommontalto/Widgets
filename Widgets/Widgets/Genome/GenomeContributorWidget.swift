@@ -7,7 +7,15 @@
 
 import SwiftUI
 
-// MARK: - Row
+struct GenomeContributorWidget: View {
+    var body: some View {
+        VStack(spacing: .spacing2x) {
+            ForEach(GenomeContributor.data) { contributor in
+                GenomeContributorRow(contributor: contributor)
+            }
+        }
+    }
+}
 
 private struct GenomeContributorRow: View {
     let contributor: GenomeContributor
@@ -26,23 +34,11 @@ private struct GenomeContributorRow: View {
 
             Spacer()
 
-            BrightText(contributor.scoreText, size: .body1, color: contributor.scoreColor, weight: .medium)
+            BrightText(contributor.scoreText, size: .heading, color: contributor.scoreColor)
                 .monospacedDigit()
         }
         .padding(.spacing3x)
         .modifier(CardModifier())
-    }
-}
-
-// MARK: - Widget
-
-struct GenomeContributorWidget: View {
-    var body: some View {
-        VStack(spacing: .spacing2x) {
-            ForEach(GenomeContributor.data) { contributor in
-                GenomeContributorRow(contributor: contributor)
-            }
-        }
     }
 }
 

@@ -10,39 +10,47 @@ import SwiftUI
 struct VaultTestPanel: Identifiable, Hashable {
     let id: String
     let name: String
-    let imageName: String
-    let bannerName: String
+    let detail: String
+    let backgroundName: String
+    /// Vector icon asset; nil falls back to `systemImage` (Longevity uses SF "figure").
+    var iconName: String?
+    var systemImage: String?
 
     static let demo: [VaultTestPanel] = [
         VaultTestPanel(
             id: "longevity",
             name: "Longevity",
-            imageName: ImageNames.vaultTestLongevityCardV5,
-            bannerName: ImageNames.vaultTestLongevityBannerV5
+            detail: "Biomarkers linked to biological aging, inflammation, organ function, cardiovascular risk, nutrient status, and long-term disease risk.",
+            backgroundName: ImageNames.vaultTestLongevityBackgroundV5,
+            systemImage: "figure"
         ),
         VaultTestPanel(
             id: "hormones",
             name: "Hormones",
-            imageName: ImageNames.vaultTestHormonesCardV5,
-            bannerName: ImageNames.vaultTestHormonesBannerV5
+            detail: "Sex, thyroid, adrenal, and metabolic hormones that influence energy, mood, libido, weight, sleep, and reproductive health.",
+            backgroundName: ImageNames.vaultTestHormonesBackgroundV5,
+            iconName: ImageNames.vaultTestHormonesIconV5
         ),
         VaultTestPanel(
             id: "gut",
             name: "Gut Health",
-            imageName: ImageNames.vaultTestGutHealthCardV5,
-            bannerName: ImageNames.vaultTestGutHealthBannerV5
+            detail: "Digestive function, gut microbiome composition, inflammation, pathogens, food sensitivities, and markers of nutrient absorption.",
+            backgroundName: ImageNames.vaultTestGutHealthBackgroundV5,
+            iconName: ImageNames.vaultTestGutHealthIconV5
         ),
         VaultTestPanel(
             id: "metabolic",
             name: "Metabolic Health",
-            imageName: ImageNames.vaultTestMetabolicHealthCardV5,
-            bannerName: ImageNames.vaultTestMetabolicHealthBannerV5
+            detail: "Blood sugar regulation, insulin sensitivity, cholesterol, liver function, kidney function, inflammation, and cardiovascular risk.",
+            backgroundName: ImageNames.vaultTestMetabolicHealthBackgroundV5,
+            iconName: ImageNames.vaultTestMetabolicHealthIconV5
         ),
         VaultTestPanel(
             id: "fertility",
             name: "Fertility",
-            imageName: ImageNames.vaultTestFertilityCardV5,
-            bannerName: ImageNames.vaultTestFertilityBannerV5
+            detail: "Reproductive hormones, ovarian reserve or sperm health, cycle function, thyroid status, and other markers that may affect conception.",
+            backgroundName: ImageNames.vaultTestFertilityBackgroundV5,
+            iconName: ImageNames.vaultTestFertilityIconV5
         ),
     ]
 }
@@ -86,12 +94,11 @@ struct VaultTestsSheet: View {
                 VStack {
                     Spacer()
 
-                    BrightFullWidthButton("Find tests") {
+                    BrightFullWidthButton("Find tests", horizontalPadding: .spacing6x) {
                         onTestSelected(visiblePanel)
                         showingDetail = true
                     }
                     .opacity(isShowing ? 1 : 0)
-                    .padding(.horizontal, .spacing4x)
                 }
             }
             .background(Color.sheetBackground.ignoresSafeArea())
@@ -173,11 +180,8 @@ struct VaultTestsSheet: View {
     }
 
     private func panelCard(_ panel: VaultTestPanel) -> some View {
-        Image(panel.imageName)
-            .resizable()
-            .scaledToFill()
+        VaultTestPanelCard(panel: panel)
             .frame(width: cardWidth, height: cardWidth * 1.25)
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius40))
     }
 
     // MARK: Page indicator

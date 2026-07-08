@@ -7,7 +7,17 @@
 
 import SwiftUI
 
-// MARK: - Card
+struct GenomeImpactContributorWidget: View {
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: .spacing2x), count: 2)
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: .spacing2x) {
+            ForEach(GenomeCategory.all) { category in
+                GenomeCategoryCard(category: category)
+            }
+        }
+    }
+}
 
 private struct GenomeCategoryCard: View {
     let category: GenomeCategory
@@ -24,20 +34,6 @@ private struct GenomeCategoryCard: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
-    }
-}
-
-// MARK: - Widget
-
-struct GenomeImpactContributorWidget: View {
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: .spacing2x), count: 2)
-
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: .spacing2x) {
-            ForEach(GenomeCategory.all) { category in
-                GenomeCategoryCard(category: category)
-            }
-        }
     }
 }
 

@@ -27,10 +27,11 @@ class ImageNames {
     static let genomeHourglassV5           = "Genome/Icons/genome_hourglass_v5"
     static let genomeSunriseV5             = "Genome/Icons/genome_sunrise_v5"
     static let genomeBrainV5               = "Genome/Icons/genome_brain_v5"
-    static let genomeOrderV5               = "Genome/Icons/genome_order_v5"
     static let genomeDnaV5                 = "Genome/Icons/genome_dna_v5"
     static let genomeClockV5               = "Genome/Icons/genome_clock_v5"
     static let genomeBackgroundV5          = "Genome/genome_background_v5"
+    static let genomeOrderBackgroundV5     = "Genome/genome_order_background_v5"
+    static let genomeOrderDnaIconV5        = "Genome/Icons/genome_order_dna_icon_v5"
 
     // Order panel
     static let genomeOrderDnaHeroV5        = "Genome/Order/genome_order_dna_hero_v5"
@@ -44,15 +45,18 @@ class ImageNames {
 
     // MARK: - Vault
 
-    static let vaultTestLongevityCardV5       = "Vault/Card/vault_test_longevity_card_v5"
-    static let vaultTestHormonesCardV5        = "Vault/Card/vault_test_hormones_card_v5"
-    static let vaultTestGutHealthCardV5       = "Vault/Card/vault_test_gut_health_card_v5"
-    static let vaultTestMetabolicHealthCardV5 = "Vault/Card/vault_test_metabolic_health_card_v5"
-    static let vaultTestFertilityCardV5       = "Vault/Card/vault_test_fertility_card_v5"
-    static let vaultTestGutHealthBannerV5     = "Vault/Banner/vault_test_gut_health_banner_v5"
-    static let vaultTestLongevityBannerV5     = "Vault/Banner/vault_test_longevity_banner_v5"
-    static let vaultTestHormonesBannerV5      = "Vault/Banner/vault_test_hormones_banner_v5"
-    static let vaultTestMetabolicHealthBannerV5 = "Vault/Banner/vault_test_metabolic_health_banner_v5"
-    static let vaultTestFertilityBannerV5     = "Vault/Banner/vault_test_fertility_banner_v5"
     static let vaultTestFigureV5              = "Vault/vault_test_figure_v5"
+
+    static let vaultGuidedTestingBannerV5     = "Vault/Banner/vault_guided_testing_banner_v5"
+
+    static let vaultTestLongevityBackgroundV5       = "Vault/Background/vault_test_longevity_background_v5"
+    static let vaultTestHormonesBackgroundV5        = "Vault/Background/vault_test_hormones_background_v5"
+    static let vaultTestGutHealthBackgroundV5       = "Vault/Background/vault_test_gut_health_background_v5"
+    static let vaultTestMetabolicHealthBackgroundV5 = "Vault/Background/vault_test_metabolic_health_background_v5"
+    static let vaultTestFertilityBackgroundV5       = "Vault/Background/vault_test_fertility_background_v5"
+
+    static let vaultTestHormonesIconV5        = "Vault/Icon/vault_test_hormones_icon_v5"
+    static let vaultTestGutHealthIconV5       = "Vault/Icon/vault_test_gut_health_icon_v5"
+    static let vaultTestMetabolicHealthIconV5 = "Vault/Icon/vault_test_metabolic_health_icon_v5"
+    static let vaultTestFertilityIconV5       = "Vault/Icon/vault_test_fertility_icon_v5"
 }

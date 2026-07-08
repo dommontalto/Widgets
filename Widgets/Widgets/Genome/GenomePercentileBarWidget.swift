@@ -48,7 +48,7 @@ struct GenomePercentileBarWidget: View {
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                    BrightText("\(percentile)", size: .huge2, weight: .light)
+                    BrightText("\(percentile)", size: .huge2)
                     BrightText("nd percentile", size: .body2, color: Color.textColor, weight: .regular)
                 }
                 BrightText("Higher than \(percentile)% of your matched reference cohort", size: .body4, color: Color.lightTextColor, weight: .regular)
@@ -79,8 +79,7 @@ struct GenomePercentileBarWidget: View {
                         .fill(Color.cards)
                         .frame(width: 8, height: markerHeight)
                     Capsule()
-                        .fill(Color.white)
-                        .overlay(Capsule().stroke(Color.black, lineWidth: 0.25))
+                        .fill(Color.primary)
                         .frame(width: markerWidth, height: markerHeight)
                 }
                 .offset(x: markerX - 4),

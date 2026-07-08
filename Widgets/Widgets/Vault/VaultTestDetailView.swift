@@ -42,13 +42,12 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing10x)
         }
         .scrollIndicators(.hidden)
-        .background(Color.bG)
+        .background(Color.sheetBackground)
         .ignoresSafeArea(edges: .top)
         .overlay(alignment: .bottom) {
-            BrightFullWidthButton("Find tests") {
+            BrightFullWidthButton("Find tests", horizontalPadding: .spacing6x) {
                 showingServices = true
             }
-            .padding(.horizontal, .spacing4x)
         }
         .navigationDestination(isPresented: $showingServices) {
             VaultTestingServicesView()
@@ -56,16 +55,9 @@ struct VaultTestDetailView: View {
     }
 
     private var banner: some View {
-        Image(panel.bannerName)
-            .resizable()
-            .scaledToFit()
+        VaultTestPanelCard(panel: panel, cornerRadius: .spacing0x)
             .frame(maxWidth: .infinity)
-            .clipShape(
-                UnevenRoundedRectangle(cornerRadii: .init(
-                    topLeading: .cornerRadius40,
-                    topTrailing: .cornerRadius40
-                ))
-            )
+            .frame(height: 318)
     }
 
     private var includedList: some View {

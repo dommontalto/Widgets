@@ -9,10 +9,34 @@ import SwiftUI
 
 struct GenomeOrderWidget: View {
     var body: some View {
-        Image(ImageNames.genomeOrderV5)
-            .resizable()
-            .scaledToFit()
-            .modifier(CardModifier())
+        Color.clear
+            .frame(maxWidth: .infinity)
+            .frame(height: 156)
+            .background {
+                Image(ImageNames.genomeOrderBackgroundV5)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .overlay {
+                content
+            }
+            .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
+            .modifier(CardModifier(clipContent: false))
+    }
+
+    private var content: some View {
+        VStack(spacing: .spacing2x) {
+            Image(ImageNames.genomeOrderDnaIconV5)
+
+            BrightText(
+                "Don’t have genetic data available?\nOrder your testing kit today.",
+                size: .body1,
+                color: .white
+            )
+            .multilineTextAlignment(.center)
+        }
+        .blendMode(.overlay)
+        .padding(.spacing4x)
     }
 }
 

@@ -46,7 +46,7 @@ struct BrightChip<Trailing: View>: View {
                     .foregroundStyle(textColor)
             }
 
-            BrightText(title, size: size, color: textColor, weight: .light)
+            BrightText(title, size: size, color: textColor)
 
             trailing()
         }

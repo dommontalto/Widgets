@@ -8,78 +8,6 @@
 import SwiftUI
 import UIKit
 
-// UIGestureRecognizerRepresentable (iOS 18 SwiftUI protocol) — cooperates with ScrollView natively
-private struct GridLongPressGesture: UIGestureRecognizerRepresentable {
-    var gridOrigin: CGPoint
-    var onBegan: (CGPoint) -> Void
-    var onMoved: (CGPoint) -> Void
-    var onEnded: () -> Void
-
-    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
-        let g = UILongPressGestureRecognizer()
-        g.minimumPressDuration = 0.5
-        return g
-    }
-
-    func handleUIGestureRecognizerAction(_ r: UILongPressGestureRecognizer, context: Context) {
-        guard let window = r.view?.window else { return }
-        let windowPt = r.location(in: window)
-        let localPt = CGPoint(x: windowPt.x - gridOrigin.x, y: windowPt.y - gridOrigin.y)
-        switch r.state {
-        case .began:    onBegan(localPt)
-        case .changed:  onMoved(localPt)
-        default:        onEnded()
-        }
-    }
-}
-
-struct GridCell: Equatable {
-    let row: Int
-    let col: Int
-}
-
-struct SpeechBubble: Shape {
-    var cornerRadius: CGFloat
-    var tailSize: CGFloat
-    var tailX: CGFloat
-    var tailOnBottom: Bool
-
-    var animatableData: CGFloat {
-        get { tailX }
-        set { tailX = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let body = tailOnBottom
-            ? CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tailSize)
-            : CGRect(x: rect.minX, y: rect.minY + tailSize, width: rect.width, height: rect.height - tailSize)
-
-        path.addRoundedRect(in: body, cornerSize: CGSize(width: cornerRadius, height: cornerRadius))
-
-        let minBase = body.minX + cornerRadius + tailSize
-        let maxBase = body.maxX - cornerRadius - tailSize
-        let baseCenter = min(max(tailX, minBase), maxBase)
-        let tip = min(max(tailX, body.minX + 6), body.maxX - 6)
-
-        var tail = Path()
-        if tailOnBottom {
-            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.maxY - 0.5))
-            tail.addLine(to: CGPoint(x: tip, y: rect.maxY))
-            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.maxY - 0.5))
-        } else {
-            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.minY + 0.5))
-            tail.addLine(to: CGPoint(x: tip, y: rect.minY))
-            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.minY + 0.5))
-        }
-        tail.closeSubpath()
-        path.addPath(tail)
-        return path
-    }
-}
-
-// MARK: - Widget
-
 struct VaultDatapointsWidget: View {
     private let highlighted: Color = .defaultSkyBlue
     private let muted: Color = .defaultSkyBlue.opacity(.ultraLowOpacity)
@@ -110,8 +38,8 @@ struct VaultDatapointsWidget: View {
                 .padding(.horizontal, .spacing3x)
 
             VStack(alignment: .leading, spacing: .spacing1x) {
-                BrightText("\(filled)/\(total)", size: .huge2, weight: .light)
-                BrightText("complete data points", size: .subheading2, color: Color.lightTextColor, weight: .light)
+                BrightText("\(filled)/\(total)", size: .huge2)
+                BrightText("complete data points", size: .subheading2, color: Color.lightTextColor)
             }
             .padding(.horizontal, .spacing3x)
             .padding(.bottom, .spacing3x)
@@ -239,6 +167,78 @@ struct VaultDatapointsWidget: View {
         }
         .padding(.spacing2x)
         .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius20))
+    }
+}
+
+// MARK: - Supporting Types
+
+// UIGestureRecognizerRepresentable (iOS 18 SwiftUI protocol) — cooperates with ScrollView natively
+private struct GridLongPressGesture: UIGestureRecognizerRepresentable {
+    var gridOrigin: CGPoint
+    var onBegan: (CGPoint) -> Void
+    var onMoved: (CGPoint) -> Void
+    var onEnded: () -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let g = UILongPressGestureRecognizer()
+        g.minimumPressDuration = 0.5
+        return g
+    }
+
+    func handleUIGestureRecognizerAction(_ r: UILongPressGestureRecognizer, context: Context) {
+        guard let window = r.view?.window else { return }
+        let windowPt = r.location(in: window)
+        let localPt = CGPoint(x: windowPt.x - gridOrigin.x, y: windowPt.y - gridOrigin.y)
+        switch r.state {
+        case .began:    onBegan(localPt)
+        case .changed:  onMoved(localPt)
+        default:        onEnded()
+        }
+    }
+}
+
+struct GridCell: Equatable {
+    let row: Int
+    let col: Int
+}
+
+struct SpeechBubble: Shape {
+    var cornerRadius: CGFloat
+    var tailSize: CGFloat
+    var tailX: CGFloat
+    var tailOnBottom: Bool
+
+    var animatableData: CGFloat {
+        get { tailX }
+        set { tailX = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let body = tailOnBottom
+            ? CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tailSize)
+            : CGRect(x: rect.minX, y: rect.minY + tailSize, width: rect.width, height: rect.height - tailSize)
+
+        path.addRoundedRect(in: body, cornerSize: CGSize(width: cornerRadius, height: cornerRadius))
+
+        let minBase = body.minX + cornerRadius + tailSize
+        let maxBase = body.maxX - cornerRadius - tailSize
+        let baseCenter = min(max(tailX, minBase), maxBase)
+        let tip = min(max(tailX, body.minX + 6), body.maxX - 6)
+
+        var tail = Path()
+        if tailOnBottom {
+            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.maxY - 0.5))
+            tail.addLine(to: CGPoint(x: tip, y: rect.maxY))
+            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.maxY - 0.5))
+        } else {
+            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.minY + 0.5))
+            tail.addLine(to: CGPoint(x: tip, y: rect.minY))
+            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.minY + 0.5))
+        }
+        tail.closeSubpath()
+        path.addPath(tail)
+        return path
     }
 }
 

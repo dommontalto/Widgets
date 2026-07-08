@@ -7,12 +7,53 @@
 
 import SwiftUI
 
+struct WorkoutConsistencyWidget: View {
+    private let highlighted: Color = .defaultSkyBlue
+    private let muted: Color = .defaultSkyBlue.opacity(.ultraLowOpacity)
+    private let cellSize: CGFloat = .spacing3x    // 18pt
+    private let cellSpacing: CGFloat = .spacing1x // 6pt
+    private let febColumn = 6
+
+    @State private var cells = WorkoutsDemoData.randomGrid(rows: 4, columns: 12)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                HeatmapHeader(icon: "figure.arms.open", title: "Consistency")
+
+                HStack(spacing: 0) {
+                    BrightText("Jan", size: .body1, weight: .regular)
+                        .frame(width: columnOffset(febColumn), alignment: .leading)
+                    BrightText("Feb", size: .body1, weight: .regular)
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(.horizontal, .spacing3x)
+
+            HeatmapGrid(
+                cells: cells,
+                cellSpacing: cellSpacing,
+                highlighted: highlighted,
+                muted: muted
+            )
+            .padding(.horizontal, .spacing3x)
+            .padding(.bottom, .spacing3x)
+        }
+        .padding(.top, .spacing3x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(CardModifier())
+    }
+    private func columnOffset(_ index: Int) -> CGFloat {
+        CGFloat(index) * (cellSize + cellSpacing)
+    }
+}
+
 // MARK: - Supporting Views
 
 struct HeatmapHeader: View {
     let icon: String
     let title: String
-    
+
     var body: some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: icon)
@@ -44,49 +85,6 @@ struct HeatmapGrid: View {
                     .aspectRatio(1, contentMode: .fit)
             }
         }
-    }
-}
-
-// MARK: - Widget
-
-struct WorkoutConsistencyWidget: View {
-    private let highlighted: Color = .defaultSkyBlue
-    private let muted: Color = .defaultSkyBlue.opacity(.ultraLowOpacity)
-    private let cellSize: CGFloat = .spacing3x    // 18pt
-    private let cellSpacing: CGFloat = .spacing1x // 6pt
-    private let febColumn = 6
-    
-    @State private var cells = WorkoutsDemoData.randomGrid(rows: 4, columns: 12)
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            VStack(alignment: .leading, spacing: .spacing2x) {
-                HeatmapHeader(icon: "figure.arms.open", title: "Consistency")
-
-                HStack(spacing: 0) {
-                    BrightText("Jan", size: .body1, weight: .regular)
-                        .frame(width: columnOffset(febColumn), alignment: .leading)
-                    BrightText("Feb", size: .body1, weight: .regular)
-                    Spacer(minLength: 0)
-                }
-            }
-            .padding(.horizontal, .spacing3x)
-
-            HeatmapGrid(
-                cells: cells,
-                cellSpacing: cellSpacing,
-                highlighted: highlighted,
-                muted: muted
-            )
-            .padding(.horizontal, .spacing3x)
-            .padding(.bottom, .spacing3x)
-        }
-        .padding(.top, .spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
-    }
-    private func columnOffset(_ index: Int) -> CGFloat {
-        CGFloat(index) * (cellSize + cellSpacing)
     }
 }
 

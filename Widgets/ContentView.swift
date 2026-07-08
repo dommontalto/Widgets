@@ -14,8 +14,20 @@ struct ContentView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                findTestsButton
-
+                section("Vault") {
+                    widgetLabel("VaultGuidedTestingCard")
+                    VaultGuidedTestingCard {
+                        withAnimation(.brightBouncy) {
+                            showingVaultTests = true
+                        }
+                    }
+                    .padding(.bottom, .spacing3x)
+                    
+                    widgetLabel("VaultDatapointsWidget")
+                    VaultDatapointsWidget()
+                        .padding(.bottom, .spacing3x)
+                }
+                
                 section("Genome") {
                     widgetLabel("GenomeOrderWidget")
                     Button { showingOrder = true } label: {
@@ -48,12 +60,6 @@ struct ContentView: View {
                 section("Workout") {
                     widgetLabel("WorkoutConsistencyWidget")
                     WorkoutConsistencyWidget()
-                        .padding(.bottom, .spacing3x)
-                }
-
-                section("Vault") {
-                    widgetLabel("VaultDatapointsWidget")
-                    VaultDatapointsWidget()
                         .padding(.bottom, .spacing3x)
                 }
             }
@@ -114,21 +120,11 @@ private struct WidgetLabelRow: View {
             Button {
                 isTicked.toggle()
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(isTicked ? Color.defaultSkyBlue : Color.clear)
-                    Circle()
-                        .strokeBorder(
-                            isTicked ? Color.clear : Color.lightTextColor.opacity(.semiLowOpacity),
-                            lineWidth: 1.5
-                        )
-                    if isTicked {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
+                if isTicked {
+                    BrightTick()
+                } else {
+                    BrightEmptyTick()
                 }
-                .frame(width: .spacing4x, height: .spacing4x)
             }
             .buttonStyle(.plain)
 
