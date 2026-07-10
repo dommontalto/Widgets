@@ -7,19 +7,13 @@
 
 import SwiftUI
 
-/// Small rounded chip with an optional leading image, optional selected state
-/// and optional trailing accessory. Pass `onTap` to make it tappable; leave it
-/// nil for a static display chip.
 struct BrightChip<Trailing: View>: View {
     let title: String
     var imageName: String?
     var systemImage: String?
     var size: FontSizes = .body1
-    /// Text/icon colour when not selected.
     var tint: Color = .semiLightTextColor
-    /// Background colour when not selected.
     var fill: Color = .sheetModalCards
-    /// Selected-state colour (faint fill + stroke).
     var accent: Color = .defaultGreen
     var isSelected: Bool = false
     var onTap: (() -> Void)?

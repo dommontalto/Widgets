@@ -35,7 +35,7 @@ struct VaultGuidedTestingCard: View {
                     .font(.system(size: 26, weight: .light))
                     .foregroundStyle(.white)
 
-                BrightText("Guided Testing", size: .standout1, color: .white)
+                BrightText("Guided Testing", size: .huge3, color: .white)
             }
             .blendMode(.overlay)
         }

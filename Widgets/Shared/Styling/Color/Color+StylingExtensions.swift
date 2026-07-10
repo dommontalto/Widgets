@@ -94,7 +94,7 @@ extension Color {
     static let defaultOrange = Color(light: .brightOrange, dark: .brightOrange)
     static let defaultClaudeOrange = Color(light: .claudeOrange, dark: .claudeOrange)
     static let defaultYellow = Color(light: .brightYellow, dark: .brightYellow)
-    static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
+    static let defaultGreen = Color(light: .scoreGreen, dark: .scoreGreen)
     static let activityYellow = Color(light: .moderateActivityYellow, dark: .moderateActivityYellow)
     static let defaultLightGrey = Color(light: .lightGrey, dark: .lightGrey)
 
@@ -133,8 +133,7 @@ extension Color {
     fileprivate static let brightGreen = Color(hex: "#2FB360")
     fileprivate static let darkGreen = Color(hex: "#1A3D45")
     fileprivate static let fluorescentGreen = Color(hex: "#00D750")
-    fileprivate static let scoreGreenLight = Color(hex: "#00D54F")
-    fileprivate static let scoreGreenDark = Color(hex: "#00FF5F")
+    fileprivate static let scoreGreen = Color(hex: "#00C74A")
 
     fileprivate static let brightViolet = Color(hex: "#B872FF")
     fileprivate static let vibrantPurple = Color(hex: "#D139FF")
@@ -208,6 +207,14 @@ extension Color {
 
     static let cycleFlowOnlyTop = Color(hex: "#FF9E66")
     static let cycleFlowOnlyBottom = Color(hex: "#FF5757")
+
+    // Vault
+
+    static let vaultGoalLongevityTop = Color(hex: "#FFEBAA")
+    static let vaultGoalHormonesTop  = Color(hex: "#AAB8FF")
+    static let vaultGoalGutHealthTop = Color(hex: "#FFC9E6")
+    static let vaultGoalMetabolicTop = Color(hex: "#FFA98C")
+    static let vaultGoalFertilityTop = Color(hex: "#AAF7FF")
 }
 
 // MARK: - Dark Mode Support

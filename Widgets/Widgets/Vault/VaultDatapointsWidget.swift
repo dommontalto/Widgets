@@ -6,111 +6,96 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct VaultDatapointsWidget: View {
-    private let highlighted: Color = .defaultSkyBlue
-    private let muted: Color = .defaultSkyBlue.opacity(.ultraLowOpacity)
+    private let highlighted: Color = .defaultGreen
+    private let muted: Color = .defaultGreen.opacity(.ultraLowOpacity)
 
-    private let dpGap: CGFloat = .spacing1x / 2   // 3pt fixed gap
+    private let dpGap: CGFloat = .spacing1x / 2
 
     private var gridCols: Int { datapoints.first?.count ?? 0 }
     private var gridRows: Int { datapoints.count }
 
     @State private var datapoints = VaultDemoData.randomGrid(rows: 16, columns: 24)
-    @State private var hoveredCell: GridCell?
-    @State private var cellPitch: CGFloat = 12
-    @State private var measuredGridWidth: CGFloat = 200
-    @State private var gridGlobalOrigin: CGPoint = .zero
+    @State private var selectedCell: GridCell?
+    @State private var sheetHeight: CGFloat = 320
 
-    private var dpCell: CGFloat { max(cellPitch - dpGap, 1) }
+    private var sheetShown: Binding<Bool> {
+        Binding(
+            get: { selectedCell != nil },
+            set: { if !$0 { selectedCell = nil } }
+        )
+    }
 
     private var total: Int { datapoints.flatMap { $0 }.count }
     private var filled: Int { datapoints.flatMap { $0 }.filter { $0 }.count }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing4x) {
-            datapointsGrid
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing3x)
-
-            gridLegend
-                .padding(.horizontal, .spacing3x)
-
-            VStack(alignment: .leading, spacing: .spacing1x) {
-                BrightText("\(filled)/\(total)", size: .huge2)
-                BrightText("complete data points", size: .subheading2, color: Color.lightTextColor)
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    BrightText("\(filled) ", size: .huge2)
+                    BrightText("/\(total)", size: .standout4, color: .lightTextColor)
+                }
+                BrightText("recorded data points", size: .body2, color: Color.lightTextColor)
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.bottom, .spacing3x)
+
+            VStack(alignment: .leading, spacing: .spacing4x) {
+                datapointsGrid
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.top, .spacing3x)
+
+                gridLegend
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.bottom, .spacing3x)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .modifier(CardModifier())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
-        .overlay(alignment: .topLeading) {
-            if let cell = hoveredCell {
-                hoverOverlay(cell)
-                    .allowsHitTesting(false)
+        .sheet(isPresented: sheetShown) {
+            if let cell = selectedCell {
+                VaultMetricSheet(
+                    metric: VaultDemoData.metric(forIndex: cell.row * gridCols + cell.col),
+                    hasData: datapoints[cell.row][cell.col],
+                    onClose: { selectedCell = nil }
+                )
+                .onPreferenceChange(MetricSheetHeightKey.self) { if $0 > 0 { sheetHeight = $0 } }
+                .presentationDetents([.height(sheetHeight)])
+                .presentationDragIndicator(.hidden)
+                .presentationBackgroundInteraction(.enabled)
             }
         }
     }
 
-    // MARK: - Interactive Grid
+    // MARK: - Grid
 
     private var datapointsGrid: some View {
-        let cols = gridCols
-        let flat = (0..<gridRows).flatMap { row in (0..<gridCols).map { col in (row, col) } }
-        let columns = Array(repeating: GridItem(.flexible(), spacing: dpGap), count: cols)
+        let flat = (0..<gridRows).flatMap { row in (0..<gridCols).map { col in GridCell(row: row, col: col) } }
+        let columns = Array(repeating: GridItem(.flexible(), spacing: dpGap), count: gridCols)
 
         return LazyVGrid(columns: columns, spacing: dpGap) {
-            ForEach(Array(flat.enumerated()), id: \.offset) { _, pair in
-                dpDot(row: pair.0, col: pair.1)
+            ForEach(flat) { cell in
+                dpDot(cell)
                     .aspectRatio(1, contentMode: .fit)
             }
         }
-        .coordinateSpace(.named("dpgrid"))
-        .contentShape(Rectangle())
-        .gesture(
-            GridLongPressGesture(
-                gridOrigin: gridGlobalOrigin,
-                onBegan: { setHovered(at: $0) },
-                onMoved: { setHovered(at: $0) },
-                onEnded: { hoveredCell = nil }
-            )
-        )
-        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: hoveredCell)
-        .sensoryFeedback(.selection, trigger: hoveredCell)
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
-            gridGlobalOrigin = frame.origin
-            measuredGridWidth = frame.width
-            let gapTotal = CGFloat(cols - 1) * dpGap
-            let cell = (frame.width - gapTotal) / CGFloat(cols)
-            cellPitch = cell + dpGap
-        }
+        .animation(.brightBouncy, value: selectedCell)
     }
 
-    private func setHovered(at point: CGPoint) {
-        let col = min(max(Int(point.x / cellPitch), 0), gridCols - 1)
-        let row = min(max(Int(point.y / cellPitch), 0), gridRows - 1)
-        hoveredCell = GridCell(row: row, col: col)
-    }
-
-    private func dpDot(row: Int, col: Int) -> some View {
-        let lit = datapoints[row][col]
-        let bump = magnification(row: row, col: col)
+    private func dpDot(_ cell: GridCell) -> some View {
+        let isSelected = selectedCell == cell
         return RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(lit ? highlighted : muted)
-            .scaleEffect(1 + bump * 1.1)
-            .shadow(color: highlighted.opacity(Double(bump) * 0.5), radius: bump * 6)
-            .zIndex(Double(bump))
-    }
-
-    private func magnification(row: Int, col: Int) -> CGFloat {
-        guard let hovered = hoveredCell else { return 0 }
-        let dr = CGFloat(row - hovered.row)
-        let dc = CGFloat(col - hovered.col)
-        let distance = (dr * dr + dc * dc).squareRoot()
-        let radius: CGFloat = 2.4
-        return max(0, 1 - distance / radius)
+            .fill(isSelected ? Color.defaultPurple : (datapoints[cell.row][cell.col] ? highlighted : muted))
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .stroke(Color.defaultPurple, lineWidth: 1.5)
+                        .padding(-2)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { selectedCell = cell }
     }
 
     // MARK: - Legend
@@ -127,118 +112,119 @@ struct VaultDatapointsWidget: View {
             RoundedRectangle(cornerRadius: 2, style: .continuous)
                 .fill(color)
                 .frame(width: 8, height: 8)
-            BrightText(label, size: .body5, color: Color.lightTextColor, weight: .regular)
+            BrightText(label, size: .body2, color: Color.lightTextColor, weight: .regular)
         }
-    }
-
-    // MARK: - Hover Bubble
-
-    private func hoverOverlay(_ cell: GridCell) -> some View {
-        let centerX = CGFloat(cell.col) * cellPitch + dpCell / 2 + CGFloat.spacing3x
-        let centerY = CGFloat(cell.row) * cellPitch + dpCell / 2 + CGFloat.spacing3x
-        let isLit = datapoints[cell.row][cell.col]
-        let metric = VaultDemoData.metric(forIndex: cell.row * gridCols + cell.col)
-
-        let bubbleW: CGFloat = 160
-        let bubbleH: CGFloat = 70
-        let gap: CGFloat = .spacing5x
-
-        let dotHalf = dpCell * 1.05
-        let minX = cellPitch + dpCell / 2 + CGFloat.spacing3x
-        let maxX = CGFloat(gridCols - 2) * cellPitch + dpCell / 2 + CGFloat.spacing3x
-        let bubbleCenterX = min(max(centerX, minX), maxX)
-        let bubbleCenterY = centerY - dotHalf - gap - bubbleH / 2
-
-        return bubble(metric, hasData: isLit)
-            .frame(width: bubbleW, height: bubbleH)
-            .position(x: bubbleCenterX, y: bubbleCenterY)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private func bubble(_ metric: VaultDemoData.Metric, hasData: Bool) -> some View {
-        VStack(alignment: .leading, spacing: .spacing05x) {
-            BrightText(metric.title, size: .body1, weight: .medium)
-            if hasData {
-                BrightText(metric.value, size: .body1, color: Color.semiLightTextColor, weight: .regular)
-                    .monospacedDigit()
-            } else {
-                BrightText("No data", size: .body1, color: Color.lightTextColor, weight: .regular)
-            }
-        }
-        .padding(.spacing2x)
-        .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius20))
     }
 }
 
 // MARK: - Supporting Types
 
-// UIGestureRecognizerRepresentable (iOS 18 SwiftUI protocol) — cooperates with ScrollView natively
-private struct GridLongPressGesture: UIGestureRecognizerRepresentable {
-    var gridOrigin: CGPoint
-    var onBegan: (CGPoint) -> Void
-    var onMoved: (CGPoint) -> Void
-    var onEnded: () -> Void
-
-    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
-        let g = UILongPressGestureRecognizer()
-        g.minimumPressDuration = 0.5
-        return g
-    }
-
-    func handleUIGestureRecognizerAction(_ r: UILongPressGestureRecognizer, context: Context) {
-        guard let window = r.view?.window else { return }
-        let windowPt = r.location(in: window)
-        let localPt = CGPoint(x: windowPt.x - gridOrigin.x, y: windowPt.y - gridOrigin.y)
-        switch r.state {
-        case .began:    onBegan(localPt)
-        case .changed:  onMoved(localPt)
-        default:        onEnded()
-        }
-    }
-}
-
-struct GridCell: Equatable {
+struct GridCell: Equatable, Identifiable {
     let row: Int
     let col: Int
+
+    var id: String { "\(row)-\(col)" }
 }
 
-struct SpeechBubble: Shape {
-    var cornerRadius: CGFloat
-    var tailSize: CGFloat
-    var tailX: CGFloat
-    var tailOnBottom: Bool
+// MARK: - Metric sheet
 
-    var animatableData: CGFloat {
-        get { tailX }
-        set { tailX = newValue }
+private struct MetricSheetHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+private struct VaultMetricSheet: View {
+    let metric: VaultDemoData.Metric
+    let hasData: Bool
+    let onClose: () -> Void
+
+    @State private var showMore = false
+
+    private var valueNumber: String {
+        metric.value.split(separator: " ", maxSplits: 1).first.map(String.init) ?? metric.value
     }
 
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let body = tailOnBottom
-            ? CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tailSize)
-            : CGRect(x: rect.minX, y: rect.minY + tailSize, width: rect.width, height: rect.height - tailSize)
+    private var valueUnit: String {
+        metric.value.split(separator: " ", maxSplits: 1).dropFirst().first.map(String.init) ?? ""
+    }
 
-        path.addRoundedRect(in: body, cornerSize: CGSize(width: cornerRadius, height: cornerRadius))
+    var body: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            VStack(alignment: .leading, spacing: .spacing1x) {
+                BrightText(metric.title, size: .standout3)
+                    .padding(.trailing, 52)
+                if hasData {
+                    BrightText("Latest: \(VaultDemoData.latestRecorded(metric))", size: .body3, color: .lightTextColor, weight: .regular)
+                }
+            }
 
-        let minBase = body.minX + cornerRadius + tailSize
-        let maxBase = body.maxX - cornerRadius - tailSize
-        let baseCenter = min(max(tailX, minBase), maxBase)
-        let tip = min(max(tailX, body.minX + 6), body.maxX - 6)
+            VStack(alignment: .leading, spacing: .spacing105x) {
+                HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
+                    BrightText(hasData ? valueNumber : "–", size: .huge)
+                        .monospacedDigit()
+                    BrightText(valueUnit, size: .subheading2, color: .lightTextColor, weight: .regular)
+                }
 
-        var tail = Path()
-        if tailOnBottom {
-            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.maxY - 0.5))
-            tail.addLine(to: CGPoint(x: tip, y: rect.maxY))
-            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.maxY - 0.5))
-        } else {
-            tail.move(to: CGPoint(x: baseCenter - tailSize, y: body.minY + 0.5))
-            tail.addLine(to: CGPoint(x: tip, y: rect.minY))
-            tail.addLine(to: CGPoint(x: baseCenter + tailSize, y: body.minY + 0.5))
+                if hasData {
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.standard(size: .subheading2, weight: .regular))
+                            .foregroundStyle(Color.defaultBrightGreen)
+                        BrightText("in normal range", size: .body3, color: .semiLightTextColor, weight: .regular)
+                    }
+                } else {
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.standard(size: .subheading2, weight: .regular))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(Color.defaultSkyBlue, Color.defaultLighthouseBlue)
+                        BrightText("no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                BrightText("What is this datapoint?", size: .body3, color: .semiLightTextColor, weight: .regular)
+                BrightText(VaultDemoData.whatIsIt(metric), size: .body3, color: .lightTextColor, weight: .regular)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(.lineSpacingMedium)
+                if showMore {
+                    BrightText(VaultDemoData.whyItMatters(metric), size: .body3, color: .lightTextColor, weight: .regular)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(.lineSpacingMedium)
+                }
+            }
+
+            if !showMore {
+                BrightPillButton("Show more", color: .defaultSkyBlue, buttonSize: .large) {
+                    withAnimation(.brightBouncy) { showMore = true }
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
-        tail.closeSubpath()
-        path.addPath(tail)
-        return path
+        .padding(.spacing4x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            GeometryReader { proxy in
+                Color.clear.preference(key: MetricSheetHeightKey.self, value: proxy.size.height)
+            }
+        )
+        .overlay(alignment: .topTrailing) {
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.textColor)
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassEffect(shape: .circle, interactive: false))
+                    .overlay(Circle().stroke(Color.textColor.opacity(.veryMinimalOpacity), lineWidth: 1))
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, .spacing3x)
+            .padding(.trailing, .spacing3x)
+        }
     }
 }
 

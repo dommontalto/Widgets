@@ -52,14 +52,16 @@ struct GenomeOrderSheet: View {
             }
             .scrollIndicators(.hidden)
             .background(alignment: .top) {
-                Image(ImageNames.genomeBackgroundV5)
+                Image(ImageNames.genomeOrderBackgroundV5)
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity, alignment: .top)
+                    .blur(radius: 20, opaque: true)
                     .overlay {
                         LinearGradient(
                             stops: [
-                                .init(color: .clear, location: 0.5),
+                                .init(color: .black.opacity(.minimalOpacity), location: 0),
+                                .init(color: .black.opacity(.veryLowOpacity), location: 0.7),
                                 .init(color: .black, location: 1.0),
                             ],
                             startPoint: .top,
@@ -142,9 +144,7 @@ struct GenomeOrderSheet: View {
 
     private var purchaseButton: some View {
         BrightFullWidthButton("Purchase", horizontalPadding: .spacing6x) { dismiss() }
-            .padding(.horizontal, .spacing3x)
     }
-
 }
 
 #Preview {

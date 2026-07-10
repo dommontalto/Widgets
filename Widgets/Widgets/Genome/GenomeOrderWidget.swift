@@ -16,6 +16,7 @@ struct GenomeOrderWidget: View {
                 Image(ImageNames.genomeOrderBackgroundV5)
                     .resizable()
                     .scaledToFill()
+                    .blur(radius: 10, opaque: true)
             }
             .overlay {
                 content

@@ -12,6 +12,8 @@ struct VaultTestPanel: Identifiable, Hashable {
     let name: String
     let detail: String
     let backgroundName: String
+    /// Top stop of the "What's your goal?" background gradient.
+    let gradientTopColor: Color
     /// Vector icon asset; nil falls back to `systemImage` (Longevity uses SF "figure").
     var iconName: String?
     var systemImage: String?
@@ -22,6 +24,7 @@ struct VaultTestPanel: Identifiable, Hashable {
             name: "Longevity",
             detail: "Biomarkers linked to biological aging, inflammation, organ function, cardiovascular risk, nutrient status, and long-term disease risk.",
             backgroundName: ImageNames.vaultTestLongevityBackgroundV5,
+            gradientTopColor: .vaultGoalLongevityTop,
             systemImage: "figure"
         ),
         VaultTestPanel(
@@ -29,6 +32,7 @@ struct VaultTestPanel: Identifiable, Hashable {
             name: "Hormones",
             detail: "Sex, thyroid, adrenal, and metabolic hormones that influence energy, mood, libido, weight, sleep, and reproductive health.",
             backgroundName: ImageNames.vaultTestHormonesBackgroundV5,
+            gradientTopColor: .vaultGoalHormonesTop,
             iconName: ImageNames.vaultTestHormonesIconV5
         ),
         VaultTestPanel(
@@ -36,6 +40,7 @@ struct VaultTestPanel: Identifiable, Hashable {
             name: "Gut Health",
             detail: "Digestive function, gut microbiome composition, inflammation, pathogens, food sensitivities, and markers of nutrient absorption.",
             backgroundName: ImageNames.vaultTestGutHealthBackgroundV5,
+            gradientTopColor: .vaultGoalGutHealthTop,
             iconName: ImageNames.vaultTestGutHealthIconV5
         ),
         VaultTestPanel(
@@ -43,6 +48,7 @@ struct VaultTestPanel: Identifiable, Hashable {
             name: "Metabolic Health",
             detail: "Blood sugar regulation, insulin sensitivity, cholesterol, liver function, kidney function, inflammation, and cardiovascular risk.",
             backgroundName: ImageNames.vaultTestMetabolicHealthBackgroundV5,
+            gradientTopColor: .vaultGoalMetabolicTop,
             iconName: ImageNames.vaultTestMetabolicHealthIconV5
         ),
         VaultTestPanel(
@@ -50,6 +56,7 @@ struct VaultTestPanel: Identifiable, Hashable {
             name: "Fertility",
             detail: "Reproductive hormones, ovarian reserve or sperm health, cycle function, thyroid status, and other markers that may affect conception.",
             backgroundName: ImageNames.vaultTestFertilityBackgroundV5,
+            gradientTopColor: .vaultGoalFertilityTop,
             iconName: ImageNames.vaultTestFertilityIconV5
         ),
     ]
@@ -101,13 +108,17 @@ struct VaultTestsSheet: View {
                     .opacity(isShowing ? 1 : 0)
                 }
             }
-            .background(Color.sheetBackground.ignoresSafeArea())
+            .background(goalGradientBackground.ignoresSafeArea())
             .navigationDestination(isPresented: $showingDetail) {
                 VaultTestDetailView(panel: visiblePanel)
             }
             .navigationTitle("What's your goal?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    BrightText("What's your goal?", size: .body1, color: .defaultMainBlack, weight: .medium)
+                }
+
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         close()
@@ -128,6 +139,29 @@ struct VaultTestsSheet: View {
                 isShowing = true
             }
         }
+    }
+
+    // MARK: Background
+
+    // Stop locations from the Figma gradients (1.663% / 89.532%, bottom-up).
+    private let gradientTopLocation: CGFloat = 1 - 0.89532
+    private let gradientBottomLocation: CGFloat = 1 - 0.01663
+
+    private var goalGradientBackground: some View {
+        ZStack {
+            ForEach(Array(panels.enumerated()), id: \.element.id) { index, panel in
+                LinearGradient(
+                    stops: [
+                        .init(color: panel.gradientTopColor, location: gradientTopLocation),
+                        .init(color: .sheetBackground, location: gradientBottomLocation),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .opacity(index <= (activeIndex ?? 0) ? 1 : 0)
+            }
+        }
+        .animation(.brightEaseInOut, value: activeIndex)
     }
 
     // MARK: Carousel
