@@ -14,6 +14,12 @@ struct BrightPageIndicator: View {
     @State private var width: CGFloat = 0
 
     var body: some View {
+        if activeIndex != nil {
+            dots
+        }
+    }
+
+    private var dots: some View {
         HStack(spacing: .spacing1x) {
             ForEach(0..<total, id: \.self) { index in
                 Circle()
