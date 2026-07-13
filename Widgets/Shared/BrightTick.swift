@@ -1,8 +1,9 @@
 //
 //  BrightTick.swift
-//  Widgets
+//  Bright
 //
-//  Ported from Bright.
+//  Created by Dom Montalto on 8/7/2026.
+//  Copyright © 2026 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI

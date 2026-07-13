@@ -1,8 +1,9 @@
 //
 //  BrightFullWidthButton.swift
-//  Widgets
+//  Bright
 //
-//  Ported from Bright.
+//  Created by Gangajaliya Sandeep on 19/12/2024.
+//  Copyright © 2024 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI

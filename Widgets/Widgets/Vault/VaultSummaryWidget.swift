@@ -6,9 +6,8 @@
 //
 
 import SwiftUI
+import Charts
 
-/// Vault → Summary hero: a cohort-percentile sentence with inline chips.
-/// Edge-to-edge (no card) — sits at the top of the Vault section.
 struct VaultSummaryWidget: View {
     @State private var gender = "men"
     @State private var ageRange = "18 & 24"
@@ -18,8 +17,11 @@ struct VaultSummaryWidget: View {
                                      "41 & 45", "46 & 50", "51 & 55", "56 & 60", "60+"]
 
     var body: some View {
-        headline
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: .spacing5x) {
+            headline
+            chart
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Headline
@@ -31,7 +33,6 @@ struct VaultSummaryWidget: View {
         case highlight(String, Color)
     }
 
-    // One row per clause — the sentence breaks to a new line after each comma.
     private let lines: [[Token]] = [
         [.text("From"), .text("your"), .text("data"), .text("this"), .text("week,")],
         [.text("of"), .genderChip, .text("aged"), .text("between"), .ageChip],
@@ -99,13 +100,73 @@ struct VaultSummaryWidget: View {
                 RoundedRectangle(cornerRadius: .cornerRadius10, style: .continuous)
                     .stroke(color, lineWidth: 1)
             }
+            .padding(.spacing05x)
+    }
+
+    // MARK: - Chart
+
+    private var chart: some View {
+        Chart {
+            RuleMark(y: .value("Baseline", VaultWeekPoint.week.first?.value ?? 50))
+                .foregroundStyle(Color.textColor.opacity(.ultraLowOpacity))
+                .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
+
+            ForEach(VaultWeekPoint.week) { point in
+                LineMark(x: .value("Day", point.day), y: .value("Percentile", point.value))
+                    .foregroundStyle(Color.defaultSkyBlue.opacity(.mediumOpacity))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
+                    .interpolationMethod(.catmullRom)
+            }
+        }
+        .chartYScale(domain: 0...100)
+        .chartYAxis {
+            AxisMarks(position: .trailing, values: [0, 20, 40, 60, 80, 100]) { value in
+                AxisValueLabel {
+                    if let pct = value.as(Double.self) {
+                        Text(pct == 0 ? "0%" : "\(Int(pct))")
+                            .font(.standard(size: .body4, weight: .regular))
+                            .foregroundStyle(Color.lightTextColor)
+                    }
+                }
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
+                    .foregroundStyle(Color.textColor.opacity(.ultraLowOpacity))
+                AxisValueLabel {
+                    if let day = value.as(String.self) {
+                        Text(day)
+                            .font(.standard(size: .body4, weight: .regular))
+                            .foregroundStyle(Color.semiLightTextColor)
+                    }
+                }
+            }
+        }
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                if let plot = proxy.plotFrame {
+                    let frame = geo[plot]
+                    ForEach(VaultWeekPoint.week) { point in
+                        if let x = proxy.position(forX: point.day),
+                           let y = proxy.position(forY: point.value) {
+                            ZStack {
+                                Circle().fill(Color.bG)
+                                Circle().stroke(Color.defaultSkyBlue, lineWidth: 2.5)
+                            }
+                            .frame(width: 7, height: 7)
+                            .position(x: frame.minX + x, y: frame.minY + y)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: 220)
     }
 }
 
 // MARK: - Flow layout
 
-/// Wraps its subviews left-to-right onto new rows, centring each item within its
-/// row. Lets the headline's words + chips flow naturally without clipping.
 private struct HeadlineFlowLayout: Layout {
     var hSpacing: CGFloat = .spacing1x
     var vSpacing: CGFloat = .spacing2x

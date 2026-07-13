@@ -1,8 +1,9 @@
 //
 //  BrightPillButton.swift
-//  Widgets
+//  Bright
 //
-//  Ported from Bright.
+//  Created by Zoe Friedman on 8/8/2023.
+//  Copyright © 2023 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI

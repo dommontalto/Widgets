@@ -1,8 +1,8 @@
 //
 //  BrightPageSheetView.swift
-//  Widgets
+//  Bright
 //
-//  Ported from Bright.
+//  Copyright © 2026 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI

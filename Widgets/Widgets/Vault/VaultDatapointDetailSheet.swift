@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-/// Full-height datapoint detail: latest value + status tag, range selector,
-/// BrightGraph, AVG/Range pills, and the guided-testing card.
 struct VaultDatapointDetailSheet: View {
     let metric: VaultDemoData.Metric
 
@@ -41,6 +39,7 @@ struct VaultDatapointDetailSheet: View {
                 .padding(.top, .spacing2x)
                 .padding(.bottom, .spacing4x)
             }
+            .scrollClipDisabled()
         }
         .sheet(isPresented: $showingTests) {
             VaultTestsSheet(onDismiss: {

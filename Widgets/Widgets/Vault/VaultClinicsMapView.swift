@@ -137,7 +137,7 @@ private struct ClinicMiniSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack {
-                closeButton
+                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
                 Spacer()
                 visitWebsiteButton
             }
@@ -198,20 +198,6 @@ private struct ClinicMiniSheet: View {
                 Color.clear.preference(key: SheetHeightKey.self, value: proxy.size.height)
             }
         )
-    }
-
-    private var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 20))
-                .foregroundStyle(Color.textColor)
-                .frame(width: .spacing7x, height: .spacing7x)
-                // No .interactive() so the tap reaches the Button.
-                .glassEffect(.regular, in: .circle)
-                .overlay(Circle().stroke(Color.textColor.opacity(.veryMinimalOpacity), lineWidth: 1))
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
     }
 
     private var visitWebsiteButton: some View {

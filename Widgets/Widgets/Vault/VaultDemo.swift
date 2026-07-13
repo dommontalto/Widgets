@@ -59,5 +59,21 @@ enum VaultDemoData {
     static func latestRecorded(_ metric: Metric) -> String {
         latestTimestamps[metric.title.count % latestTimestamps.count]
     }
+}
 
+/// One day's cohort percentile, driving the VaultSummaryWidget line chart.
+struct VaultWeekPoint: Identifiable {
+    var id: String { day }
+    let day: String
+    let value: Double
+
+    static let week: [VaultWeekPoint] = [
+        .init(day: "Mon", value: 52),
+        .init(day: "Tue", value: 56),
+        .init(day: "Wed", value: 54),
+        .init(day: "Thu", value: 56),
+        .init(day: "Fri", value: 68),
+        .init(day: "Sat", value: 61),
+        .init(day: "Sun", value: 58),
+    ]
 }

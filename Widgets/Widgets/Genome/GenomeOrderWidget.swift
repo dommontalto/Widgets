@@ -22,9 +22,6 @@ struct GenomeOrderWidget: View {
                 content
             }
             .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
-            // clipShape clips drawing but not hit-testing — without this, the
-            // scaledToFill background image makes the enclosing Button tappable
-            // far outside the card, stealing taps from widgets above it.
             .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
             .modifier(CardModifier(clipContent: false))
     }

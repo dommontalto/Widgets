@@ -1,8 +1,9 @@
 //
 //  BrightChip.swift
-//  Widgets
+//  Bright
 //
-//  Ported from Bright.
+//  Created by Dom Montalto on 7/7/2026.
+//  Copyright © 2026 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI

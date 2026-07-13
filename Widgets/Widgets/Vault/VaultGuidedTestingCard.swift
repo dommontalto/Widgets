@@ -54,7 +54,7 @@ struct VaultGuidedTestingCard: View {
             Spacer(minLength: .spacing2x)
 
             Image(systemName: "chevron.forward.circle")
-                .font(.system(size: 26, weight: .light))
+                .font(.system(size: 20, weight: .light))
                 .foregroundStyle(Color.textColor)
         }
         .padding(.spacing3x)

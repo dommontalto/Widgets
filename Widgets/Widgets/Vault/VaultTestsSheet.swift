@@ -12,9 +12,7 @@ struct VaultTestPanel: Identifiable, Hashable {
     let name: String
     let detail: String
     let backgroundName: String
-    /// Top stop of the "What's your goal?" background gradient.
     let gradientTopColor: Color
-    /// Vector icon asset; nil falls back to `systemImage` (Longevity uses SF "figure").
     var iconName: String?
     var systemImage: String?
 
@@ -68,10 +66,7 @@ struct VaultTestsSheet: View {
 
     @State private var isShowing = false
     @State private var isClosing = false
-    @State private var scrollPosition: ScrollPosition = .init(idType: VaultTestPanel.ID.self)
     @State private var activeIndex: Int? = 0
-    @State private var hapticTrigger = 0
-    @State private var carouselWidth: CGFloat = 0
     @State private var showingDetail = false
 
     private let panels = VaultTestPanel.demo
@@ -89,9 +84,12 @@ struct VaultTestsSheet: View {
                 VStack(spacing: .spacing0x) {
                     Spacer()
 
-                    panelCarousel
+                    BrightCarousel(items: panels, activeIndex: $activeIndex) { panel, width in
+                        VaultTestPanelCard(panel: panel)
+                            .frame(width: width, height: width * 1.25)
+                    }
 
-                    pageIndicator
+                    BrightPageIndicator(total: panels.count, activeIndex: $activeIndex)
                         .opacity(isShowing ? 1 : 0)
                         .padding(.top, .spacing6x)
 
@@ -143,7 +141,6 @@ struct VaultTestsSheet: View {
 
     // MARK: Background
 
-    // Stop locations from the Figma gradients (1.663% / 89.532%, bottom-up).
     private let gradientTopLocation: CGFloat = 1 - 0.89532
     private let gradientBottomLocation: CGFloat = 1 - 0.01663
 
@@ -162,76 +159,6 @@ struct VaultTestsSheet: View {
             }
         }
         .animation(.brightEaseInOut, value: activeIndex)
-    }
-
-    // MARK: Carousel
-
-    private var cardWidth: CGFloat {
-        guard carouselWidth > 0 else { return 200 }
-        return carouselWidth * 0.65
-    }
-
-    private var horizontalInset: CGFloat {
-        guard carouselWidth > 0 else { return .spacing4x }
-        return (carouselWidth - cardWidth) / 2
-    }
-
-    private var panelCarousel: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: .spacing05x) {
-                ForEach(panels) { panel in
-                    panelCard(panel)
-                        .frame(width: cardWidth)
-                        .contentShape(Rectangle())
-                        .scrollTransition(.animated(.brightBouncy)) { content, phase in
-                            content
-                                .opacity(phase.isIdentity ? 1 : 0.5)
-                                .scaleEffect(phase.isIdentity ? 1 : 0.85)
-                        }
-                        .id(panel.id)
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollPosition($scrollPosition)
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-        .contentMargins(.horizontal, horizontalInset, for: .scrollContent)
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.width
-        } action: { width in
-            carouselWidth = width
-        }
-        .onScrollTargetVisibilityChange(idType: VaultTestPanel.ID.self, threshold: 0.5) { visible in
-            if let first = visible.first,
-               let index = panels.firstIndex(where: { $0.id == first }) {
-                activeIndex = index
-                hapticTrigger += 1
-            }
-        }
-        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.5), trigger: hapticTrigger)
-    }
-
-    private func panelCard(_ panel: VaultTestPanel) -> some View {
-        VaultTestPanelCard(panel: panel)
-            .frame(width: cardWidth, height: cardWidth * 1.25)
-    }
-
-    // MARK: Page indicator
-
-    private var pageIndicator: some View {
-        HStack(spacing: .spacing1x) {
-            ForEach(panels.indices, id: \.self) { index in
-                Circle()
-                    .fill(index == activeIndex ? Color.textColor : Color.lightTextColor)
-                    .frame(width: .spacing1x, height: .spacing1x)
-            }
-        }
-        .animation(.brightEaseInOut, value: activeIndex)
-        .padding(.horizontal, .spacing2x)
-        .frame(height: .spacing5x)
-        .modifier(GlassEffect())
     }
 
     private func close() {

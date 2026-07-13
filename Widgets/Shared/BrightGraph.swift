@@ -14,8 +14,6 @@ struct BrightGraphPoint: Identifiable {
     let value: Double
 }
 
-/// Day-scale metric graph: 0–100% y-axis on the trailing edge, 6-hourly x-axis
-/// labels, dashed gridlines. Renders its axes even with no data (empty state).
 struct BrightGraph: View {
     var points: [BrightGraphPoint] = []
     var lineColor: Color = .defaultSkyBlue

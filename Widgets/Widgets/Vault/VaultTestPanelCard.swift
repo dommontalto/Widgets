@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-/// Composed test-panel card from the Figma design: shared gradient background,
-/// white wash, then icon / title / body blended with `.overlay` so they pick
-/// up the background hue.
 struct VaultTestPanelCard: View {
     let panel: VaultTestPanel
     var cornerRadius: CGFloat = .cornerRadius40
