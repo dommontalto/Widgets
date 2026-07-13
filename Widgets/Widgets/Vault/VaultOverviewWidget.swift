@@ -1,5 +1,5 @@
 //
-//  VaultSummaryWidget.swift
+//  VaultOverviewWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 10/7/2026.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Charts
 
-struct VaultSummaryWidget: View {
+struct VaultOverviewWidget: View {
     @State private var gender = "men"
     @State private var ageRange = "18 & 24"
 
@@ -221,6 +221,6 @@ private struct HeadlineFlowLayout: Layout {
 }
 
 #Preview {
-    VaultSummaryWidget()
+    VaultOverviewWidget()
         .padding(.spacing3x)
 }

@@ -61,7 +61,7 @@ enum VaultDemoData {
     }
 }
 
-/// One day's cohort percentile, driving the VaultSummaryWidget line chart.
+/// One day's cohort percentile, driving the VaultOverviewWidget line chart.
 struct VaultWeekPoint: Identifiable {
     var id: String { day }
     let day: String

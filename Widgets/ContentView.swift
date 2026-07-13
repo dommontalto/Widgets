@@ -15,8 +15,8 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Vault") {
-                    widgetLabel("VaultSummaryWidget")
-                    VaultSummaryWidget()
+                    widgetLabel("VaultOverviewWidget")
+                    VaultOverviewWidget()
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("VaultGuidedTestingCard")
