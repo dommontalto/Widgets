@@ -103,7 +103,7 @@ struct VaultOverviewWidget: View {
 
     private var chart: some View {
         Chart {
-            RuleMark(y: .value("Baseline", VaultWeekPoint.week.first?.value ?? 50))
+            RuleMark(y: .value("Baseline", 50))
                 .foregroundStyle(Color.textColor.opacity(.ultraLowOpacity))
                 .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
 

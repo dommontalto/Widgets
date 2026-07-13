@@ -40,6 +40,7 @@ struct VaultDatapointsWidget: View {
                 }
                 BrightText("recorded data points", size: .body2, color: Color.lightTextColor)
             }
+            .padding(.leading, .spacing2x)
 
             VStack(alignment: .leading, spacing: .spacing4x) {
                 datapointsGrid
@@ -61,7 +62,7 @@ struct VaultDatapointsWidget: View {
                     onClose: { selectedCell = nil }
                 )
                 .presentationDetents([.height(sheetHeight)])
-                .presentationCornerRadius(.cornerRadius40)
+                .presentationCornerRadius(.cornerRadius50)
                 .presentationDragIndicator(.hidden)
                 .presentationBackgroundInteraction(.enabled)
             }
