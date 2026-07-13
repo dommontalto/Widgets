@@ -12,7 +12,6 @@ import SwiftUI
 struct VaultDatapointDetailSheet: View {
     let metric: VaultDemoData.Metric
 
-    @Environment(\.dismiss) private var dismiss
     @State private var selectedRange = "D"
     @State private var showingTests = false
     @State private var rangeFrames: [String: CGRect] = [:]
@@ -25,60 +24,29 @@ struct VaultDatapointDetailSheet: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing4x) {
-                latest
-                rangeSelector
-                BrightGraph()
-                    .frame(height: 250)
-                statPills
-                VaultGuidedTestingCard {
-                    withAnimation(.brightBouncy) {
-                        showingTests = true
+        BrightPageSheetView(title: metric.title, showBackButton: true) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: .spacing4x) {
+                    latest
+                    rangeSelector
+                    BrightGraph()
+                        .frame(height: 250)
+                    statPills
+                    VaultGuidedTestingCard {
+                        withAnimation(.brightBouncy) {
+                            showingTests = true
+                        }
                     }
                 }
+                .padding(.top, .spacing2x)
+                .padding(.bottom, .spacing4x)
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.top, .spacing2x)
-            .padding(.bottom, .spacing4x)
         }
-        .safeAreaInset(edge: .top) { topBar }
-        .background(Color.bG)
         .sheet(isPresented: $showingTests) {
             VaultTestsSheet(onDismiss: {
                 showingTests = false
             })
         }
-    }
-
-    // MARK: - Top bar
-
-    private var topBar: some View {
-        ZStack {
-            BrightText(metric.title, size: .body1, weight: .regular)
-
-            HStack {
-                glassButton {
-                    Image(systemName: "chevron.backward")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color.textColor)
-                        .frame(width: 44, height: 44)
-                } action: { dismiss() }
-
-                Spacer()
-            }
-        }
-        .padding(.horizontal, .spacing3x)
-        .padding(.vertical, .spacing2x)
-    }
-
-    private func glassButton<Label: View>(@ViewBuilder label: () -> Label, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            label()
-                .modifier(GlassEffect(shape: .circle, interactive: false))
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Latest value

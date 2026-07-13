@@ -18,7 +18,8 @@ struct VaultDatapointsWidget: View {
 
     @State private var datapoints = VaultDemoData.randomGrid(rows: 16, columns: 24)
     @State private var selectedCell: GridCell?
-    @State private var sheetHeight: CGFloat = 150
+
+    private let sheetHeight: CGFloat = 220
 
     private var sheetShown: Binding<Bool> {
         Binding(
@@ -59,7 +60,6 @@ struct VaultDatapointsWidget: View {
                     hasData: datapoints[cell.row][cell.col],
                     onClose: { selectedCell = nil }
                 )
-                .onPreferenceChange(MetricSheetHeightKey.self) { if $0 > 0 { sheetHeight = $0 } }
                 .presentationDetents([.height(sheetHeight)])
                 .presentationDragIndicator(.hidden)
                 .presentationBackgroundInteraction(.enabled)

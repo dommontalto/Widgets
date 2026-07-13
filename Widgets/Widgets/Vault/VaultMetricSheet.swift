@@ -7,13 +7,6 @@
 
 import SwiftUI
 
-struct MetricSheetHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 struct VaultMetricSheet: View {
     let metric: VaultDemoData.Metric
     let hasData: Bool
@@ -30,37 +23,51 @@ struct VaultMetricSheet: View {
     }
 
     var body: some View {
+        GeometryReader { _ in
+            content
+        }
+        .ignoresSafeArea(edges: .bottom)
+        .sheet(isPresented: $showDetail) {
+            VaultDatapointDetailSheet(metric: metric)
+                .presentationCornerRadius(.modalCornerRadius)
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            VStack(alignment: .leading, spacing: .spacing1x) {
-                BrightText(metric.title, size: .standout3)
-                    .padding(.trailing, 52)
-                if hasData {
-                    BrightText("Latest: \(VaultDemoData.latestRecorded(metric))", size: .body3, color: .lightTextColor, weight: .regular)
+            HStack {
+                VStack(alignment: .leading, spacing: .spacing1x) {
+                    BrightText(metric.title, size: .standout3)
+                        .contentTransition(.numericText())
+                    BrightText("Latest: \(hasData ? VaultDemoData.latestRecorded(metric) : "–")", size: .body3, color: .lightTextColor, weight: .regular)
+                        .contentTransition(.numericText())
                 }
+                Spacer()
+                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
             }
 
             VStack(alignment: .leading, spacing: .spacing105x) {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
                     BrightText(hasData ? valueNumber : "–", size: .huge)
                         .monospacedDigit()
+                        .contentTransition(.numericText())
                     BrightText(valueUnit, size: .subheading2, color: .lightTextColor, weight: .regular)
+                        .contentTransition(.numericText())
                 }
 
-                if hasData {
-                    HStack(spacing: .spacing1x) {
+                HStack(spacing: .spacing1x) {
+                    if hasData {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))
                             .foregroundStyle(Color.defaultBrightGreen)
-                        BrightText("in normal range", size: .body3, color: .semiLightTextColor, weight: .regular)
-                    }
-                } else {
-                    HStack(spacing: .spacing1x) {
+                    } else {
                         Image(systemName: "questionmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(Color.defaultSkyBlue, Color.defaultLighthouseBlue)
-                        BrightText("no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
                     }
+                    BrightText(hasData ? "in normal range" : "no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
+                        .contentTransition(.numericText())
                 }
             }
 
@@ -69,30 +76,10 @@ struct VaultMetricSheet: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .padding(.spacing4x)
+        .animation(.brightBouncy, value: metric.title)
+        .animation(.brightBouncy, value: hasData)
+        .padding([.top, .horizontal], .spacing4x)
+        .padding(.bottom, .spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            GeometryReader { proxy in
-                Color.clear.preference(key: MetricSheetHeightKey.self, value: proxy.size.height)
-            }
-        )
-        .overlay(alignment: .topTrailing) {
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Color.textColor)
-                    .frame(width: 44, height: 44)
-                    .modifier(GlassEffect(shape: .circle, interactive: false))
-                    .overlay(Circle().stroke(Color.textColor.opacity(.veryMinimalOpacity), lineWidth: 1))
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .padding(.top, .spacing3x)
-            .padding(.trailing, .spacing3x)
-        }
-        .sheet(isPresented: $showDetail) {
-            VaultDatapointDetailSheet(metric: metric)
-                .presentationCornerRadius(.modalCornerRadius)
-        }
     }
 }
