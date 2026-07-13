@@ -61,6 +61,7 @@ struct VaultDatapointsWidget: View {
                     onClose: { selectedCell = nil }
                 )
                 .presentationDetents([.height(sheetHeight)])
+                .presentationCornerRadius(.cornerRadius40)
                 .presentationDragIndicator(.hidden)
                 .presentationBackgroundInteraction(.enabled)
             }

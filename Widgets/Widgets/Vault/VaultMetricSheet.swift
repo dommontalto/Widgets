@@ -28,7 +28,7 @@ struct VaultMetricSheet: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showDetail) {
-            VaultDatapointDetailSheet(metric: metric)
+            VaultDatapointDetailSheet(metric: metric, hasData: hasData)
                 .presentationCornerRadius(.modalCornerRadius)
         }
     }

@@ -9,9 +9,11 @@ import SwiftUI
 
 struct VaultDatapointDetailSheet: View {
     let metric: VaultDemoData.Metric
+    var hasData: Bool = true
 
     @State private var selectedRange = "D"
     @State private var showingTests = false
+    @State private var isAllReadingsExpanded = true
     @State private var rangeFrames: [String: CGRect] = [:]
     @Namespace private var rangePill
 
@@ -25,14 +27,28 @@ struct VaultDatapointDetailSheet: View {
         BrightPageSheetView(title: metric.title, showBackButton: true) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
-                    latest
+                    if hasData {
+                        latest
+                    }
+
+                    if !hasData {
+                        noDataBanner
+                    }
+
                     rangeSelector
+
                     BrightGraph()
                         .frame(height: 250)
+
                     statPills
-                    VaultGuidedTestingCard {
-                        withAnimation(.brightBouncy) {
-                            showingTests = true
+
+                    if hasData {
+                        allReadings
+                    } else {
+                        VaultGuidedTestingCard {
+                            withAnimation(.brightBouncy) {
+                                showingTests = true
+                            }
                         }
                     }
                 }
@@ -61,6 +77,64 @@ struct VaultDatapointDetailSheet: View {
             }
 
             BrightText("Today, 21 Jan, 2026", size: .body2, color: .lightTextColor)
+        }
+    }
+
+    // MARK: - No data
+
+    private var noDataBanner: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            Image(systemName: "questionmark.circle.fill")
+                .font(.system(size: 26))
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(Color.defaultBlue, Color.defaultBlue.opacity(.minimalOpacity))
+
+            BrightText("No data found for this datapoint.", size: .body2, color: .defaultBlue, weight: .regular)
+        }
+        .padding(.spacing2x + .spacing05x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
+                .fill(Color.defaultBlue.opacity(.finalBossLowOpacity))
+        )
+    }
+
+    // MARK: - All readings
+
+    private var demoReadings: [VaultRangeMarkerData] {
+        let unit = metric.value.split(separator: " ", maxSplits: 1).dropFirst().first.map(String.init) ?? ""
+        return [
+            VaultRangeMarkerData(id: "r1", title: "Today, 21 Jan, 2026", lastUpdated: "", value: valueNumber, unit: unit, markerPosition: 0.45),
+            VaultRangeMarkerData(id: "r2", title: "14 Jan, 2026", lastUpdated: "", value: "44", unit: unit, markerPosition: 0.4),
+        ]
+    }
+
+    private var allReadings: some View {
+        VStack(spacing: .spacing0x) {
+            HStack {
+                BrightText("ALL READINGS", size: .body3, color: .lightTextColor)
+                Spacer()
+                BrightRoundButton(
+                    systemImage: "chevron.right",
+                    imageRotation: isAllReadingsExpanded ? .degrees(90) : .zero
+                )
+            }
+            .padding(.horizontal, .spacing2x + .spacing05x)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.brightSnappy) {
+                    isAllReadingsExpanded.toggle()
+                }
+            }
+
+            if isAllReadingsExpanded {
+                VStack(spacing: .spacing3x) {
+                    ForEach(demoReadings) { reading in
+                        VaultMarkerWidget(data: reading)
+                    }
+                }
+                .padding(.top, .spacing2x)
+            }
         }
     }
 
