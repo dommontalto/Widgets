@@ -33,20 +33,16 @@ struct VaultOverviewWidget: View {
         case highlight(String, Color)
     }
 
-    private let lines: [[Token]] = [
-        [.text("From"), .text("your"), .text("data"), .text("this"), .text("week,")],
-        [.text("of"), .genderChip, .text("aged"), .text("between"), .ageChip],
-        [.text("you're"), .text("in"), .text("the"), .text("top"), .highlight("8%", .defaultGreen)],
+    private let tokens: [Token] = [
+        .text("From"), .text("your"), .text("data"), .text("this"), .text("week,"),
+        .text("of"), .genderChip, .text("aged"), .text("between"), .ageChip,
+        .text("you're"), .text("in"), .text("the"), .text("top"), .highlight("8%", .defaultGreen),
     ]
 
     private var headline: some View {
-        VStack(alignment: .leading, spacing: .spacing105x) {
-            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                HeadlineFlowLayout(hSpacing: .spacing1x, vSpacing: .spacing105x) {
-                    ForEach(Array(line.enumerated()), id: \.offset) { _, token in
-                        tokenView(token)
-                    }
-                }
+        HeadlineFlowLayout(hSpacing: .spacing1x, vSpacing: .spacing105x) {
+            ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
+                tokenView(token)
             }
         }
     }
