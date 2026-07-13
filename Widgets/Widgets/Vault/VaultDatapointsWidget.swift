@@ -18,7 +18,7 @@ struct VaultDatapointsWidget: View {
 
     @State private var datapoints = VaultDemoData.randomGrid(rows: 16, columns: 24)
     @State private var selectedCell: GridCell?
-    @State private var sheetHeight: CGFloat = 320
+    @State private var sheetHeight: CGFloat = 150
 
     private var sheetShown: Binding<Bool> {
         Binding(
@@ -77,6 +77,8 @@ struct VaultDatapointsWidget: View {
             ForEach(flat) { cell in
                 dpDot(cell)
                     .aspectRatio(1, contentMode: .fit)
+                    .contentShape(Rectangle())
+                    .onTapGesture { selectedCell = cell }
             }
         }
         .animation(.brightBouncy, value: selectedCell)
@@ -85,7 +87,7 @@ struct VaultDatapointsWidget: View {
     private func dpDot(_ cell: GridCell) -> some View {
         let isSelected = selectedCell == cell
         return RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(isSelected ? Color.defaultPurple : (datapoints[cell.row][cell.col] ? highlighted : muted))
+            .fill(datapoints[cell.row][cell.col] ? highlighted : muted)
             .overlay {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
@@ -94,8 +96,6 @@ struct VaultDatapointsWidget: View {
                         .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { selectedCell = cell }
     }
 
     // MARK: - Legend
@@ -124,108 +124,6 @@ struct GridCell: Equatable, Identifiable {
     let col: Int
 
     var id: String { "\(row)-\(col)" }
-}
-
-// MARK: - Metric sheet
-
-private struct MetricSheetHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
-private struct VaultMetricSheet: View {
-    let metric: VaultDemoData.Metric
-    let hasData: Bool
-    let onClose: () -> Void
-
-    @State private var showMore = false
-
-    private var valueNumber: String {
-        metric.value.split(separator: " ", maxSplits: 1).first.map(String.init) ?? metric.value
-    }
-
-    private var valueUnit: String {
-        metric.value.split(separator: " ", maxSplits: 1).dropFirst().first.map(String.init) ?? ""
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            VStack(alignment: .leading, spacing: .spacing1x) {
-                BrightText(metric.title, size: .standout3)
-                    .padding(.trailing, 52)
-                if hasData {
-                    BrightText("Latest: \(VaultDemoData.latestRecorded(metric))", size: .body3, color: .lightTextColor, weight: .regular)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: .spacing105x) {
-                HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
-                    BrightText(hasData ? valueNumber : "–", size: .huge)
-                        .monospacedDigit()
-                    BrightText(valueUnit, size: .subheading2, color: .lightTextColor, weight: .regular)
-                }
-
-                if hasData {
-                    HStack(spacing: .spacing1x) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.standard(size: .subheading2, weight: .regular))
-                            .foregroundStyle(Color.defaultBrightGreen)
-                        BrightText("in normal range", size: .body3, color: .semiLightTextColor, weight: .regular)
-                    }
-                } else {
-                    HStack(spacing: .spacing1x) {
-                        Image(systemName: "questionmark.circle.fill")
-                            .font(.standard(size: .subheading2, weight: .regular))
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(Color.defaultSkyBlue, Color.defaultLighthouseBlue)
-                        BrightText("no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
-                    }
-                }
-            }
-
-            VStack(alignment: .leading, spacing: .spacing2x) {
-                BrightText("What is this datapoint?", size: .body3, color: .semiLightTextColor, weight: .regular)
-                BrightText(VaultDemoData.whatIsIt(metric), size: .body3, color: .lightTextColor, weight: .regular)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(.lineSpacingMedium)
-                if showMore {
-                    BrightText(VaultDemoData.whyItMatters(metric), size: .body3, color: .lightTextColor, weight: .regular)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(.lineSpacingMedium)
-                }
-            }
-
-            if !showMore {
-                BrightPillButton("Show more", color: .defaultSkyBlue, buttonSize: .large) {
-                    withAnimation(.brightBouncy) { showMore = true }
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.spacing4x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            GeometryReader { proxy in
-                Color.clear.preference(key: MetricSheetHeightKey.self, value: proxy.size.height)
-            }
-        )
-        .overlay(alignment: .topTrailing) {
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Color.textColor)
-                    .frame(width: 44, height: 44)
-                    .modifier(GlassEffect(shape: .circle, interactive: false))
-                    .overlay(Circle().stroke(Color.textColor.opacity(.veryMinimalOpacity), lineWidth: 1))
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .padding(.top, .spacing3x)
-            .padding(.trailing, .spacing3x)
-        }
-    }
 }
 
 #Preview {

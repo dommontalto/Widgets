@@ -60,28 +60,4 @@ enum VaultDemoData {
         latestTimestamps[metric.title.count % latestTimestamps.count]
     }
 
-    static func whatIsIt(_ metric: Metric) -> String {
-        "\(metric.title) is one of the biomarkers tracked in your Vault. It's measured from your lab results and mapped against reference ranges for your age and sex."
-    }
-
-    static func whyItMatters(_ metric: Metric) -> String {
-        "Tracking \(metric.title.lowercased()) over time helps spot trends before they become problems, and shows how your training, diet, and sleep are moving the needle."
-    }
-}
-
-/// One day's cohort percentile, driving the VaultSummaryWidget line chart.
-struct VaultWeekPoint: Identifiable {
-    var id: String { day }
-    let day: String
-    let value: Double
-
-    static let week: [VaultWeekPoint] = [
-        .init(day: "Mon", value: 52),
-        .init(day: "Tue", value: 56),
-        .init(day: "Wed", value: 54),
-        .init(day: "Thu", value: 56),
-        .init(day: "Fri", value: 68),
-        .init(day: "Sat", value: 61),
-        .init(day: "Sun", value: 58),
-    ]
 }

@@ -6,34 +6,35 @@
 //
 
 import SwiftUI
-import Charts
 
-/// Vault → Summary hero: a cohort-percentile sentence with inline chips, above a
-/// week-long percentile line chart. Edge-to-edge (no card) — sits at the top of
-/// the Vault section.
+/// Vault → Summary hero: a cohort-percentile sentence with inline chips.
+/// Edge-to-edge (no card) — sits at the top of the Vault section.
 struct VaultSummaryWidget: View {
+    @State private var gender = "men"
+    @State private var ageRange = "18 & 24"
+
+    private static let genderOptions = ["men", "women"]
+    private static let ageOptions = ["18 & 24", "25 & 30", "31 & 35", "36 & 40",
+                                     "41 & 45", "46 & 50", "51 & 55", "56 & 60", "60+"]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing5x) {
-            headline
-            chart
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        headline
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Headline
 
     private enum Token {
         case text(String)
-        case chip(String, Color)
-        case chipComma(String, Color)
+        case genderChip
+        case ageChip
         case highlight(String, Color)
     }
 
     // One row per clause — the sentence breaks to a new line after each comma.
     private let lines: [[Token]] = [
         [.text("From"), .text("your"), .text("data"), .text("this"), .text("week,")],
-        [.text("of"), .chip("men", .defaultSkyBlue), .text("aged"), .text("between"),
-         .chipComma("18 & 24", .defaultPurple)],
+        [.text("of"), .genderChip, .text("aged"), .text("between"), .ageChip],
         [.text("you're"), .text("in"), .text("the"), .text("top"), .highlight("8%", .defaultGreen)],
     ]
 
@@ -54,11 +55,15 @@ struct VaultSummaryWidget: View {
         switch token {
         case let .text(value):
             BrightText(value, size: .standout4)
-        case let .chip(value, color):
-            chip(value, color: color)
-        case let .chipComma(value, color):
+        case .genderChip:
+            pickerChip(
+                selection: $gender,
+                options: Self.genderOptions,
+                color: gender == "women" ? .defaultPurple : .defaultSkyBlue
+            )
+        case .ageChip:
             HStack(spacing: .spacing0x) {
-                chip(value, color: color)
+                pickerChip(selection: $ageRange, options: Self.ageOptions, color: .defaultPurple)
                 BrightText(",", size: .standout4)
             }
         case let .highlight(value, color):
@@ -67,6 +72,19 @@ struct VaultSummaryWidget: View {
                 BrightText(".", size: .standout4)
             }
         }
+    }
+
+    private func pickerChip(selection: Binding<String>, options: [String], color: Color) -> some View {
+        Menu {
+            Picker("", selection: selection) {
+                ForEach(options, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+        } label: {
+            chip(selection.wrappedValue, color: color)
+        }
+        .buttonStyle(.plain)
     }
 
     private func chip(_ text: String, color: Color) -> some View {
@@ -81,68 +99,6 @@ struct VaultSummaryWidget: View {
                 RoundedRectangle(cornerRadius: .cornerRadius10, style: .continuous)
                     .stroke(color, lineWidth: 1)
             }
-    }
-
-    // MARK: - Chart
-
-    private var chart: some View {
-        Chart {
-            RuleMark(y: .value("Baseline", VaultWeekPoint.week.first?.value ?? 50))
-                .foregroundStyle(Color.textColor.opacity(.ultraLowOpacity))
-                .lineStyle(StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
-
-            ForEach(VaultWeekPoint.week) { point in
-                LineMark(x: .value("Day", point.day), y: .value("Percentile", point.value))
-                    .foregroundStyle(Color.defaultSkyBlue.opacity(.mediumOpacity))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5))
-                    .interpolationMethod(.catmullRom)
-            }
-        }
-        .chartYScale(domain: 0...100)
-        .chartYAxis {
-            AxisMarks(position: .trailing, values: [0, 20, 40, 60, 80, 100]) { value in
-                AxisValueLabel {
-                    if let pct = value.as(Double.self) {
-                        Text(pct == 0 ? "0%" : "\(Int(pct))")
-                            .font(.standard(size: .body4, weight: .regular))
-                            .foregroundStyle(Color.lightTextColor)
-                    }
-                }
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
-                    .foregroundStyle(Color.textColor.opacity(.ultraLowOpacity))
-                AxisValueLabel {
-                    if let day = value.as(String.self) {
-                        Text(day)
-                            .font(.standard(size: .body4, weight: .regular))
-                            .foregroundStyle(Color.semiLightTextColor)
-                    }
-                }
-            }
-        }
-        // Hollow dots drawn in overlay so they read as sky-blue rings on the bG.
-        .chartOverlay { proxy in
-            GeometryReader { geo in
-                if let plot = proxy.plotFrame {
-                    let frame = geo[plot]
-                    ForEach(VaultWeekPoint.week) { point in
-                        if let x = proxy.position(forX: point.day),
-                           let y = proxy.position(forY: point.value) {
-                            ZStack {
-                                Circle().fill(Color.bG)
-                                Circle().stroke(Color.defaultSkyBlue, lineWidth: 2.5)
-                            }
-                            .frame(width: 7, height: 7)
-                            .position(x: frame.minX + x, y: frame.minY + y)
-                        }
-                    }
-                }
-            }
-        }
-        .frame(height: 220)
     }
 }
 
