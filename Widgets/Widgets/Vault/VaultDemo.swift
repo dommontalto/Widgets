@@ -203,12 +203,6 @@ enum VaultDemoData {
 
     static func graphSeries(for range: String) -> GraphSeries {
         switch range {
-        case "W":
-            return GraphSeries(
-                xDomain: 0...6,
-                xLabels: [0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"],
-                points: points([52, 56, 54, 56, 68, 61, 58], startingAt: 0, step: 1)
-            )
         case "M":
             return GraphSeries(
                 xDomain: 1...30,
@@ -229,9 +223,9 @@ enum VaultDemoData {
             )
         default:
             return GraphSeries(
-                xDomain: 0...24,
-                xLabels: [0: "12AM", 6: "6AM", 12: "12PM", 18: "6PM"],
-                points: points([46, 44, 49, 58, 62, 57, 63, 60], startingAt: 1, step: 3)
+                xDomain: 0...6,
+                xLabels: [0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"],
+                points: points([52, 56, 54, 56, 68, 61, 58], startingAt: 0, step: 1)
             )
         }
     }

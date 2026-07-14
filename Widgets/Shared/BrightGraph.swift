@@ -17,8 +17,8 @@ struct BrightGraphPoint: Identifiable {
 struct BrightGraph: View {
     var points: [BrightGraphPoint] = []
     var lineColor: Color = .defaultSkyBlue
-    var xDomain: ClosedRange<Double> = 0...24
-    var xAxisLabels: [Double: String] = [0: "12AM", 6: "6AM", 12: "12PM", 18: "6PM"]
+    var xDomain: ClosedRange<Double> = 0...6
+    var xAxisLabels: [Double: String] = [0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"]
     var showsPointMarkers = false
 
     var body: some View {

@@ -11,14 +11,14 @@ struct VaultDatapointDetailSheet: View {
     let metric: VaultDemoData.Metric
     var hasData: Bool = true
 
-    @State private var selectedRange = "D"
+    @State private var selectedRange = "W"
     @State private var animatesGraph = false
     @State private var showingTests = false
     @State private var isAllReadingsExpanded = true
     @State private var rangeFrames: [String: CGRect] = [:]
     @Namespace private var rangePill
 
-    private static let ranges = ["D", "W", "M", "3M", "1Y"]
+    private static let ranges = ["W", "M", "3M", "1Y"]
 
     private var valueNumber: String {
         metric.value.split(separator: " ", maxSplits: 1).first.map(String.init) ?? metric.value
