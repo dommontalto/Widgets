@@ -56,7 +56,7 @@ struct VaultDatapointsWidget: View {
         }
         .sheet(isPresented: sheetShown) {
             if let cell = selectedCell {
-                VaultMetricSheet(
+                VaultDatapointMiniSheet(
                     metric: VaultDemoData.metric(forIndex: cell.row * gridCols + cell.col),
                     hasData: datapoints[cell.row][cell.col],
                     onClose: { selectedCell = nil }

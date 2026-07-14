@@ -96,16 +96,6 @@ struct GenomeOrderSheet: View {
                 color: .white
             )
             .multilineTextAlignment(.center)
-
-            VStack(spacing: .spacing2x) {
-                BrightText("What's included", size: .body3, color: .white)
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 24, height: 24)
-                    .background(Circle().fill(Color.white.opacity(.minimalOpacity)))
-            }
-            .padding(.top, .spacing4x)
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, .spacing4x)

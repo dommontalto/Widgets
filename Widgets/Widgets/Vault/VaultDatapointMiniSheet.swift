@@ -1,5 +1,5 @@
 //
-//  VaultMetricSheet.swift
+//  VaultDatapointMiniSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 13/7/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct VaultMetricSheet: View {
+struct VaultDatapointMiniSheet: View {
     let metric: VaultDemoData.Metric
     let hasData: Bool
     let onClose: () -> Void
@@ -30,6 +30,7 @@ struct VaultMetricSheet: View {
         .sheet(isPresented: $showDetail) {
             VaultDatapointDetailSheet(metric: metric, hasData: hasData)
                 .presentationCornerRadius(.modalCornerRadius)
+                .presentationBackgroundInteraction(.enabled)
         }
     }
 
