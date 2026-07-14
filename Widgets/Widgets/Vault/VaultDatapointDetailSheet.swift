@@ -12,6 +12,7 @@ struct VaultDatapointDetailSheet: View {
     var hasData: Bool = true
 
     @State private var selectedRange = "D"
+    @State private var animatesGraph = false
     @State private var showingTests = false
     @State private var isAllReadingsExpanded = true
     @State private var rangeFrames: [String: CGRect] = [:]
@@ -21,6 +22,14 @@ struct VaultDatapointDetailSheet: View {
 
     private var valueNumber: String {
         metric.value.split(separator: " ", maxSplits: 1).first.map(String.init) ?? metric.value
+    }
+
+    private var history: VaultMarkerHistoryData {
+        VaultDemoData.markerHistory(for: metric)
+    }
+
+    private var readings: [VaultMarkerHistoryReading] {
+        history.readings ?? []
     }
 
     var body: some View {
@@ -37,8 +46,7 @@ struct VaultDatapointDetailSheet: View {
 
                     rangeSelector
 
-                    BrightGraph()
-                        .frame(height: 250)
+                    graph
 
                     statPills
 
@@ -64,6 +72,37 @@ struct VaultDatapointDetailSheet: View {
         }
     }
 
+    // MARK: - Graph
+
+    private var graph: some View {
+        let series = VaultDemoData.graphSeries(for: selectedRange)
+        return BrightGraph(
+            points: hasData ? series.points : [],
+            xDomain: series.xDomain,
+            xAxisLabels: series.xLabels,
+            showsPointMarkers: hasData
+        )
+        .frame(height: 250)
+        .id(selectedRange)
+        .transaction { $0.animation = animatesGraph ? .brightEaseInOut : nil }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    guard let index = Self.ranges.firstIndex(of: selectedRange) else { return }
+                    let newIndex = min(Self.ranges.count - 1, max(0, index + (value.translation.width < 0 ? 1 : -1)))
+                    select(Self.ranges[newIndex])
+                }
+        )
+    }
+
+    private func select(_ range: String) {
+        guard range != selectedRange else { return }
+        animatesGraph = true
+        withAnimation(.brightBouncy) { selectedRange = range }
+    }
+
     // MARK: - Latest value
 
     private var latest: some View {
@@ -76,7 +115,9 @@ struct VaultDatapointDetailSheet: View {
                 BrightHealthStatus(status: "Optimal")
             }
 
-            BrightText("Today, 21 Jan, 2026", size: .body2, color: .lightTextColor)
+            if let latestDate = VaultDemoData.displayDate(readings.first?.date) {
+                BrightText(latestDate, size: .body2, color: .lightTextColor)
+            }
         }
     }
 
@@ -102,11 +143,16 @@ struct VaultDatapointDetailSheet: View {
     // MARK: - All readings
 
     private var demoReadings: [VaultRangeMarkerData] {
-        let unit = metric.value.split(separator: " ", maxSplits: 1).dropFirst().first.map(String.init) ?? ""
-        return [
-            VaultRangeMarkerData(id: "r1", title: "Today, 21 Jan, 2026", lastUpdated: "", value: valueNumber, unit: unit, markerPosition: 0.45),
-            VaultRangeMarkerData(id: "r2", title: "14 Jan, 2026", lastUpdated: "", value: "44", unit: unit, markerPosition: 0.4),
-        ]
+        readings.map { reading in
+            VaultRangeMarkerData(
+                id: reading.id,
+                title: VaultDemoData.displayDate(reading.date) ?? "Latest",
+                lastUpdated: "",
+                value: reading.value.map { formatted($0) } ?? "--",
+                unit: reading.unit ?? VaultDemoData.valueUnit(metric),
+                markerPosition: reading.markerPosition ?? 0.45
+            )
+        }
     }
 
     private var allReadings: some View {
@@ -158,7 +204,7 @@ struct VaultDatapointDetailSheet: View {
                         rangeFrames[range] = $0
                     }
                     .onTapGesture {
-                        withAnimation(.brightBouncy) { selectedRange = range }
+                        select(range)
                     }
             }
         }
@@ -170,7 +216,7 @@ struct VaultDatapointDetailSheet: View {
                     guard let nearest = rangeFrames.min(by: {
                         abs($0.value.midX - value.location.x) < abs($1.value.midX - value.location.x)
                     })?.key, nearest != selectedRange else { return }
-                    withAnimation(.brightBouncy) { selectedRange = nearest }
+                    select(nearest)
                 }
         )
     }
@@ -179,9 +225,20 @@ struct VaultDatapointDetailSheet: View {
 
     private var statPills: some View {
         HStack(spacing: .spacing2x) {
-            statPill("AVG –")
-            statPill("Range –")
+            statPill("AVG \(hasData ? history.average.map { formatted($0) } ?? "–" : "–")")
+            statPill("Range \(hasData ? formattedRange : "–")")
         }
+    }
+
+    private var formattedRange: String {
+        guard let lower = history.rangeMin, let upper = history.rangeMax else { return "–" }
+        return "\(formatted(lower)) - \(formatted(upper))"
+    }
+
+    private func formatted(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(value))
+            : String(format: "%.1f", value)
     }
 
     private func statPill(_ text: String) -> some View {

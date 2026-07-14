@@ -9,21 +9,22 @@ import SwiftUI
 import Charts
 
 struct BrightGraphPoint: Identifiable {
-    var id: Double { hour }
-    let hour: Double
+    var id: Double { x }
+    let x: Double
     let value: Double
 }
 
 struct BrightGraph: View {
     var points: [BrightGraphPoint] = []
     var lineColor: Color = .defaultSkyBlue
-
-    private static let hourLabels: [Double: String] = [0: "12AM", 6: "6AM", 12: "12PM", 18: "6PM"]
+    var xDomain: ClosedRange<Double> = 0...24
+    var xAxisLabels: [Double: String] = [0: "12AM", 6: "6AM", 12: "12PM", 18: "6PM"]
+    var showsPointMarkers = false
 
     var body: some View {
         Chart {
             ForEach(points) { point in
-                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value))
+                LineMark(x: .value("X", point.x), y: .value("Value", point.value))
                     .foregroundStyle(lineColor.opacity(.mediumOpacity))
                     .lineStyle(StrokeStyle(lineWidth: 1.5))
                     .interpolationMethod(.catmullRom)
@@ -31,16 +32,16 @@ struct BrightGraph: View {
 
             if points.isEmpty {
                 // Invisible mark so Charts still lays out the axes.
-                PointMark(x: .value("Hour", 0), y: .value("Value", 0))
+                PointMark(x: .value("X", xDomain.lowerBound), y: .value("Value", 0))
                     .opacity(0)
             }
         }
-        .chartXScale(domain: 0...24)
+        .chartXScale(domain: xDomain)
         .chartYScale(domain: 0...100)
         .chartXAxis {
-            AxisMarks(values: [0, 6, 12, 18]) { value in
+            AxisMarks(values: xAxisLabels.keys.sorted()) { value in
                 AxisValueLabel(anchor: .topLeading) {
-                    if let hour = value.as(Double.self), let label = Self.hourLabels[hour] {
+                    if let x = value.as(Double.self), let label = xAxisLabels[x] {
                         Text(label)
                             .font(.standard(size: .body4, weight: .regular))
                             .foregroundStyle(Color.lightTextColor)
@@ -63,11 +64,35 @@ struct BrightGraph: View {
                 }
             }
         }
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                if showsPointMarkers, let plot = proxy.plotFrame {
+                    let frame = geo[plot]
+                    ForEach(points) { point in
+                        if let x = proxy.position(forX: point.x),
+                           let y = proxy.position(forY: point.value) {
+                            ZStack {
+                                Circle().fill(Color.bG)
+                                Circle().stroke(lineColor, lineWidth: 2.5)
+                            }
+                            .frame(width: 7, height: 7)
+                            .position(x: frame.minX + x, y: frame.minY + y)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    BrightGraph()
-        .frame(height: 250)
-        .padding(.spacing3x)
+    let series = VaultDemoData.graphSeries(for: "W")
+    BrightGraph(
+        points: series.points,
+        xDomain: series.xDomain,
+        xAxisLabels: series.xLabels,
+        showsPointMarkers: true
+    )
+    .frame(height: 250)
+    .padding(.spacing3x)
 }

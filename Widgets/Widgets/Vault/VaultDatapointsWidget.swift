@@ -12,14 +12,11 @@ struct VaultDatapointsWidget: View {
     private let muted: Color = .defaultGreen.opacity(.ultraLowOpacity)
 
     private let dpGap: CGFloat = .spacing1x / 2
+    private let columns = 24
 
-    private var gridCols: Int { datapoints.first?.count ?? 0 }
-    private var gridRows: Int { datapoints.count }
+    private let datapoints = VaultDemoData.completeness.datapoints ?? []
 
-    @State private var datapoints = VaultDemoData.randomGrid(rows: 16, columns: 24)
     @State private var selectedCell: GridCell?
-
-    private let sheetHeight: CGFloat = 220
 
     private var sheetShown: Binding<Bool> {
         Binding(
@@ -28,8 +25,24 @@ struct VaultDatapointsWidget: View {
         )
     }
 
-    private var total: Int { datapoints.flatMap { $0 }.count }
-    private var filled: Int { datapoints.flatMap { $0 }.filter { $0 }.count }
+    private var total: Int { datapoints.count }
+    private var filled: Int { datapoints.filter { $0.complete == true }.count }
+    private var gridRows: Int { max(1, Int((Double(total) / Double(columns)).rounded(.up))) }
+
+    private func index(row: Int, col: Int) -> Int? {
+        let i = row * columns + col
+        guard i < total else { return nil }
+        return i
+    }
+
+    private func datapoint(_ cell: GridCell) -> VaultCompletenessDatapoint? {
+        guard let i = index(row: cell.row, col: cell.col) else { return nil }
+        return datapoints[i]
+    }
+
+    private func isLit(_ cell: GridCell) -> Bool {
+        datapoint(cell)?.complete == true
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -54,17 +67,17 @@ struct VaultDatapointsWidget: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .modifier(CardModifier())
         }
-        .sheet(isPresented: sheetShown) {
-            if let cell = selectedCell {
+        .brightMiniSheet(isPresented: sheetShown) {
+            if let cell = selectedCell, let dp = datapoint(cell) {
                 VaultDatapointMiniSheet(
-                    metric: VaultDemoData.metric(forIndex: cell.row * gridCols + cell.col),
-                    hasData: datapoints[cell.row][cell.col],
-                    onClose: { selectedCell = nil }
+                    title: dp.name ?? "Data point",
+                    unit: dp.unit ?? "",
+                    hasData: dp.complete == true,
+                    latestRecorded: VaultDemoData.displayDateTime(dp.lastUpdated),
+                    onClose: { selectedCell = nil },
+                    value: dp.value,
+                    markerPosition: dp.markerPosition
                 )
-                .presentationDetents([.height(sheetHeight)])
-                .presentationCornerRadius(.cornerRadius50)
-                .presentationDragIndicator(.hidden)
-                .presentationBackgroundInteraction(.enabled)
             }
         }
     }
@@ -72,24 +85,29 @@ struct VaultDatapointsWidget: View {
     // MARK: - Grid
 
     private var datapointsGrid: some View {
-        let flat = (0..<gridRows).flatMap { row in (0..<gridCols).map { col in GridCell(row: row, col: col) } }
-        let columns = Array(repeating: GridItem(.flexible(), spacing: dpGap), count: gridCols)
+        let flat = (0..<gridRows).flatMap { row in (0..<columns).map { col in GridCell(row: row, col: col) } }
+        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: dpGap), count: columns)
 
-        return LazyVGrid(columns: columns, spacing: dpGap) {
+        return LazyVGrid(columns: gridColumns, spacing: dpGap) {
             ForEach(flat) { cell in
                 dpDot(cell)
                     .aspectRatio(1, contentMode: .fit)
                     .contentShape(Rectangle())
-                    .onTapGesture { selectedCell = cell }
+                    .onTapGesture {
+                        guard datapoint(cell) != nil else { return }
+                        selectedCell = cell
+                    }
             }
         }
         .animation(.brightBouncy, value: selectedCell)
     }
 
     private func dpDot(_ cell: GridCell) -> some View {
+        let isBlank = index(row: cell.row, col: cell.col) == nil
         let isSelected = selectedCell == cell
         return RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(datapoints[cell.row][cell.col] ? highlighted : muted)
+            .fill(isLit(cell) ? highlighted : muted)
+            .opacity(isBlank ? 0 : 1)
             .overlay {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)

@@ -8,39 +8,46 @@
 import SwiftUI
 
 struct VaultDatapointMiniSheet: View {
-    let metric: VaultDemoData.Metric
+    let title: String
+    let unit: String
     let hasData: Bool
+    let latestRecorded: String?
     let onClose: () -> Void
+    var value: String?
+    var markerPosition: Double?
 
     @State private var showDetail = false
 
-    private var valueNumber: String {
-        metric.value.split(separator: " ", maxSplits: 1).first.map(String.init) ?? metric.value
-    }
-
-    private var valueUnit: String {
-        metric.value.split(separator: " ", maxSplits: 1).dropFirst().first.map(String.init) ?? ""
+    private var statusLabel: String {
+        guard let markerPosition else { return "In range" }
+        let position = min(1, max(0, markerPosition))
+        if position < 0.12 || position >= 0.78 {
+            return "Out of range"
+        }
+        if position < 0.20 || position >= 0.70 {
+            return "Borderline"
+        }
+        return "In range"
     }
 
     var body: some View {
-        GeometryReader { _ in
-            content
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .sheet(isPresented: $showDetail) {
-            VaultDatapointDetailSheet(metric: metric, hasData: hasData)
+        content
+            .sheet(isPresented: $showDetail) {
+                VaultDatapointDetailSheet(
+                    metric: VaultDemoData.Metric(title: title, value: "\(value ?? "–") \(unit)"),
+                    hasData: hasData
+                )
                 .presentationCornerRadius(.modalCornerRadius)
-                .presentationBackgroundInteraction(.enabled)
-        }
+            }
     }
 
     private var content: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             HStack {
                 VStack(alignment: .leading, spacing: .spacing1x) {
-                    BrightText(metric.title, size: .standout3)
+                    BrightText(title, size: .standout3)
                         .contentTransition(.numericText())
-                    BrightText("Latest: \(hasData ? VaultDemoData.latestRecorded(metric) : "–")", size: .body3, color: .lightTextColor, weight: .regular)
+                    BrightText("Latest: \(hasData ? (latestRecorded ?? "–") : "–")", size: .body3, color: .lightTextColor, weight: .regular)
                         .contentTransition(.numericText())
                 }
                 Spacer()
@@ -49,25 +56,25 @@ struct VaultDatapointMiniSheet: View {
 
             VStack(alignment: .leading, spacing: .spacing105x) {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
-                    BrightText(hasData ? valueNumber : "–", size: .huge)
+                    BrightText(hasData ? (value ?? "–") : "–", size: .huge)
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                    BrightText(valueUnit, size: .subheading2, color: .lightTextColor, weight: .regular)
+                    BrightText(unit, size: .subheading2, color: .lightTextColor, weight: .regular)
                         .contentTransition(.numericText())
                 }
 
                 HStack(spacing: .spacing1x) {
                     if hasData {
-                        Image(systemName: "checkmark.circle.fill")
+                        Image(systemName: statusLabel == "In range" ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))
-                            .foregroundStyle(Color.defaultBrightGreen)
+                            .foregroundStyle(BrightHealthStatus(status: statusLabel).color)
                     } else {
                         Image(systemName: "questionmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(Color.defaultSkyBlue, Color.defaultLighthouseBlue)
                     }
-                    BrightText(hasData ? "in normal range" : "no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
+                    BrightText(hasData ? statusLabel.lowercased() : "no data available", size: .body3, color: .semiLightTextColor, weight: .regular)
                         .contentTransition(.numericText())
                 }
             }
@@ -77,7 +84,7 @@ struct VaultDatapointMiniSheet: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .animation(.brightBouncy, value: metric.title)
+        .animation(.brightBouncy, value: title)
         .animation(.brightBouncy, value: hasData)
         .padding([.top, .horizontal], .spacing4x)
         .padding(.bottom, .spacing2x)
