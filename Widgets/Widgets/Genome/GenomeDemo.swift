@@ -60,7 +60,7 @@ struct GenomeCategory: Identifiable {
 
 struct GenomeOrderStatusDemoData {
     static let status = "Order placed"
-    static let eta = "ETA: 6 weeks"
+    static let eta = "ETA: 2 weeks"
     static let totalSteps = 4
     static let completedSteps = 1
 }

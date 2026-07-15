@@ -23,7 +23,7 @@ struct GenomeOrderConfirmationSheet: View {
                     VStack(spacing: .spacing2x) {
                         ProgressView()
                             .controlSize(.large)
-                            .padding(.bottom, .spacing2x)
+                            .padding(.bottom, .spacing1x)
 
                         BrightText("Confirming your order…", size: .subheading)
                     }
