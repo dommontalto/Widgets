@@ -39,7 +39,7 @@ struct BrightPlaceholderView: View {
             image
                 .resizable()
                 .scaledToFit()
-                .frame(width: 60, height: 60)
+                .frame(width: 56, height: 56)
 
             BrightText(title, size: .heading)
 

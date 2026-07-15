@@ -46,10 +46,16 @@ struct GenomeOrderSheet: View {
         BrightPageSheetView(horizontalPadding: .spacing0x, backgroundColor: .black) {
             ScrollView {
                 VStack(spacing: .spacing0x) {
-                    hero
+                    BrightPlaceholderView(
+                        image: ImageNames.genomeOrderDnaHeroV5,
+                        title: "Order your genome test",
+                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test."
+                    )
+                    .padding(.bottom, .spacing8x)
+                    
                     includedList
                 }
-                .padding(.bottom, .spacing10x)
+                .padding(.bottom, .spacing12x)
             }
             .scrollIndicators(.hidden)
             .background(alignment: .top) {
@@ -81,32 +87,6 @@ struct GenomeOrderSheet: View {
             GenomeOrderConfirmationSheet()
         }
     }
-
-    // MARK: Hero
-
-    private var hero: some View {
-        VStack(spacing: .spacing3x) {
-            Image(ImageNames.genomeOrderDnaHeroV5)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 56, height: 56)
-
-            BrightText("Order your genome test", size: .standout4, color: .white)
-                .multilineTextAlignment(.center)
-
-            BrightText(
-                "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
-                size: .body3,
-                color: .white
-            )
-            .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, .spacing4x)
-        .padding(.horizontal, .spacing6x)
-    }
-
-    // MARK: Included list
 
     private var includedList: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
