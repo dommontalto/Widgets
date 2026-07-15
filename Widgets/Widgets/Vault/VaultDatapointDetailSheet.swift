@@ -74,12 +74,27 @@ struct VaultDatapointDetailSheet: View {
 
     // MARK: - Graph
 
+    /// Readings inside the selected window, plotted at their date with
+    /// `markerPosition` as the y-value. One reading renders as a single dot.
     private var graph: some View {
-        let series = VaultDemoData.graphSeries(for: selectedRange)
+        let days = Self.windowDays(for: selectedRange)
+        let end = readings.compactMap { VaultDemoData.parseDate($0.date) }.max() ?? .now
+        let start = end.addingTimeInterval(-days * 86400)
+        let points = readings
+            .compactMap { reading -> BrightGraphPoint? in
+                let date = VaultDemoData.parseDate(reading.date) ?? end
+                guard date >= start else { return nil }
+                return BrightGraphPoint(
+                    x: date.timeIntervalSince(start) / 86400,
+                    value: (reading.markerPosition ?? 0.45) * 100
+                )
+            }
+            .sorted { $0.x < $1.x }
+
         return BrightGraph(
-            points: hasData ? series.points : [],
-            xDomain: series.xDomain,
-            xAxisLabels: series.xLabels,
+            points: hasData ? points : [],
+            xDomain: 0...days,
+            xAxisLabels: Self.axisLabels(days: days, start: start),
             showsPointMarkers: hasData
         )
         .frame(height: 250)
@@ -101,6 +116,23 @@ struct VaultDatapointDetailSheet: View {
         guard range != selectedRange else { return }
         animatesGraph = true
         withAnimation(.brightBouncy) { selectedRange = range }
+    }
+
+    private static func windowDays(for range: String) -> Double {
+        switch range {
+        case "W": 7
+        case "M": 30
+        case "3M": 90
+        default: 365
+        }
+    }
+
+    private static func axisLabels(days: Double, start: Date) -> [Double: String] {
+        let ticks: [Double] = [0, days / 3, days * 2 / 3, days]
+        return ticks.reduce(into: [:]) { labels, tick in
+            let date = start.addingTimeInterval(tick * 86400)
+            labels[tick] = date.formatted(.dateTime.day().month(.abbreviated))
+        }
     }
 
     // MARK: - Latest value
@@ -176,7 +208,7 @@ struct VaultDatapointDetailSheet: View {
             if isAllReadingsExpanded {
                 VStack(spacing: .spacing3x) {
                     ForEach(demoReadings) { reading in
-                        VaultMarkerWidget(data: reading)
+                        VaultMarkerWidget(data: reading, cardColor: .sheetModalCards)
                     }
                 }
                 .padding(.top, .spacing2x)

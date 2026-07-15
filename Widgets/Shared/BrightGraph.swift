@@ -16,7 +16,7 @@ struct BrightGraphPoint: Identifiable {
 
 struct BrightGraph: View {
     var points: [BrightGraphPoint] = []
-    var lineColor: Color = .defaultSkyBlue
+    var lineColor: Color = .defaultGreen
     var xDomain: ClosedRange<Double> = 0...6
     var xAxisLabels: [Double: String] = [0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"]
     var showsPointMarkers = false
@@ -60,6 +60,7 @@ struct BrightGraph: View {
                         Text(pct == 0 ? "0%" : "\(Int(pct))")
                             .font(.standard(size: .body5, weight: .regular))
                             .foregroundStyle(Color.semiLightTextColor)
+                            .padding(.leading, .spacing2x)
                     }
                 }
             }
@@ -86,11 +87,16 @@ struct BrightGraph: View {
 }
 
 #Preview {
-    let series = VaultDemoData.graphSeries(for: "W")
     BrightGraph(
-        points: series.points,
-        xDomain: series.xDomain,
-        xAxisLabels: series.xLabels,
+        points: [
+            BrightGraphPoint(x: 0, value: 52),
+            BrightGraphPoint(x: 1, value: 56),
+            BrightGraphPoint(x: 2, value: 54),
+            BrightGraphPoint(x: 3, value: 56),
+            BrightGraphPoint(x: 4, value: 68),
+            BrightGraphPoint(x: 5, value: 61),
+            BrightGraphPoint(x: 6, value: 58),
+        ],
         showsPointMarkers: true
     )
     .frame(height: 250)

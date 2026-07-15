@@ -41,6 +41,7 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
 
 struct VaultMarkerWidget: View, Equatable {
     let data: VaultRangeMarkerData
+    var cardColor: Color = .cards
     var onTap: (() -> Void)?
 
     static func == (lhs: VaultMarkerWidget, rhs: VaultMarkerWidget) -> Bool {
@@ -79,7 +80,7 @@ struct VaultMarkerWidget: View, Equatable {
         }
         .padding(.vertical, .spacing2x)
         .padding(.horizontal, .spacing3x)
-        .modifier(CardModifier())
+        .modifier(CardModifier(color: cardColor))
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }
     }
@@ -119,7 +120,7 @@ struct VaultMarkerWidget: View, Equatable {
                 // a clean gap and never straddles a segment seam (e.g. green/orange).
                 ZStack {
                     Capsule()
-                        .fill(Color.cards)
+                        .fill(cardColor)
                         .frame(width: 8, height: 18)
                     Capsule()
                         .fill(Color.textColor)

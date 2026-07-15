@@ -193,46 +193,6 @@ enum VaultDemoData {
         parseDate(iso)?.formatted(.dateTime.day().month(.abbreviated).year())
     }
 
-    // MARK: - Graph demo series
-
-    struct GraphSeries {
-        let xDomain: ClosedRange<Double>
-        let xLabels: [Double: String]
-        let points: [BrightGraphPoint]
-    }
-
-    static func graphSeries(for range: String) -> GraphSeries {
-        switch range {
-        case "M":
-            return GraphSeries(
-                xDomain: 1...30,
-                xLabels: [1: "1", 8: "8", 15: "15", 22: "22", 29: "29"],
-                points: points([48, 53, 50, 57, 55, 62, 59, 64], startingAt: 1, step: 4)
-            )
-        case "3M":
-            return GraphSeries(
-                xDomain: 0...2,
-                xLabels: [0: "Nov", 1: "Dec", 2: "Jan"],
-                points: points([42, 45, 44, 50, 53, 49, 56, 60, 63], startingAt: 0, step: 0.25)
-            )
-        case "1Y":
-            return GraphSeries(
-                xDomain: 0...11,
-                xLabels: [0: "Feb", 3: "May", 6: "Aug", 9: "Nov"],
-                points: points([38, 42, 40, 47, 52, 49, 55, 58, 54, 61, 64, 68], startingAt: 0, step: 1)
-            )
-        default:
-            return GraphSeries(
-                xDomain: 0...6,
-                xLabels: [0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"],
-                points: points([52, 56, 54, 56, 68, 61, 58], startingAt: 0, step: 1)
-            )
-        }
-    }
-
-    private static func points(_ values: [Double], startingAt start: Double, step: Double) -> [BrightGraphPoint] {
-        values.enumerated().map { BrightGraphPoint(x: start + Double($0.offset) * step, value: $0.element) }
-    }
 }
 
 private extension Double {
