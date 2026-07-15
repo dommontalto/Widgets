@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct GenomeOrderSheet: View {
-    @Environment(\.dismiss) private var dismiss
+    @State private var isStartingCheckout = false
+    @State private var showingConfirmation = false
 
     private struct Panel: Identifiable {
         let id = UUID()
@@ -76,6 +77,9 @@ struct GenomeOrderSheet: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .sheet(isPresented: $showingConfirmation) {
+            GenomeOrderConfirmationSheet()
+        }
     }
 
     // MARK: Hero
@@ -133,7 +137,32 @@ struct GenomeOrderSheet: View {
     }
 
     private var purchaseButton: some View {
-        BrightFullWidthButton("Purchase", horizontalPadding: .spacing6x) { dismiss() }
+        BrightFullWidthButton(isStartingCheckout ? "" : "Purchase", horizontalPadding: .spacing6x) {
+            startPurchase()
+        }
+        .contentTransition(.opacity)
+        .disabled(isStartingCheckout)
+        .overlay {
+            if isStartingCheckout {
+                ProgressView()
+                    .tint(.black)
+                    .transition(.asymmetric(
+                        insertion: .opacity.animation(.brightEaseInOut.delay(0.35)),
+                        removal: .opacity.animation(.brightEaseInOut)
+                    ))
+            }
+        }
+        .animation(.brightEaseInOut, value: isStartingCheckout)
+    }
+
+    private func startPurchase() {
+        guard !isStartingCheckout else { return }
+        isStartingCheckout = true
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            isStartingCheckout = false
+            showingConfirmation = true
+        }
     }
 }
 

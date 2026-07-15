@@ -29,6 +29,7 @@ class ImageNames {
     static let genomeBrainV5               = "Genome/Icons/genome_brain_v5"
     static let genomeDnaV5                 = "Genome/Icons/genome_dna_v5"
     static let genomeClockV5               = "Genome/Icons/genome_clock_v5"
+    static let genomeV5                    = "Genome/genome_v5"
     static let genomeOrderBackgroundV5     = "Genome/genome_order_background_v5"
     static let genomeOrderDnaIconV5        = "Genome/Icons/genome_order_dna_icon_v5"
 
