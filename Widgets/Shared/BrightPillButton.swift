@@ -13,8 +13,10 @@ struct BrightPillButton: View {
     let image: String?
     let systemImage: String?
     let color: Color?
+    let textColor: Color?
     let size: FontSizes
     let buttonSize: BrightButtonSizes
+    let isClear: Bool
     let onTapCallback: () -> Void
 
     init(
@@ -22,17 +24,25 @@ struct BrightPillButton: View {
         image: String? = nil,
         systemImage: String? = nil,
         color: Color? = nil,
+        textColor: Color? = nil,
         size: FontSizes = .subheading1,
         buttonSize: BrightButtonSizes = .medium,
+        isClear: Bool = false,
         onTapCallback: @escaping (() -> Void)
     ) {
         self.title = title
         self.image = image
         self.systemImage = systemImage
         self.color = color
+        self.textColor = textColor
         self.size = size
         self.buttonSize = buttonSize
+        self.isClear = isClear
         self.onTapCallback = onTapCallback
+    }
+
+    private var resolvedTextColor: Color {
+        textColor ?? (color == nil ? .textColor : .black)
     }
 
     var body: some View {
@@ -41,20 +51,20 @@ struct BrightPillButton: View {
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: Constants.imageSize, weight: .medium))
-                        .foregroundStyle(color == nil ? Color.textColor : Color.black)
+                        .foregroundStyle(resolvedTextColor)
                 } else if let image {
                     Image(image)
                         .resizable()
                         .scaledToFit()
                         .frame(height: Constants.imageSize)
                 }
-                BrightText(title, size: size, color: color == nil ? .textColor : .black)
+                BrightText(title, size: size, color: resolvedTextColor)
             }
             .padding(.horizontal, .spacing2x + .spacing05x)
             .frame(height: buttonSize.rawValue)
         }
         .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())
-        .modifier(GlassEffect(shape: .capsule))
+        .modifier(GlassEffect(shape: .capsule, isClear: isClear))
     }
 
     private enum Constants {

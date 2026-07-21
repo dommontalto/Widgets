@@ -14,6 +14,28 @@ struct ContentView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
+                section("Exercise") {
+                    widgetLabel("ExerciseConsistencyWidget")
+                    ExerciseConsistencyWidget()
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseTrainingLoadWidget")
+                    ExerciseTrainingLoadWidget()
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseSessionHistoryWidget")
+                    ExerciseSessionHistoryWidget()
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseUpcomingWidget")
+                    ExerciseUpcomingWidget()
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseWeeklyPlanWidget")
+                    ExerciseWeeklyPlanWidget()
+                        .padding(.bottom, .spacing3x)
+                }
+
                 section("Vault") {
                     widgetLabel("VaultOverviewWidget")
                     VaultOverviewWidget()
@@ -58,12 +80,6 @@ struct ContentView: View {
 
                     widgetLabel("GenomeOrderStatusWidget")
                     GenomeOrderStatusWidget()
-                        .padding(.bottom, .spacing3x)
-                }
-
-                section("Workout") {
-                    widgetLabel("WorkoutConsistencyWidget")
-                    WorkoutConsistencyWidget()
                         .padding(.bottom, .spacing3x)
                 }
             }

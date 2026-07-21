@@ -34,13 +34,16 @@ Widgets/
 └── Widgets/
     ├── Genome/
     │   └── GenomeSummaryPercentileWidget.swift
-    ├── Workouts/
-    │   ├── WorkoutsConsistencyWidget.swift  — HeatmapHeader + HeatmapGrid defined here
-    │   └── WorkoutsDemo.swift               — WorkoutsDemoData
+    ├── Exercise/
+    │   ├── ExerciseConsistencyWidget.swift  — Strength & Cardio heatmap card
+    │   ├── ExerciseTrainingLoadWidget.swift — Split % bar + weekly load rows
+    │   ├── ExerciseSessionHistoryWidget.swift — Logs list, past 14 days
+    │   ├── ExerciseUpcomingWidget.swift     — No sessions + Quick workout glass pill
+    │   ├── ExerciseWeeklyPlanWidget.swift   — green banner + hero image with Start CTA
+    │   └── ExerciseDemo.swift               — ExerciseDayType + ExerciseDemoData
     └── Vault/
         ├── VaultDatapointsWidget.swift      — GridCell + SpeechBubble defined here
-        ├── VaultDemo.swift                  — VaultDemoData
-        └── WorkoutsDemo.swift               — WorkoutsDemoData (shared here)
+        └── VaultDemo.swift                  — VaultDemoData
 ```
 
 ---
