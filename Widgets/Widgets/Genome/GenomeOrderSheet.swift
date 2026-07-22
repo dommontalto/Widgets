@@ -51,6 +51,7 @@ struct GenomeOrderSheet: View {
                         title: "Order your genome test",
                         subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test."
                     )
+                    .environment(\.colorScheme, .dark)
                     .padding(.bottom, .spacing8x)
                     
                     includedList
@@ -125,6 +126,7 @@ struct GenomeOrderSheet: View {
         .overlay {
             if isStartingCheckout {
                 ProgressView()
+                    .controlSize(.large)
                     .tint(.black)
                     .transition(.asymmetric(
                         insertion: .opacity.animation(.brightEaseInOut.delay(0.35)),
