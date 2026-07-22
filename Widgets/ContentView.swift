@@ -34,9 +34,17 @@ struct ContentView: View {
                     widgetLabel("ExerciseWeeklyPlanWidget")
                     ExerciseWeeklyPlanWidget()
                         .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseProgramPhaseWidget")
+                    ExerciseProgramPhaseWidget()
+                        .padding(.bottom, .spacing3x)
                 }
 
                 section("Vault") {
+                    widgetLabel("VaultDatapointsWidget")
+                    VaultDatapointsWidget()
+                        .padding(.bottom, .spacing3x)
+
                     widgetLabel("VaultOverviewWidget")
                     VaultOverviewWidget()
                         .padding(.bottom, .spacing3x)
@@ -48,10 +56,6 @@ struct ContentView: View {
                         }
                     }
                     .padding(.bottom, .spacing3x)
-                    
-                    widgetLabel("VaultDatapointsWidget")
-                    VaultDatapointsWidget()
-                        .padding(.bottom, .spacing3x)
                 }
                 
                 section("Genome") {

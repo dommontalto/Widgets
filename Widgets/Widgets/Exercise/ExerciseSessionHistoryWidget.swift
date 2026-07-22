@@ -17,7 +17,7 @@ struct ExerciseSessionHistoryWidget: View {
                 BrightText("Past 14 days", size: .body2, color: .lightTextColor)
             }
 
-            VStack(spacing: 0) {
+            VStack(spacing: .spacing0x) {
                 ForEach(sessions.indices, id: \.self) { i in
                     HStack {
                         BrightText(sessions[i].name, size: .body2, color: .semiLightTextColor, weight: .regular)

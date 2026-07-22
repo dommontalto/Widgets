@@ -22,7 +22,7 @@ struct ExerciseTrainingLoadWidget: View {
             }
 
             VStack(spacing: .spacing105x) {
-                HStack(spacing: 0) {
+                HStack(spacing: .spacing0x) {
                     percentLabel(load.strengthPercent, color: .defaultPurple)
                         .frame(maxWidth: .infinity)
                     percentLabel(load.cardioPercent, color: .defaultSkyBlue)
@@ -87,7 +87,7 @@ struct ExerciseTrainingLoadWidget: View {
             BrightText(week.name, size: .body3, color: .lightTextColor)
 
             GeometryReader { proxy in
-                HStack(spacing: 0) {
+                HStack(spacing: .spacing0x) {
                     Capsule()
                         .fill(Color.defaultPurple.opacity(.veryMinimalOpacity))
                         .frame(width: proxy.size.width * week.strengthFraction)

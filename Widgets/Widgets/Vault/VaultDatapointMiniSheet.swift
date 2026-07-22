@@ -83,11 +83,12 @@ struct VaultDatapointMiniSheet: View {
                 showDetail = true
             }
             .frame(maxWidth: .infinity)
+            .padding(.top, .spacing1x)
         }
         .animation(.brightBouncy, value: title)
         .animation(.brightBouncy, value: hasData)
         .padding([.top, .horizontal], .spacing4x)
-        .padding(.bottom, .spacing2x)
+        .padding(.bottom, .spacing1x)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -113,10 +113,13 @@ struct ExerciseSessionMiniSheet: View {
             HStack {
                 HStack(spacing: .spacing105x) {
                     Image(systemName: icon)
-                        .font(.standard(size: .standout4, weight: .light))
+                        .resizable()
+                        .scaledToFit()
+                        .fontWeight(.light)
+                        .frame(width: 40, height: 40)
                         .foregroundStyle(Color.textColor)
                         .contentTransition(.symbolEffect(.replace))
-                    BrightText(session.name, size: .standout4)
+                    BrightText(session.name, size: .standout1)
                         .contentTransition(.numericText())
                 }
                 Spacer()
@@ -124,7 +127,7 @@ struct ExerciseSessionMiniSheet: View {
             }
 
             VStack(alignment: .leading, spacing: .spacing3x) {
-                BrightText("Session Goals:", size: .body1, color: .semiLightTextColor)
+                BrightText("Session Goals", size: .body1, color: .semiLightTextColor)
 
                 HStack(spacing: .spacing3x) {
                     ForEach(session.goals.indices, id: \.self) { i in
@@ -140,19 +143,17 @@ struct ExerciseSessionMiniSheet: View {
             }
 
             BrightText(session.note, size: .body2, color: .semiLightTextColor)
+                .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
                 .padding(.vertical, .spacing2x)
 
-            HStack(spacing: .spacing2x) {
-                BrightPillButton("Adjust", buttonSize: .large) {}
-                    .frame(maxWidth: .infinity)
-                BrightPillButton("Start session", color: .defaultGreen, buttonSize: .large) {}
-                    .frame(maxWidth: .infinity)
-            }
+            BrightPillButton("Start session", color: .defaultGreen, buttonSize: .large) {}
+                .frame(maxWidth: .infinity)
+                .padding(.top, .spacing1x)
         }
         .animation(.brightBouncy, value: session.name)
         .padding([.top, .horizontal], .spacing4x)
-        .padding(.bottom, .spacing2x)
+        .padding(.bottom, .spacing1x)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -161,7 +162,7 @@ struct ExerciseSessionMiniSheet: View {
             HStack(spacing: .spacing1x) {
                 Image(systemName: goal.icon)
                     .font(.standard(size: .body1, weight: .light))
-                    .foregroundStyle(Color.textColor)
+                    .foregroundStyle(goal.iconColor)
                 BrightText(goal.label, size: .body1)
                     .contentTransition(.numericText())
             }

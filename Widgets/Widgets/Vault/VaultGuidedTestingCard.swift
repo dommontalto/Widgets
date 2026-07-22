@@ -11,7 +11,7 @@ struct VaultGuidedTestingCard: View {
     var onTap: () -> Void = {}
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .spacing0x) {
             banner
             footer
         }

@@ -40,6 +40,7 @@ Widgets/
     │   ├── ExerciseSessionHistoryWidget.swift — Logs list, past 14 days
     │   ├── ExerciseUpcomingWidget.swift     — No sessions + Quick workout glass pill
     │   ├── ExerciseWeeklyPlanWidget.swift   — green banner + hero image with Start CTA
+    │   ├── ExerciseProgramPhaseWidget.swift — mesocycle week + macro/meso/micro bars
     │   └── ExerciseDemo.swift               — ExerciseDayType + ExerciseDemoData
     └── Vault/
         ├── VaultDatapointsWidget.swift      — GridCell + SpeechBubble defined here
@@ -135,6 +136,7 @@ Base unit = 6pt.
 
 | Token | Value | Common use |
 |---|---|---|
+| `.spacing0x` | 0pt | No spacing — never write `spacing: 0` in a stack |
 | `.spacing05x` | 3pt | Tight gaps between text |
 | `.spacing1x` | 6pt | Cell gaps, small padding |
 | `.spacing105x` | 9pt | Icon-to-label gap in headers |

@@ -5,7 +5,7 @@
 //  Created by Dom Montalto on 1/7/2026.
 //
 
-import Foundation
+import SwiftUI
 
 enum ExerciseDayType: CaseIterable {
     case strength
@@ -41,6 +41,7 @@ struct ExerciseSession {
 
 struct ExerciseSessionGoal {
     let icon: String
+    var iconColor: Color = .textColor
     let label: String
     let value: String
 }
@@ -53,15 +54,45 @@ struct ExerciseUpcomingSession {
     let note: String
 }
 
+struct ExerciseProgramStatus {
+    let mesocycleWeek: Int
+    let mesocycleLength: Int
+    let macroLabel: String
+    let macroProgress: Double
+    let mesoCount: Int
+    let mesoCompleted: Int
+    let mesoCurrentProgress: Double
+    let microWeeks: Int
+    let microDaysPerWeek: Int
+    let microCompletedDays: Int
+    let note: String
+    let bullets: [String]
+}
+
 enum ExerciseDemoData {
+    static let programStatus = ExerciseProgramStatus(
+        mesocycleWeek: 2,
+        mesocycleLength: 4,
+        macroLabel: "24 weeks",
+        macroProgress: 0.31,
+        mesoCount: 4,
+        mesoCompleted: 1,
+        mesoCurrentProgress: 0.25,
+        microWeeks: 4,
+        microDaysPerWeek: 7,
+        microCompletedDays: 9,
+        note: "We\u{2019}re ramping up your training intensity this week.",
+        bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
+    )
+
     static let upcomingSessions = [
         ExerciseUpcomingSession(
             name: "Gym session",
             time: "6:00 - 7:00 PM",
             type: .strength,
             goals: [
-                ExerciseSessionGoal(icon: "square.stack.3d.up", label: "Total sets:", value: "20"),
-                ExerciseSessionGoal(icon: "gauge.with.needle", label: "Target RPE", value: "8"),
+                ExerciseSessionGoal(icon: "text.append", iconColor: .defaultGreen, label: "Total sets", value: "20"),
+                ExerciseSessionGoal(icon: "text.line.first.and.arrowtriangle.forward", iconColor: .defaultOrange, label: "Target RPE", value: "8"),
             ],
             note: "Based off your recovery and sleep, we recommend adjusting a lower RPE today."
         ),
@@ -70,8 +101,8 @@ enum ExerciseDemoData {
             time: "8:30 - 9:00 PM",
             type: .cardio,
             goals: [
-                ExerciseSessionGoal(icon: "clock", label: "Pace:", value: "4\u{2019}26"),
-                ExerciseSessionGoal(icon: "arrow.up.heart", label: "Zone:", value: "3"),
+                ExerciseSessionGoal(icon: "clock", iconColor: .defaultSkyBlue, label: "Pace", value: "4\u{2019}26"),
+                ExerciseSessionGoal(icon: "arrow.up.heart", iconColor: .defaultWarningRed, label: "Zone", value: "3"),
             ],
             note: "Based off your recovery and sleep, we recommend adjusting for a slower run."
         ),
