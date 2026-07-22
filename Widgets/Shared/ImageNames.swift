@@ -43,6 +43,11 @@ class ImageNames {
     static let genomeOrderNutritionV5      = "Genome/Order/genome_order_nutrition_v5"
     static let genomeOrderFitnessV5        = "Genome/Order/genome_order_fitness_v5"
 
+    // MARK: - Exercise
+
+    static let exerciseWeeklyPlanV5 = "Exercise/exercise_weekly_plan_v5"
+    static let exerciseBodymapV5    = "Exercise/exercise_bodymap_v5"
+
     // MARK: - Vault
 
     static let vaultTestFigureV5              = "Vault/vault_test_figure_v5"

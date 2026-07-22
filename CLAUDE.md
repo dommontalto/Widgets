@@ -41,6 +41,7 @@ Widgets/
     │   ├── ExerciseUpcomingWidget.swift     — No sessions + Quick workout glass pill
     │   ├── ExerciseWeeklyPlanWidget.swift   — green banner + hero image with Start CTA
     │   ├── ExerciseProgramPhaseWidget.swift — mesocycle week + macro/meso/micro bars
+    │   ├── ExerciseBodymapWidget.swift      — working sets per muscle group + body image
     │   └── ExerciseDemo.swift               — ExerciseDayType + ExerciseDemoData
     └── Vault/
         ├── VaultDatapointsWidget.swift      — GridCell + SpeechBubble defined here

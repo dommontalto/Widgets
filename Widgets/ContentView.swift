@@ -38,6 +38,10 @@ struct ContentView: View {
                     widgetLabel("ExerciseProgramPhaseWidget")
                     ExerciseProgramPhaseWidget()
                         .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseBodymapWidget")
+                    ExerciseBodymapWidget()
+                        .padding(.bottom, .spacing3x)
                 }
 
                 section("Vault") {

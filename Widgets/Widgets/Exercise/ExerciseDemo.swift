@@ -34,6 +34,12 @@ struct ExerciseTrainingLoad {
     let weeks: [ExerciseWeekLoad]
 }
 
+struct ExerciseMuscleGroup {
+    let name: String
+    let sets: Int
+    let status: String
+}
+
 struct ExerciseSession {
     let name: String
     let timestamp: String
@@ -84,6 +90,15 @@ enum ExerciseDemoData {
         note: "We\u{2019}re ramping up your training intensity this week.",
         bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
     )
+
+    static let muscleGroups = [
+        ExerciseMuscleGroup(name: "Shoulders", sets: 5, status: "Optimal"),
+        ExerciseMuscleGroup(name: "Chest", sets: 5, status: "Low"),
+        ExerciseMuscleGroup(name: "Back", sets: 8, status: "High"),
+        ExerciseMuscleGroup(name: "Arms", sets: 12, status: "Optimal"),
+        ExerciseMuscleGroup(name: "Core", sets: 3, status: "Optimal"),
+        ExerciseMuscleGroup(name: "Legs", sets: 10, status: "Optimal"),
+    ]
 
     static let upcomingSessions = [
         ExerciseUpcomingSession(

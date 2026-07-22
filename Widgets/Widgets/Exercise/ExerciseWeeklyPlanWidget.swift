@@ -41,7 +41,7 @@ struct ExerciseWeeklyPlanWidget: View {
 
     private var hero: some View {
         ZStack {
-            Image("Exercise/exercise_weekly_plan")
+            Image(ImageNames.exerciseWeeklyPlanV5)
                 .resizable()
                 .scaledToFill()
 
