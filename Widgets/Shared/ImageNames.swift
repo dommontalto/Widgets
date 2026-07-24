@@ -47,6 +47,9 @@ class ImageNames {
 
     static let exerciseWeeklyPlanV5 = "Exercise/exercise_weekly_plan_v5"
     static let exerciseBodymapV5    = "Exercise/exercise_bodymap_v5"
+    static let exerciseRecoveryV5   = "Exercise/exercise_recovery_v5"
+    static let exerciseFatigueV5    = "Exercise/exercise_fatigue_v5"
+    static let exerciseReadinessV5  = "Exercise/exercise_readiness_v5"
 
     // MARK: - Vault
 
