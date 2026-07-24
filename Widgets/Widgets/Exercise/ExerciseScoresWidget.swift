@@ -47,7 +47,7 @@ struct ExerciseScoresWidget: View {
                     icon()
                         .font(.standardSFPro(size: .subheading, weight: .medium))
                 }
-                .foregroundStyle(Color.black)
+                .foregroundStyle(Color.textColor)
                 .blendMode(.overlay)
             }
             .aspectRatio(1, contentMode: .fit)
