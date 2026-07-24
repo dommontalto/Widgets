@@ -6,45 +6,12 @@
       "scale": "1x"
     },
     {
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ],
-      "filename": "exercise_recovery_v5_dark.png",
-      "idiom": "universal",
-      "scale": "1x"
-    },
-    {
       "filename": "exercise_recovery_v5@2x.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ],
-      "filename": "exercise_recovery_v5_dark@2x.png",
-      "idiom": "universal",
-      "scale": "2x"
-    },
-    {
       "filename": "exercise_recovery_v5@3x.png",
-      "idiom": "universal",
-      "scale": "3x"
-    },
-    {
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ],
-      "filename": "exercise_recovery_v5_dark@3x.png",
       "idiom": "universal",
       "scale": "3x"
     }
