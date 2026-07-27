@@ -64,7 +64,12 @@ struct HeartWorkoutMapSheetView: View {
                 .padding(.bottom, .spacing5x)
         }
         .ignoresSafeArea(edges: .bottom)
-        .onAppear { updateCamera() }
+        // Let the zoom-open settle on the route overview first, then fly in — doing
+        // both at once hides the wide shot behind the expanding card.
+        .task {
+            try? await Task.sleep(for: .seconds(Constants.flyInDelay))
+            updateCamera()
+        }
         .onChange(of: selectedSecond) { _, _ in
             updateCamera()
         }
@@ -250,6 +255,9 @@ struct HeartWorkoutMapSheetView: View {
         static let headingResponsiveness: Double = 0.3
         /// Used for the fly-in on appear and for discontinuous jumps.
         static let flyToDuration: TimeInterval = 0.5
+        /// Roughly the zoom-open transition, so the overview is on screen before
+        /// the camera starts moving.
+        static let flyInDelay: TimeInterval = 0.45
         static let jumpThreshold: Double = 0.1
     }
 }

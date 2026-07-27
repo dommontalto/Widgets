@@ -24,6 +24,7 @@ struct HeartWorkoutOverviewWidget: View {
     let cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
 
     @State private var showingMapSheet = false
+    @Namespace private var mapNamespace
 
     /// Smoothing the route is expensive enough that it must not re-run on every
     /// body evaluation, so it happens once at init.
@@ -133,7 +134,7 @@ struct HeartWorkoutOverviewWidget: View {
 
             metricGrid
         }
-        .sheet(isPresented: $showingMapSheet) {
+        .fullScreenCover(isPresented: $showingMapSheet) {
             NavigationStack {
                 HeartWorkoutMapSheetView(
                     routePoints: precomputedRoutePoints,
@@ -167,8 +168,7 @@ struct HeartWorkoutOverviewWidget: View {
                 .toolbarBackground(.hidden, for: .navigationBar)
                 .toolbarBackground(.hidden, for: .automatic)
             }
-            .presentationDetents([.large])
-            .presentationDragIndicator(.hidden)
+            .navigationTransition(.zoom(sourceID: Constants.mapTransitionID, in: mapNamespace))
         }
     }
 
@@ -202,6 +202,9 @@ struct HeartWorkoutOverviewWidget: View {
             )
             .padding(.spacing2x)
         }
+        .matchedTransitionSource(id: Constants.mapTransitionID, in: mapNamespace) { source in
+            source.clipShape(.rect(cornerRadius: .cornerRadius24, style: .continuous))
+        }
     }
 
     private func expandMap() {
@@ -226,6 +229,7 @@ struct HeartWorkoutOverviewWidget: View {
         /// size than an asset icon to read at the same visual weight.
         static let systemIconScale: CGFloat = 20.0 / 24.0
         static let heroDividerHeight: CGFloat = 76
+        static let mapTransitionID = "workoutRouteMap"
         /// Increase to load the map faster at the cost of route fidelity.
         static let minimumDistanceMetres: Double = 25
         static let smoothingIterations = 3
