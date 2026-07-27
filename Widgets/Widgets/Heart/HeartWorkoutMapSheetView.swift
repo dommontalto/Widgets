@@ -102,7 +102,7 @@ struct HeartWorkoutMapSheetView: View {
 
             if let selected = selectedCoordinate {
                 Annotation("", coordinate: selected) {
-                    routeMarker(color: .defaultBlue, size: Constants.selectedMarkerSize)
+                    routeMarker(color: selectedMetric.color, size: Constants.selectedMarkerSize)
                         .shadow(color: .black.opacity(.mediumOpacity), radius: 4, y: 2)
                 }
             }
@@ -159,6 +159,10 @@ struct HeartWorkoutMapSheetView: View {
         let ahead = coordinate(atFraction: min(1, fraction + Constants.lookAheadFraction)) ?? current
         let targetHeading = bearing(from: current, to: ahead)
 
+        // Centre the camera behind the marker rather than on it, so the marker
+        // rides above the middle of the screen and the route ahead stays visible.
+        let trailing = coordinate(atFraction: max(0, fraction - Constants.cameraTrailFraction)) ?? current
+
         let isJump = abs(fraction - lastFraction) > Constants.jumpThreshold
         lastFraction = fraction
 
@@ -179,7 +183,7 @@ struct HeartWorkoutMapSheetView: View {
         chaseHeading = heading
 
         let camera = MapCamera(
-            centerCoordinate: ahead,
+            centerCoordinate: trailing,
             distance: Constants.followDistance,
             heading: heading,
             pitch: Constants.followPitch
@@ -216,6 +220,9 @@ struct HeartWorkoutMapSheetView: View {
         static let followDistance: CLLocationDistance = 500
         static let followPitch: CGFloat = 65
         static let lookAheadFraction: Double = 0.02
+        /// How far behind the marker the camera sits, as a fraction of the route.
+        /// Raise it to push the marker further up the screen.
+        static let cameraTrailFraction: Double = 0.01
         static let headingResponsiveness: Double = 0.3
         static let entranceDuration: TimeInterval = 0.5
         static let jumpThreshold: Double = 0.1

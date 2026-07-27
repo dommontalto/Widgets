@@ -20,6 +20,15 @@ enum HeartWorkoutGraphMetric: CaseIterable {
     case altitude
     case pace
     case cadence
+
+    var color: Color {
+        switch self {
+        case .heartRate: .defaultWarningRed
+        case .altitude: .defaultBlue
+        case .pace: .defaultBrightGreen
+        case .cadence: .defaultBrightPink
+        }
+    }
 }
 
 /// One metric's line, readout and styling. Both the readout row and the graph
@@ -27,7 +36,6 @@ enum HeartWorkoutGraphMetric: CaseIterable {
 private struct MetricSpec: Identifiable {
     let metric: HeartWorkoutGraphMetric
     let title: String
-    let color: Color
     let unit: String
     let values: [Double]
     let yTicks: [Int]?
@@ -35,6 +43,7 @@ private struct MetricSpec: Identifiable {
     let restingReadout: String
 
     var id: HeartWorkoutGraphMetric { metric }
+    var color: Color { metric.color }
 }
 
 struct HeartWorkoutPerformanceGraphWidget: View {
@@ -132,7 +141,6 @@ extension HeartWorkoutPerformanceGraphWidget {
                 MetricSpec(
                     metric: .heartRate,
                     title: "Heart Rate",
-                    color: .defaultWarningRed,
                     unit: "BPM",
                     values: heartValues,
                     yTicks: data.heartData.yTicks,
@@ -147,7 +155,6 @@ extension HeartWorkoutPerformanceGraphWidget {
                 MetricSpec(
                     metric: .altitude,
                     title: "Altitude",
-                    color: .defaultBlue,
                     unit: altitudeGain.unit ?? "M",
                     values: altitudeValues,
                     yTicks: data.altitudeData.yTicks,
@@ -162,7 +169,6 @@ extension HeartWorkoutPerformanceGraphWidget {
                 MetricSpec(
                     metric: .pace,
                     title: "Pace",
-                    color: .defaultBrightGreen,
                     unit: "/ KM",
                     values: paceValues,
                     yTicks: data.paceData.yTicks,
@@ -179,7 +185,6 @@ extension HeartWorkoutPerformanceGraphWidget {
                 MetricSpec(
                     metric: .cadence,
                     title: "Cadence",
-                    color: .defaultBrightPink,
                     unit: "SPM",
                     values: cadenceValues,
                     yTicks: data.cadenceData.yTicks,
