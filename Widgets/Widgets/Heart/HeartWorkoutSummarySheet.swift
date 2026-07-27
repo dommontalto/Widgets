@@ -33,6 +33,7 @@ struct HeartWorkoutSummarySheet: View {
     let workout: HeartWorkoutSummaryData
 
     @State private var selectedIndex = HeartWorkoutSummaryTab.summary.rawValue
+    @State private var selectedGraphSecond: Double?
 
     var body: some View {
         BrightPageSheetView(horizontalPadding: .spacing0x) {
@@ -98,7 +99,8 @@ struct HeartWorkoutSummarySheet: View {
             routeZoneIndexes: workout.routeZoneIndexes,
             heartGraph: workout.heartGraph,
             altitudeGraph: workout.altitudeGraph,
-            paceGraph: workout.paceGraph
+            paceGraph: workout.paceGraph,
+            cadenceGraph: workout.cadenceGraph
         )
     }
 
@@ -135,7 +137,8 @@ struct HeartWorkoutSummarySheet: View {
                     altitudeData: workout.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
                     paceData: workout.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
                     cadenceData: workout.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
-                )
+                ),
+                selectedSecond: $selectedGraphSecond
             )
 
             if let splits = workout.splits {

@@ -59,7 +59,6 @@ struct ExerciseSessionLauncherWidget: View {
                             item.title,
                             systemImage: item.systemImage,
                             color: item.color,
-                            size: .body1,
                             buttonSize: .large
                         ) {
                             action = item

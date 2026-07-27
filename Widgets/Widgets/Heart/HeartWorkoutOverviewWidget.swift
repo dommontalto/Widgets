@@ -21,6 +21,7 @@ struct HeartWorkoutOverviewWidget: View {
     let heartGraph: HeartWorkoutSummaryHeartGraphData?
     let altitudeGraph: HeartWorkoutSummaryAltitudeGraphData?
     let paceGraph: HeartWorkoutSummaryPaceGraphData?
+    let cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
 
     @State private var showingMapSheet = false
 
@@ -44,7 +45,8 @@ struct HeartWorkoutOverviewWidget: View {
         routeZoneIndexes: [Int]?,
         heartGraph: HeartWorkoutSummaryHeartGraphData? = nil,
         altitudeGraph: HeartWorkoutSummaryAltitudeGraphData? = nil,
-        paceGraph: HeartWorkoutSummaryPaceGraphData? = nil
+        paceGraph: HeartWorkoutSummaryPaceGraphData? = nil,
+        cadenceGraph: HeartWorkoutSummaryCadenceGraphData? = nil
     ) {
         self.duration = duration
         self.distanceKm = distanceKm
@@ -58,6 +60,7 @@ struct HeartWorkoutOverviewWidget: View {
         self.heartGraph = heartGraph
         self.altitudeGraph = altitudeGraph
         self.paceGraph = paceGraph
+        self.cadenceGraph = cadenceGraph
 
         let coordinates = Self.coordinates(latitudes: routeLatitudes, longitudes: routeLongitudes)
         let points = Self.routePoints(coordinates: coordinates, zoneIndexes: routeZoneIndexes)
@@ -139,9 +142,15 @@ struct HeartWorkoutOverviewWidget: View {
                     startCoordinate: precomputedStartCoordinate,
                     endCoordinate: precomputedEndCoordinate,
                     duration: duration,
-                    heartGraph: heartGraph,
-                    altitudeGraph: altitudeGraph,
-                    paceGraph: paceGraph
+                    hrAvg: hrAvg ?? 0,
+                    avgPace: avgPaceSecondsPerKm ?? 0,
+                    altitudeGain: Amount(unit: "M", value: altitudeGainMetres),
+                    graphData: HeartWorkoutCombinedGraphData(
+                        heartData: heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
+                        altitudeData: altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
+                        paceData: paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
+                        cadenceData: cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+                    )
                 )
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -193,7 +202,6 @@ struct HeartWorkoutOverviewWidget: View {
             )
             .padding(.spacing2x)
         }
-        .environment(\.colorScheme, .dark)
     }
 
     private func expandMap() {
@@ -560,7 +568,8 @@ extension HeartWorkoutOverviewWidget {
             routeZoneIndexes: workout.routeZoneIndexes,
             heartGraph: workout.heartGraph,
             altitudeGraph: workout.altitudeGraph,
-            paceGraph: workout.paceGraph
+            paceGraph: workout.paceGraph,
+            cadenceGraph: workout.cadenceGraph
         )
         .padding(.spacing3x)
     }
