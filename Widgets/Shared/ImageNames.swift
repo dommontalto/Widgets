@@ -50,6 +50,20 @@ class ImageNames {
     static let exerciseRecoveryV5   = "Exercise/exercise_recovery_v5"
     static let exerciseFatigueV5    = "Exercise/exercise_fatigue_v5"
     static let exerciseReadinessV5  = "Exercise/exercise_readiness_v5"
+    static let exerciseRecordHexagonV5     = "Exercise/exercise_record_hexagon_v5"
+    static let exerciseRecordHexagonGoldV5 = "Exercise/exercise_record_hexagon_gold_v5"
+
+    // MARK: - Heart
+
+    static let heartPulseRedV5 = "Heart/heart_pulse_red_v5"
+    static let heartRedDownV5  = "Heart/heart_red_down_v5"
+    static let cardioFitnessV5 = "Heart/cardio_fitness_v5"
+    static let durationV5      = "Heart/duration_v5"
+    static let distanceV5      = "Heart/distance_v5"
+    static let altitudeGainV5  = "Heart/altitude_gain_v5"
+    static let stopwatchV5     = "Heart/stopwatch_v5"
+    static let caloriesBurntV5 = "Heart/calories_burnt_v5"
+    static let energyBurntV5   = "Heart/energy_burnt_v5"
 
     // MARK: - Vault
 

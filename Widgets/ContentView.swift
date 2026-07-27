@@ -15,6 +15,14 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
+                    widgetLabel("ExerciseSessionLauncherWidget")
+                    ExerciseSessionLauncherWidget()
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExercisePersonalRecordsWidget")
+                    ExercisePersonalRecordsWidget()
+                        .padding(.bottom, .spacing3x)
+
                     widgetLabel("ExerciseScoresWidget")
                     ExerciseScoresWidget()
                         .padding(.bottom, .spacing3x)

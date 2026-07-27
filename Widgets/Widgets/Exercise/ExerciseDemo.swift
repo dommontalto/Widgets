@@ -81,7 +81,62 @@ struct ExerciseProgramStatus {
     let bullets: [String]
 }
 
+struct ExerciseIntervalSegment: Identifiable {
+    enum Kind {
+        case work
+        case rest
+
+        var color: Color {
+            switch self {
+            case .work: .defaultBrightGreen
+            case .rest: .defaultSkyBlue
+            }
+        }
+    }
+
+    let id = UUID()
+    /// Relative share of the interval strip; normalised against the other segments.
+    let weight: Double
+    let kind: Kind
+}
+
+struct ExerciseLiveSession {
+    let icon: String
+    let distance: String
+    let timeElapsed: String
+    let averagePace: String
+    let splitPace: String
+    let sectionNumber: Int
+    let sectionRemaining: String
+    let segments: [ExerciseIntervalSegment]
+    /// Position along the full interval strip, gaps included.
+    let progress: Double
+    let currentIntervalName: String
+    let currentIntervalKind: ExerciseIntervalSegment.Kind
+
+    var currentIntervalColor: Color { currentIntervalKind.color }
+}
+
 enum ExerciseDemoData {
+    static let liveSession = ExerciseLiveSession(
+        icon: "figure.run",
+        distance: "5.25 KM",
+        timeElapsed: "29:34:18",
+        averagePace: "5\u{2019}38",
+        splitPace: "5\u{2019}26",
+        sectionNumber: 2,
+        sectionRemaining: "43 SEC",
+        segments: [
+            ExerciseIntervalSegment(weight: 68, kind: .rest),
+            ExerciseIntervalSegment(weight: 160, kind: .work),
+            ExerciseIntervalSegment(weight: 26, kind: .rest),
+            ExerciseIntervalSegment(weight: 91, kind: .work),
+        ],
+        progress: 0.596,
+        currentIntervalName: "RUN",
+        currentIntervalKind: .work
+    )
+
     static let programStatus = ExerciseProgramStatus(
         mesocycleWeek: 2,
         mesocycleLength: 4,

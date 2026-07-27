@@ -14,7 +14,7 @@ struct BrightPillButton: View {
     let systemImage: String?
     let color: Color?
     let textColor: Color?
-    let size: FontSizes
+    let size: FontSizes?
     let buttonSize: BrightButtonSizes
     let isClear: Bool
     let onTapCallback: () -> Void
@@ -25,7 +25,7 @@ struct BrightPillButton: View {
         systemImage: String? = nil,
         color: Color? = nil,
         textColor: Color? = nil,
-        size: FontSizes = .subheading1,
+        size: FontSizes? = nil,
         buttonSize: BrightButtonSizes = .medium,
         isClear: Bool = false,
         onTapCallback: @escaping (() -> Void)
@@ -45,6 +45,10 @@ struct BrightPillButton: View {
         textColor ?? (color == nil ? .textColor : .black)
     }
 
+    private var resolvedSize: FontSizes {
+        size ?? buttonSize.defaultFontSize
+    }
+
     var body: some View {
         Button(action: onTapCallback) {
             HStack(spacing: .spacing1x) {
@@ -58,9 +62,9 @@ struct BrightPillButton: View {
                         .scaledToFit()
                         .frame(height: Constants.imageSize)
                 }
-                BrightText(title, size: size, color: resolvedTextColor)
+                BrightText(title, size: resolvedSize, color: resolvedTextColor)
             }
-            .padding(.horizontal, .spacing2x + .spacing05x)
+            .padding(.horizontal, .spacing105x)
             .frame(height: buttonSize.rawValue)
         }
         .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())

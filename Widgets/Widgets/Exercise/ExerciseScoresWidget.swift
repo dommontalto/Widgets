@@ -41,9 +41,7 @@ struct ExerciseScoresWidget: View {
                     .scaledToFit()
 
                 VStack(spacing: .spacing1x) {
-                    Text("\(value)")
-                        .font(.standardSFPro(size: .huge, weight: .light))
-                        .monospacedDigit()
+                    BrightText("\(value)", size: .huge, color: .black)
                     icon()
                         .font(.standardSFPro(size: .subheading, weight: .medium))
                 }

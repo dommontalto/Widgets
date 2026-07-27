@@ -27,6 +27,8 @@ struct ExerciseConsistencyWidget: View {
     private let cellCornerRadius: CGFloat = 4
     private let dayLabelWidth: CGFloat = 14
     private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
+    private let swipeMinimumDistance: CGFloat = 20
+    private let swipeThreshold: CGFloat = 40
 
     @State private var months = ExerciseDemoData.consistencyMonths()
     @State private var activePage: Int? = 0
@@ -50,39 +52,36 @@ struct ExerciseConsistencyWidget: View {
         return result
     }
 
-    private var pageSelection: Binding<Int> {
-        Binding(
-            get: { activePage ?? 0 },
-            set: { activePage = $0 }
-        )
+    private var currentPage: Page {
+        Page(rawValue: activePage ?? 0) ?? .strength
     }
 
     var body: some View {
         VStack(spacing: .spacing2x) {
-            ZStack {
-                card(.combined)
-                    .padding(.horizontal, .spacing3x)
-                    .hidden()
-
-                TabView(selection: pageSelection) {
-                    ForEach(Page.allCases, id: \.rawValue) { page in
-                        card(page)
-                            .padding(.horizontal, .spacing3x)
-                            .tag(page.rawValue)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-            }
-            .padding(.horizontal, -.spacing3x)
+            card(currentPage)
+                .gesture(swipeGesture)
 
             BrightPageIndicator(total: Page.allCases.count, activeIndex: $activePage)
         }
         .animation(.brightEaseInOut, value: activePage)
     }
 
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: swipeMinimumDistance)
+            .onEnded { value in
+                let current = activePage ?? 0
+                if value.translation.width < -swipeThreshold {
+                    activePage = min(Page.allCases.count - 1, current + 1)
+                } else if value.translation.width > swipeThreshold {
+                    activePage = max(0, current - 1)
+                }
+            }
+    }
+
     private func card(_ page: Page) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText(page.title, size: .body1, color: .textColor)
+                .contentTransition(.numericText())
                 .padding(.bottom, .spacing2x)
 
             VStack(alignment: .leading, spacing: .spacing1x) {
