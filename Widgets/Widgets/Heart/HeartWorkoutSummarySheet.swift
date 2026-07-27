@@ -34,34 +34,73 @@ struct HeartWorkoutSummarySheet: View {
 
     @State private var selectedIndex = HeartWorkoutSummaryTab.summary.rawValue
     @State private var selectedGraphSecond: Double?
+    @State private var isMapExpanded = false
 
     var body: some View {
-        BrightPageSheetView(horizontalPadding: .spacing0x) {
+        // Measured out here rather than inside the pager: along the scroll axis a
+        // containerRelativeFrame resolves as unbounded. The bottom inset is added
+        // back so the expanded map reaches the screen edge, not the safe area.
+        GeometryReader { proxy in
+            sheet(expandedMapHeight: proxy.size.height + proxy.safeAreaInsets.bottom)
+        }
+    }
+
+    private func sheet(expandedMapHeight: CGFloat) -> some View {
+        BrightPageSheetView(
+            horizontalPadding: .spacing0x,
+            bottomSafeArea: !isMapExpanded
+        ) {
             BrightSwipePageView(
                 pages: HeartWorkoutSummaryTab.allCases.map {
                     SwipePage(title: $0.displayTitle, systemImage: $0.systemImage)
                 },
-                fakeLargeTitle: workout.title,
+                fakeLargeTitle: isMapExpanded ? "" : workout.title,
                 titleSize: .standout4,
                 titleWeight: .medium,
-                titleSubtitle: AnyView(subtitle),
+                titleSubtitle: isMapExpanded ? nil : AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,
+                showInlineTabs: !isMapExpanded,
+                disableHorizontalScroll: isMapExpanded,
+                collapsesTitleToToolbar: !isMapExpanded,
+                verticalScrollDisabledPageIndex: isMapExpanded
+                ? HeartWorkoutSummaryTab.summary.rawValue
+                    : nil,
+                bottomSafeArea: !isMapExpanded,
+                navigationBarVisibility: isMapExpanded ? .hidden : .visible,
                 selectedIndex: $selectedIndex
             ) { index in
-                tabContent(for: HeartWorkoutSummaryTab(rawValue: index) ?? .summary)
+                tabContent(
+                    for: HeartWorkoutSummaryTab(rawValue: index) ?? .summary,
+                    expandedMapHeight: expandedMapHeight
+                )
                     .padding(.horizontal, .spacing3x)
-                    // Matches HeartView / SleepView, where BrightCalendarWidget's own
-                    // top padding sits under the tab pills.
-                    .padding(.top, .spacing2x)
-                    .padding(.bottom, .spacing3x)
+                    // Collapsed: matches HeartView / SleepView, where
+                    // BrightCalendarWidget's own top padding sits under the pills.
+                    // Expanded: cancels the row the pager reserves for the pills so
+                    // the map reaches the top of the page.
+                    .padding(.top, isMapExpanded ? -Constants.reservedPillRow : .spacing2x)
+                    .padding(.bottom, isMapExpanded ? .spacing0x : .spacing3x)
             }
         }
     }
 
     private var subtitle: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            if let startTime = workout.startTime, let endTime = workout.endTime {
-                BrightText(timeRange(from: startTime, to: endTime), size: .body2)
+            HStack(spacing: .spacing2x) {
+                if let startTime = workout.startTime, let endTime = workout.endTime {
+                    BrightText(timeRange(from: startTime, to: endTime), size: .body2)
+                }
+
+                if let temperature = workout.temperature {
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: "sun.max.fill")
+                            .font(.system(size: Constants.sourceIconSize))
+                            .foregroundStyle(Color.defaultYellow)
+                            .frame(width: Constants.sourceIconBox, height: Constants.sourceIconBox)
+
+                        BrightText(temperature, size: .body2)
+                    }
+                }
             }
 
             if let source = workout.source {
@@ -78,15 +117,15 @@ struct HeartWorkoutSummarySheet: View {
     }
 
     @ViewBuilder
-    private func tabContent(for tab: HeartWorkoutSummaryTab) -> some View {
+    private func tabContent(for tab: HeartWorkoutSummaryTab, expandedMapHeight: CGFloat) -> some View {
         switch tab {
-        case .summary: summaryTab
+        case .summary: summaryTab(expandedMapHeight: expandedMapHeight)
         case .heart: heartTab
         case .performance: performanceTab
         }
     }
 
-    private var summaryTab: some View {
+    private func summaryTab(expandedMapHeight: CGFloat) -> some View {
         HeartWorkoutOverviewWidget(
             duration: workout.duration,
             distanceKm: workout.distance.map { ($0.value ?? 0) / 1000 },
@@ -100,12 +139,18 @@ struct HeartWorkoutSummarySheet: View {
             heartGraph: workout.heartGraph,
             altitudeGraph: workout.altitudeGraph,
             paceGraph: workout.paceGraph,
-            cadenceGraph: workout.cadenceGraph
+            cadenceGraph: workout.cadenceGraph,
+            isMapExpanded: $isMapExpanded,
+            expandedMapHeight: expandedMapHeight
         )
     }
 
     private var heartTab: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
+            HeartWorkoutSummaryBreakdownWidget(
+                data: workout.breakdown ?? HeartWorkoutSummaryBreakdownData()
+            )
+
             HeartWorkoutSummaryGraphWidget(
                 hrAvg: workout.hrAvg ?? 0,
                 zoneAvg: workout.zoneAvg ?? 0,
@@ -117,10 +162,6 @@ struct HeartWorkoutSummarySheet: View {
 
             HeartWorkoutSummaryPostWorkoutWidget(
                 data: workout.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
-            )
-
-            HeartWorkoutSummaryBreakdownWidget(
-                data: workout.breakdown ?? HeartWorkoutSummaryBreakdownData()
             )
         }
     }
@@ -161,6 +202,9 @@ struct HeartWorkoutSummarySheet: View {
     }
 
     private enum Constants {
+        /// The pill-row slot BrightSwipePageView keeps above every page, plus the
+        /// stack spacing under it.
+        static let reservedPillRow: CGFloat = SwipePageConstants.pillHeight + .spacing2x
         static let pillFollowMaxShift: CGFloat = .spacing12x + .spacing4x
         static let sourceIconSize: CGFloat = 20
         static let sourceIconBox: CGFloat = 24

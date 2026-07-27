@@ -17,6 +17,9 @@ struct BrightPillButton: View {
     let size: FontSizes?
     let buttonSize: BrightButtonSizes
     let isClear: Bool
+    /// Matches InlineTabPill: unselected dims the whole capsule and drops the
+    /// label to 60%. Defaults to true, so a plain button is full strength.
+    let isSelected: Bool
     let onTapCallback: () -> Void
 
     init(
@@ -28,6 +31,7 @@ struct BrightPillButton: View {
         size: FontSizes? = nil,
         buttonSize: BrightButtonSizes = .medium,
         isClear: Bool = false,
+        isSelected: Bool = true,
         onTapCallback: @escaping (() -> Void)
     ) {
         self.title = title
@@ -38,11 +42,14 @@ struct BrightPillButton: View {
         self.size = size
         self.buttonSize = buttonSize
         self.isClear = isClear
+        self.isSelected = isSelected
         self.onTapCallback = onTapCallback
     }
 
     private var resolvedTextColor: Color {
-        textColor ?? (color == nil ? .textColor : .black)
+        if let textColor { return textColor }
+        if color != nil { return .black }
+        return isSelected ? .textColor : .lightTextColor
     }
 
     private var resolvedSize: FontSizes {
@@ -69,6 +76,7 @@ struct BrightPillButton: View {
         }
         .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())
         .modifier(GlassEffect(shape: .capsule, isClear: isClear))
+        .opacity(isSelected ? .opaque : .semiLowOpacity)
     }
 
     private enum Constants {

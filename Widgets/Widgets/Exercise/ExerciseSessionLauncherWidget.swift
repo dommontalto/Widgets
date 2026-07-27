@@ -40,10 +40,12 @@ enum ExerciseSessionAction: String, Identifiable {
         case .viewWorkout, .viewCardio: nil
         }
     }
+
 }
 
 struct ExerciseSessionLauncherWidget: View {
     @State private var action: ExerciseSessionAction?
+    @State private var isLoggingCardio = false
 
     private let rows: [[ExerciseSessionAction]] = [
         [.startWorkout, .startCardio],
@@ -61,7 +63,11 @@ struct ExerciseSessionLauncherWidget: View {
                             color: item.color,
                             buttonSize: .large
                         ) {
-                            action = item
+                            if item == .startCardio {
+                                isLoggingCardio = true
+                            } else {
+                                action = item
+                            }
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -71,13 +77,14 @@ struct ExerciseSessionLauncherWidget: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity)
         .modifier(CardModifier())
+        .fullScreenCover(isPresented: $isLoggingCardio) {
+            ExerciseLiveCardioSheet { isLoggingCardio = false }
+        }
         .sheet(item: $action) { item in
             switch item {
-            case .startCardio:
-                ExerciseLiveCardioSheet { action = nil }
             case .viewCardio:
                 HeartWorkoutSummarySheet(workout: HeartDemoData.workout)
-            case .startWorkout, .viewWorkout:
+            case .startWorkout, .startCardio, .viewWorkout:
                 BrightPageSheetView(title: item.title) {
                     BrightPlaceholderView(
                         systemImage: item.systemImage,

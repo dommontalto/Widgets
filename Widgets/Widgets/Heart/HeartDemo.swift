@@ -55,6 +55,8 @@ struct HeartWorkoutSummaryData {
     var endTime: String?
     /// Where the workout came from, e.g. "Logged with Apple Watch".
     var source: String?
+    /// Conditions during the workout, e.g. "14°".
+    var temperature: String?
 
     var heartGraph: HeartWorkoutSummaryHeartGraphData?
 
@@ -159,6 +161,7 @@ enum HeartDemoData {
         startTime: "2026-07-25T06:12:00Z",
         endTime: "2026-07-25T06:57:00Z",
         source: "Logged with Apple Watch",
+        temperature: "14°",
         heartGraph: HeartWorkoutSummaryHeartGraphData(
             yTicks: [110, 185],
             data: heartSamples

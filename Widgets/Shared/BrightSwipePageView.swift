@@ -98,6 +98,8 @@ struct BrightSwipePageView<Content: View>: View {
     /// Full-bleed page background. Defaults to `nil` (no background) so sheet
     /// call sites keep their own; standalone screens pass `.bG`.
     let backgroundColor: Color?
+    /// Hide it to give a page the full sheet, e.g. an expanded map.
+    let navigationBarVisibility: Visibility
     let onRefresh: (() async -> Void)?
     @Binding var selectedIndex: Int
     @ViewBuilder let content: (Int) -> Content
@@ -123,6 +125,7 @@ struct BrightSwipePageView<Content: View>: View {
         verticalScrollDisabledPageIndex: Int? = nil,
         bottomSafeArea: Bool = true,
         backgroundColor: Color? = nil,
+        navigationBarVisibility: Visibility = .visible,
         onRefresh: (() async -> Void)? = nil,
         selectedIndex: Binding<Int>,
         @ViewBuilder content: @escaping (Int) -> Content
@@ -144,6 +147,7 @@ struct BrightSwipePageView<Content: View>: View {
         self.verticalScrollDisabledPageIndex = verticalScrollDisabledPageIndex
         self.bottomSafeArea = bottomSafeArea
         self.backgroundColor = backgroundColor
+        self.navigationBarVisibility = navigationBarVisibility
         self.onRefresh = onRefresh
         _selectedIndex = selectedIndex
         // Start the scroll position at the selected page so the appear-time sync
@@ -173,7 +177,7 @@ struct BrightSwipePageView<Content: View>: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.visible, for: .navigationBar)
+        .toolbar(navigationBarVisibility, for: .navigationBar)
         .toolbar {
             if collapsesTitleToToolbar {
                 ToolbarItem(placement: .principal) {

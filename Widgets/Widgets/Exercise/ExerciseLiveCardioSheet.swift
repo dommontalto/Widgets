@@ -21,7 +21,7 @@ struct ExerciseLiveCardioSheet: View {
 
             hairline
 
-            metric(label: "TIME ELAPSED", value: session.timeElapsed, color: .defaultMainWhite)
+            metric(label: "TIME ELAPSED", value: session.timeElapsed, color: .textColor)
 
             hairline
 
@@ -36,8 +36,8 @@ struct ExerciseLiveCardioSheet: View {
             stopButton
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultMainBlack.ignoresSafeArea())
-        .presentationBackground(Color.defaultMainBlack)
+        .background(Color.bG.ignoresSafeArea())
+        .presentationBackground(Color.bG)
         .presentationDragIndicator(.hidden)
     }
 
@@ -46,12 +46,12 @@ struct ExerciseLiveCardioSheet: View {
     private var badge: some View {
         Image(systemName: session.icon)
             .font(.standard(size: .standout1, weight: .light))
-            .foregroundStyle(Color.defaultMainWhite)
+            .foregroundStyle(Color.textColor)
             .frame(width: Constants.badgeSize, height: Constants.badgeSize)
             .overlay {
                 RoundedRectangle(cornerRadius: .cornerRadius14, style: .continuous)
                     .strokeBorder(
-                        Color.defaultMainWhite.opacity(.veryLowOpacity),
+                        Color.textColor.opacity(.veryLowOpacity),
                         lineWidth: Constants.hairline
                     )
             }
@@ -76,7 +76,7 @@ struct ExerciseLiveCardioSheet: View {
             paceColumn("AVG PACE", value: session.averagePace, color: .defaultSkyBlue)
 
             Rectangle()
-                .fill(Color.defaultMainWhite.opacity(.minimalOpacity))
+                .fill(Color.textColor.opacity(.minimalOpacity))
                 .frame(width: Constants.hairline)
 
             paceColumn("SPLIT PACE", value: session.splitPace, color: .defaultGreen)
@@ -86,7 +86,7 @@ struct ExerciseLiveCardioSheet: View {
 
     private func paceColumn(_ label: String, value: String, color: Color) -> some View {
         VStack(spacing: .spacing05x) {
-            BrightText(label, size: .body1, color: .defaultMainWhite.opacity(.mediumOpacity))
+            BrightText(label, size: .body1, color: .semiLightTextColor)
             BrightText(value, size: .giant, color: color)
                 .monospacedDigit()
         }
@@ -96,7 +96,7 @@ struct ExerciseLiveCardioSheet: View {
 
     private var hairline: some View {
         Rectangle()
-            .fill(Color.defaultMainWhite.opacity(.minimalOpacity))
+            .fill(Color.textColor.opacity(.minimalOpacity))
             .frame(height: Constants.hairline)
     }
 
@@ -108,7 +108,7 @@ struct ExerciseLiveCardioSheet: View {
                 BrightText(
                     "SECTION \(session.sectionNumber)",
                     size: .body1,
-                    color: .defaultMainWhite.opacity(.mediumOpacity)
+                    color: .semiLightTextColor
                 )
 
                 Spacer(minLength: .spacing2x)
@@ -116,7 +116,7 @@ struct ExerciseLiveCardioSheet: View {
                 BrightText(
                     "REMAINING",
                     size: .body1,
-                    color: .defaultMainWhite.opacity(.mediumOpacity)
+                    color: .semiLightTextColor
                 )
             }
             .padding(.horizontal, .spacing9x)
@@ -137,7 +137,7 @@ struct ExerciseLiveCardioSheet: View {
             centered(at: markerX) {
                 Image(systemName: "triangle.fill")
                     .font(.standard(size: .body1, weight: .medium))
-                    .foregroundStyle(Color.defaultMainWhite)
+                    .foregroundStyle(Color.textColor)
                     .rotationEffect(.degrees(180))
             }
             .frame(height: Constants.markerHeight)

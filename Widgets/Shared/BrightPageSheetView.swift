@@ -15,6 +15,8 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     let showCloseButton: Bool
     let showBackButton: Bool
     let backButtonCallback: (() -> Void)?
+    /// Set false to let content run under the home indicator, e.g. a full-bleed map.
+    let bottomSafeArea: Bool
     let trailing: Trailing
     let content: Content
 
@@ -27,6 +29,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
+        bottomSafeArea: Bool = true,
         @ToolbarContentBuilder trailing: () -> Trailing,
         @ViewBuilder content: () -> Content
     ) {
@@ -36,6 +39,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         self.showCloseButton = showCloseButton
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
+        self.bottomSafeArea = bottomSafeArea
         self.trailing = trailing()
         self.content = content()
     }
@@ -44,7 +48,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         NavigationStack {
             content
                 .padding(.horizontal, horizontalPadding)
-                .safeAreaPadding(.bottom)
+                .safeAreaPadding(bottomSafeArea ? .bottom : [])
                 .scrollDismissesKeyboard(.interactively)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(backgroundColor.edgesIgnoringSafeArea(.all))
@@ -103,6 +107,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
+        bottomSafeArea: Bool = true,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -111,6 +116,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         self.showCloseButton = showCloseButton
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
+        self.bottomSafeArea = bottomSafeArea
         self.trailing = EmptyToolbarContent()
         self.content = content()
     }
