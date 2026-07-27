@@ -21,11 +21,12 @@ struct HeartWorkoutMapSheetView: View {
     let graphData: HeartWorkoutCombinedGraphData
 
     @State private var cameraPosition: MapCameraPosition
-    @State private var selectedSecond: Double?
+    /// Starts at the beginning of the workout so the camera flies in on appear.
+    @State private var selectedSecond: Double? = 0
     @State private var selectedMetric: HeartWorkoutGraphMetric = .heartRate
     @State private var chaseHeading: Double?
     @State private var lastFraction: Double = 0
-    @State private var followStart: Date?
+    @State private var isFollowing = false
 
     init(
         routePoints: [HeartWorkoutOverviewWidget.RoutePoint],
@@ -63,9 +64,23 @@ struct HeartWorkoutMapSheetView: View {
                 .padding(.bottom, .spacing5x)
         }
         .ignoresSafeArea(edges: .bottom)
+        .onAppear { updateCamera() }
         .onChange(of: selectedSecond) { _, _ in
             updateCamera()
         }
+    }
+
+    /// The chart clears its selection the moment you lift off. The map should hold
+    /// its position rather than pulling back out, so nil writes are dropped.
+    private var stickySelection: Binding<Double?> {
+        Binding(
+            get: { selectedSecond },
+            set: { newValue in
+                if let newValue {
+                    selectedSecond = newValue
+                }
+            }
+        )
     }
 
     private var breakdown: some View {
@@ -75,7 +90,7 @@ struct HeartWorkoutMapSheetView: View {
             avgPace: avgPace,
             altitudeGain: altitudeGain,
             data: graphData,
-            selectedSecond: $selectedSecond,
+            selectedSecond: stickySelection,
             selectedMetric: $selectedMetric
         )
     }
@@ -147,10 +162,12 @@ struct HeartWorkoutMapSheetView: View {
     }
 
     private func updateCamera() {
+        // Only reachable when there's no route to follow — scrubbing never clears
+        // the selection, so the camera doesn't pull back out during normal use.
         guard let fraction = selectedFraction, let current = coordinate(atFraction: fraction) else {
             chaseHeading = nil
-            followStart = nil
-            withAnimation(.easeOut(duration: Constants.entranceDuration)) {
+            isFollowing = false
+            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
                 cameraPosition = .region(region)
             }
             return
@@ -163,14 +180,8 @@ struct HeartWorkoutMapSheetView: View {
         // rides above the middle of the screen and the route ahead stays visible.
         let trailing = coordinate(atFraction: max(0, fraction - Constants.cameraTrailFraction)) ?? current
 
-        let isJump = abs(fraction - lastFraction) > Constants.jumpThreshold
+        let isJump = isFollowing && abs(fraction - lastFraction) > Constants.jumpThreshold
         lastFraction = fraction
-
-        let now = Date()
-        if followStart == nil {
-            followStart = now
-        }
-        let isEntering = now.timeIntervalSince(followStart ?? now) < Constants.entranceDuration
 
         // Ease the heading towards the target so scrubbing doesn't whip the camera.
         let heading: Double
@@ -189,8 +200,21 @@ struct HeartWorkoutMapSheetView: View {
             pitch: Constants.followPitch
         )
 
-        if isEntering || isJump {
-            withAnimation(.easeOut(duration: Constants.entranceDuration)) {
+        // Animate the one-off transitions only. Scrubbing fires continuously, and
+        // wrapping every update in `withAnimation` restarts the ease each time, so
+        // the camera decelerates towards a target it keeps re-deciding — which
+        // reads as a slow crawl. Tracking updates are set directly so the camera
+        // stays pinned to the finger.
+        guard isFollowing else {
+            isFollowing = true
+            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
+                cameraPosition = .camera(camera)
+            }
+            return
+        }
+
+        if isJump {
+            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
                 cameraPosition = .camera(camera)
             }
         } else {
@@ -224,7 +248,8 @@ struct HeartWorkoutMapSheetView: View {
         /// Raise it to push the marker further up the screen.
         static let cameraTrailFraction: Double = 0.01
         static let headingResponsiveness: Double = 0.3
-        static let entranceDuration: TimeInterval = 0.5
+        /// Used for the fly-in on appear and for discontinuous jumps.
+        static let flyToDuration: TimeInterval = 0.5
         static let jumpThreshold: Double = 0.1
     }
 }
