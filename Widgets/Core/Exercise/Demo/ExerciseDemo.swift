@@ -46,9 +46,14 @@ struct ExerciseMuscleGroup {
     let status: String
 }
 
-struct ExerciseSession {
+struct ExerciseSession: Identifiable {
+    let id = UUID()
     let name: String
     let timestamp: String
+    let type: ExerciseDayType
+    let summary: String
+    let detail: ExerciseSessionDetail
+    var hasRoute = false
 }
 
 struct ExerciseSessionGoal {
@@ -186,13 +191,84 @@ enum ExerciseDemoData {
         ),
     ]
 
+    static let strengthDetail = ExerciseSessionDetail(
+        stats: [
+            ExerciseSessionStat(label: "Duration", value: "58:24"),
+            ExerciseSessionStat(label: "Volume", value: "12,480", unit: "kg"),
+            ExerciseSessionStat(label: "Total sets", value: "21"),
+            ExerciseSessionStat(label: "Records", value: "2", unit: "PRs"),
+            ExerciseSessionStat(label: "Avg heart rate", value: "121", unit: "bpm"),
+            ExerciseSessionStat(label: "Calories", value: "412", unit: "kcal"),
+        ],
+        exercises: [
+            ExerciseLoggedExercise(name: "Bench Press (Barbell)", sets: [
+                ExerciseLoggedSet(weight: "60", reps: "12"),
+                ExerciseLoggedSet(weight: "80", reps: "10"),
+                ExerciseLoggedSet(weight: "90", reps: "8"),
+                ExerciseLoggedSet(weight: "100", reps: "5", isRecord: true),
+            ]),
+            ExerciseLoggedExercise(name: "Incline Press (Dumbbell)", sets: [
+                ExerciseLoggedSet(weight: "26", reps: "12"),
+                ExerciseLoggedSet(weight: "30", reps: "10"),
+                ExerciseLoggedSet(weight: "30", reps: "9"),
+            ]),
+            ExerciseLoggedExercise(name: "Seated Row (Cable)", sets: [
+                ExerciseLoggedSet(weight: "55", reps: "12"),
+                ExerciseLoggedSet(weight: "65", reps: "10"),
+                ExerciseLoggedSet(weight: "70", reps: "10"),
+                ExerciseLoggedSet(weight: "75", reps: "8"),
+            ]),
+            ExerciseLoggedExercise(name: "Lat Pulldown (Cable)", sets: [
+                ExerciseLoggedSet(weight: "60", reps: "12"),
+                ExerciseLoggedSet(weight: "65", reps: "10"),
+                ExerciseLoggedSet(weight: "70", reps: "8"),
+            ]),
+            ExerciseLoggedExercise(name: "Bicep Curl (EZ-Bar)", sets: [
+                ExerciseLoggedSet(weight: "30", reps: "12"),
+                ExerciseLoggedSet(weight: "35", reps: "10"),
+                ExerciseLoggedSet(weight: "40", reps: "8", isRecord: true),
+            ]),
+        ],
+        splits: [],
+        note: "Push volume is up 8% on your last mesocycle. Bench press hit a new 5-rep max."
+    )
+
+    static let cardioDetail = ExerciseSessionDetail(
+        stats: [
+            ExerciseSessionStat(label: "Distance", value: "5.02", unit: "km"),
+            ExerciseSessionStat(label: "Time", value: "24:56"),
+            ExerciseSessionStat(label: "Avg pace", value: "4\u{2019}58\u{201D}", unit: "/km"),
+            ExerciseSessionStat(label: "Avg heart rate", value: "158", unit: "bpm"),
+            ExerciseSessionStat(label: "Elevation", value: "42", unit: "m"),
+            ExerciseSessionStat(label: "Calories", value: "386", unit: "kcal"),
+        ],
+        exercises: [],
+        splits: [
+            ExerciseSplit(label: "1", pace: "5\u{2019}12\u{201D}", paceFraction: 0.78, heartRate: 148, elevation: "+4 m"),
+            ExerciseSplit(label: "2", pace: "5\u{2019}02\u{201D}", paceFraction: 0.84, heartRate: 154, elevation: "+9 m"),
+            ExerciseSplit(label: "3", pace: "4\u{2019}58\u{201D}", paceFraction: 0.87, heartRate: 159, elevation: "-2 m"),
+            ExerciseSplit(label: "4", pace: "4\u{2019}51\u{201D}", paceFraction: 0.93, heartRate: 162, elevation: "+6 m"),
+            ExerciseSplit(label: "5", pace: "4\u{2019}46\u{201D}", paceFraction: 1.0, heartRate: 166, elevation: "-3 m"),
+        ],
+        note: "Negative splits across the full 5K. Pacing control is improving week on week."
+    )
+
     static let sessionHistory = [
-        ExerciseSession(name: "Gym session", timestamp: "6:00 PM, 18 Jul, 2026"),
-        ExerciseSession(name: "Outdoor run", timestamp: "4:40 PM, 17 Jul, 2026"),
-        ExerciseSession(name: "Gym session", timestamp: "6:00 PM, 18 Jul, 2026"),
-        ExerciseSession(name: "Outdoor run", timestamp: "4:40 PM, 17 Jul, 2026"),
-        ExerciseSession(name: "Gym session", timestamp: "6:00 PM, 18 Jul, 2026"),
-        ExerciseSession(name: "Outdoor run", timestamp: "4:40 PM, 17 Jul, 2026"),
+        ExerciseSession(name: "Push day", timestamp: "6:00 PM, 23 Jul", type: .strength, summary: "58:24 • 12,480 kg • 21 sets", detail: strengthDetail),
+        ExerciseSession(name: "5K run", timestamp: "6:40 AM, 22 Jul", type: .cardio, summary: "5.02 km • 4’58” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
+        ExerciseSession(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),
+        ExerciseSession(name: "Recovery run", timestamp: "6:30 AM, 17 Jul", type: .cardio, summary: "4.00 km • 5’42” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Push day", timestamp: "6:05 PM, 15 Jul", type: .strength, summary: "55:40 • 12,120 kg • 20 sets", detail: strengthDetail),
+        ExerciseSession(name: "Interval run", timestamp: "6:35 AM, 14 Jul", type: .cardio, summary: "6 × 400m • 3’58” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Pull day", timestamp: "6:15 PM, 12 Jul", type: .strength, summary: "50:22 • 10,940 kg • 18 sets", detail: strengthDetail),
+        ExerciseSession(name: "Long run", timestamp: "7:10 AM, 11 Jul", type: .cardio, summary: "12.4 km • 5’18” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Leg day", timestamp: "5:50 PM, 9 Jul", type: .strength, summary: "63:05 • 15,110 kg • 23 sets", detail: strengthDetail),
+        ExerciseSession(name: "Recovery run", timestamp: "6:25 AM, 8 Jul", type: .cardio, summary: "4.20 km • 5’38” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Full body", timestamp: "6:00 PM, 5 Jul", type: .strength, summary: "48:15 • 9,860 kg • 16 sets", detail: strengthDetail),
+        ExerciseSession(name: "Tempo run", timestamp: "7:00 AM, 3 Jul", type: .cardio, summary: "8.00 km • 4’35” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseSession(name: "Push day", timestamp: "6:10 PM, 1 Jul", type: .strength, summary: "57:48 • 12,300 kg • 21 sets", detail: strengthDetail),
     ]
 
     static let trainingLoad = ExerciseTrainingLoad(

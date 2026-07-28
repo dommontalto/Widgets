@@ -27,7 +27,6 @@ struct ExerciseConsistencyWidget: View {
     private let cellCornerRadius: CGFloat = 4
     private let dayLabelWidth: CGFloat = 14
     private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
-    private let swipeMinimumDistance: CGFloat = 20
     private let swipeThreshold: CGFloat = 40
 
     @State private var months = ExerciseDemoData.consistencyMonths()
@@ -59,28 +58,23 @@ struct ExerciseConsistencyWidget: View {
     var body: some View {
         VStack(spacing: .spacing2x) {
             card(currentPage)
-                .gesture(swipeGesture)
+                .gesture(HorizontalPagingGesture { translation in
+                    let current = activePage ?? 0
+                    if translation < -swipeThreshold {
+                        activePage = min(Page.allCases.count - 1, current + 1)
+                    } else if translation > swipeThreshold {
+                        activePage = max(0, current - 1)
+                    }
+                })
 
             BrightPageIndicator(total: Page.allCases.count, activeIndex: $activePage)
         }
         .animation(.brightEaseInOut, value: activePage)
     }
 
-    private var swipeGesture: some Gesture {
-        DragGesture(minimumDistance: swipeMinimumDistance)
-            .onEnded { value in
-                let current = activePage ?? 0
-                if value.translation.width < -swipeThreshold {
-                    activePage = min(Page.allCases.count - 1, current + 1)
-                } else if value.translation.width > swipeThreshold {
-                    activePage = max(0, current - 1)
-                }
-            }
-    }
-
     private func card(_ page: Page) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(page.title, size: .body1, color: .textColor)
+            BrightText(page.title, size: .body1)
                 .contentTransition(.numericText())
                 .padding(.bottom, .spacing2x)
 
@@ -197,6 +191,43 @@ struct ExerciseConsistencyWidget: View {
 
     private func monthWidth(_ month: ExerciseMonthData) -> CGFloat {
         CGFloat(month.columns.count) * (cellSize + cellSpacing) - cellSpacing
+    }
+}
+
+/// A pan that only claims horizontal movement, so paging the heatmap doesn't
+/// fight the enclosing vertical scroll.
+private struct HorizontalPagingGesture: UIGestureRecognizerRepresentable {
+    var onSwipe: (CGFloat) -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let gesture = UIPanGestureRecognizer()
+        gesture.delegate = context.coordinator
+        gesture.maximumNumberOfTouches = 1
+        return gesture
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        guard recognizer.state == .ended else { return }
+        onSwipe(recognizer.translation(in: recognizer.view).x)
+    }
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let panGesture = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = panGesture.velocity(in: panGesture.view)
+            return abs(velocity.x) > abs(velocity.y)
+        }
+
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            true
+        }
     }
 }
 

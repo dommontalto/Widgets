@@ -35,8 +35,8 @@ struct ContentView: View {
                     ExerciseTrainingLoadWidget()
                         .padding(.bottom, .spacing3x)
 
-                    widgetLabel("ExerciseSessionHistoryWidget")
-                    ExerciseSessionHistoryWidget()
+                    widgetLabel("ExerciseHistoryWidget")
+                    ExerciseHistoryWidget()
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseUpcomingWidget")

@@ -16,8 +16,6 @@ enum BrightButtonSizes: CGFloat {
     /// Forced by iOS to use for toolbars
     case large = 44
 
-    /// Label size a button of this height should use unless a call site overrides
-    /// it — 19pt in a 30pt capsule leaves too little room around the text.
     var defaultFontSize: FontSizes {
         switch self {
         case .small: .body1

@@ -53,7 +53,7 @@ struct ExerciseBodymapWidget: View {
 
             Spacer(minLength: .spacing0x)
 
-            BrightHealthStatus(status: group.status)
+            BrightStatus(status: group.status)
         }
         .padding(.horizontal, .spacing2x)
         .frame(height: tileHeight)

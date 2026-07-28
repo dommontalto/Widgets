@@ -29,7 +29,7 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
         }
     }
 
-    /// Status label matched to the lit colour, rendered by `BrightHealthStatus`.
+    /// Status label matched to the lit colour, rendered by `BrightStatus`.
     var statusLabel: String {
         switch litSegmentIndex {
         case 0, 4: "Out of range"
@@ -60,7 +60,7 @@ struct VaultMarkerWidget: View, Equatable {
 
                 Spacer()
 
-                BrightHealthStatus(status: data.statusLabel)
+                BrightStatus(status: data.statusLabel)
             }
 
             BrightText(

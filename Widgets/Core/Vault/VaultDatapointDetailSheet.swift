@@ -144,7 +144,7 @@ struct VaultDatapointDetailSheet: View {
             HStack(spacing: .spacing2x) {
                 BrightText(valueNumber, size: .huge)
                     .monospacedDigit()
-                BrightHealthStatus(status: "Optimal")
+                BrightStatus(status: "Optimal")
             }
 
             if let latestDate = VaultDemoData.displayDate(readings.first?.date) {

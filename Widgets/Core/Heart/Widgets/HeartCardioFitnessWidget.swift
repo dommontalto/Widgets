@@ -30,7 +30,7 @@ struct HeartCardioFitnessWidget: View {
 
                 Spacer()
 
-                BrightHealthStatus(status: data.label ?? "")
+                BrightStatus(status: data.label ?? "")
             }
 
             HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {

@@ -1,5 +1,5 @@
 //
-//  BrightHealthStatus.swift
+//  BrightStatus.swift
 //  Bright
 //
 //  Created by Gangajaliya Sandeep on 21/5/2024.
@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-struct BrightHealthStatus: View {
+struct BrightStatus: View {
     let status: String
     var withStroke = false
 
@@ -81,5 +81,5 @@ struct BrightHealthStatus: View {
 }
 
 #Preview {
-    BrightHealthStatus(status: "GOOD")
+    BrightStatus(status: "GOOD")
 }

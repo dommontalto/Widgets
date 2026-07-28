@@ -67,7 +67,7 @@ struct VaultDatapointMiniSheet: View {
                     if hasData {
                         Image(systemName: statusLabel == "In range" ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))
-                            .foregroundStyle(BrightHealthStatus(status: statusLabel).color)
+                            .foregroundStyle(BrightStatus(status: statusLabel).color)
                     } else {
                         Image(systemName: "questionmark.circle.fill")
                             .font(.standard(size: .subheading2, weight: .regular))

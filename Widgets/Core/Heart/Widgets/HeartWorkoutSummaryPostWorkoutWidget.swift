@@ -62,6 +62,7 @@ struct HeartWorkoutSummaryPostWorkoutWidget: View {
                     xAxisLabel(data.xDatesDisplay![1])
                     xAxisLabel(data.xDatesDisplay![2])
                 }
+                .padding(.trailing, Constants.yAxisWidth + .spacing105x)
             }
         }
         .padding(.spacing3x)

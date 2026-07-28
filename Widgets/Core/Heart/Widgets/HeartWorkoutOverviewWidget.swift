@@ -23,7 +23,6 @@ struct HeartWorkoutOverviewWidget: View {
     let paceGraph: HeartWorkoutSummaryPaceGraphData?
     let cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
 
-    /// Owned by the sheet so it can hide the tab pills while the map is open.
     @Binding var isMapExpanded: Bool
     /// Measured by the sheet outside the scroll view. Deriving it in here with
     /// containerRelativeFrame resolves as unbounded along the scroll axis, which
@@ -31,7 +30,6 @@ struct HeartWorkoutOverviewWidget: View {
     let expandedMapHeight: CGFloat
 
     @State private var cameraPosition: MapCameraPosition
-    /// Starts at the beginning of the workout so the camera has somewhere to fly.
     @State private var selectedSecond: Double? = 0
     @State private var selectedMetric: HeartWorkoutGraphMetric = .heartRate
     @State private var chaseHeading: Double?

@@ -161,8 +161,6 @@ struct HeartWorkoutPerformanceGraphWidget: View {
         }
     }
 
-    /// Not `private`: `graphHeight` is the default for a memberwise-init
-    /// parameter, so it has to be at least as visible as the initialiser.
     enum Constants {
         static let graphHeight: CGFloat = 70
         static let readoutSpace = "metricReadouts"
@@ -444,8 +442,6 @@ extension HeartWorkoutPerformanceGraphWidget {
             }
             .padding(.horizontal, isSwitchable ? .spacing1x : .spacing0x)
             .frame(height: Constants.cellHeight)
-            // Capsule chrome belongs to the switcher only — on the stacked card
-            // these are plain readouts, not controls.
             .background {
                 if isSwitchable {
                     Capsule()
