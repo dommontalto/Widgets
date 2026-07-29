@@ -1,5 +1,7 @@
 # Widgets — Project Conventions
 
+**Never create a branch. Commit straight to `main`.**
+
 iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always use the tokens below — never use raw hex values, magic numbers, or system fonts.
 
 **Never build (xcodebuild or otherwise) unless explicitly asked.**
