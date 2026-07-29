@@ -1,5 +1,5 @@
 //
-//  ExerciseWorkoutCompleteSheet.swift
+//  ExerciseSessionCompleteSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ExerciseWorkoutCompleteSheet: View {
+struct ExerciseSessionCompleteSheet: View {
     let session: ExerciseSession
 
     @State private var collapsedExercises: Set<String> = []
@@ -28,31 +28,12 @@ struct ExerciseWorkoutCompleteSheet: View {
     }
 
     private func sheet(expandedMapHeight: CGFloat) -> some View {
-        BrightPageSheetView {
+        Group {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     header
 
-                    if session.hasRoute {
-                        HeartWorkoutOverviewWidget(
-                            duration: ExerciseDemoRoute.duration,
-                            distanceKm: 5.02,
-                            altitudeGainMetres: 42,
-                            avgPaceSecondsPerKm: 298,
-                            caloriesBurnt: Amount(unit: "KCAL", value: 386),
-                            hrAvg: 158,
-                            routeLatitudes: ExerciseDemoRoute.latitudes,
-                            routeLongitudes: ExerciseDemoRoute.longitudes,
-                            routeZoneIndexes: ExerciseDemoRoute.zoneIndexes,
-                            heartGraph: ExerciseDemoRoute.heartGraph,
-                            altitudeGraph: ExerciseDemoRoute.altitudeGraph,
-                            paceGraph: ExerciseDemoRoute.paceGraph,
-                            isMapExpanded: $isMapExpanded,
-                            expandedMapHeight: expandedMapHeight
-                        )
-                    } else {
-                        statsGrid
-                    }
+                    statsGrid
 
                     if !session.detail.exercises.isEmpty {
                         exercisesCard
@@ -66,10 +47,15 @@ struct ExerciseWorkoutCompleteSheet: View {
                         splitsCard
                     }
                 }
+                .padding(.horizontal, .spacing3x)
                 .padding(.top, .spacing2x)
                 .padding(.bottom, .spacing4x)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.sheetBackground.ignoresSafeArea())
+        .navigationTitle("Session complete")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: openedExerciseBinding) { exercise in
             BrightPageSheetView(title: exercise.name) {
                 ExerciseDetailSheet(exercise: exercise)
@@ -333,9 +319,9 @@ struct ExerciseWorkoutCompleteSheet: View {
 }
 
 #Preview("Strength") {
-    ExerciseWorkoutCompleteSheet(session: ExerciseDemoData.sessionHistory[0])
+    ExerciseSessionCompleteSheet(session: ExerciseDemoData.sessionHistory[0])
 }
 
 #Preview("Cardio") {
-    ExerciseWorkoutCompleteSheet(session: ExerciseDemoData.sessionHistory[1])
+    ExerciseSessionCompleteSheet(session: ExerciseDemoData.sessionHistory[1])
 }

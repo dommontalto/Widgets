@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-extension CGFloat {
+nonisolated extension CGFloat {
     // MARK: - Spacing
 
     private static var base: CGFloat = 6

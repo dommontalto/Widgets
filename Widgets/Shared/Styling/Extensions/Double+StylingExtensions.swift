@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension Double {
+nonisolated extension Double {
     // MARK: - Opacity
 
     /// Opacity level 100%.

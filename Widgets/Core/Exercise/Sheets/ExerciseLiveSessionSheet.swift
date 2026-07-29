@@ -1,5 +1,5 @@
 //
-//  ExerciseLiveWorkoutSheet.swift
+//  ExerciseLiveSessionSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ExerciseLiveWorkoutSheet: View {
+struct ExerciseLiveSessionSheet: View {
     var sessionName = "Gym session"
     var templateItems: [ExerciseTemplateItem]? = nil
 
@@ -32,36 +32,47 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     var body: some View {
-        BrightPageSheetView {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing4x) {
-                    header
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: .spacing4x) {
+                header
 
-                    statsRow
+                statsRow
 
-                    VStack(spacing: .spacing3x) {
-                        ForEach($exercises) { $exercise in
-                            exerciseCard($exercise)
-                        }
+                VStack(spacing: .spacing3x) {
+                    ForEach($exercises) { $exercise in
+                        exerciseCard($exercise)
                     }
+                }
 
-                    footerButtons
-                }
-                .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing4x)
+                footerButtons
             }
-            .safeAreaInset(edge: .bottom) {
-                if restEndDate != nil {
-                    restTimerPill
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+            .padding(.horizontal, .spacing3x)
+            .padding(.top, .spacing2x)
+            .padding(.bottom, .spacing4x)
+        }
+        .safeAreaInset(edge: .bottom) {
+            if restEndDate != nil {
+                restTimerPill
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.sheetBackground.ignoresSafeArea())
+        .navigationTitle(sessionName)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("End") {
+                    completedSession = finishedSession
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(.defaultWarningRed)
             }
         }
         .animation(.brightEaseInOut, value: completedSets)
         .animation(.brightBouncy, value: restEndDate)
-        // The library and post-workout summary screens haven't been ported yet.
-        .sheet(item: $completedSession, onDismiss: { dismiss() }) { session in
-            ExerciseWorkoutCompleteSheet(session: session)
+        .navigationDestination(item: $completedSession) { session in
+            ExerciseSessionCompleteSheet(session: session)
         }
         .sheet(isPresented: $showAddExercise) {
             BrightPageSheetView(title: "Exercises") {
@@ -93,10 +104,6 @@ struct ExerciseLiveWorkoutSheet: View {
             }
 
             Spacer(minLength: .spacing2x)
-
-            BrightPillButton("Finish", color: .defaultGreen) {
-                completedSession = finishedSession
-            }
         }
     }
 
@@ -461,13 +468,13 @@ private struct ExerciseLoggerSetRow: View {
     }
 }
 
-struct ExerciseTemplateItem: Identifiable {
+struct ExerciseTemplateItem: Identifiable, Sendable {
     let id = UUID()
     let exerciseName: String
     let target: String
 }
 
-struct ExerciseActiveSet: Identifiable {
+struct ExerciseActiveSet: Identifiable, Sendable {
     let id = UUID()
     var weight: String
     var reps: String
@@ -478,13 +485,13 @@ struct ExerciseActiveSet: Identifiable {
     var isDone = false
 }
 
-struct ExerciseActiveExercise: Identifiable {
+struct ExerciseActiveExercise: Identifiable, Sendable {
     let id = UUID()
     var name: String
     var notes = ""
     var sets: [ExerciseActiveSet]
 
-    static func fresh(named name: String) -> ExerciseActiveExercise {
+    nonisolated static func fresh(named name: String) -> ExerciseActiveExercise {
         ExerciseActiveExercise(name: name, sets: [
             ExerciseActiveSet(weight: "", reps: "", isWarmup: true),
             ExerciseActiveSet(weight: "", reps: ""),
@@ -493,7 +500,7 @@ struct ExerciseActiveExercise: Identifiable {
         ])
     }
 
-    static func fromTemplate(_ items: [ExerciseTemplateItem]) -> [ExerciseActiveExercise] {
+    nonisolated static func fromTemplate(_ items: [ExerciseTemplateItem]) -> [ExerciseActiveExercise] {
         items.map { item in
             ExerciseActiveExercise(name: item.exerciseName, notes: item.target, sets: [
                 ExerciseActiveSet(weight: "", reps: "", isWarmup: true),
@@ -504,7 +511,7 @@ struct ExerciseActiveExercise: Identifiable {
         }
     }
 
-    static let demo = [
+    nonisolated static let demo: [ExerciseActiveExercise] = [
         ExerciseActiveExercise(name: "Bench Press (Barbell)", sets: [
             ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", isWarmup: true, isDone: true),
             ExerciseActiveSet(weight: "80", reps: "10", previous: "77.5 \u{00D7} 10", isDone: true),
@@ -530,5 +537,5 @@ struct ExerciseActiveExercise: Identifiable {
 }
 
 #Preview {
-    ExerciseLiveWorkoutSheet()
+    ExerciseLiveSessionSheet()
 }

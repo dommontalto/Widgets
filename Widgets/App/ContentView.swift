@@ -10,15 +10,34 @@ import SwiftUI
 struct ContentView: View {
     @State private var showingOrder = false
     @State private var showingVaultTests = false
+    @State private var showingSession = false
+    @State private var builder = ExerciseSessionBuilder()
+    @State private var startedSession: ExerciseQuickSession?
+    @State private var isLoggingCardio = false
 
     var body: some View {
+        NavigationStack {
+            content
+        }
+        .environment(builder)
+    }
+
+    private var sessions: [ExerciseQuickSession] {
+        ExerciseDemoSessions.all + builder.saved
+    }
+
+    private func start(_ session: ExerciseQuickSession) {
+        if session.isCardio {
+            isLoggingCardio = true
+        } else {
+            startedSession = session
+        }
+    }
+
+    private var content: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
-                    widgetLabel("ExerciseSessionLauncherWidget")
-                    ExerciseSessionLauncherWidget()
-                        .padding(.bottom, .spacing3x)
-
                     widgetLabel("ExercisePersonalRecordsWidget")
                     ExercisePersonalRecordsWidget()
                         .padding(.bottom, .spacing3x)
@@ -106,6 +125,34 @@ struct ContentView: View {
             .padding(.spacing3x)
         }
         .background(Color.bG.ignoresSafeArea())
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Section("My Sessions") {
+                        ForEach(sessions) { session in
+                            Button(session.name, systemImage: session.symbol) {
+                                start(session)
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "play.fill")
+                } primaryAction: {
+                    showingSession = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingSession) {
+            ExerciseSessionSheet()
+        }
+        .sheet(item: $startedSession) { session in
+            NavigationStack {
+                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items)
+            }
+        }
+        .fullScreenCover(isPresented: $isLoggingCardio) {
+            ExerciseLiveCardioSheet { isLoggingCardio = false }
+        }
         .sheet(isPresented: $showingOrder) {
             GenomeOrderSheet()
         }

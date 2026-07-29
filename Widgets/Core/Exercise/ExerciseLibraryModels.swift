@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum ExerciseEquipment: String, CaseIterable, Identifiable {
+nonisolated enum ExerciseEquipment: String, CaseIterable, Identifiable {
     case barbell
     case dumbbell
     case cable
@@ -21,7 +21,7 @@ enum ExerciseEquipment: String, CaseIterable, Identifiable {
     var displayName: String { rawValue.capitalized }
 }
 
-enum ExerciseMuscle: String, CaseIterable, Identifiable {
+nonisolated enum ExerciseMuscle: String, CaseIterable, Identifiable {
     case chest
     case back
     case shoulders
@@ -42,7 +42,7 @@ enum ExerciseMuscle: String, CaseIterable, Identifiable {
     }
 }
 
-enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
+nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
     case push
     case pull
     case legs
@@ -68,20 +68,53 @@ enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
     }
 }
 
-struct ExerciseProgressionPoint: Identifiable {
+nonisolated enum ExerciseSessionCategory: String, CaseIterable, Identifiable {
+    case gym
+    case bodyweight
+    case cardio
+    case sports
+
+    static let standard: [ExerciseSessionCategory] = allCases
+
+    var id: String { rawValue }
+
+    var displayName: String { rawValue.capitalized }
+
+    var symbol: String {
+        switch self {
+        case .gym: "figure.strengthtraining.traditional"
+        case .bodyweight: "figure.play"
+        case .cardio: "figure"
+        case .sports: "figure.rugby"
+        }
+    }
+
+    var accentColor: Color {
+        switch self {
+        case .gym, .bodyweight: .defaultPurple
+        case .cardio, .sports: .defaultSkyBlue
+        }
+    }
+
+    var countUnit: String {
+        self == .sports ? "sports" : "exercises"
+    }
+}
+
+nonisolated struct ExerciseProgressionPoint: Identifiable {
     let id: Int
     let weeksAgo: Int
     let value: Double
 }
 
-struct ExerciseHistoryEntry: Identifiable {
+nonisolated struct ExerciseHistoryEntry: Identifiable {
     let id = UUID()
     let date: String
     let summary: String
     let bestSet: String
 }
 
-struct ExerciseDefinition: Identifiable {
+nonisolated struct ExerciseDefinition: Identifiable {
     let name: String
     let equipment: ExerciseEquipment
     let primaryMuscle: ExerciseMuscle

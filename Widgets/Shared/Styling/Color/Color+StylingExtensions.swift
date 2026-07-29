@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-extension Color {
+nonisolated extension Color {
     static let primaryBlue = Color(hex: "#5599FF")
     static let progressYellow = Color(hex: "#FFD129")
 }
 
 /// V4. Use these only.
-extension Color {
+nonisolated extension Color {
     static let loading = Color(light: .mainBlack, dark: .mainBlack)
     static let bG = Color(light: .mediumGrey, dark: .mainBlack)
 
@@ -219,7 +219,7 @@ extension Color {
 
 // MARK: - Dark Mode Support
 
-extension UIColor {
+nonisolated extension UIColor {
     convenience init(light: UIColor, dark: UIColor) {
         self.init { traitCollection in
             switch traitCollection.userInterfaceStyle {
@@ -234,13 +234,13 @@ extension UIColor {
     }
 }
 
-extension Color {
+nonisolated extension Color {
     init(light: Color, dark: Color) {
         self.init(UIColor(light: UIColor(light), dark: UIColor(dark)))
     }
 }
 
-extension Color {
+nonisolated extension Color {
     init(redRGB: Int, greenRGB: Int, blueRGB: Int) {
         self.init(
             red: Double(redRGB) / Double(255),

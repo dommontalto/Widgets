@@ -34,17 +34,14 @@ struct ExerciseHistoryWidget: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
         .sheet(item: $selectedSession) { session in
-            if session.type == .cardio {
-                HeartWorkoutSummarySheet(workout: HeartDemoData.workout)
-            } else {
-                ExerciseWorkoutCompleteSheet(session: session)
-            }
+            ExerciseSessionCompleteSheet(session: session)
         }
     }
 
     private func sessionRow(_ session: ExerciseSession) -> some View {
         let color = color(for: session.type)
         return Button {
+            guard session.type != .cardio else { return }
             selectedSession = session
         } label: {
             HStack(spacing: .spacing105x) {

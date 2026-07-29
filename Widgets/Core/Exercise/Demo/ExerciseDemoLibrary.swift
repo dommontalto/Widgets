@@ -7,12 +7,21 @@
 
 import SwiftUI
 
-enum ExerciseDemoLibrary {
-    static let all: [ExerciseDefinition] = strength + cardio
+nonisolated enum ExerciseDemoLibrary {
+    static let all: [ExerciseDefinition] = strength + cardio + sports
 
     static func exercise(named name: String) -> ExerciseDefinition? {
         all.first { $0.name == name }
             ?? all.first { name.hasPrefix($0.name) || $0.name.hasPrefix(name) }
+    }
+
+    static func exercises(in category: ExerciseSessionCategory) -> [ExerciseDefinition] {
+        switch category {
+        case .gym: strength.filter { $0.equipment != .bodyweight }
+        case .bodyweight: strength.filter { $0.equipment == .bodyweight }
+        case .cardio: cardio
+        case .sports: sports
+        }
     }
 
     static let strength: [ExerciseDefinition] = [
@@ -112,6 +121,20 @@ enum ExerciseDemoLibrary {
         cardioEntry("Swim", symbolName: "figure.pool.swim", best: "1\u{2019}58\u{201D} /100m", longest: "2,000 m", base: 124, metricLabel: "Pace"),
         cardioEntry("Hike", symbolName: "figure.hiking", best: "620 m gain", longest: "16 km", base: 400, metricLabel: "Elevation"),
         cardioEntry("Walk", symbolName: "figure.walk", best: "8\u{2019}40\u{201D} /km", longest: "11 km", base: 540, metricLabel: "Pace"),
+    ]
+
+    static let sports: [ExerciseDefinition] = [
+        cardioEntry("Basketball", symbolName: "figure.basketball", best: "48 min", longest: "72 min", base: 300, metricLabel: "Time"),
+        cardioEntry("Bouldering", symbolName: "figure.climbing", best: "V6 send", longest: "95 min", base: 260, metricLabel: "Grade"),
+        cardioEntry("Football", symbolName: "figure.soccer", best: "9.8 km covered", longest: "90 min", base: 340, metricLabel: "Distance"),
+        cardioEntry("Lead Climbing", symbolName: "figure.climbing", best: "6c redpoint", longest: "140 min", base: 300, metricLabel: "Grade"),
+        cardioEntry("Rock Climbing", symbolName: "figure.climbing", best: "18 routes", longest: "120 min", base: 280, metricLabel: "Routes"),
+        cardioEntry("Volleyball", symbolName: "figure.volleyball", best: "52 min", longest: "68 min", base: 280, metricLabel: "Time"),
+        cardioEntry("Squash", symbolName: "figure.racquetball", best: "42 min", longest: "65 min", base: 240, metricLabel: "Time"),
+        cardioEntry("Surfing", symbolName: "figure.surfing", best: "24 waves", longest: "110 min", base: 320, metricLabel: "Waves"),
+        cardioEntry("Tennis", symbolName: "figure.tennis", best: "3 sets", longest: "105 min", base: 290, metricLabel: "Time"),
+        cardioEntry("Touch Rugby", symbolName: "figure.rugby", best: "7.4 km covered", longest: "80 min", base: 310, metricLabel: "Distance"),
+        cardioEntry("Yoga", symbolName: "figure.yoga", best: "62 min", longest: "80 min", base: 200, metricLabel: "Time"),
     ]
 
     private static func lift(
@@ -229,5 +252,5 @@ enum ExerciseDemoLibrary {
 }
 
 private extension ExerciseEquipment {
-    static let ezBarStandIn = ExerciseEquipment.barbell
+    nonisolated static let ezBarStandIn = ExerciseEquipment.barbell
 }

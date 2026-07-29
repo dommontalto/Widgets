@@ -17,6 +17,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     let backButtonCallback: (() -> Void)?
     /// Set false to let content run under the home indicator, e.g. a full-bleed map.
     let bottomSafeArea: Bool
+    let path: Binding<NavigationPath>?
     let trailing: Trailing
     let content: Content
 
@@ -30,6 +31,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
         bottomSafeArea: Bool = true,
+        path: Binding<NavigationPath>? = nil,
         @ToolbarContentBuilder trailing: () -> Trailing,
         @ViewBuilder content: () -> Content
     ) {
@@ -40,13 +42,21 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
         self.bottomSafeArea = bottomSafeArea
+        self.path = path
         self.trailing = trailing()
         self.content = content()
     }
 
     var body: some View {
-        NavigationStack {
-            content
+        if let path {
+            NavigationStack(path: path) { stackContent }
+        } else {
+            NavigationStack { stackContent }
+        }
+    }
+
+    private var stackContent: some View {
+        content
                 .padding(.horizontal, horizontalPadding)
                 .safeAreaPadding(bottomSafeArea ? .bottom : [])
                 .scrollDismissesKeyboard(.interactively)
@@ -77,7 +87,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                         }
                     }
                     if showCloseButton && !showBackButton {
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem(placement: .topBarLeading) {
                             Button {
                                 dismiss()
                             } label: {
@@ -87,7 +97,6 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                     }
                     trailing
                 }
-        }
     }
 }
 
@@ -108,6 +117,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
         bottomSafeArea: Bool = true,
+        path: Binding<NavigationPath>? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -117,6 +127,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
         self.bottomSafeArea = bottomSafeArea
+        self.path = path
         self.trailing = EmptyToolbarContent()
         self.content = content()
     }

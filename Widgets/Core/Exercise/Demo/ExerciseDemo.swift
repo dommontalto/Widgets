@@ -46,7 +46,7 @@ struct ExerciseMuscleGroup {
     let status: String
 }
 
-struct ExerciseSession: Identifiable {
+struct ExerciseSession: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let timestamp: String
@@ -54,6 +54,14 @@ struct ExerciseSession: Identifiable {
     let summary: String
     let detail: ExerciseSessionDetail
     var hasRoute = false
+
+    static func == (lhs: ExerciseSession, rhs: ExerciseSession) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 struct ExerciseSessionGoal {
