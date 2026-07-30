@@ -176,6 +176,28 @@ Defined in `CGFloat+StylingExtensions.swift`.
 
 ---
 
+## Haptics & wiggle
+
+Never call `UIImpactFeedbackGenerator` or `sensoryFeedback` directly — use
+`BrightHaptic` (`Shared/BrightHaptic.swift`):
+
+```swift
+.brightHaptic(.light, trigger: selection)          // .light / .medium / .success
+.brightHaptic(trigger: isDone) { _, done in         // pick per value
+    done ? .success : .light
+}
+```
+
+To draw attention to whatever is blocking an action, shake it with
+`brightWiggle` (`Shared/BrightWiggle.swift`) — it plays the haptic itself:
+
+```swift
+TextField("Session name", text: $name)
+    .brightWiggle(trigger: nameNudge)   // increment the Int to fire it
+```
+
+---
+
 ## CardModifier
 
 Defined in `Shared/Styling/ViewModifier/CardModifier.swift`.

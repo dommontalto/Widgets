@@ -34,7 +34,7 @@ struct BrightTick: View {
 
     var body: some View {
         Image(systemName: isTicked ? "checkmark.circle.fill" : style.symbol)
-            .font(.standardSFPro(size: .standout1, weight: .light))
+            .font(.standardSFPro(size: .standout2, weight: .light))
             .foregroundStyle(isTicked ? tickTint : style.tint)
             .contentTransition(.symbolEffect(.replace))
             .brightHaptic(trigger: isTicked) { _, isTicked in

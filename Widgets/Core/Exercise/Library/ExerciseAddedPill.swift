@@ -10,41 +10,56 @@ import SwiftUI
 struct ExerciseAddedPill: View {
     @Environment(ExerciseSessionBuilder.self) private var builder
 
-    @State private var isConfirmingReset = false
-    @State private var resetTask: Task<Void, Never>?
+    @State private var isShowingClear = false
+    @State private var clearTask: Task<Void, Never>?
 
     var body: some View {
-        HStack(spacing: .spacing0x) {
+        HStack(spacing: .spacing1x) {
             Spacer(minLength: .spacing0x)
 
-            BrightPillButton(
-                isConfirmingReset ? "Reset" : "Exercises: \(builder.count)",
-                color: isConfirmingReset ? .defaultWarningRed : nil,
-                buttonSize: .small
-            ) {
-                handleTap()
+            BrightPillButton("Exercises: \(builder.count)", buttonSize: .small) {
+                toggleClear()
             }
             .contentTransition(.numericText(value: Double(builder.count)))
+
+            if isShowingClear {
+                Button {
+                    clearTask?.cancel()
+                    isShowingClear = false
+                    withAnimation(.brightBouncy) { builder.reset() }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.standardSFPro(size: .standout3, weight: .light))
+                        .foregroundStyle(Color.defaultWarningRed)
+                        .frame(width: Constants.clearTouchSize, height: Constants.clearTouchSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity.combined(with: .scale))
+            }
         }
-        .animation(.brightSnappy, value: isConfirmingReset)
+        .animation(.brightSnappy, value: isShowingClear)
         .animation(.brightSnappy, value: builder.count)
     }
 
-    private func handleTap() {
-        resetTask?.cancel()
+    private func toggleClear() {
+        clearTask?.cancel()
 
-        guard !isConfirmingReset else {
-            withAnimation(.brightBouncy) { builder.reset() }
-            isConfirmingReset = false
+        guard !isShowingClear else {
+            isShowingClear = false
             return
         }
 
-        isConfirmingReset = true
-        resetTask = Task { @MainActor in
+        isShowingClear = true
+        clearTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
-            isConfirmingReset = false
+            isShowingClear = false
         }
+    }
+
+    private enum Constants {
+        static let clearTouchSize: CGFloat = 30
     }
 }
 

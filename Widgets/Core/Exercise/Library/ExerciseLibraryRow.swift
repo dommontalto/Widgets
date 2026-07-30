@@ -41,7 +41,6 @@ struct ExerciseLibraryRow: View {
             }
             .buttonStyle(.plain)
             .disabled(onToggle == nil)
-            .padding(.trailing, .spacing1x)
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)

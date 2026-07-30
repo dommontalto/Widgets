@@ -22,6 +22,9 @@ struct ExerciseCustomiseSetsView: View {
     @State private var swapTarget: ExerciseSwapTarget?
     @State private var isAddingExercise = false
     @State private var addedExercise: String?
+    @State private var iconPickerWidth: CGFloat = 0
+    @State private var nameNudge = 0
+    @Namespace private var iconPickerSpace
 
     var body: some View {
         ScrollViewReader { scroller in
@@ -72,22 +75,30 @@ struct ExerciseCustomiseSetsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
+                    guard !isNameEmpty else {
+                        nameNudge += 1
+                        return
+                    }
                     builder.save(named: name, icon: symbol)
                     onSave()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.defaultSkyBlue)
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                .tint(isNameEmpty ? .defaultMainGrey : .defaultSkyBlue)
             }
         }
+    }
+
+    private var isNameEmpty: Bool {
+        name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             TextField("Session name", text: $name)
                 .focused($isTyping)
-                .font(.standard(size: .standout4, weight: .regular))
+                .font(.standard(size: .standout28, weight: .regular))
                 .foregroundStyle(Color.textColor)
+                .brightWiggle(trigger: nameNudge)
 
             BrightText(builder.count.counted("exercise"), size: .body1, color: .semiLightTextColor)
         }
@@ -96,23 +107,48 @@ struct ExerciseCustomiseSetsView: View {
     private var iconPicker: some View {
         HStack(spacing: .spacing0x) {
             ForEach(ExerciseSessionIcon.allCases) { icon in
-                Button {
-                    symbol = icon
-                } label: {
-                    Image(systemName: icon.symbol)
-                        .font(.standardSFPro(size: .heading, weight: .light))
-                        .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
-                        .frame(width: Constants.iconTile, height: Constants.iconTile)
-                        .background {
-                            Circle()
-                                .fill(Color.defaultMainGrey.opacity(icon == symbol ? .minimalOpacity : .finalBossLowOpacity))
-                        }
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
+                Image(systemName: icon.symbol)
+                    .font(.standardSFPro(size: .heading, weight: .light))
+                    .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
+                    .frame(width: Constants.iconTile, height: Constants.iconTile)
+                    .background {
+                        Circle()
+                            .fill(Color.defaultMainGrey.opacity(.finalBossLowOpacity))
+                    }
+                    .matchedGeometryEffect(id: icon, in: iconPickerSpace)
+                    .frame(maxWidth: .infinity)
             }
         }
+        .background(alignment: .leading) {
+            Color.clear
+                .frame(width: Constants.iconTile, height: Constants.iconTile)
+                .modifier(GlassEffect(shape: .circle))
+                .matchedGeometryEffect(id: symbol, in: iconPickerSpace, isSource: false)
+        }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            iconPickerWidth = width
+        }
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    select(at: value.location.x)
+                }
+        )
+        .brightHaptic(.light, trigger: symbol)
         .animation(.brightSnappy, value: symbol)
+    }
+
+    /// One gesture drives both tap and drag, so the glass follows the finger
+    /// across the row instead of jumping between taps.
+    private func select(at x: CGFloat) {
+        let icons = ExerciseSessionIcon.allCases
+        guard iconPickerWidth > 0 else { return }
+        let slot = iconPickerWidth / CGFloat(icons.count)
+        let index = min(max(0, Int(x / slot)), icons.count - 1)
+        guard icons[index] != symbol else { return }
+        symbol = icons[index]
     }
 
     private func exerciseCard(_ exercise: String) -> some View {
