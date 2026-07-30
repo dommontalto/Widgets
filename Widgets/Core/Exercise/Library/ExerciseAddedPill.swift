@@ -18,7 +18,7 @@ struct ExerciseAddedPill: View {
             Spacer(minLength: .spacing0x)
 
             BrightPillButton(
-                isConfirmingReset ? "Reset" : "Added: \(builder.count)",
+                isConfirmingReset ? "Reset" : "Exercises: \(builder.count)",
                 color: isConfirmingReset ? .defaultWarningRed : nil,
                 buttonSize: .small
             ) {
@@ -34,7 +34,7 @@ struct ExerciseAddedPill: View {
         resetTask?.cancel()
 
         guard !isConfirmingReset else {
-            builder.reset()
+            withAnimation(.brightBouncy) { builder.reset() }
             isConfirmingReset = false
             return
         }

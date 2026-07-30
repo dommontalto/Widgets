@@ -27,7 +27,7 @@ struct ExerciseCategoryView: View {
                 VStack(spacing: .spacing2x) {
                     ForEach(filtered) { exercise in
                         ExerciseLibraryRow(exercise: exercise, isAdded: builder.isAdded(exercise.name)) {
-                            builder.toggle(exercise.name)
+                            withAnimation(.brightBouncy) { builder.toggle(exercise.name) }
                         }
                     }
                 }
@@ -44,11 +44,12 @@ struct ExerciseCategoryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if builder.count > 0 {
-                    Button("Next") {
+                    Button("Add") {
                         builder.path.append(ExerciseSessionRoute.newSession)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.defaultSkyBlue)
+                    .transition(.opacity.combined(with: .scale))
                 }
             }
         }
