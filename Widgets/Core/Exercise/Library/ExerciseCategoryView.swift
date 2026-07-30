@@ -44,8 +44,8 @@ struct ExerciseCategoryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if builder.count > 0 {
-                    NavigationLink(value: ExerciseSessionRoute.newSession) {
-                        Text("Add")
+                    Button("Next") {
+                        builder.path.append(ExerciseSessionRoute.newSession)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.defaultSkyBlue)

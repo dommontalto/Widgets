@@ -26,7 +26,7 @@ struct ExerciseUpcomingWidget: View {
         .brightMiniSheet(isPresented: sheetBinding) {
             if let selectedIndex {
                 ExerciseSessionMiniSheet(session: sessions[selectedIndex]) {
-                    withAnimation(.easeOut) { self.selectedIndex = nil }
+                    withAnimation(.brightEaseInOut) { self.selectedIndex = nil }
                 }
             }
         }
@@ -35,7 +35,7 @@ struct ExerciseUpcomingWidget: View {
     private var sheetBinding: Binding<Bool> {
         Binding(
             get: { selectedIndex != nil },
-            set: { if !$0 { withAnimation(.easeOut) { selectedIndex = nil } } }
+            set: { if !$0 { withAnimation(.brightEaseInOut) { selectedIndex = nil } } }
         )
     }
 
@@ -46,7 +46,7 @@ struct ExerciseUpcomingWidget: View {
             VStack(spacing: .spacing1x) {
                 ForEach(sessions.indices, id: \.self) { i in
                     sessionRow(sessions[i], isSelected: selectedIndex == i) {
-                        withAnimation(.easeIn) { selectedIndex = i }
+                        withAnimation(.brightEaseInOut) { selectedIndex = i }
                     }
                 }
             }

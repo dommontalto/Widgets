@@ -96,8 +96,8 @@ nonisolated enum ExerciseSessionCategory: String, CaseIterable, Identifiable {
         }
     }
 
-    var countUnit: String {
-        self == .sports ? "sports" : "exercises"
+    var countNoun: String {
+        self == .sports ? "sport" : "exercise"
     }
 }
 

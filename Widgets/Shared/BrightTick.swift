@@ -8,37 +8,58 @@
 
 import SwiftUI
 
-/// Selected-state tick for option rows: sky-blue circle with a white checkmark.
-struct BrightTick: View {
-    var size: CGFloat = .spacing4x
+enum BrightTickStyle {
+    case empty
+    case plus
 
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.defaultSkyBlue)
-            Image(systemName: "checkmark")
-                .font(.system(size: size * 0.5, weight: .semibold))
-                .foregroundStyle(.white)
+    var symbol: String {
+        switch self {
+        case .empty: "circle"
+        case .plus: "plus.circle"
         }
-        .frame(width: size, height: size)
+    }
+
+    var tint: Color {
+        switch self {
+        case .empty: .textColor.opacity(.ultraLowOpacity)
+        case .plus: .defaultSkyBlue
+        }
     }
 }
 
-/// Unselected counterpart to `BrightTick`: a dimmed outline circle.
-struct BrightEmptyTick: View {
-    var size: CGFloat = .spacing4x
+struct BrightTick: View {
+    var isTicked: Bool
+    var style: BrightTickStyle = .empty
+    var tickTint: Color = .defaultGreen
 
     var body: some View {
-        Circle()
-            .strokeBorder(Color.lightTextColor.opacity(.semiLowOpacity), lineWidth: 1.5)
-            .frame(width: size, height: size)
+        Image(systemName: isTicked ? "checkmark.circle.fill" : style.symbol)
+            .font(.standardSFPro(size: .standout1, weight: .light))
+            .foregroundStyle(isTicked ? tickTint : style.tint)
+            .contentTransition(.symbolEffect(.replace))
+            .brightHaptic(trigger: isTicked) { _, isTicked in
+                isTicked ? .success : .light
+            }
     }
 }
 
 #Preview {
-    HStack(spacing: .spacing2x) {
-        BrightTick()
-        BrightEmptyTick()
+    @Previewable @State var isEmptyTicked = false
+    @Previewable @State var isPlusTicked = false
+
+    VStack(spacing: .spacing4x) {
+        Button {
+            isEmptyTicked.toggle()
+        } label: {
+            BrightTick(isTicked: isEmptyTicked)
+        }
+
+        Button {
+            isPlusTicked.toggle()
+        } label: {
+            BrightTick(isTicked: isPlusTicked, style: .plus)
+        }
     }
+    .buttonStyle(.plain)
     .padding()
 }

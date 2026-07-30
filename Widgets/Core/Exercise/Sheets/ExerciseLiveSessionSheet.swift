@@ -402,10 +402,7 @@ private struct ExerciseLoggerSetRow: View {
                 set.isDone.toggle()
                 onToggle()
             } label: {
-                Image(systemName: set.isDone ? "checkmark.circle.fill" : "circle")
-                    .font(.standardSFPro(size: .subheading2, weight: .light))
-                    .foregroundStyle(set.isDone ? Color.defaultGreen : .lightTextColor)
-                    .contentTransition(.symbolEffect(.replace))
+                BrightTick(isTicked: set.isDone)
             }
             .buttonStyle(.plain)
             .frame(width: checkColumnWidth)

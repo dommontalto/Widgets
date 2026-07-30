@@ -24,6 +24,7 @@ struct ExerciseAddedPill: View {
             ) {
                 handleTap()
             }
+            .contentTransition(.numericText(value: Double(builder.count)))
         }
         .animation(.brightSnappy, value: isConfirmingReset)
         .animation(.brightSnappy, value: builder.count)

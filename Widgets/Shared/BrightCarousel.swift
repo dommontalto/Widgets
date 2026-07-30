@@ -116,7 +116,7 @@ struct BrightCarousel<Item: Identifiable & Hashable, Card: View>: View {
                 scrollPosition.scrollTo(id: items[index].id)
             }
         }
-        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.5), trigger: hapticTrigger)
+        .brightHaptic(.light, trigger: hapticTrigger)
     }
 
     // MARK: Tier picker

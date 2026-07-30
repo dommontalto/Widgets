@@ -241,7 +241,7 @@ struct VaultDatapointDetailSheet: View {
             }
         }
         .coordinateSpace(name: "rangeSelector")
-        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.5), trigger: selectedRange)
+        .brightHaptic(.light, trigger: selectedRange)
         .gesture(
             DragGesture(minimumDistance: 5, coordinateSpace: .named("rangeSelector"))
                 .onChanged { value in

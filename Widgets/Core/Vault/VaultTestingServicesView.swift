@@ -134,7 +134,8 @@ struct VaultTestingServicesView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "line.3.horizontal.decrease")
+                    Label("Filter", systemImage: "line.3.horizontal.decrease")
+                        .labelStyle(.iconOnly)
                 }
             }
 
@@ -142,7 +143,8 @@ struct VaultTestingServicesView: View {
                 Button {
                     showingMap = true
                 } label: {
-                    Image(systemName: "map")
+                    Label("Map", systemImage: "map")
+                        .labelStyle(.iconOnly)
                 }
             }
         }

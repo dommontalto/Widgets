@@ -82,7 +82,8 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                                     dismiss()
                                 }
                             } label: {
-                                Image(systemName: "chevron.left")
+                                Label("Back", systemImage: "chevron.left")
+                                    .labelStyle(.iconOnly)
                             }
                         }
                     }
@@ -91,7 +92,8 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                             Button {
                                 dismiss()
                             } label: {
-                                Image(systemName: "xmark")
+                                Label("Close", systemImage: "xmark")
+                                    .labelStyle(.iconOnly)
                             }
                         }
                     }

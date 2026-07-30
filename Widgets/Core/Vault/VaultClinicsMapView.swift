@@ -64,14 +64,16 @@ struct VaultClinicsMapView: View {
                         position = .region(Self.seattle)
                     }
                 } label: {
-                    Image(systemName: "location")
+                    Label("Locate", systemImage: "location")
+                        .labelStyle(.iconOnly)
                 }
             }
 
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                 } label: {
-                    Image(systemName: "magnifyingglass")
+                    Label("Search", systemImage: "magnifyingglass")
+                        .labelStyle(.iconOnly)
                 }
             }
         }

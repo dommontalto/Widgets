@@ -151,7 +151,7 @@ struct BrightSwipePageView<Content: View>: View {
         self.onRefresh = onRefresh
         _selectedIndex = selectedIndex
         // Start the scroll position at the selected page so the appear-time sync
-        // is a no-op — otherwise the nil→index change trips `.sensoryFeedback`
+        // is a no-op — otherwise the nil→index change trips `.brightHaptic`
         // and fires a spurious haptic when the view first mounts.
         _scrollPosition = State(initialValue: selectedIndex.wrappedValue)
         self.content = content
@@ -216,7 +216,7 @@ struct BrightSwipePageView<Content: View>: View {
         .scrollPosition(id: $scrollPosition)
         .scrollDisabled(disableHorizontalScroll)
         .scrollIndicators(.hidden)
-        .sensoryFeedback(.impact, trigger: scrollPosition)
+        .brightHaptic(.medium, trigger: scrollPosition)
         .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, new in
             state.scrollOffset = new
         }

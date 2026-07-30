@@ -11,6 +11,8 @@ struct BrightSearchBar: View {
     let placeholder: String
     @Binding var text: String
 
+    @FocusState private var isFocused: Bool
+
     init(_ placeholder: String, text: Binding<String>) {
         self.placeholder = placeholder
         _text = text
@@ -26,10 +28,13 @@ struct BrightSearchBar: View {
                 .font(.system(size: 16))
                 .foregroundStyle(Color.textColor)
                 .submitLabel(.search)
+                .focused($isFocused)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, .spacing2x)
         .padding(.horizontal, .spacing3x)
         .modifier(GlassEffect())
         .contentShape(Capsule())
+        .onTapGesture { isFocused = true }
     }
 }

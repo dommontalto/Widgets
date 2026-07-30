@@ -35,10 +35,7 @@ struct ExerciseLibraryRow: View {
             Button {
                 onToggle?()
             } label: {
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle")
-                    .font(.standardSFPro(size: .standout1, weight: .light))
-                    .foregroundStyle(isAdded ? Color.defaultGreen : .defaultSkyBlue)
-                    .contentTransition(.symbolEffect(.replace))
+                BrightTick(isTicked: isAdded, style: .plus)
                     .frame(width: Constants.tickTouchSize, height: Constants.tickTouchSize)
                     .contentShape(Rectangle())
             }

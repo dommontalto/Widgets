@@ -69,6 +69,7 @@ final class ExerciseSessionBuilder {
     var added: [String] = []
     var sets: [String: [ExerciseSetDraft]] = [:]
     var saved: [ExerciseQuickSession] = []
+    var path = NavigationPath()
 
     var count: Int { added.count }
 
@@ -113,6 +114,49 @@ final class ExerciseSessionBuilder {
         saved.contains { $0.id == session.id }
     }
 
+    func duplicate(_ session: ExerciseQuickSession) {
+        let copy = ExerciseQuickSession(
+            name: uniqueName(from: session.name),
+            symbol: session.symbol,
+            accentColor: session.accentColor,
+            subtitle: session.subtitle,
+            isCardio: session.isCardio,
+            items: session.items
+        )
+        if let index = saved.firstIndex(where: { $0.id == session.id }) {
+            saved.insert(copy, at: index + 1)
+        } else {
+            saved.append(copy)
+        }
+    }
+
+    func rename(_ session: ExerciseQuickSession, to name: String) {
+        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty, title != session.name,
+              let index = saved.firstIndex(where: { $0.id == session.id })
+        else { return }
+        saved[index] = ExerciseQuickSession(
+            name: uniqueName(from: title),
+            symbol: session.symbol,
+            accentColor: session.accentColor,
+            subtitle: session.subtitle,
+            isCardio: session.isCardio,
+            items: session.items
+        )
+    }
+
+    private func uniqueName(from name: String) -> String {
+        let taken = Set((ExerciseDemoSessions.all + saved).map(\.name))
+        guard taken.contains(name) else { return name }
+        var candidate = "\(name) Copy"
+        var suffix = 2
+        while taken.contains(candidate) {
+            candidate = "\(name) Copy \(suffix)"
+            suffix += 1
+        }
+        return candidate
+    }
+
     func save(named name: String, symbol: String = "dumbbell") {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty, !added.isEmpty else { return }
@@ -127,7 +171,7 @@ final class ExerciseSessionBuilder {
                 name: title,
                 symbol: symbol,
                 accentColor: .defaultPurple,
-                subtitle: "\(added.count) exercises",
+                subtitle: added.count.counted("exercise"),
                 isCardio: false,
                 items: items
             )
@@ -150,7 +194,7 @@ final class ExerciseSessionBuilder {
             if case .working = $0.kind { return true }
             return false
         }
-        guard let first = working.first else { return "\(working.count) sets" }
+        guard let first = working.first else { return working.count.counted("set") }
         return "\(working.count) \u{00D7} \(first.reps)"
     }
 

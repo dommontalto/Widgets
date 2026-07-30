@@ -136,7 +136,8 @@ struct ContentView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "play.fill")
+                    Label("Start session", systemImage: "play.fill")
+                        .labelStyle(.iconOnly)
                 } primaryAction: {
                     showingSession = true
                 }
@@ -207,11 +208,7 @@ private struct WidgetLabelRow: View {
             Button {
                 isTicked.toggle()
             } label: {
-                if isTicked {
-                    BrightTick()
-                } else {
-                    BrightEmptyTick()
-                }
+                BrightTick(isTicked: isTicked)
             }
             .buttonStyle(.plain)
 

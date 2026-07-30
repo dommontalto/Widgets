@@ -18,7 +18,8 @@ struct ExerciseSessionSheet: View {
     @State private var searchText = ""
     @State private var isLoggingCardio = false
     @Environment(ExerciseSessionBuilder.self) private var builder
-    @State private var path = NavigationPath()
+    @State private var renamingSession: ExerciseQuickSession?
+    @State private var renameText = ""
 
     private let columns = [
         GridItem(.flexible(), spacing: .spacing2x),
@@ -26,7 +27,9 @@ struct ExerciseSessionSheet: View {
     ]
 
     var body: some View {
-        BrightPageSheetView(title: "Start Session", horizontalPadding: .spacing0x, path: $path) {
+        @Bindable var builder = builder
+
+        return BrightPageSheetView(title: "Start Session", horizontalPadding: .spacing0x, path: $builder.path) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     VStack(alignment: .leading, spacing: .spacing2x) {
@@ -54,8 +57,8 @@ struct ExerciseSessionSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
-                        NavigationLink(value: ExerciseSessionRoute.newSession) {
-                            Text("Add")
+                        Button("Next") {
+                            builder.path.append(ExerciseSessionRoute.newSession)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)
@@ -66,8 +69,25 @@ struct ExerciseSessionSheet: View {
         .fullScreenCover(isPresented: $isLoggingCardio) {
             ExerciseLiveCardioSheet { isLoggingCardio = false }
         }
+        .alert("Rename session", isPresented: renameBinding) {
+            TextField("Session name", text: $renameText)
+
+            Button("Cancel", role: .cancel) {}
+
+            Button("Save") {
+                guard let renamingSession else { return }
+                withAnimation(.brightSnappy) { builder.rename(renamingSession, to: renameText) }
+            }
+        }
         .animation(.brightEaseInOut, value: searchText.isEmpty)
         .animation(.brightSnappy, value: builder.count)
+    }
+
+    private var renameBinding: Binding<Bool> {
+        Binding(
+            get: { renamingSession != nil },
+            set: { if !$0 { renamingSession = nil } }
+        )
     }
 
     @ViewBuilder
@@ -80,7 +100,7 @@ struct ExerciseSessionSheet: View {
         case let .session(name):
             quickSession(named: name)
         case .newSession:
-            ExerciseCustomiseSetsView { path = NavigationPath() }
+            ExerciseCustomiseSetsView { builder.path = NavigationPath() }
         }
     }
 
@@ -120,7 +140,7 @@ struct ExerciseSessionSheet: View {
                     symbol: category.symbol,
                     color: category.accentColor,
                     title: category.displayName,
-                    subtitle: "\(ExerciseDemoLibrary.exercises(in: category).count) \(category.countUnit)"
+                    subtitle: ExerciseDemoLibrary.exercises(in: category).count.counted(category.countNoun)
                 )
             }
             .buttonStyle(.plain)
@@ -156,10 +176,20 @@ struct ExerciseSessionSheet: View {
             title: session.name,
             subtitle: session.subtitle
         )
+        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
         .contextMenu {
+            Button("Duplicate", systemImage: "plus.square.on.square") {
+                withAnimation(.brightSnappy) { builder.duplicate(session) }
+            }
+
             if builder.canDelete(session) {
+                Button("Rename", systemImage: "pencil") {
+                    renameText = session.name
+                    renamingSession = session
+                }
+
                 Button("Delete", systemImage: "trash", role: .destructive) {
-                    builder.delete(session)
+                    withAnimation(.brightSnappy) { builder.delete(session) }
                 }
             }
         }

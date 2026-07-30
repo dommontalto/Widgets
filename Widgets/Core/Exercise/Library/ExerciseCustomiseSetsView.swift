@@ -79,7 +79,7 @@ struct ExerciseCustomiseSetsView: View {
                 .font(.standard(size: .standout4, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
-            BrightText("\(builder.count) exercises", size: .body1, color: .semiLightTextColor)
+            BrightText(builder.count.counted("exercise"), size: .body1, color: .semiLightTextColor)
         }
     }
 

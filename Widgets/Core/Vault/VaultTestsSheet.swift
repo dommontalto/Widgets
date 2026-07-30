@@ -121,7 +121,8 @@ struct VaultTestsSheet: View {
                     Button {
                         close()
                     } label: {
-                        Image(systemName: "chevron.backward")
+                        Label("Back", systemImage: "chevron.backward")
+                            .labelStyle(.iconOnly)
                     }
                 }
 
