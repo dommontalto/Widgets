@@ -14,12 +14,16 @@ struct ExerciseSetRow: View {
     @Binding var reps: String
     @Binding var rest: String
     var isTyping: FocusState<Bool>.Binding
+    let onCycleKind: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            badge
+            Button(action: onCycleKind) {
+                badge
+            }
+            .buttonStyle(.plain)
 
             Spacer(minLength: .spacing2x)
 
@@ -75,9 +79,10 @@ struct ExerciseSetRow: View {
             .focused(isTyping)
             .font(.standard(size: .body2, weight: .regular))
             .foregroundStyle(Color.textColor)
+            .keyboardType(.decimalPad)
             .multilineTextAlignment(.center)
             .frame(width: Constants.fieldWidth, height: Constants.badgeSize)
-            .modifier(GlassEffect(shape: .capsule))
+            .background(Color.defaultMainGrey.opacity(.minimalOpacity), in: Capsule())
     }
 
     enum Constants {

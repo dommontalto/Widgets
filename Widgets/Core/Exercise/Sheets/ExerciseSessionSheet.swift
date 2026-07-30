@@ -167,7 +167,7 @@ struct ExerciseSessionSheet: View {
     }
 
     private var sessions: [ExerciseQuickSession] {
-        ExerciseDemoSessions.all + builder.saved
+        builder.saved
     }
 
     private func sessionCard(_ session: ExerciseQuickSession) -> some View {
@@ -183,15 +183,13 @@ struct ExerciseSessionSheet: View {
                 withAnimation(.brightSnappy) { builder.duplicate(session) }
             }
 
-            if builder.canDelete(session) {
-                Button("Rename", systemImage: "pencil") {
-                    renameText = session.name
-                    renamingSession = session
-                }
+            Button("Rename", systemImage: "pencil") {
+                renameText = session.name
+                renamingSession = session
+            }
 
-                Button("Delete", systemImage: "trash", role: .destructive) {
-                    withAnimation(.brightSnappy) { builder.delete(session) }
-                }
+            Button("Delete", systemImage: "trash", role: .destructive) {
+                withAnimation(.brightSnappy) { builder.delete(session) }
             }
         }
     }

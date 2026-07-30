@@ -23,7 +23,7 @@ struct ContentView: View {
     }
 
     private var sessions: [ExerciseQuickSession] {
-        ExerciseDemoSessions.all + builder.saved
+        builder.saved
     }
 
     private func start(_ session: ExerciseQuickSession) {

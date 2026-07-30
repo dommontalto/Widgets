@@ -84,15 +84,17 @@ nonisolated enum ExerciseSessionCategory: String, CaseIterable, Identifiable {
         switch self {
         case .gym: "figure.strengthtraining.traditional"
         case .bodyweight: "figure.play"
-        case .cardio: "figure"
+        case .cardio: "figure.run"
         case .sports: "figure.rugby"
         }
     }
 
     var accentColor: Color {
         switch self {
-        case .gym, .bodyweight: .defaultPurple
-        case .cardio, .sports: .defaultSkyBlue
+        case .gym: .defaultPurple
+        case .bodyweight: .defaultGreen
+        case .cardio: .defaultSkyBlue
+        case .sports: .defaultOrange
         }
     }
 

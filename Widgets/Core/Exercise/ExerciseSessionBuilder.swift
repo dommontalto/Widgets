@@ -10,13 +10,13 @@ import SwiftUI
 enum ExerciseSetKind: Hashable {
     case warmUp
     case working(Int)
-    case coolDown
+    case dropSet
 
     var symbol: String? {
         switch self {
         case .warmUp: "figure.cooldown"
         case .working: nil
-        case .coolDown: "arrow.down"
+        case .dropSet: "arrow.down"
         }
     }
 
@@ -25,11 +25,17 @@ enum ExerciseSetKind: Hashable {
         return nil
     }
 
+    var isWorking: Bool {
+        if case .working = self { return true }
+        return false
+    }
+
+
     var color: Color {
         switch self {
         case .warmUp: .defaultGreen
         case .working: .defaultOrange
-        case .coolDown: .defaultBrightPink
+        case .dropSet: .defaultBrightPink
         }
     }
 }
@@ -37,6 +43,7 @@ enum ExerciseSetKind: Hashable {
 enum ExerciseSessionIcon: String, CaseIterable, Identifiable {
     case dumbbell
     case strength
+    case bodyweight
     case run
     case bike
     case swim
@@ -48,17 +55,27 @@ enum ExerciseSessionIcon: String, CaseIterable, Identifiable {
         switch self {
         case .dumbbell: "dumbbell"
         case .strength: "figure.strengthtraining.traditional"
+        case .bodyweight: "figure.play"
         case .run: "figure.run"
         case .bike: "figure.outdoor.cycle"
         case .swim: "figure.pool.swim"
         case .sports: "figure.rugby"
         }
     }
+
+    var accentColor: Color {
+        switch self {
+        case .dumbbell, .strength: .defaultPurple
+        case .bodyweight: .defaultGreen
+        case .run, .bike, .swim: .defaultSkyBlue
+        case .sports: .defaultOrange
+        }
+    }
 }
 
 struct ExerciseSetDraft: Identifiable, Hashable {
     let id = UUID()
-    let kind: ExerciseSetKind
+    var kind: ExerciseSetKind
     var weight: String
     var reps: String
     var rest: String
@@ -68,7 +85,7 @@ struct ExerciseSetDraft: Identifiable, Hashable {
 final class ExerciseSessionBuilder {
     var added: [String] = []
     var sets: [String: [ExerciseSetDraft]] = [:]
-    var saved: [ExerciseQuickSession] = []
+    var saved: [ExerciseQuickSession] = ExerciseDemoSessions.all
     var path = NavigationPath()
 
     var count: Int { added.count }
@@ -110,10 +127,6 @@ final class ExerciseSessionBuilder {
         saved.removeAll { $0.id == session.id }
     }
 
-    func canDelete(_ session: ExerciseQuickSession) -> Bool {
-        saved.contains { $0.id == session.id }
-    }
-
     func duplicate(_ session: ExerciseQuickSession) {
         let copy = ExerciseQuickSession(
             name: uniqueName(from: session.name),
@@ -146,7 +159,7 @@ final class ExerciseSessionBuilder {
     }
 
     private func uniqueName(from name: String) -> String {
-        let taken = Set((ExerciseDemoSessions.all + saved).map(\.name))
+        let taken = Set(saved.map(\.name))
         guard taken.contains(name) else { return name }
         var candidate = "\(name) Copy"
         var suffix = 2
@@ -157,7 +170,7 @@ final class ExerciseSessionBuilder {
         return candidate
     }
 
-    func save(named name: String, symbol: String = "dumbbell") {
+    func save(named name: String, icon: ExerciseSessionIcon = .dumbbell) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty, !added.isEmpty else { return }
         let items = added.map { exercise in
@@ -169,8 +182,8 @@ final class ExerciseSessionBuilder {
         saved.append(
             ExerciseQuickSession(
                 name: title,
-                symbol: symbol,
-                accentColor: .defaultPurple,
+                symbol: icon.symbol,
+                accentColor: icon.accentColor,
                 subtitle: added.count.counted("exercise"),
                 isCardio: false,
                 items: items
@@ -224,13 +237,31 @@ final class ExerciseSessionBuilder {
         sets[exercise] = nil
     }
 
-    private func renumbered(_ drafts: [ExerciseSetDraft]) -> [ExerciseSetDraft] {
-        var working = 0
-        return drafts.map { draft in
-            guard case .working = draft.kind else { return draft }
-            working += 1
-            return ExerciseSetDraft(kind: .working(working), weight: draft.weight, reps: draft.reps, rest: draft.rest)
+    /// Warm-up and drop sets go back to working sets. A working set becomes a
+    /// warm-up when it extends the leading warm-up block, and a drop set anywhere
+    /// else — warm-ups are always contiguous and always first.
+    func cycleKind(of id: UUID, in exercise: String) {
+        guard var drafts = sets[exercise],
+              let index = drafts.firstIndex(where: { $0.id == id }) else { return }
+
+        let extendsWarmUps = drafts[..<index].allSatisfy { $0.kind == .warmUp }
+
+        drafts[index].kind = switch drafts[index].kind {
+        case .warmUp, .dropSet: .working(0)
+        case .working: extendsWarmUps ? .warmUp : .dropSet
         }
+
+        sets[exercise] = renumbered(drafts)
+    }
+
+    private func renumbered(_ drafts: [ExerciseSetDraft]) -> [ExerciseSetDraft] {
+        var renumbered = drafts
+        var working = 0
+        for index in renumbered.indices where renumbered[index].kind.isWorking {
+            working += 1
+            renumbered[index].kind = .working(working)
+        }
+        return renumbered
     }
 
     func addSet(to exercise: String) {
@@ -238,19 +269,19 @@ final class ExerciseSessionBuilder {
             if case .working = $0.kind { return true }
             return false
         }
-        let draft = ExerciseSetDraft(kind: .working(working.count + 1), weight: "10 kg", reps: "5", rest: "5:00")
-        guard let coolDownIndex = sets[exercise]?.firstIndex(where: { $0.kind == .coolDown }) else {
+        let draft = ExerciseSetDraft(kind: .working(working.count + 1), weight: "10 kg", reps: "5", rest: "1:00")
+        guard let dropSetIndex = sets[exercise]?.firstIndex(where: { $0.kind == .dropSet }) else {
             sets[exercise, default: []].append(draft)
             return
         }
-        sets[exercise]?.insert(draft, at: coolDownIndex)
+        sets[exercise]?.insert(draft, at: dropSetIndex)
     }
 
     private static let defaultSets: [ExerciseSetDraft] = [
         ExerciseSetDraft(kind: .warmUp, weight: "10 kg", reps: "5", rest: "1:00"),
-        ExerciseSetDraft(kind: .working(1), weight: "10 kg", reps: "5", rest: "5:00"),
-        ExerciseSetDraft(kind: .working(2), weight: "10 kg", reps: "5", rest: "5:00"),
-        ExerciseSetDraft(kind: .working(3), weight: "10 kg", reps: "5", rest: "5:00"),
-        ExerciseSetDraft(kind: .coolDown, weight: "10 kg", reps: "5", rest: "5:00"),
+        ExerciseSetDraft(kind: .working(1), weight: "10 kg", reps: "5", rest: "1:00"),
+        ExerciseSetDraft(kind: .working(2), weight: "10 kg", reps: "5", rest: "1:00"),
+        ExerciseSetDraft(kind: .working(3), weight: "10 kg", reps: "5", rest: "1:00"),
+        ExerciseSetDraft(kind: .dropSet, weight: "10 kg", reps: "5", rest: "1:00"),
     ]
 }

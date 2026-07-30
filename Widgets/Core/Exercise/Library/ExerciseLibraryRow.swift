@@ -49,14 +49,10 @@ struct ExerciseLibraryRow: View {
     }
 
     private var thumbnail: some View {
-        RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
-            .fill(Color.textColor.opacity(.ultraLowOpacity))
-            .frame(width: Constants.thumbnailWidth, height: Constants.thumbnailHeight)
-            .overlay {
-                Image(systemName: exercise.category.symbol)
-                    .font(.standardSFPro(size: .body2, weight: .light))
-                    .foregroundStyle(exercise.category.accentColor)
-            }
+        Image(systemName: exercise.category.symbol)
+            .font(.standardSFPro(size: .standout4, weight: .light))
+            .foregroundStyle(exercise.category.accentColor)
+            .frame(width: Constants.thumbnailWidth)
     }
 
     private var subtitle: String {
@@ -65,7 +61,6 @@ struct ExerciseLibraryRow: View {
 
     private enum Constants {
         static let thumbnailWidth: CGFloat = 40
-        static let thumbnailHeight: CGFloat = 50
         static let tickTouchSize: CGFloat = 44
     }
 }

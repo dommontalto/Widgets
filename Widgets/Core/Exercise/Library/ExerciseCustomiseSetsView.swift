@@ -21,26 +21,35 @@ struct ExerciseCustomiseSetsView: View {
     @State private var symbol = ExerciseSessionIcon.allCases[0]
     @State private var swapTarget: ExerciseSwapTarget?
     @State private var isAddingExercise = false
+    @State private var addedExercise: String?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                nameField
+        ScrollViewReader { scroller in
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: .spacing3x) {
+                    nameField
 
-                iconPicker
+                    iconPicker
 
-                ForEach(builder.added, id: \.self) { exercise in
-                    exerciseCard(exercise)
+                    ForEach(builder.added, id: \.self) { exercise in
+                        exerciseCard(exercise)
+                            .id(exercise)
+                    }
+
+                    BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .medium) {
+                        isAddingExercise = true
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-
-                BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .large) {
-                    isAddingExercise = true
-                }
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal, .spacing3x)
+                .padding(.top, .spacing2x)
+                .padding(.bottom, .spacing4x)
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.top, .spacing2x)
-            .padding(.bottom, .spacing4x)
+            .onChange(of: addedExercise) { _, exercise in
+                guard let exercise else { return }
+                withAnimation(.brightEaseInOut) { scroller.scrollTo(exercise, anchor: .top) }
+                addedExercise = nil
+            }
         }
         .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -57,12 +66,13 @@ struct ExerciseCustomiseSetsView: View {
         .sheet(isPresented: $isAddingExercise) {
             ExerciseSwapSheet(adding: true) { exercise in
                 builder.add(exercise.name)
+                addedExercise = exercise.name
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
-                    builder.save(named: name, symbol: symbol.symbol)
+                    builder.save(named: name, icon: symbol)
                     onSave()
                 }
                 .buttonStyle(.borderedProminent)
@@ -84,26 +94,24 @@ struct ExerciseCustomiseSetsView: View {
     }
 
     private var iconPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: .spacing2x) {
-                ForEach(ExerciseSessionIcon.allCases) { icon in
-                    Button {
-                        symbol = icon
-                    } label: {
-                        Image(systemName: icon.symbol)
-                            .font(.standardSFPro(size: .heading, weight: .light))
-                            .foregroundStyle(icon == symbol ? Color.defaultSkyBlue : .semiLightTextColor)
-                            .frame(width: Constants.iconTile, height: Constants.iconTile)
-                            .background {
-                                Circle()
-                                    .fill(Color.defaultMainGrey.opacity(icon == symbol ? .minimalOpacity : .finalBossLowOpacity))
-                            }
-                    }
-                    .buttonStyle(.plain)
+        HStack(spacing: .spacing0x) {
+            ForEach(ExerciseSessionIcon.allCases) { icon in
+                Button {
+                    symbol = icon
+                } label: {
+                    Image(systemName: icon.symbol)
+                        .font(.standardSFPro(size: .heading, weight: .light))
+                        .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
+                        .frame(width: Constants.iconTile, height: Constants.iconTile)
+                        .background {
+                            Circle()
+                                .fill(Color.defaultMainGrey.opacity(icon == symbol ? .minimalOpacity : .finalBossLowOpacity))
+                        }
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.plain)
             }
         }
-        .scrollClipDisabled()
         .animation(.brightSnappy, value: symbol)
     }
 
@@ -140,7 +148,7 @@ struct ExerciseCustomiseSetsView: View {
                 Button("Move up", systemImage: "arrow.up") {
                     builder.moveUp(exercise)
                 }
-                Button("Swap out exercise", systemImage: "arrow.triangle.2.circlepath") {
+                Button("Swap out exercise", systemImage: "rectangle.2.swap") {
                     swapTarget = ExerciseSwapTarget(id: exercise)
                 }
                 Button("Remove exercise", systemImage: "trash", role: .destructive) {
@@ -148,7 +156,7 @@ struct ExerciseCustomiseSetsView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.standardSFPro(size: .heading, weight: .light))
+                    .font(.standardSFPro(size: .standout4, weight: .light))
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
@@ -172,7 +180,7 @@ struct ExerciseCustomiseSetsView: View {
             .buttonStyle(.plain)
 
             circleButton("plus") {
-                builder.addSet(to: exercise)
+                withAnimation(.brightSnappy) { builder.addSet(to: exercise) }
             }
         }
     }
@@ -225,14 +233,17 @@ struct ExerciseCustomiseSetsView: View {
                     weight: builder.binding(for: draft.id, in: exercise, keyPath: \.weight),
                     reps: builder.binding(for: draft.id, in: exercise, keyPath: \.reps),
                     rest: builder.binding(for: draft.id, in: exercise, keyPath: \.rest),
-                    isTyping: $isTyping
+                    isTyping: $isTyping,
+                    onCycleKind: {
+                        withAnimation(.brightSnappy) { builder.cycleKind(of: draft.id, in: exercise) }
+                    }
                 )
                 .listRowInsets(EdgeInsets(top: 0, leading: .spacing3x, bottom: 0, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
-                        builder.removeSet(draft.id, from: exercise)
+                        withAnimation(.brightSnappy) { builder.removeSet(draft.id, from: exercise) }
                     } label: {
                         Image(systemName: "trash")
                     }
@@ -246,6 +257,7 @@ struct ExerciseCustomiseSetsView: View {
         .contentMargins(.vertical, .spacing0x, for: .scrollContent)
         .environment(\.defaultMinListRowHeight, ExerciseSetRow.Constants.rowHeight)
         .frame(height: ExerciseSetRow.Constants.rowHeight * CGFloat(drafts.count))
+        .animation(.brightSnappy, value: drafts.count)
     }
 
     private enum Constants {
