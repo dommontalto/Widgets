@@ -57,7 +57,7 @@ struct ExerciseLiveSessionSheet: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.sheetBackground.ignoresSafeArea())
+        .background(Color.defaultSheetBackground.ignoresSafeArea())
         .navigationTitle(sessionName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -66,7 +66,7 @@ struct ExerciseLiveSessionSheet: View {
                     completedSession = finishedSession
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.defaultWarningRed)
+                .tint(.defaultRed)
             }
         }
         .animation(.brightEaseInOut, value: completedSets)
@@ -162,7 +162,7 @@ struct ExerciseLiveSessionSheet: View {
         .padding(.horizontal, .spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: statTileHeight)
-        .modifier(CardModifier(color: .sheetModalCards, cornerRadius: .cornerRadius18))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
     private func exerciseCard(_ exercise: Binding<ExerciseActiveExercise>) -> some View {
@@ -261,7 +261,7 @@ struct ExerciseLiveSessionSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var restTimerPill: some View {
@@ -295,7 +295,7 @@ struct ExerciseLiveSessionSheet: View {
         }
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing2x)
-        .modifier(CardModifier(color: .sheetModalCards, cornerRadius: .cornerRadius18))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing1x)
     }
@@ -311,7 +311,7 @@ struct ExerciseLiveSessionSheet: View {
             Button {
                 dismiss()
             } label: {
-                BrightText("Cancel workout", size: .body2, color: .defaultWarningRed, weight: .regular)
+                BrightText("Cancel workout", size: .body2, color: .defaultRed, weight: .regular)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, .spacing2x)
             }
@@ -419,7 +419,7 @@ private struct ExerciseLoggerSetRow: View {
             if dragOffset < 0 {
                 Image(systemName: "trash")
                     .font(.standardSFPro(size: .body2, weight: .regular))
-                    .foregroundStyle(Color.defaultWarningRed)
+                    .foregroundStyle(Color.defaultRed)
                     .padding(.trailing, .spacing1x)
             }
         }

@@ -96,7 +96,7 @@ struct BrightSwipePageView<Content: View>: View {
     /// edge. Defaults to `true` — no effect on existing call sites.
     let bottomSafeArea: Bool
     /// Full-bleed page background. Defaults to `nil` (no background) so sheet
-    /// call sites keep their own; standalone screens pass `.bG`.
+    /// call sites keep their own; standalone screens pass `.defaultBackground`.
     let backgroundColor: Color?
     /// Hide it to give a page the full sheet, e.g. an expanded map.
     let navigationBarVisibility: Visibility

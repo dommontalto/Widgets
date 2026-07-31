@@ -53,7 +53,7 @@ struct ExerciseSessionCompleteSheet: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.sheetBackground.ignoresSafeArea())
+        .background(Color.defaultSheetBackground.ignoresSafeArea())
         .navigationTitle("Session complete")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: openedExerciseBinding) { exercise in
@@ -115,7 +115,7 @@ struct ExerciseSessionCompleteSheet: View {
         .padding(.horizontal, .spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: statTileHeight)
-        .modifier(CardModifier(color: .sheetModalCards, cornerRadius: .cornerRadius18))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
     private var exercisesCard: some View {
@@ -134,7 +134,7 @@ struct ExerciseSessionCompleteSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private func exerciseSection(_ exercise: ExerciseLoggedExercise) -> some View {
@@ -223,7 +223,7 @@ struct ExerciseSessionCompleteSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var zoneBreakdown: [(color: Color, fraction: CGFloat, time: String)] {
@@ -232,7 +232,7 @@ struct ExerciseSessionCompleteSheet: View {
             (.defaultGreen, 0.22, "5:29"),
             (.defaultYellow, 0.38, "9:28"),
             (.defaultOrange, 0.24, "5:59"),
-            (.defaultWarningRed, 0.06, "1:31"),
+            (.defaultRed, 0.06, "1:31"),
         ]
     }
 
@@ -282,7 +282,7 @@ struct ExerciseSessionCompleteSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private func splitRow(_ split: ExerciseSplit) -> some View {

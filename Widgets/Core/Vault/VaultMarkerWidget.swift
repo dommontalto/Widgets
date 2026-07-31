@@ -41,7 +41,7 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
 
 struct VaultMarkerWidget: View, Equatable {
     let data: VaultRangeMarkerData
-    var cardColor: Color = .cards
+    var cardColor: Color = .defaultCards
     var onTap: (() -> Void)?
 
     static func == (lhs: VaultMarkerWidget, rhs: VaultMarkerWidget) -> Bool {

@@ -14,7 +14,7 @@ struct BrightChip<Trailing: View>: View {
     var systemImage: String?
     var size: FontSizes = .body1
     var tint: Color = .semiLightTextColor
-    var fill: Color = .sheetModalCards
+    var fill: Color = .defaultSheetModalCards
     var accent: Color = .defaultGreen
     var isSelected: Bool = false
     var onTap: (() -> Void)?
@@ -78,7 +78,7 @@ extension BrightChip where Trailing == EmptyView {
         systemImage: String? = nil,
         size: FontSizes = .body1,
         tint: Color = .semiLightTextColor,
-        fill: Color = .sheetModalCards,
+        fill: Color = .defaultSheetModalCards,
         accent: Color = .defaultGreen,
         isSelected: Bool = false,
         onTap: (() -> Void)? = nil
@@ -105,5 +105,5 @@ extension BrightChip where Trailing == EmptyView {
         BrightChip(title: "LIVER", size: .body3, tint: .defaultBlue, fill: .defaultLighthouseBlue)
     }
     .padding()
-    .background(Color.sheetBackground)
+    .background(Color.defaultSheetBackground)
 }

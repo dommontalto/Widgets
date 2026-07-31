@@ -44,7 +44,7 @@ struct ExerciseLibraryRow: View {
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var thumbnail: some View {

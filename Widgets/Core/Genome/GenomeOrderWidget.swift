@@ -45,5 +45,5 @@ struct GenomeOrderWidget: View {
 #Preview {
     GenomeOrderWidget()
         .padding(.spacing3x)
-        .background(Color.bG.ignoresSafeArea())
+        .background(Color.defaultBackground.ignoresSafeArea())
 }

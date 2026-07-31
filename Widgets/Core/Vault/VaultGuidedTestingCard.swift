@@ -59,12 +59,12 @@ struct VaultGuidedTestingCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cards)
+        .background(Color.defaultCards)
     }
 }
 
 #Preview {
     VaultGuidedTestingCard()
         .padding(.spacing3x)
-        .background(Color.bG.ignoresSafeArea())
+        .background(Color.defaultBackground.ignoresSafeArea())
 }

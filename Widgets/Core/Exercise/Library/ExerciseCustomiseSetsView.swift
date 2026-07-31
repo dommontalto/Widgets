@@ -56,7 +56,7 @@ struct ExerciseCustomiseSetsView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.sheetBackground.ignoresSafeArea())
+        .background(Color.defaultSheetBackground.ignoresSafeArea())
         .contentShape(Rectangle())
         .onTapGesture { isTyping = false }
         .navigationTitle("Customise sets")
@@ -100,7 +100,7 @@ struct ExerciseCustomiseSetsView: View {
                 .foregroundStyle(Color.textColor)
                 .brightWiggle(trigger: nameNudge)
 
-            BrightText(builder.count.counted("exercise"), size: .body1, color: .semiLightTextColor)
+            BrightText("\(builder.count) exercise\(builder.count == 1 ? "" : "s")", size: .body1, color: .semiLightTextColor)
         }
     }
 
@@ -167,7 +167,7 @@ struct ExerciseCustomiseSetsView: View {
         }
         .padding(.vertical, .spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private func cardHeader(_ exercise: String) -> some View {

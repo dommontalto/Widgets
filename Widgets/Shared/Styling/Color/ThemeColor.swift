@@ -14,7 +14,7 @@ class ThemeColor {
     static let fats: Color = .defaultYellow
     static let protein: Color = .defaultBrightPink
     static let activity: Color = .defaultOrange
-    static let resting: Color = .defaultRestingPurple
+    static let resting: Color = .defaultPurple
 
     // Limits
     static let others: Color = .defaultBrightPink

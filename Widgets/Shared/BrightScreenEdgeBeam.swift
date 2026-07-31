@@ -78,7 +78,7 @@ struct BrightScreenEdgeBeam: View {
 
 #Preview {
     ZStack {
-        Color.bG.ignoresSafeArea()
+        Color.defaultBackground.ignoresSafeArea()
         BrightScreenEdgeBeam()
     }
 }

@@ -30,7 +30,7 @@ struct ExerciseAddedPill: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.standardSFPro(size: .standout3, weight: .light))
-                        .foregroundStyle(Color.defaultWarningRed)
+                        .foregroundStyle(Color.defaultRed)
                         .frame(width: Constants.clearTouchSize, height: Constants.clearTouchSize)
                         .contentShape(Rectangle())
                 }

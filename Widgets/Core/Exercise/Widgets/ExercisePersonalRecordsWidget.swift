@@ -28,7 +28,7 @@ struct ExercisePersonalRecordsWidget: View {
             badge: BadgeStyle(
                 imageName: ImageNames.exerciseRecordHexagonV5,
                 icon: "hare.fill",
-                iconColor: .defaultMainWhite,
+                iconColor: .defaultWhite,
                 iconSize: .subheading
             ),
             label: "Fastest 1K",
@@ -39,7 +39,7 @@ struct ExercisePersonalRecordsWidget: View {
             badge: BadgeStyle(
                 imageName: ImageNames.exerciseRecordHexagonGoldV5,
                 icon: "flag.and.flag.filled.crossed",
-                iconColor: .defaultMainBlack,
+                iconColor: .defaultBlack,
                 iconSize: .heading
             ),
             label: "Finisher",

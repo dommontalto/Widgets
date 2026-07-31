@@ -46,12 +46,12 @@ struct ExerciseWeeklyPlanWidget: View {
                 .scaledToFill()
 
             VStack(spacing: .spacing3x) {
-                BrightPillButton("Start", textColor: .defaultMainWhite, buttonSize: .large, isClear: true, onTapCallback: onStart)
+                BrightPillButton("Start", textColor: .defaultWhite, buttonSize: .large, isClear: true, onTapCallback: onStart)
 
                 BrightText(
                     "Start a program or plan your workouts in advance.",
                     size: .heading,
-                    color: .defaultMainWhite,
+                    color: .defaultWhite,
                     weight: .regular
                 )
                 .multilineTextAlignment(.center)

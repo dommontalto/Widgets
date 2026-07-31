@@ -65,7 +65,7 @@ struct BrightStatus: View {
         case "SUB-OPTIMAL", "AVG ZONE 4", "BORDERLINE":
             Color.defaultOrange
         case "POOR", "LOW", "HIGH", "AVG ZONE 5", "LOWER", "HIGHER", "OUT OF RANGE", "WARNING":
-            Color.defaultWarningRed
+            Color.defaultRed
         case "STANDARD":
             Color.defaultBlue
         case "AVG ZONE 1":

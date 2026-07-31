@@ -49,7 +49,7 @@ struct GenomePercentileGraphWidget: View {
     private var legendRow: some View {
         HStack(spacing: .spacing3x) {
             legendDot(color: Color.defaultCyan, label: "Reference")
-            legendDot(color: Color.defaultWarningRed, label: "Higher-risk")
+            legendDot(color: Color.defaultRed, label: "Higher-risk")
         }
     }
 
@@ -72,7 +72,7 @@ struct GenomePercentileGraphWidget: View {
                     yEnd: .value("% Risk", p.higherRisk)
                 )
                 .foregroundStyle(LinearGradient(
-                    colors: [Color.defaultWarningRed.opacity(.semiLowOpacity), .clear],
+                    colors: [Color.defaultRed.opacity(.semiLowOpacity), .clear],
                     startPoint: .top, endPoint: .bottom
                 ))
                 .interpolationMethod(.catmullRom)
@@ -110,7 +110,7 @@ struct GenomePercentileGraphWidget: View {
         .chartForegroundStyleScale([
             "ref":  Color.defaultCyan,
             "user": Color.lightTextColor,
-            "high": Color.defaultWarningRed
+            "high": Color.defaultRed
         ])
         .chartLegend(.hidden)
         .chartOverlay { proxy in

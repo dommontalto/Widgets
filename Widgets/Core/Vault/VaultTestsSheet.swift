@@ -114,7 +114,7 @@ struct VaultTestsSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    BrightText("What's your goal?", size: .body1, color: .defaultMainBlack, weight: .medium)
+                    BrightText("What's your goal?", size: .body1, color: .defaultBlack, weight: .medium)
                 }
 
                 ToolbarItem(placement: .topBarLeading) {
@@ -151,7 +151,7 @@ struct VaultTestsSheet: View {
                 LinearGradient(
                     stops: [
                         .init(color: panel.gradientTopColor, location: gradientTopLocation),
-                        .init(color: .sheetBackground, location: gradientBottomLocation),
+                        .init(color: .defaultSheetBackground, location: gradientBottomLocation),
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -171,7 +171,7 @@ struct VaultTestsSheet: View {
 
 #Preview {
     ZStack {
-        Color.bG.ignoresSafeArea()
+        Color.defaultBackground.ignoresSafeArea()
         VaultTestsSheet()
     }
 }

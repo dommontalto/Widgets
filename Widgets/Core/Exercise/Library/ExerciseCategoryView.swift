@@ -36,7 +36,7 @@ struct ExerciseCategoryView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.sheetBackground.ignoresSafeArea())
+        .background(Color.defaultSheetBackground.ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .animation(.brightEaseInOut, value: filtered.count)

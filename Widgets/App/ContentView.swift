@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showingOrder = false
     @State private var showingVaultTests = false
     @State private var showingSession = false
+    @State private var showingAddSessions = false
     @State private var builder = ExerciseSessionBuilder()
     @State private var startedSession: ExerciseQuickSession?
     @State private var isLoggingCardio = false
@@ -38,6 +39,10 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
+                    widgetLabel("ExerciseAddSessionsSheet")
+                    addSessionsButton
+                        .padding(.bottom, .spacing3x)
+
                     widgetLabel("ExercisePersonalRecordsWidget")
                     ExercisePersonalRecordsWidget()
                         .padding(.bottom, .spacing3x)
@@ -124,7 +129,7 @@ struct ContentView: View {
             }
             .padding(.spacing3x)
         }
-        .background(Color.bG.ignoresSafeArea())
+        .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -146,6 +151,9 @@ struct ContentView: View {
         .sheet(isPresented: $showingSession) {
             ExerciseSessionSheet()
         }
+        .sheet(isPresented: $showingAddSessions) {
+            ExerciseAddSessionsSheet()
+        }
         .sheet(item: $startedSession) { session in
             NavigationStack {
                 ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items)
@@ -162,6 +170,21 @@ struct ContentView: View {
                 showingVaultTests = false
             })
         }
+    }
+
+    private var addSessionsButton: some View {
+        Button {
+            showingAddSessions = true
+        } label: {
+            BrightText("Add sessions", size: .body2, weight: .regular)
+                .padding(.horizontal, .spacing3x)
+                .padding(.vertical, .spacing105x)
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
     }
 
     private var findTestsButton: some View {

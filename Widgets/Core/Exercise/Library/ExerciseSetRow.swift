@@ -49,7 +49,7 @@ struct ExerciseSetRow: View {
 
     private var tint: Color {
         colorScheme == .dark
-            ? .sheetBackground.opacity(.veryLowOpacity)
+            ? .defaultSheetBackground.opacity(.veryLowOpacity)
             : .defaultMainGrey.opacity(.ultraLowOpacity)
     }
 

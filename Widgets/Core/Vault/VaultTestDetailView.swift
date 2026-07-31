@@ -42,7 +42,7 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing10x)
         }
         .scrollIndicators(.hidden)
-        .background(Color.sheetBackground)
+        .background(Color.defaultSheetBackground)
         .ignoresSafeArea(edges: .top)
         .overlay(alignment: .bottom) {
             BrightFullWidthButton("Find tests", horizontalPadding: .spacing6x) {

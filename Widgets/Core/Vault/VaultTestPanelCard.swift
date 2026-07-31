@@ -63,5 +63,5 @@ struct VaultTestPanelCard: View {
             .frame(height: 280)
     }
     .padding(.spacing3x)
-    .background(Color.bG.ignoresSafeArea())
+    .background(Color.defaultBackground.ignoresSafeArea())
 }

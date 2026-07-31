@@ -73,7 +73,7 @@ struct BrightGraph: View {
                         if let x = proxy.position(forX: point.x),
                            let y = proxy.position(forY: point.value) {
                             ZStack {
-                                Circle().fill(Color.bG)
+                                Circle().fill(Color.defaultBackground)
                                 Circle().stroke(lineColor, lineWidth: 2.5)
                             }
                             .frame(width: 7, height: 7)

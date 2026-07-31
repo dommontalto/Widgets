@@ -15,7 +15,7 @@ struct CardModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
     init(
-        color: Color = .cards,
+        color: Color = .defaultCards,
         cornerRadius: CGFloat = .cardCornerRadius,
         clipContent: Bool = true
     ) {

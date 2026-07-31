@@ -42,5 +42,5 @@ private struct GenomeCategoryCard: View {
         GenomeImpactContributorWidget()
             .padding(.spacing3x)
     }
-    .background(Color.bG.ignoresSafeArea())
+    .background(Color.defaultBackground.ignoresSafeArea())
 }

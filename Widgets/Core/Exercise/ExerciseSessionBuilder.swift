@@ -184,7 +184,7 @@ final class ExerciseSessionBuilder {
                 name: title,
                 symbol: icon.symbol,
                 accentColor: icon.accentColor,
-                subtitle: added.count.counted("exercise"),
+                subtitle: "\(added.count) exercise\(added.count == 1 ? "" : "s")",
                 isCardio: false,
                 items: items
             )
@@ -207,7 +207,7 @@ final class ExerciseSessionBuilder {
             if case .working = $0.kind { return true }
             return false
         }
-        guard let first = working.first else { return working.count.counted("set") }
+        guard let first = working.first else { return "\(working.count) sets" }
         return "\(working.count) \u{00D7} \(first.reps)"
     }
 

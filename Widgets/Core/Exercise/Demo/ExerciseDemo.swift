@@ -193,7 +193,7 @@ enum ExerciseDemoData {
             type: .cardio,
             goals: [
                 ExerciseSessionGoal(icon: "clock", iconColor: .defaultSkyBlue, label: "Pace", value: "4\u{2019}26"),
-                ExerciseSessionGoal(icon: "arrow.up.heart", iconColor: .defaultWarningRed, label: "Zone", value: "3"),
+                ExerciseSessionGoal(icon: "arrow.up.heart", iconColor: .defaultRed, label: "Zone", value: "3"),
             ],
             note: "Based off your recovery and sleep, we recommend adjusting for a slower run."
         ),

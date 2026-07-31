@@ -93,5 +93,5 @@ struct BrightPlaceholderView: View {
             subtitle: "Your kit is on its way. We'll email you tracking details."
         )
     }
-    .background(Color.bG.ignoresSafeArea())
+    .background(Color.defaultBackground.ignoresSafeArea())
 }

@@ -208,7 +208,7 @@ struct VaultDatapointDetailSheet: View {
             if isAllReadingsExpanded {
                 VStack(spacing: .spacing3x) {
                     ForEach(demoReadings) { reading in
-                        VaultMarkerWidget(data: reading, cardColor: .sheetModalCards)
+                        VaultMarkerWidget(data: reading, cardColor: .defaultSheetModalCards)
                     }
                 }
                 .padding(.top, .spacing2x)

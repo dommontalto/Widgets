@@ -109,7 +109,7 @@ struct VaultClinicsMapView: View {
 
     private var clinicPin: some View {
         Circle()
-            .fill(Color.defaultMainBlack)
+            .fill(Color.defaultBlack)
             .frame(width: .spacing5x, height: .spacing5x)
             .overlay {
                 Image(systemName: "circle.hexagongrid")
@@ -147,7 +147,7 @@ private struct ClinicMiniSheet: View {
 
             HStack(spacing: .spacing105x) {
                 Circle()
-                    .fill(Color.defaultMainBlack)
+                    .fill(Color.defaultBlack)
                     .frame(width: .spacing5x, height: .spacing5x)
                     .overlay {
                         Image(systemName: "circle.hexagongrid")

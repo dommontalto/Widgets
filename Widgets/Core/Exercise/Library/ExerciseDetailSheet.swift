@@ -94,7 +94,7 @@ struct ExerciseDetailSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var statsGrid: some View {
@@ -122,7 +122,7 @@ struct ExerciseDetailSheet: View {
         .padding(.horizontal, .spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: statTileHeight)
-        .modifier(CardModifier(color: .sheetModalCards, cornerRadius: .cornerRadius18))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
     private var progressionCard: some View {
@@ -161,7 +161,7 @@ struct ExerciseDetailSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var chart: some View {
@@ -214,7 +214,7 @@ struct ExerciseDetailSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var historyCard: some View {
@@ -245,7 +245,7 @@ struct ExerciseDetailSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private class Constants {

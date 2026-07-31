@@ -36,8 +36,8 @@ struct ExerciseLiveCardioSheet: View {
             stopButton
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.bG.ignoresSafeArea())
-        .presentationBackground(Color.bG)
+        .background(Color.defaultBackground.ignoresSafeArea())
+        .presentationBackground(Color.defaultBackground)
         .presentationDragIndicator(.hidden)
     }
 
@@ -205,13 +205,13 @@ struct ExerciseLiveCardioSheet: View {
             HStack(spacing: .spacing1x) {
                 Image(systemName: "stop.fill")
                     .font(.standard(size: .heading, weight: .regular))
-                    .foregroundStyle(Color.defaultWarningRed)
+                    .foregroundStyle(Color.defaultRed)
 
-                BrightText("STOP", size: .standout4, color: .defaultWarningRed)
+                BrightText("STOP", size: .standout4, color: .defaultRed)
             }
             .padding(.horizontal, .spacing2x)
             .frame(height: .spacing8x)
-            .background(Color.defaultWarningRed.opacity(.veryLowOpacity), in: Capsule())
+            .background(Color.defaultRed.opacity(.veryLowOpacity), in: Capsule())
         }
         .buttonStyle(.plain)
         .padding(.bottom, .spacing4x)
@@ -229,7 +229,7 @@ struct ExerciseLiveCardioSheet: View {
 }
 
 #Preview {
-    Color.bG
+    Color.defaultBackground
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
             ExerciseLiveCardioSheet()

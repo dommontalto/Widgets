@@ -114,7 +114,7 @@ struct VaultTestingServicesView: View {
             .padding(.bottom, .spacing10x)
         }
         .scrollIndicators(.hidden)
-        .background(Color.sheetBackground.ignoresSafeArea())
+        .background(Color.defaultSheetBackground.ignoresSafeArea())
         .navigationTitle("Testing services")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -159,7 +159,7 @@ struct VaultTestingServicesView: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing105x) {
                 Circle()
-                    .fill(Color.defaultMainBlack)
+                    .fill(Color.defaultBlack)
                     .frame(width: .spacing4x, height: .spacing4x)
                     .overlay {
                         Image(systemName: "circle.hexagongrid")
@@ -201,7 +201,7 @@ struct VaultTestingServicesView: View {
                 .padding(.top, .spacing1x)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var divider: some View {

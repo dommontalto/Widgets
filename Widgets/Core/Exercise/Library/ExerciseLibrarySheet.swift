@@ -92,7 +92,7 @@ struct ExerciseLibrarySheet: View {
             }
             .padding(.horizontal, .spacing3x)
             .padding(.vertical, .spacing1x)
-            .modifier(CardModifier(color: .sheetModalCards))
+            .modifier(CardModifier(color: .defaultSheetModalCards))
         }
     }
 

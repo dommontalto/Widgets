@@ -26,7 +26,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     init(
         title: String = "",
         horizontalPadding: CGFloat = .spacing3x,
-        backgroundColor: Color = .sheetBackground,
+        backgroundColor: Color = .defaultSheetBackground,
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
@@ -114,7 +114,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
     init(
         title: String = "",
         horizontalPadding: CGFloat = .spacing3x,
-        backgroundColor: Color = .sheetBackground,
+        backgroundColor: Color = .defaultSheetBackground,
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,

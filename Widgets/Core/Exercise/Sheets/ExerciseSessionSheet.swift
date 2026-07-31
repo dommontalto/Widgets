@@ -47,9 +47,8 @@ struct ExerciseSessionSheet: View {
                         searchResults
                     }
                 }
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing4x)
+                .padding(.spacing3x)
+                .padding(.top, .spacing1x)
             }
             .navigationDestination(for: ExerciseSessionRoute.self) { route in
                 destination(for: route)
@@ -111,7 +110,7 @@ struct ExerciseSessionSheet: View {
             ExerciseDetailSheet(exercise: exercise)
                 .padding(.horizontal, .spacing3x)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(Color.sheetBackground.ignoresSafeArea())
+                .background(Color.defaultSheetBackground.ignoresSafeArea())
                 .navigationTitle(exercise.name)
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -141,7 +140,7 @@ struct ExerciseSessionSheet: View {
                     symbol: category.symbol,
                     color: category.accentColor,
                     title: category.displayName,
-                    subtitle: ExerciseDemoLibrary.exercises(in: category).count.counted(category.countNoun)
+                    subtitle: "\(ExerciseDemoLibrary.exercises(in: category).count) \(category.countUnit)"
                 )
             }
             .buttonStyle(.plain)
@@ -216,7 +215,7 @@ struct ExerciseSessionSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.spacing2x)
         .frame(height: Constants.cardHeight, alignment: .topLeading)
-        .modifier(CardModifier(color: .sheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var searchResults: some View {

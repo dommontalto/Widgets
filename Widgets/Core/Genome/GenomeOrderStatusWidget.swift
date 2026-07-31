@@ -68,5 +68,5 @@ struct GenomeOrderStatusWidget: View {
 #Preview {
     GenomeOrderStatusWidget()
         .padding(.spacing3x)
-        .background(Color.bG.ignoresSafeArea())
+        .background(Color.defaultBackground.ignoresSafeArea())
 }

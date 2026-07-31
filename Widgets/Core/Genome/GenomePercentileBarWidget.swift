@@ -76,7 +76,7 @@ struct GenomePercentileBarWidget: View {
             .overlay(
                 ZStack {
                     Capsule()
-                        .fill(Color.cards)
+                        .fill(Color.defaultCards)
                         .frame(width: 8, height: markerHeight)
                     Capsule()
                         .fill(Color.primary)
@@ -94,5 +94,5 @@ struct GenomePercentileBarWidget: View {
 #Preview {
     GenomePercentileBarWidget()
         .padding(.spacing3x)
-        .background(Color.bG.ignoresSafeArea())
+        .background(Color.defaultBackground.ignoresSafeArea())
 }
