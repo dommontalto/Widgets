@@ -79,51 +79,15 @@ struct VaultTestsSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                VStack(spacing: .spacing0x) {
-                    Spacer()
-
-                    BrightCarousel(items: panels, activeIndex: $activeIndex) { panel, width in
-                        VaultTestPanelCard(panel: panel)
-                            .frame(width: width, height: width * 1.25)
-                    }
-
-                    BrightPageIndicator(total: panels.count, activeIndex: $activeIndex)
-                        .opacity(isShowing ? 1 : 0)
-                        .padding(.top, .spacing6x)
-
-                    Spacer()
-                }
-
-                VStack {
-                    Spacer()
-
-                    BrightFullWidthButton("Find tests", horizontalPadding: .spacing6x) {
-                        onTestSelected(visiblePanel)
-                        showingDetail = true
-                    }
-                    .opacity(isShowing ? 1 : 0)
-                }
-            }
-            .background(goalGradientBackground.ignoresSafeArea())
-            .navigationDestination(isPresented: $showingDetail) {
-                VaultTestDetailView(panel: visiblePanel)
-            }
-            .navigationTitle("What's your goal?")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+        BrightPageSheetView(
+            title: "What's your goal?",
+            horizontalPadding: .spacing0x,
+            backgroundColor: .clear,
+            showBackButton: true,
+            backButtonCallback: close,
+            trailing: {
                 ToolbarItem(placement: .principal) {
                     BrightText("What's your goal?", size: .body1, color: .defaultBlack, weight: .medium)
-                }
-
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        close()
-                    } label: {
-                        Label("Back", systemImage: "chevron.backward")
-                            .labelStyle(.iconOnly)
-                    }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -131,8 +95,40 @@ struct VaultTestsSheet: View {
                         showingDetail = true
                     }
                 }
+            },
+            content: {
+                ZStack {
+                    VStack(spacing: .spacing0x) {
+                        Spacer()
+
+                        BrightCarousel(items: panels, activeIndex: $activeIndex) { panel, width in
+                            VaultTestPanelCard(panel: panel)
+                                .frame(width: width, height: width * 1.25)
+                        }
+
+                        BrightPageIndicator(total: panels.count, activeIndex: $activeIndex)
+                            .opacity(isShowing ? 1 : 0)
+                            .padding(.top, .spacing6x)
+
+                        Spacer()
+                    }
+
+                    VStack {
+                        Spacer()
+
+                        BrightFullWidthButton("Find tests", horizontalPadding: .spacing6x) {
+                            onTestSelected(visiblePanel)
+                            showingDetail = true
+                        }
+                        .opacity(isShowing ? 1 : 0)
+                    }
+                }
+                .background(goalGradientBackground.ignoresSafeArea())
+                .navigationDestination(isPresented: $showingDetail) {
+                    VaultTestDetailView(panel: visiblePanel)
+                }
             }
-        }
+        )
         .onAppear {
             withAnimation(.brightBouncy) {
                 isShowing = true

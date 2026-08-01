@@ -27,40 +27,56 @@ struct ExerciseCustomiseSetsView: View {
     @Namespace private var iconPickerSpace
 
     var body: some View {
-        ScrollViewReader { scroller in
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing3x) {
-                    nameField
-
-                    iconPicker
-
-                    ForEach(builder.added, id: \.self) { exercise in
-                        exerciseCard(exercise)
-                            .id(exercise)
+        BrightPageView(
+            title: "Customise sets",
+            scrollableTitle: false,
+            horizontalPadding: .spacing0x,
+            backgroundColor: .defaultSheetBackground,
+            toolbar: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        guard !isNameEmpty else {
+                            nameNudge += 1
+                            return
+                        }
+                        builder.save(named: name, icon: symbol)
+                        onSave()
                     }
-
-                    BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .medium) {
-                        isAddingExercise = true
-                    }
-                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .tint(isNameEmpty ? .defaultMainGrey : .defaultSkyBlue)
+                    .id(isNameEmpty)
                 }
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing4x)
+            },
+            content: {
+                ScrollViewReader { scroller in
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: .spacing3x) {
+                            nameField
+
+                            iconPicker
+
+                            ForEach(builder.added, id: \.self) { exercise in
+                                exerciseCard(exercise)
+                                    .id(exercise)
+                            }
+
+                            BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .medium) {
+                                isAddingExercise = true
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.horizontal, .spacing3x)
+                        .padding(.top, .spacing2x)
+                        .padding(.bottom, .spacing4x)
+                    }
+                    .onChange(of: addedExercise) { _, exercise in
+                        guard let exercise else { return }
+                        withAnimation(.brightEaseInOut) { scroller.scrollTo(exercise, anchor: .top) }
+                        addedExercise = nil
+                    }
+                }
             }
-            .onChange(of: addedExercise) { _, exercise in
-                guard let exercise else { return }
-                withAnimation(.brightEaseInOut) { scroller.scrollTo(exercise, anchor: .top) }
-                addedExercise = nil
-            }
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultSheetBackground.ignoresSafeArea())
-        .contentShape(Rectangle())
-        .onTapGesture { isTyping = false }
-        .navigationTitle("Customise sets")
-        .navigationBarTitleDisplayMode(.inline)
+        )
         .sheet(item: $swapTarget) { target in
             ExerciseSwapSheet(replacing: target.id) { replacement in
                 builder.replace(target.id, with: replacement.name)
@@ -70,21 +86,6 @@ struct ExerciseCustomiseSetsView: View {
             ExerciseSwapSheet(adding: true) { exercise in
                 builder.add(exercise.name)
                 addedExercise = exercise.name
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") {
-                    guard !isNameEmpty else {
-                        nameNudge += 1
-                        return
-                    }
-                    builder.save(named: name, icon: symbol)
-                    onSave()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(isNameEmpty ? .defaultMainGrey : .defaultSkyBlue)
-                .id(isNameEmpty)
             }
         }
     }

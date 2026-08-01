@@ -98,59 +98,64 @@ struct VaultTestingServicesView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                BrightText(
-                    "\(clinics.count) clinics found near your location",
-                    size: .body4,
-                    color: .lightTextColor
-                )
-
-                ForEach(clinics) { clinic in
-                    clinicCard(clinic)
-                }
-            }
-            .padding(.horizontal, .spacing3x)
-            .padding(.bottom, .spacing10x)
-        }
-        .scrollIndicators(.hidden)
-        .background(Color.defaultSheetBackground.ignoresSafeArea())
-        .navigationTitle("Testing services")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    ForEach(VaultTestingSortOrder.allCases) { order in
-                        Button {
-                            withAnimation(.brightEaseInOut) { sortOrder = order }
-                        } label: {
-                            Label {
-                                Text(order.rawValue)
-                            } icon: {
-                                if order == sortOrder {
-                                    Image(systemName: "checkmark")
+        BrightPageView(
+            title: "Testing services",
+            scrollableTitle: false,
+            horizontalPadding: .spacing0x,
+            backgroundColor: .defaultSheetBackground,
+            toolbar: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        ForEach(VaultTestingSortOrder.allCases) { order in
+                            Button {
+                                withAnimation(.brightEaseInOut) { sortOrder = order }
+                            } label: {
+                                Label {
+                                    Text(order.rawValue)
+                                } icon: {
+                                    if order == sortOrder {
+                                        Image(systemName: "checkmark")
+                                    }
                                 }
                             }
                         }
+                    } label: {
+                        Label("Filter", systemImage: "line.3.horizontal.decrease")
+                            .labelStyle(.iconOnly)
                     }
-                } label: {
-                    Label("Filter", systemImage: "line.3.horizontal.decrease")
-                        .labelStyle(.iconOnly)
                 }
-            }
 
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingMap = true
-                } label: {
-                    Label("Map", systemImage: "map")
-                        .labelStyle(.iconOnly)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingMap = true
+                    } label: {
+                        Label("Map", systemImage: "map")
+                            .labelStyle(.iconOnly)
+                    }
+                }
+            },
+            content: {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: .spacing3x) {
+                        BrightText(
+                            "\(clinics.count) clinics found near your location",
+                            size: .body4,
+                            color: .lightTextColor
+                        )
+
+                        ForEach(clinics) { clinic in
+                            clinicCard(clinic)
+                        }
+                    }
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.bottom, .spacing10x)
+                }
+                .scrollIndicators(.hidden)
+                .navigationDestination(isPresented: $showingMap) {
+                    VaultClinicsMapView()
                 }
             }
-        }
-        .navigationDestination(isPresented: $showingMap) {
-            VaultClinicsMapView()
-        }
+        )
     }
 
     // MARK: Clinic card

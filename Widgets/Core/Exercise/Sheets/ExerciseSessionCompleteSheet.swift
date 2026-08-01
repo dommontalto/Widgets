@@ -28,7 +28,12 @@ struct ExerciseSessionCompleteSheet: View {
     }
 
     private func sheet(expandedMapHeight: CGFloat) -> some View {
-        Group {
+        BrightPageView(
+            title: "Session complete",
+            scrollableTitle: false,
+            horizontalPadding: .spacing0x,
+            backgroundColor: .defaultSheetBackground
+        ) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     header
@@ -52,10 +57,6 @@ struct ExerciseSessionCompleteSheet: View {
                 .padding(.bottom, .spacing4x)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultSheetBackground.ignoresSafeArea())
-        .navigationTitle("Session complete")
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: openedExerciseBinding) { exercise in
             BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
                 ExerciseDetailSheet(exercise: exercise)

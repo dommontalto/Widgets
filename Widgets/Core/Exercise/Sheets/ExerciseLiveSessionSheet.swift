@@ -32,43 +32,47 @@ struct ExerciseLiveSessionSheet: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing4x) {
-                header
+        BrightPageView(
+            title: sessionName,
+            scrollableTitle: false,
+            horizontalPadding: .spacing0x,
+            backgroundColor: .defaultSheetBackground,
+            toolbar: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("End") {
+                        completedSession = finishedSession
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.defaultRed)
+                }
+            },
+            content: {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: .spacing4x) {
+                        header
 
-                statsRow
+                        statsRow
 
-                VStack(spacing: .spacing3x) {
-                    ForEach($exercises) { $exercise in
-                        exerciseCard($exercise)
+                        VStack(spacing: .spacing3x) {
+                            ForEach($exercises) { $exercise in
+                                exerciseCard($exercise)
+                            }
+                        }
+
+                        footerButtons
+                    }
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.top, .spacing2x)
+                    .padding(.bottom, .spacing4x)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    if restEndDate != nil {
+                        restTimerPill
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-
-                footerButtons
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.top, .spacing2x)
-            .padding(.bottom, .spacing4x)
-        }
-        .safeAreaInset(edge: .bottom) {
-            if restEndDate != nil {
-                restTimerPill
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultSheetBackground.ignoresSafeArea())
-        .navigationTitle(sessionName)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("End") {
-                    completedSession = finishedSession
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.defaultRed)
-            }
-        }
+        )
         .animation(.brightEaseInOut, value: completedSets)
         .animation(.brightBouncy, value: restEndDate)
         .navigationDestination(item: $completedSession) { session in

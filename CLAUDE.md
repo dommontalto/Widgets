@@ -233,6 +233,44 @@ the text/header section horizontally and let the visual content fill the card wi
 
 ---
 
+## Page Containers
+
+Defined in `Shared/BrightPageSheetView.swift`.
+
+Never hand-roll page scaffolding. If a screen sets its own `.frame(maxWidth:maxHeight:)`
++ `.background(...ignoresSafeArea())` + `.scrollDismissesKeyboard` + `.navigationTitle`
++ `.navigationBarTitleDisplayMode(.inline)`, use `BrightPageSheetView` instead — it
+supplies all of that plus the close/back button.
+
+```swift
+BrightPageSheetView(
+    title: "Add Sessions",
+    horizontalPadding: .spacing0x,     // content does its own padding
+    trailing: {
+        ToolbarItem(placement: .topBarTrailing) { saveButton }
+    },
+    content: { scrollContent }
+)
+```
+
+Rules:
+- **Never wrap it in a `NavigationStack`** — it makes one internally. Pass `path:`
+  to drive its navigation instead.
+- It applies `horizontalPadding` itself (default `.spacing3x`) — pass `.spacing0x`
+  rather than fighting it with inner padding.
+- It dismisses the keyboard on background tap — drop any local
+  `.contentShape(Rectangle())` + `.onTapGesture`.
+- Toolbar items go in the `trailing:` builder, not a separate `.toolbar`.
+- `showBackButton: true` replaces the close button for pushed-style sheets.
+
+Deliberate exceptions: full-bleed chrome-less sheets (own `presentationBackground`,
+no nav bar) stay hand-rolled.
+
+`BrightPageView` — the pushed-destination equivalent with no `NavigationStack` of its
+own — exists in the Bright iOS app but has **not** been ported here yet.
+
+---
+
 ## Widget Pattern
 
 Each widget is a self-contained SwiftUI View. Supporting types (shapes, demo data)
