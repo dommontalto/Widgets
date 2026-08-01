@@ -81,4 +81,13 @@ class ImageNames {
     static let vaultTestGutHealthIconV5       = "Vault/Icon/vault_test_gut_health_icon_v5"
     static let vaultTestMetabolicHealthIconV5 = "Vault/Icon/vault_test_metabolic_health_icon_v5"
     static let vaultTestFertilityIconV5       = "Vault/Icon/vault_test_fertility_icon_v5"
+
+    // MARK: - Cycle Tracking
+
+    static let cycleTrackingMainSummaryV5  = "CycleTracking/cycle_tracking_main_summary_v5"
+    static let cycleTrackingFeelV5         = "CycleTracking/cycle_tracking_feel_v5"
+    static let cycleTrackingDifferentlyV5  = "CycleTracking/cycle_tracking_differently_v5"
+    static let cycleTrackingMainSymptomsV5 = "CycleTracking/cycle_tracking_main_symptoms_v5"
+    static let cycleTrackingTickV5         = "CycleTracking/cycle_tracking_tick_v5"
+    static let cycleTrackingExclamationV5  = "CycleTracking/cycle_tracking_exclamation_v5"
 }

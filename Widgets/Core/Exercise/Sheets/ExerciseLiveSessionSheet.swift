@@ -28,7 +28,7 @@ struct ExerciseLiveSessionSheet: View {
     init(sessionName: String = "Gym session", templateItems: [ExerciseTemplateItem]? = nil) {
         self.sessionName = sessionName
         self.templateItems = templateItems
-        _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseActiveExercise.demo)
+        _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseDemoData.activeExercises)
     }
 
     var body: some View {
@@ -508,29 +508,6 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
         }
     }
 
-    nonisolated static let demo: [ExerciseActiveExercise] = [
-        ExerciseActiveExercise(name: "Bench Press (Barbell)", sets: [
-            ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", isWarmup: true, isDone: true),
-            ExerciseActiveSet(weight: "80", reps: "10", previous: "77.5 \u{00D7} 10", isDone: true),
-            ExerciseActiveSet(weight: "90", reps: "8", previous: "87.5 \u{00D7} 8"),
-            ExerciseActiveSet(weight: "100", reps: "5", previous: "97.5 \u{00D7} 5", isRecord: true),
-        ]),
-        ExerciseActiveExercise(name: "Incline Press (Dumbbell)", sets: [
-            ExerciseActiveSet(weight: "26", reps: "12", previous: "26 \u{00D7} 11"),
-            ExerciseActiveSet(weight: "30", reps: "10", previous: "30 \u{00D7} 9"),
-            ExerciseActiveSet(weight: "30", reps: "9", previous: "30 \u{00D7} 8"),
-        ]),
-        ExerciseActiveExercise(name: "Seated Row (Cable)", sets: [
-            ExerciseActiveSet(weight: "55", reps: "12", previous: "55 \u{00D7} 12"),
-            ExerciseActiveSet(weight: "65", reps: "10", previous: "65 \u{00D7} 10"),
-            ExerciseActiveSet(weight: "70", reps: "10", previous: "70 \u{00D7} 9"),
-        ]),
-        ExerciseActiveExercise(name: "Bicep Curl (EZ-Bar)", sets: [
-            ExerciseActiveSet(weight: "30", reps: "12", previous: "30 \u{00D7} 12"),
-            ExerciseActiveSet(weight: "35", reps: "10", previous: "35 \u{00D7} 10"),
-            ExerciseActiveSet(weight: "40", reps: "8", previous: "37.5 \u{00D7} 8", isRecord: true),
-        ]),
-    ]
 }
 
 #Preview {

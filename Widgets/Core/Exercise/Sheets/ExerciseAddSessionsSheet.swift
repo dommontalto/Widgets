@@ -51,7 +51,7 @@ nonisolated struct ExercisePlanDay: Identifiable {
 struct ExerciseAddSessionsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var days = ExerciseAddSessionsSheet.demoWeek
+    @State private var days = ExerciseDemoData.plannerWeek
     @State private var repeatsWeekly = false
     @State private var clipboard: ExercisePlannedSession?
     @State private var weekClipboard: [ExercisePlanDay]?
@@ -106,16 +106,16 @@ struct ExerciseAddSessionsSheet: View {
 
             Menu {
                 Button("Add variable week", systemImage: "calendar.badge.plus") {
-                    days = Self.demoWeek
+                    days = ExerciseDemoData.plannerWeek
                 }
 
                 Divider()
 
                 Button("Clear week", systemImage: "eraser.line.dashed") {
-                    days = Self.emptyWeek
+                    days = ExerciseDemoData.plannerEmptyWeek
                 }
                 Button("Delete week", systemImage: "trash", role: .destructive) {
-                    days = Self.emptyWeek
+                    days = ExerciseDemoData.plannerEmptyWeek
                     dismiss()
                 }
             } label: {
@@ -172,7 +172,7 @@ struct ExerciseAddSessionsSheet: View {
 
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
         Menu {
-            ForEach(Self.templates) { template in
+            ForEach(ExerciseDemoData.plannerTemplates) { template in
                 Button(template.title, systemImage: templateSymbol(template.kind)) {
                     day.wrappedValue.sessions.append(template.duplicated)
                 }
@@ -246,7 +246,7 @@ struct ExerciseAddSessionsSheet: View {
     private var bottomBar: some View {
         HStack(spacing: .spacing0x) {
             BrightRoundButton(systemImage: "arrow.counterclockwise", size: .large) {
-                days = Self.demoWeek
+                days = ExerciseDemoData.plannerWeek
                 clipboard = nil
                 weekClipboard = nil
             }
@@ -307,36 +307,6 @@ struct ExerciseAddSessionsSheet: View {
         static let stripeWidth: CGFloat = 3
         static let hairline: CGFloat = 0.5
         static let backgroundBleed: CGFloat = 1000
-    }
-}
-
-private extension ExerciseAddSessionsSheet {
-    static let templates: [ExercisePlannedSession] = [
-        ExercisePlannedSession(title: "Back & Biceps", subtitle: "10 exercises", kind: .strength),
-        ExercisePlannedSession(title: "Chest & Legs", subtitle: "10 exercises", kind: .strength),
-        ExercisePlannedSession(title: "Back & Core", subtitle: "6 exercises", kind: .strength),
-        ExercisePlannedSession(title: "3K Run", subtitle: "Target: Zone 2", kind: .run),
-        ExercisePlannedSession(title: "10K Run", subtitle: "Target: Zone 3", kind: .run),
-        ExercisePlannedSession(title: "20K Cycle", subtitle: "Target: Zone 2", kind: .cycle),
-        ExercisePlannedSession(title: "Rest Day", subtitle: "", kind: .rest),
-    ]
-
-    static var demoWeek: [ExercisePlanDay] {
-        [
-            ExercisePlanDay(name: "Mon", sessions: [templates[0].duplicated]),
-            ExercisePlanDay(name: "Tue", sessions: [templates[1].duplicated]),
-            ExercisePlanDay(name: "Wed", sessions: [templates[6].duplicated]),
-            ExercisePlanDay(name: "Thu", sessions: [templates[4].duplicated]),
-            ExercisePlanDay(name: "Fri", sessions: [templates[2].duplicated, templates[3].duplicated]),
-            ExercisePlanDay(name: "Sat", sessions: [templates[6].duplicated]),
-            ExercisePlanDay(name: "Sun", sessions: [templates[5].duplicated]),
-        ]
-    }
-
-    static var emptyWeek: [ExercisePlanDay] {
-        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map {
-            ExercisePlanDay(name: $0, sessions: [])
-        }
     }
 }
 

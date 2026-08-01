@@ -9,14 +9,18 @@
 import SwiftUI
 
 public enum BrightHaptic {
+    case soft
     case light
     case medium
+    case impact
     case success
 
     public var feedback: SensoryFeedback {
         switch self {
+        case .soft: .impact(flexibility: .soft)
         case .light: .impact(weight: .light)
         case .medium: .impact(weight: .medium)
+        case .impact: .impact
         case .success: .success
         }
     }
@@ -24,10 +28,14 @@ public enum BrightHaptic {
     @MainActor
     public func play() {
         switch self {
+        case .soft:
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         case .light:
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         case .medium:
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        case .impact:
+            UIImpactFeedbackGenerator().impactOccurred()
         case .success:
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }

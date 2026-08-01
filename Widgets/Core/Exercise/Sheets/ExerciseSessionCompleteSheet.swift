@@ -57,7 +57,7 @@ struct ExerciseSessionCompleteSheet: View {
         .navigationTitle("Session complete")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: openedExerciseBinding) { exercise in
-            BrightPageSheetView(title: exercise.name) {
+            BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
                 ExerciseDetailSheet(exercise: exercise)
             }
         }

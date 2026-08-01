@@ -311,4 +311,122 @@ enum ExerciseDemoData {
             return ExerciseMonthData(name: name, columns: columns)
         }
     }
+
+    // MARK: - Session planner
+
+    static let plannerTemplates: [ExercisePlannedSession] = [
+        ExercisePlannedSession(title: "Back & Biceps", subtitle: "10 exercises", kind: .strength),
+        ExercisePlannedSession(title: "Chest & Legs", subtitle: "10 exercises", kind: .strength),
+        ExercisePlannedSession(title: "Back & Core", subtitle: "6 exercises", kind: .strength),
+        ExercisePlannedSession(title: "3K Run", subtitle: "Target: Zone 2", kind: .run),
+        ExercisePlannedSession(title: "10K Run", subtitle: "Target: Zone 3", kind: .run),
+        ExercisePlannedSession(title: "20K Cycle", subtitle: "Target: Zone 2", kind: .cycle),
+        ExercisePlannedSession(title: "Rest Day", subtitle: "", kind: .rest),
+    ]
+
+    static var plannerWeek: [ExercisePlanDay] {
+        [
+            ExercisePlanDay(name: "Mon", sessions: [plannerTemplates[0].duplicated]),
+            ExercisePlanDay(name: "Tue", sessions: [plannerTemplates[1].duplicated]),
+            ExercisePlanDay(name: "Wed", sessions: [plannerTemplates[6].duplicated]),
+            ExercisePlanDay(name: "Thu", sessions: [plannerTemplates[4].duplicated]),
+            ExercisePlanDay(name: "Fri", sessions: [plannerTemplates[2].duplicated, plannerTemplates[3].duplicated]),
+            ExercisePlanDay(name: "Sat", sessions: [plannerTemplates[6].duplicated]),
+            ExercisePlanDay(name: "Sun", sessions: [plannerTemplates[5].duplicated]),
+        ]
+    }
+
+    static var plannerEmptyWeek: [ExercisePlanDay] {
+        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map {
+            ExercisePlanDay(name: $0, sessions: [])
+        }
+    }
+
+    // MARK: - Exercise detail
+
+    static let detailStats: [ExerciseStatTile] = [
+        ExerciseStatTile(label: "Personal Best", value: "120", unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
+        ExerciseStatTile(label: "EST. 1RM", value: "120", unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
+        ExerciseStatTile(label: "Total Sessions", value: "54", unit: "Sessions", symbol: "text.line.3.summary", color: .defaultGreen),
+        ExerciseStatTile(label: "AVG weekly sets", value: "12", unit: "sets", symbol: "chart.line.flattrend.xyaxis", color: .defaultSkyBlue),
+    ]
+
+    static let detailProgression: [ExerciseProgressionSample] = (0 ..< 365).map { day in
+        let t = Double(day) / 364
+        let base = 30 + 50 * t
+        let spike = 45 * exp(-pow((t - 0.93) / 0.045, 2))
+        let dip = 18 * exp(-pow((t - 0.97) / 0.02, 2))
+        let noise = sin(Double(day) * 7.3) * 2.5 + sin(Double(day) * 2.1) * 2 + sin(Double(day) * 0.37) * 3
+        return ExerciseProgressionSample(id: day, value: max(5, base + spike - dip + noise))
+    }
+
+    static let detailImpact = CycleTrackingImpactData(
+        items: [
+            CycleTrackingImpactItem(text: "Develops lower body strength", isPositive: true),
+            CycleTrackingImpactItem(text: "Increases athletic ability overtime", isPositive: true),
+            CycleTrackingImpactItem(text: "Reduce risk of osteoporosis", isPositive: true),
+            CycleTrackingImpactItem(text: "Requires good form and technique", isPositive: false),
+            CycleTrackingImpactItem(text: "High fatigue exercise", isPositive: false),
+        ],
+        description: nil
+    )
+
+    static let detailHistory: [ExerciseHistorySession] = [
+        ExerciseHistorySession(date: "Mon, 18 Jul, 2026", prLabel: "Weight PR", sets: [
+            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
+            ExerciseHistorySet(label: "1", reps: "4 reps", weight: "80 KG"),
+            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG"),
+            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG"),
+        ]),
+        ExerciseHistorySession(date: "Thu, 14 Jul, 2026", sets: [
+            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
+            ExerciseHistorySet(label: "1", reps: "4 reps", weight: "80 KG"),
+            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG"),
+            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG"),
+        ]),
+        ExerciseHistorySession(date: "Mon, 11 Jul, 2026", prLabel: "Rep PR", sets: [
+            ExerciseHistorySet(label: nil, reps: "8 reps", weight: "50 KG"),
+            ExerciseHistorySet(label: "1", reps: "6 reps", weight: "75 KG"),
+            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "75 KG"),
+            ExerciseHistorySet(label: "3", reps: "5 reps", weight: "75 KG"),
+        ]),
+        ExerciseHistorySession(date: "Thu, 7 Jul, 2026", sets: [
+            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "50 KG"),
+            ExerciseHistorySet(label: "1", reps: "5 reps", weight: "75 KG"),
+            ExerciseHistorySet(label: "2", reps: "5 reps", weight: "72.5 KG"),
+            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "72.5 KG"),
+        ]),
+        ExerciseHistorySession(date: "Mon, 4 Jul, 2026", sets: [
+            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "50 KG"),
+            ExerciseHistorySet(label: "1", reps: "5 reps", weight: "70 KG"),
+            ExerciseHistorySet(label: "2", reps: "4 reps", weight: "70 KG"),
+            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "70 KG"),
+        ]),
+    ]
+
+    // MARK: - Live session
+
+    static let activeExercises: [ExerciseActiveExercise] = [
+        ExerciseActiveExercise(name: "Bench Press (Barbell)", sets: [
+            ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", isWarmup: true, isDone: true),
+            ExerciseActiveSet(weight: "80", reps: "10", previous: "77.5 \u{00D7} 10", isDone: true),
+            ExerciseActiveSet(weight: "90", reps: "8", previous: "87.5 \u{00D7} 8"),
+            ExerciseActiveSet(weight: "100", reps: "5", previous: "97.5 \u{00D7} 5", isRecord: true),
+        ]),
+        ExerciseActiveExercise(name: "Incline Press (Dumbbell)", sets: [
+            ExerciseActiveSet(weight: "26", reps: "12", previous: "26 \u{00D7} 11"),
+            ExerciseActiveSet(weight: "30", reps: "10", previous: "30 \u{00D7} 9"),
+            ExerciseActiveSet(weight: "30", reps: "9", previous: "30 \u{00D7} 8"),
+        ]),
+        ExerciseActiveExercise(name: "Seated Row (Cable)", sets: [
+            ExerciseActiveSet(weight: "55", reps: "12", previous: "55 \u{00D7} 12"),
+            ExerciseActiveSet(weight: "65", reps: "10", previous: "65 \u{00D7} 10"),
+            ExerciseActiveSet(weight: "70", reps: "10", previous: "70 \u{00D7} 9"),
+        ]),
+        ExerciseActiveExercise(name: "Bicep Curl (EZ-Bar)", sets: [
+            ExerciseActiveSet(weight: "30", reps: "12", previous: "30 \u{00D7} 12"),
+            ExerciseActiveSet(weight: "35", reps: "10", previous: "35 \u{00D7} 10"),
+            ExerciseActiveSet(weight: "40", reps: "8", previous: "37.5 \u{00D7} 8", isRecord: true),
+        ]),
+    ]
 }

@@ -84,6 +84,7 @@ struct ExerciseCustomiseSetsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(isNameEmpty ? .defaultMainGrey : .defaultSkyBlue)
+                .id(isNameEmpty)
             }
         }
     }

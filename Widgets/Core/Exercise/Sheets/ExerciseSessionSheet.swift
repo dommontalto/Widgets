@@ -108,11 +108,8 @@ struct ExerciseSessionSheet: View {
     private func exerciseDetail(named name: String) -> some View {
         if let exercise = ExerciseDemoLibrary.exercise(named: name) {
             ExerciseDetailSheet(exercise: exercise)
-                .padding(.horizontal, .spacing3x)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .background(Color.defaultSheetBackground.ignoresSafeArea())
-                .navigationTitle(exercise.name)
-                .navigationBarTitleDisplayMode(.inline)
         }
     }
 
@@ -149,19 +146,41 @@ struct ExerciseSessionSheet: View {
 
     private var sessionCards: some View {
         ForEach(sessions) { session in
-            if session.isCardio {
-                Button {
-                    isLoggingCardio = true
-                } label: {
-                    sessionCard(session)
+            Group {
+                if session.isCardio {
+                    Button {
+                        isLoggingCardio = true
+                    } label: {
+                        sessionCard(session)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    NavigationLink(value: ExerciseSessionRoute.session(session.name)) {
+                        sessionCard(session)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-            } else {
-                NavigationLink(value: ExerciseSessionRoute.session(session.name)) {
-                    sessionCard(session)
-                }
-                .buttonStyle(.plain)
             }
+            .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+            .contextMenu {
+                sessionMenu(for: session)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sessionMenu(for session: ExerciseQuickSession) -> some View {
+        Button("Duplicate", systemImage: "plus.square.on.square") {
+            withAnimation(.brightSnappy) { builder.duplicate(session) }
+        }
+
+        Button("Rename", systemImage: "pencil") {
+            renameText = session.name
+            renamingSession = session
+        }
+
+        Button("Delete", systemImage: "trash", role: .destructive) {
+            withAnimation(.brightSnappy) { builder.delete(session) }
         }
     }
 
@@ -176,21 +195,6 @@ struct ExerciseSessionSheet: View {
             title: session.name,
             subtitle: session.subtitle
         )
-        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
-        .contextMenu {
-            Button("Duplicate", systemImage: "plus.square.on.square") {
-                withAnimation(.brightSnappy) { builder.duplicate(session) }
-            }
-
-            Button("Rename", systemImage: "pencil") {
-                renameText = session.name
-                renamingSession = session
-            }
-
-            Button("Delete", systemImage: "trash", role: .destructive) {
-                withAnimation(.brightSnappy) { builder.delete(session) }
-            }
-        }
     }
 
     private func cardContent(

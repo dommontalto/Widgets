@@ -12,6 +12,7 @@ struct BrightRoundButton: View {
     private enum ImageSource {
         case system(String)
         case asset(String)
+        case text(String)
     }
 
     private let imageSource: ImageSource
@@ -53,6 +54,19 @@ struct BrightRoundButton: View {
         self.onTapCallback = onTapCallback
     }
 
+    init(
+        title: String,
+        size: BrightButtonSizes = .medium,
+        color: Color? = nil,
+        onTapCallback: (() -> Void)? = nil
+    ) {
+        self.imageSource = .text(title)
+        self.size = size
+        self.color = color
+        self.imageRotation = .zero
+        self.onTapCallback = onTapCallback
+    }
+
     private var isChevronForward: Bool {
         if case .system(let name) = imageSource {
             return name == "chevron.left" || name == "chevron.right"
@@ -73,6 +87,8 @@ struct BrightRoundButton: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: size.rawValue * 0.5, height: size.rawValue * 0.5)
+        case .text(let title):
+            BrightText(title, size: size.defaultFontSize, color: color != nil ? .defaultBlack : .textColor, weight: .regular)
         }
     }
 
@@ -81,8 +97,8 @@ struct BrightRoundButton: View {
             imageView
                 .rotationEffect(imageRotation)
                 .frame(width: size.rawValue, height: size.rawValue)
-                .foregroundStyle(color ?? .textColor)
-                .background((color ?? .clear).opacity(.veryLowOpacity), in: Circle())
+                .foregroundStyle(color != nil ? Color.defaultBlack : Color.textColor)
+                .background(color ?? .clear, in: Circle())
                 .contentShape(Circle())
         }
         .modifier(BrightRoundButtonBackground(isGlass: !isChevronForward))

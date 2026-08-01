@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var showingVaultTests = false
     @State private var showingSession = false
     @State private var showingAddSessions = false
+    @State private var showingExerciseDetail = false
     @State private var builder = ExerciseSessionBuilder()
     @State private var startedSession: ExerciseQuickSession?
     @State private var isLoggingCardio = false
@@ -39,9 +40,12 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
-                    widgetLabel("ExerciseAddSessionsSheet")
-                    addSessionsButton
-                        .padding(.bottom, .spacing3x)
+                    VStack(alignment: .leading, spacing: .spacing2x) {
+                        addSessionsButton
+                        viewExerciseButton
+                    }
+                    .padding(.top, .spacing2x)
+                    .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExercisePersonalRecordsWidget")
                     ExercisePersonalRecordsWidget()
@@ -154,6 +158,13 @@ struct ContentView: View {
         .sheet(isPresented: $showingAddSessions) {
             ExerciseAddSessionsSheet()
         }
+        .sheet(isPresented: $showingExerciseDetail) {
+            if let exercise = ExerciseDemoLibrary.exercise(named: "Squat") {
+                BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
+                    ExerciseDetailSheet(exercise: exercise)
+                }
+            }
+        }
         .sheet(item: $startedSession) { session in
             NavigationStack {
                 ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items)
@@ -176,7 +187,22 @@ struct ContentView: View {
         Button {
             showingAddSessions = true
         } label: {
-            BrightText("Add sessions", size: .body2, weight: .regular)
+            BrightText("ExerciseAddSessionsSheet", size: .body2, weight: .regular)
+                .padding(.horizontal, .spacing3x)
+                .padding(.vertical, .spacing105x)
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var viewExerciseButton: some View {
+        Button {
+            showingExerciseDetail = true
+        } label: {
+            BrightText("ExerciseDetailSheet", size: .body2, weight: .regular)
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing105x)
                 .overlay {

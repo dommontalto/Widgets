@@ -216,7 +216,7 @@ struct BrightSwipePageView<Content: View>: View {
         .scrollPosition(id: $scrollPosition)
         .scrollDisabled(disableHorizontalScroll)
         .scrollIndicators(.hidden)
-        .brightHaptic(.medium, trigger: scrollPosition)
+        .brightHaptic(.impact, trigger: scrollPosition)
         .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, new in
             state.scrollOffset = new
         }

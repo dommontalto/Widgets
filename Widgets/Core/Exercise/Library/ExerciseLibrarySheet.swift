@@ -43,7 +43,7 @@ struct ExerciseLibrarySheet: View {
             }
         }
         .sheet(item: $openedExercise) { exercise in
-            BrightPageSheetView(title: exercise.name) {
+            BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
                 ExerciseDetailSheet(exercise: exercise)
             }
         }
