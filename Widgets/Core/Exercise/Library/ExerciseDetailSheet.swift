@@ -124,7 +124,7 @@ struct ExerciseDetailSheet: View {
             statsSection
             progressionCard
         }
-        .padding(.top, isFormExpanded ? .spacing0x : .spacing1x)
+        .padding(.top, isFormExpanded ? .spacing0x : .spacing3x)
         .padding([.horizontal, .bottom], .spacing3x)
     }
 
@@ -312,9 +312,7 @@ struct ExerciseDetailSheet: View {
                 cardColor: .defaultSheetModalCards
             )
         }
-        .padding(.top, .spacing1x)
-        .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing4x)
+        .padding(.spacing3x)
     }
 
     // MARK: - Data
@@ -335,9 +333,7 @@ struct ExerciseDetailSheet: View {
                 }
             }
         }
-        .padding(.top, .spacing1x)
-        .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing4x)
+        .padding(.spacing3x)
     }
 
     private func historyCard(_ session: ExerciseHistorySession) -> some View {
@@ -360,7 +356,7 @@ struct ExerciseDetailSheet: View {
             .padding(.vertical, .spacing2x)
 
             ForEach(session.sets) { set in
-                historyRow(set, weightTemplate: weightTemplate(for: session))
+                historyRow(set)
 
                 if set.id != session.sets.last?.id {
                     BrightDivider()
@@ -387,11 +383,17 @@ struct ExerciseDetailSheet: View {
         .frame(width: Constants.prBadgeWidth, height: Constants.prBadgeHeight)
     }
 
-    private func weightTemplate(for session: ExerciseHistorySession) -> String {
-        session.sets.map(\.weight).max(by: { $0.count < $1.count }) ?? ""
+    /// Longest values across every history card, so the columns line up
+    /// between widgets rather than per card.
+    private var repsTemplate: String {
+        ExerciseDemoData.detailHistory.flatMap(\.sets).map(\.reps).max(by: { $0.count < $1.count }) ?? ""
     }
 
-    private func historyRow(_ set: ExerciseHistorySet, weightTemplate: String) -> some View {
+    private var weightTemplate: String {
+        ExerciseDemoData.detailHistory.flatMap(\.sets).map(\.weight).max(by: { $0.count < $1.count }) ?? ""
+    }
+
+    private func historyRow(_ set: ExerciseHistorySet) -> some View {
         HStack(spacing: .spacing2x) {
             if set.isWarmUp {
                 Image(systemName: "figure.cooldown")
@@ -406,8 +408,15 @@ struct ExerciseDetailSheet: View {
 
             Spacer()
 
-            BrightText(set.reps, size: .body2, color: .semiLightTextColor, weight: .regular)
-                .monospacedDigit()
+            ZStack(alignment: .trailing) {
+                BrightText(repsTemplate, size: .body2, weight: .regular)
+                    .monospacedDigit()
+                    .hidden()
+
+                BrightText(set.reps, size: .body2, color: .semiLightTextColor, weight: .regular)
+                    .monospacedDigit()
+            }
+            .lineLimit(1)
 
             Rectangle()
                 .fill(Color.textColor.opacity(.minimalOpacity))

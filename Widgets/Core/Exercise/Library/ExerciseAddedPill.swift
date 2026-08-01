@@ -14,7 +14,7 @@ struct ExerciseAddedPill: View {
     @State private var clearTask: Task<Void, Never>?
 
     var body: some View {
-        HStack(spacing: .spacing1x) {
+        HStack(spacing: .spacing05x) {
             Spacer(minLength: .spacing0x)
 
             BrightPillButton("Exercises: \(builder.count)", buttonSize: .small) {
