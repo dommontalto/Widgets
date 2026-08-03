@@ -372,11 +372,11 @@ enum ExerciseDemoData {
     )
 
     static let detailHistory: [ExerciseHistorySession] = [
-        ExerciseHistorySession(date: "Mon, 18 Jul, 2026", prLabel: "Weight PR", sets: [
+        ExerciseHistorySession(date: "Mon, 18 Jul, 2026", sets: [
             ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
             ExerciseHistorySet(label: "1", reps: "4 reps", weight: "80 KG"),
-            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG"),
-            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG"),
+            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG", prLabel: "Weight PR"),
+            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG", prLabel: "Rep PR"),
         ]),
         ExerciseHistorySession(date: "Thu, 14 Jul, 2026", sets: [
             ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
@@ -384,9 +384,9 @@ enum ExerciseDemoData {
             ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG"),
             ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG"),
         ]),
-        ExerciseHistorySession(date: "Mon, 11 Jul, 2026", prLabel: "Rep PR", sets: [
+        ExerciseHistorySession(date: "Mon, 11 Jul, 2026", sets: [
             ExerciseHistorySet(label: nil, reps: "8 reps", weight: "50 KG"),
-            ExerciseHistorySet(label: "1", reps: "6 reps", weight: "75 KG"),
+            ExerciseHistorySet(label: "1", reps: "6 reps", weight: "75 KG", prLabel: "Rep PR"),
             ExerciseHistorySet(label: "2", reps: "6 reps", weight: "75 KG"),
             ExerciseHistorySet(label: "3", reps: "5 reps", weight: "75 KG"),
         ]),

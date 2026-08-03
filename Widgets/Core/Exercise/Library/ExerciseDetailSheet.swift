@@ -23,13 +23,13 @@ nonisolated struct ExerciseHistorySet: Identifiable {
     let label: String?
     let reps: String
     let weight: String
+    var prLabel: String?
 
     var isWarmUp: Bool { label == nil }
 }
 
 nonisolated struct ExerciseHistorySession: Identifiable {
     let date: String
-    var prLabel: String?
     let sets: [ExerciseHistorySet]
 
     var id: String { date }
@@ -338,22 +338,8 @@ struct ExerciseDetailSheet: View {
 
     private func historyCard(_ session: ExerciseHistorySession) -> some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            HStack(spacing: .spacing105x) {
-                BrightText(session.date, size: .body2, color: .lightTextColor)
-
-                Spacer()
-
-                if let prLabel = session.prLabel {
-                    BrightText(prLabel, size: .body2, color: .lightTextColor)
-                    prBadge
-                } else {
-                    BrightText("Weight PR", size: .body2, color: .lightTextColor)
-                        .hidden()
-                    prBadge
-                        .hidden()
-                }
-            }
-            .padding(.vertical, .spacing2x)
+            BrightText(session.date, size: .body2, color: .lightTextColor)
+                .padding(.vertical, .spacing2x)
 
             ForEach(session.sets) { set in
                 historyRow(set)
@@ -406,7 +392,17 @@ struct ExerciseDetailSheet: View {
                     .frame(width: Constants.setLabelWidth, alignment: .leading)
             }
 
-            Spacer()
+            Spacer(minLength: .spacing2x)
+
+            if let prLabel = set.prLabel {
+                BrightText(prLabel, size: .body2, color: .lightTextColor)
+                    .lineLimit(1)
+
+                prBadge
+                    // Draws at full size but reports the text's height, so a PR
+                    // row stays level with the rows around it.
+                    .frame(height: Constants.prBadgeInlineHeight)
+            }
 
             ZStack(alignment: .trailing) {
                 BrightText(repsTemplate, size: .body2, weight: .regular)
@@ -444,6 +440,7 @@ struct ExerciseDetailSheet: View {
         static let setDividerHeight: CGFloat = 16
         static let prBadgeWidth: CGFloat = 30
         static let prBadgeHeight: CGFloat = 33
+        static let prBadgeInlineHeight: CGFloat = 20
         static let prBadgeIconSize: CGFloat = 13
     }
 }

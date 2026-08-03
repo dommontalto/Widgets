@@ -69,13 +69,6 @@ struct ExerciseFormViewer: View {
                 style: .continuous
             )
         )
-        .overlay(alignment: .topLeading) {
-            if !isExpanded {
-                BrightText("Form", size: .body1)
-                    .padding(.top, .spacing4x + .spacing05x)
-                    .padding(.leading, .spacing4x)
-            }
-        }
         .overlay(alignment: .topTrailing) {
             BrightRoundButton(
                 systemImage: isExpanded
@@ -84,8 +77,8 @@ struct ExerciseFormViewer: View {
                 size: isExpanded ? .large : .medium,
                 onTapCallback: toggleExpansion
             )
-            .padding(.top, .spacing3x)
-            .padding(.trailing, isExpanded ? .spacing3x : .spacing2x)
+            .padding(.top, isExpanded ? .spacing3x : .spacing4x)
+            .padding(.trailing, isExpanded ? .spacing3x : .spacing4x)
         }
         .padding(.horizontal, isExpanded ? -CGFloat.spacing3x : .spacing0x)
         .ignoresSafeArea(.container, edges: isExpanded ? Edge.Set.bottom : [])
@@ -117,7 +110,7 @@ struct ExerciseFormViewer: View {
 
             Spacer()
 
-            BrightRoundButton(systemImage: isPaused ? "play" : "pause") {
+            BrightRoundButton(systemImage: isPaused ? "play" : "pause", size: controlSize) {
                 isPaused.toggle()
                 if isPaused {
                     controller?.pause()
@@ -131,9 +124,14 @@ struct ExerciseFormViewer: View {
         .brightHaptic(.light, trigger: isPaused)
     }
 
+    private var controlSize: BrightButtonSizes {
+        isExpanded ? .large : .medium
+    }
+
     private func speedButton(_ speed: Double) -> some View {
         BrightRoundButton(
             title: speedLabel(speed),
+            size: controlSize,
             color: playbackSpeed == speed ? .defaultBrightGreen : nil
         ) {
             playbackSpeed = speed
