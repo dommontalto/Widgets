@@ -16,6 +16,10 @@ struct ContentView: View {
     @State private var builder = ExerciseSessionBuilder()
     @State private var startedSession: ExerciseQuickSession?
     @State private var isLoggingCardio = false
+    /// Held until the live cover has closed, so its summary sheet isn't presented
+    /// by a view that's on its way out.
+    @State private var pendingCompletion: ExerciseSession?
+    @State private var completedSession: ExerciseSession?
 
     var body: some View {
         NavigationStack {
@@ -26,6 +30,12 @@ struct ContentView: View {
 
     private var sessions: [ExerciseQuickSession] {
         builder.saved
+    }
+
+    private func presentCompletion() {
+        guard let pendingCompletion else { return }
+        completedSession = pendingCompletion
+        self.pendingCompletion = nil
     }
 
     private func start(_ session: ExerciseQuickSession) {
@@ -68,7 +78,9 @@ struct ContentView: View {
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseUpcomingWidget")
-                    ExerciseUpcomingWidget()
+                    ExerciseUpcomingWidget { session in
+                        start(session)
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseWeeklyPlanWidget")
@@ -153,7 +165,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingSession) {
-            ExerciseSessionSheet()
+            ExerciseSheet()
         }
         .sheet(isPresented: $showingAddSessions) {
             ExerciseAddSessionsSheet()
@@ -165,10 +177,15 @@ struct ContentView: View {
                 }
             }
         }
-        .sheet(item: $startedSession) { session in
+        .fullScreenCover(item: $startedSession, onDismiss: presentCompletion) { session in
             NavigationStack {
-                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items)
+                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items) { finished in
+                    pendingCompletion = finished
+                }
             }
+        }
+        .sheet(item: $completedSession) { session in
+            ExerciseSessionCompleteSheet(session: session)
         }
         .fullScreenCover(isPresented: $isLoggingCardio) {
             ExerciseLiveCardioSheet { isLoggingCardio = false }

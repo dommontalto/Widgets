@@ -63,6 +63,10 @@ struct ExerciseAddSessionsSheet: View {
             horizontalPadding: .spacing0x,
             showBackButton: true,
             trailing: {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: "Add Sessions", file: #file)
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { dismiss() }
                         .buttonStyle(.borderedProminent)
@@ -262,6 +266,7 @@ struct ExerciseAddSessionsSheet: View {
                         .font(.system(size: FontSizes.subheading.rawValue, weight: .light))
                         .foregroundStyle(Color.textColor)
                         .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.medium.rawValue)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -276,6 +281,7 @@ struct ExerciseAddSessionsSheet: View {
                         .font(.system(size: FontSizes.subheading.rawValue, weight: .light))
                         .foregroundStyle(Color.textColor.opacity(weekClipboard == nil ? .semiLowOpacity : .opaque))
                         .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.medium.rawValue)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(weekClipboard == nil)

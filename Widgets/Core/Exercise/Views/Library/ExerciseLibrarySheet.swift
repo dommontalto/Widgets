@@ -42,6 +42,11 @@ struct ExerciseLibrarySheet: View {
                 .padding(.bottom, .spacing4x)
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                ExerciseInlineTitle(title: onSelect == nil ? "Exercises" : "Add exercise", file: #file)
+            }
+        }
         .sheet(item: $openedExercise) { exercise in
             BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
                 ExerciseDetailSheet(exercise: exercise)

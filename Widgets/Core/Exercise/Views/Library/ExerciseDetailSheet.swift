@@ -8,33 +8,6 @@
 import Charts
 import SwiftUI
 
-nonisolated struct ExerciseStatTile: Identifiable {
-    let label: String
-    let value: String
-    let unit: String
-    let symbol: String
-    let color: Color
-
-    var id: String { label }
-}
-
-nonisolated struct ExerciseHistorySet: Identifiable {
-    let id = UUID()
-    let label: String?
-    let reps: String
-    let weight: String
-    var prLabel: String?
-
-    var isWarmUp: Bool { label == nil }
-}
-
-nonisolated struct ExerciseHistorySession: Identifiable {
-    let date: String
-    let sets: [ExerciseHistorySet]
-
-    var id: String { date }
-}
-
 nonisolated struct ExerciseProgressionSample: Identifiable {
     let id: Int
     let value: Double
@@ -103,7 +76,7 @@ struct ExerciseDetailSheet: View {
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                BrightText(exercise.name, size: .subheading)
+                ExerciseInlineTitle(title: exercise.name, file: #file)
             }
         }
         .onChange(of: isFormExpanded) { _, expanded in
@@ -163,37 +136,8 @@ struct ExerciseDetailSheet: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText("Stats", size: .heading)
 
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: .spacing2x + .spacing05x), count: 2),
-                spacing: .spacing2x + .spacing05x
-            ) {
-                ForEach(ExerciseDemoData.detailStats) { stat in
-                    statTile(stat)
-                }
-            }
+            ExerciseStatTileGrid(tiles: ExerciseDemoData.detailStats)
         }
-    }
-
-    private func statTile(_ stat: ExerciseStatTile) -> some View {
-        VStack(alignment: .leading, spacing: .spacing105x) {
-            Image(systemName: stat.symbol)
-                .font(.system(size: Constants.statIconSize, weight: .regular))
-                .foregroundStyle(stat.color)
-
-            BrightText(stat.label, size: .body2)
-
-            Spacer(minLength: .spacing0x)
-
-            HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(stat.value, size: .huge, weight: .light)
-                    .monospacedDigit()
-                BrightText(stat.unit, size: .subheading, color: .lightTextColor)
-            }
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .aspectRatio(1, contentMode: .fit)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     private var progressionCard: some View {
@@ -327,108 +271,9 @@ struct ExerciseDetailSheet: View {
             }
             .padding(.leading, .spacing2x)
 
-            VStack(spacing: .spacing3x) {
-                ForEach(ExerciseDemoData.detailHistory) { session in
-                    historyCard(session)
-                }
-            }
+            ExerciseSetHistoryList(groups: ExerciseDemoData.detailHistory)
         }
         .padding(.spacing3x)
-    }
-
-    private func historyCard(_ session: ExerciseHistorySession) -> some View {
-        VStack(alignment: .leading, spacing: .spacing0x) {
-            BrightText(session.date, size: .body2, color: .lightTextColor)
-                .padding(.vertical, .spacing2x)
-
-            ForEach(session.sets) { set in
-                historyRow(set)
-
-                if set.id != session.sets.last?.id {
-                    BrightDivider()
-                }
-            }
-        }
-        .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing1x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
-    }
-
-    private var prBadge: some View {
-        ZStack {
-            Image(ImageNames.exerciseRecordHexagonGoldV5)
-                .resizable()
-                .scaledToFit()
-
-            Image(systemName: "trophy.fill")
-                .font(.system(size: Constants.prBadgeIconSize, weight: .regular))
-                .foregroundStyle(Color.defaultBlack)
-                .blendMode(.overlay)
-        }
-        .frame(width: Constants.prBadgeWidth, height: Constants.prBadgeHeight)
-    }
-
-    /// Longest values across every history card, so the columns line up
-    /// between widgets rather than per card.
-    private var repsTemplate: String {
-        ExerciseDemoData.detailHistory.flatMap(\.sets).map(\.reps).max(by: { $0.count < $1.count }) ?? ""
-    }
-
-    private var weightTemplate: String {
-        ExerciseDemoData.detailHistory.flatMap(\.sets).map(\.weight).max(by: { $0.count < $1.count }) ?? ""
-    }
-
-    private func historyRow(_ set: ExerciseHistorySet) -> some View {
-        HStack(spacing: .spacing2x) {
-            if set.isWarmUp {
-                Image(systemName: "figure.cooldown")
-                    .font(.system(size: Constants.statIconSize, weight: .light))
-                    .foregroundStyle(Color.defaultGreen)
-                    .frame(width: Constants.setLabelWidth, alignment: .leading)
-            } else {
-                BrightText(set.label ?? "", size: .subheading)
-                    .monospacedDigit()
-                    .frame(width: Constants.setLabelWidth, alignment: .leading)
-            }
-
-            Spacer(minLength: .spacing2x)
-
-            if let prLabel = set.prLabel {
-                BrightText(prLabel, size: .body2, color: .lightTextColor)
-                    .lineLimit(1)
-
-                prBadge
-                    // Draws at full size but reports the text's height, so a PR
-                    // row stays level with the rows around it.
-                    .frame(height: Constants.prBadgeInlineHeight)
-            }
-
-            ZStack(alignment: .trailing) {
-                BrightText(repsTemplate, size: .body2, weight: .regular)
-                    .monospacedDigit()
-                    .hidden()
-
-                BrightText(set.reps, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    .monospacedDigit()
-            }
-            .lineLimit(1)
-
-            Rectangle()
-                .fill(Color.textColor.opacity(.minimalOpacity))
-                .frame(width: 1, height: Constants.setDividerHeight)
-
-            ZStack(alignment: .trailing) {
-                BrightText(weightTemplate, size: .body2, weight: .regular)
-                    .monospacedDigit()
-                    .hidden()
-
-                BrightText(set.weight, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    .monospacedDigit()
-            }
-            .lineLimit(1)
-        }
-        .padding(.vertical, .spacing2x)
     }
 
     private class Constants {
@@ -436,12 +281,6 @@ struct ExerciseDetailSheet: View {
         static let chartHeight: CGFloat = 130
         static let statIconSize: CGFloat = 18
         static let progressionArrowSize: CGFloat = 28
-        static let setLabelWidth: CGFloat = 24
-        static let setDividerHeight: CGFloat = 16
-        static let prBadgeWidth: CGFloat = 30
-        static let prBadgeHeight: CGFloat = 33
-        static let prBadgeInlineHeight: CGFloat = 20
-        static let prBadgeIconSize: CGFloat = 13
     }
 }
 

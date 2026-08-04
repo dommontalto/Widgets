@@ -15,13 +15,13 @@ struct ExerciseScoresWidget: View {
             tile(title: "Recovery", value: scores.recovery, imageName: ImageNames.exerciseRecoveryV5) {
                 Image(systemName: "arrow.trianglehead.2.clockwise")
             }
-            tile(title: "Fatigue", value: scores.fatigue, imageName: ImageNames.exerciseFatigueV5) {
+            tile(title: "Stress", value: scores.stress, imageName: ImageNames.exerciseStressV5) {
                 HStack(spacing: -.spacing05x) {
                     Image(systemName: "chevron.right")
                     Image(systemName: "chevron.left")
                 }
             }
-            tile(title: "Readiness", value: scores.readiness, imageName: ImageNames.exerciseReadinessV5) {
+            tile(title: "Strain", value: scores.strain, imageName: ImageNames.exerciseStrainV5) {
                 Image(systemName: "arrow.left.and.line.vertical.and.arrow.right")
             }
         }

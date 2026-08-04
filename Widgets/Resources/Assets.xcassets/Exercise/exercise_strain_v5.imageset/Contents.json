@@ -1,17 +1,17 @@
 {
   "images": [
     {
-      "filename": "exercise_fatigue_v5.png",
+      "filename": "exercise_strain_v5.png",
       "idiom": "universal",
       "scale": "1x"
     },
     {
-      "filename": "exercise_fatigue_v5@2x.png",
+      "filename": "exercise_strain_v5@2x.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
-      "filename": "exercise_fatigue_v5@3x.png",
+      "filename": "exercise_strain_v5@3x.png",
       "idiom": "universal",
       "scale": "3x"
     }

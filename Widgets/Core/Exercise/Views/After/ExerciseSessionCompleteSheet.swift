@@ -10,12 +10,9 @@ import SwiftUI
 struct ExerciseSessionCompleteSheet: View {
     let session: ExerciseSession
 
-    @State private var collapsedExercises: Set<String> = []
     @State private var openedExerciseName: String?
     @State private var isMapExpanded = false
 
-    private let statTileHeight: CGFloat = 67
-    private let setColumnWidth: CGFloat = 40
     private let splitLabelWidth: CGFloat = 24
     private let splitPaceWidth: CGFloat = 48
     private let splitTrailingWidth: CGFloat = 44
@@ -28,20 +25,18 @@ struct ExerciseSessionCompleteSheet: View {
     }
 
     private func sheet(expandedMapHeight: CGFloat) -> some View {
-        BrightPageView(
-            title: "Session complete",
-            scrollableTitle: false,
-            horizontalPadding: .spacing0x,
-            backgroundColor: .defaultSheetBackground
+        BrightPageSheetView(
+            title: "Session Complete",
+            horizontalPadding: .spacing0x
         ) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     header
 
-                    statsGrid
+                    ExerciseStatTileGrid(tiles: session.detail.tiles)
 
                     if !session.detail.exercises.isEmpty {
-                        exercisesCard
+                        exercisesList
                     }
 
                     if session.type == .cardio {
@@ -55,6 +50,11 @@ struct ExerciseSessionCompleteSheet: View {
                 .padding(.horizontal, .spacing3x)
                 .padding(.top, .spacing2x)
                 .padding(.bottom, .spacing4x)
+            }
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: "Session Complete", file: #file)
+                }
             }
         }
         .sheet(item: openedExerciseBinding) { exercise in
@@ -91,107 +91,36 @@ struct ExerciseSessionCompleteSheet: View {
         }
     }
 
-    private var statsGrid: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: .spacing2x), count: 2),
-            spacing: .spacing2x
-        ) {
-            ForEach(session.detail.stats.indices, id: \.self) { i in
-                statTile(session.detail.stats[i])
-            }
+    private var exercisesList: some View {
+        ExerciseSetHistoryList(groups: exerciseGroups) { group in
+            openedExerciseName = group.title
         }
     }
 
-    private func statTile(_ stat: ExerciseSessionStat) -> some View {
-        VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(stat.value, size: .standout3, weight: .regular)
-                    .monospacedDigit()
-                if let unit = stat.unit {
-                    BrightText(unit, size: .body4, color: .lightTextColor)
-                }
-            }
-            BrightText(stat.label, size: .body4, color: .semiLightTextColor)
+    private var exerciseGroups: [ExerciseSetGroup] {
+        session.detail.exercises.map { exercise in
+            ExerciseSetGroup(title: exercise.name, lines: lines(for: exercise))
         }
-        .padding(.horizontal, .spacing2x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: statTileHeight)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
-    private var exercisesCard: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("Workout", size: .body1)
-
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                ForEach(session.detail.exercises.indices, id: \.self) { i in
-                    exerciseSection(session.detail.exercises[i])
-
-                    if i < session.detail.exercises.count - 1 {
-                        divider
-                    }
-                }
+    /// Drop sets take a set number alongside working sets — only warm-ups sit
+    /// outside the count.
+    private func lines(for exercise: ExerciseLoggedExercise) -> [ExerciseSetLine] {
+        var number = 0
+        return exercise.sets.map { set in
+            var kind = set.kind
+            if kind.countsAsSet {
+                number += 1
             }
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
-    }
-
-    private func exerciseSection(_ exercise: ExerciseLoggedExercise) -> some View {
-        let isCollapsed = collapsedExercises.contains(exercise.name)
-        return VStack(alignment: .leading, spacing: .spacing105x) {
-            HStack {
-                Button {
-                    openedExerciseName = exercise.name
-                } label: {
-                    BrightText(exercise.name, size: .body2, color: .defaultPurple, weight: .regular)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                Spacer(minLength: .spacing2x)
-
-                Button {
-                    withAnimation(.brightEaseInOut) {
-                        if isCollapsed {
-                            collapsedExercises.remove(exercise.name)
-                        } else {
-                            collapsedExercises.insert(exercise.name)
-                        }
-                    }
-                } label: {
-                    HStack(spacing: .spacing1x) {
-                        BrightText("\(exercise.sets.count) sets", size: .body4, color: .lightTextColor)
-                            .monospacedDigit()
-                        Image(systemName: "chevron.down")
-                            .font(.standardSFPro(size: .body5, weight: .regular))
-                            .foregroundStyle(Color.lightTextColor)
-                            .rotationEffect(.degrees(isCollapsed ? 0 : 180))
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+            if kind.isWorking {
+                kind = .working(number)
             }
-
-            if !isCollapsed {
-                HStack(spacing: .spacing0x) {
-                    BrightText("SET", size: .body5, color: .lightTextColor)
-                        .frame(width: setColumnWidth, alignment: .leading)
-                    BrightText("KG", size: .body5, color: .lightTextColor)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    BrightText("REPS", size: .body5, color: .lightTextColor)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    BrightText("", size: .body5)
-                        .frame(width: setColumnWidth)
-                }
-
-                VStack(spacing: .spacing1x) {
-                    ForEach(exercise.sets.indices, id: \.self) { i in
-                        setRow(index: i, set: exercise.sets[i])
-                    }
-                }
-            }
+            return ExerciseSetLine(
+                kind: kind,
+                reps: "\(set.reps) reps",
+                weight: "\(set.weight) KG",
+                prLabel: set.isRecord ? "PR" : nil
+            )
         }
     }
 
@@ -235,28 +164,6 @@ struct ExerciseSessionCompleteSheet: View {
             (.defaultOrange, 0.24, "5:59"),
             (.defaultRed, 0.06, "1:31"),
         ]
-    }
-
-    private func setRow(index: Int, set: ExerciseLoggedSet) -> some View {
-        HStack(spacing: .spacing0x) {
-            BrightText("\(index + 1)", size: .body2, color: .semiLightTextColor)
-                .monospacedDigit()
-                .frame(width: setColumnWidth, alignment: .leading)
-            BrightText(set.weight, size: .body2, weight: .regular)
-                .monospacedDigit()
-                .frame(maxWidth: .infinity, alignment: .leading)
-            BrightText(set.reps, size: .body2, weight: .regular)
-                .monospacedDigit()
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Group {
-                if set.isRecord {
-                    Image(systemName: "trophy")
-                        .font(.standardSFPro(size: .body4, weight: .regular))
-                        .foregroundStyle(Color.defaultOrange)
-                }
-            }
-            .frame(width: setColumnWidth)
-        }
     }
 
     private var splitsCard: some View {
@@ -312,11 +219,6 @@ struct ExerciseSessionCompleteSheet: View {
         }
     }
 
-    private var divider: some View {
-        Rectangle()
-            .fill(Color.textColor.opacity(.ultraLowOpacity))
-            .frame(height: 1)
-    }
 }
 
 #Preview("Strength") {

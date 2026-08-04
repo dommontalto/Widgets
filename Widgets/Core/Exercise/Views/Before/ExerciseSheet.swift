@@ -1,5 +1,5 @@
 //
-//  ExerciseSessionSheet.swift
+//  ExerciseSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -10,16 +10,22 @@ import SwiftUI
 enum ExerciseSessionRoute: Hashable {
     case category(ExerciseSessionCategory)
     case exercise(String)
-    case session(String)
     case newSession
 }
 
-struct ExerciseSessionSheet: View {
+struct ExerciseSheet: View {
     @State private var searchText = ""
     @State private var isLoggingCardio = false
     @Environment(ExerciseSessionBuilder.self) private var builder
     @State private var renamingSession: ExerciseQuickSession?
     @State private var renameText = ""
+    @State private var viewedSession: ExerciseQuickSession?
+    /// Each stage is held until the presentation above it has closed, so the next
+    /// one isn't presented by a view that's on its way out.
+    @State private var pendingStart: ExerciseQuickSession?
+    @State private var startedSession: ExerciseQuickSession?
+    @State private var pendingCompletion: ExerciseSession?
+    @State private var completedSession: ExerciseSession?
 
     private let columns = [
         GridItem(.flexible(), spacing: .spacing2x),
@@ -54,6 +60,10 @@ struct ExerciseSessionSheet: View {
                 destination(for: route)
             }
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: "Start Session", file: #file)
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
                         Button("Add") {
@@ -69,6 +79,21 @@ struct ExerciseSessionSheet: View {
         .fullScreenCover(isPresented: $isLoggingCardio) {
             ExerciseLiveCardioSheet { isLoggingCardio = false }
         }
+        .sheet(item: $viewedSession, onDismiss: presentStart) { session in
+            ExercisePreSessionSheet(session: session) { started in
+                pendingStart = started
+            }
+        }
+        .fullScreenCover(item: $startedSession, onDismiss: presentCompletion) { session in
+            NavigationStack {
+                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items) { finished in
+                    pendingCompletion = finished
+                }
+            }
+        }
+        .sheet(item: $completedSession) { session in
+            ExerciseSessionCompleteSheet(session: session)
+        }
         .alert("Rename session", isPresented: renameBinding) {
             TextField("Session name", text: $renameText)
 
@@ -81,6 +106,18 @@ struct ExerciseSessionSheet: View {
         }
         .animation(.brightEaseInOut, value: searchText.isEmpty)
         .animation(.brightSnappy, value: builder.count)
+    }
+
+    private func presentStart() {
+        guard let pendingStart else { return }
+        startedSession = pendingStart
+        self.pendingStart = nil
+    }
+
+    private func presentCompletion() {
+        guard let pendingCompletion else { return }
+        completedSession = pendingCompletion
+        self.pendingCompletion = nil
     }
 
     private var renameBinding: Binding<Bool> {
@@ -97,10 +134,8 @@ struct ExerciseSessionSheet: View {
             ExerciseCategoryView(category: category)
         case let .exercise(name):
             exerciseDetail(named: name)
-        case let .session(name):
-            quickSession(named: name)
         case .newSession:
-            ExerciseCustomiseSetsView { builder.path = NavigationPath() }
+            ExerciseCreateSessionView { builder.path = NavigationPath() }
         }
     }
 
@@ -110,13 +145,6 @@ struct ExerciseSessionSheet: View {
             ExerciseDetailSheet(exercise: exercise)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .background(Color.defaultSheetBackground.ignoresSafeArea())
-        }
-    }
-
-    @ViewBuilder
-    private func quickSession(named name: String) -> some View {
-        if let session = sessions.first(where: { $0.name == name }) {
-            ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items)
         }
     }
 
@@ -155,7 +183,9 @@ struct ExerciseSessionSheet: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    NavigationLink(value: ExerciseSessionRoute.session(session.name)) {
+                    Button {
+                        viewedSession = session
+                    } label: {
                         sessionCard(session)
                     }
                     .buttonStyle(.plain)
@@ -245,6 +275,6 @@ struct ExerciseSessionSheet: View {
 }
 
 #Preview {
-    ExerciseSessionSheet()
+    ExerciseSheet()
         .environment(ExerciseSessionBuilder())
 }

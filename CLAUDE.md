@@ -198,6 +198,39 @@ TextField("Session name", text: $name)
 
 ---
 
+## Tap targets
+
+Never hand-roll a circular icon button — use `BrightRoundButton`, which already
+carries the glass, the `.contentShape(Circle())` and (at `.extraLarge`) a light
+haptic:
+
+```swift
+// Clear glass, tinted glyph
+BrightRoundButton(systemImage: "stop.fill", size: .extraLarge,
+                  imageColor: .defaultRed, haptic: .medium, onTapCallback: onStop)
+
+// Filled circle, black glyph
+BrightRoundButton(systemImage: "play.fill", size: .extraLarge, color: .defaultGreen) { start() }
+
+// Menu label — the Menu takes the tap
+Menu { … } label: {
+    BrightRoundButton(systemImage: "ellipsis", size: .extraLarge)
+        .allowsHitTesting(false)
+}
+```
+
+`.extraLarge` is 62pt — the primary control on live/session screens — and is the
+only size that plays a haptic by default (`.light`); pass `haptic:` to override.
+
+When you must build a custom label, remember an icon-only `Button` is tappable
+only where the glyph draws: `.frame(width:height:)` does **not** make the empty
+space hittable, and glass applied outside the `Button` is decoration, not target.
+Declare `.contentShape(Circle())` — or `Rectangle()` for square/pill labels.
+Same for full-width rows and `Menu` labels: put `.contentShape(Rectangle())` on
+the row's `HStack` so the gaps between text and trailing accessory still tap.
+
+---
+
 ## CardModifier
 
 Defined in `Shared/Styling/ViewModifier/CardModifier.swift`.

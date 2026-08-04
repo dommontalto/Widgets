@@ -8,7 +8,7 @@
 import SwiftUI
 
 nonisolated struct ExerciseSessionDetail {
-    let stats: [ExerciseSessionStat]
+    let tiles: [ExerciseStatTile]
     let exercises: [ExerciseLoggedExercise]
     let splits: [ExerciseSplit]
     let note: String
@@ -28,6 +28,7 @@ nonisolated struct ExerciseLoggedExercise {
 nonisolated struct ExerciseLoggedSet {
     let weight: String
     let reps: String
+    var kind: ExerciseSetKind = .working(0)
     var isRecord = false
 }
 

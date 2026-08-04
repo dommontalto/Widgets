@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct BrightScreenEdgeBeam: View {
+    /// Set false to fade the beam out — BorderBeam keeps its layers mounted so it
+    /// settles rather than cutting.
+    var isActive = true
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -30,6 +34,7 @@ struct BrightScreenEdgeBeam: View {
             colorVariant: .colorful,
             theme: .dark,
             duration: mirrored ? Constants.mirroredDuration : Constants.duration,
+            active: isActive,
             borderRadius: Constants.screenCornerRadius / Constants.renderScale,
             brightness: Constants.brightness,
             saturation: Constants.saturation,

@@ -30,6 +30,11 @@ enum ExerciseSetKind: Hashable {
         return false
     }
 
+    /// Warm-ups sit outside the set count; working and drop sets take a number.
+    var countsAsSet: Bool {
+        self != .warmUp
+    }
+
 
     var color: Color {
         switch self {
@@ -176,7 +181,14 @@ final class ExerciseSessionBuilder {
         let items = added.map { exercise in
             ExerciseTemplateItem(
                 exerciseName: exercise,
-                target: target(for: exercise)
+                target: target(for: exercise),
+                sets: (sets[exercise] ?? []).map { draft in
+                    ExerciseTemplateSet(
+                        weight: draft.weight.filter { $0.isNumber || $0 == "." },
+                        reps: draft.reps.filter(\.isNumber),
+                        kind: draft.kind
+                    )
+                }
             )
         }
         saved.append(

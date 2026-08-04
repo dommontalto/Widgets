@@ -50,7 +50,7 @@ struct ExerciseFormViewer: View {
                         controller?.resume()
                     }
                 }
-                .tint(Color.defaultBlue)
+                .tint(Color.defaultSkyBlue)
                 .onChange(of: progress) {
                     if isScrubbing {
                         controller?.time = min(progress * duration, duration - 0.01)

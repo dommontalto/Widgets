@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct ExerciseUpcomingWidget: View {
-    var sessions: [ExerciseUpcomingSession] = ExerciseDemoData.upcomingSessions
-    var onQuickWorkout: () -> Void = {}
+    var sessions: [ExerciseUpcomingSession] = []
+    var onQuickWorkout: (ExerciseQuickSession) -> Void = { _ in }
+
+    @Environment(ExerciseSessionBuilder.self) private var builder
 
     @State private var selectedIndex: Int?
 
@@ -92,13 +94,30 @@ struct ExerciseUpcomingWidget: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("No sessions", size: .body1)
+            BrightText("No sessions today", size: .body1)
 
-            BrightPillButton("Quick workout", buttonSize: .large, onTapCallback: onQuickWorkout)
+            quickWorkoutMenu
                 .frame(maxWidth: .infinity)
         }
-        .padding(.spacing3x)
-        .padding(.bottom, .spacing1x)
+        .padding(.horizontal, .spacing3x)
+        .padding(.top, .spacing3x)
+        .padding(.bottom, .spacing4x)
+    }
+
+    private var quickWorkoutMenu: some View {
+        Menu {
+            Section("My Sessions") {
+                ForEach(builder.saved) { session in
+                    Button(session.name, systemImage: session.symbol) {
+                        onQuickWorkout(session)
+                    }
+                }
+            }
+        } label: {
+            BrightPillButton("Quick workout", buttonSize: .large) {}
+            // The pill is only the label — let the Menu take the tap.
+            .allowsHitTesting(false)
+        }
     }
 }
 
@@ -178,9 +197,7 @@ struct ExerciseSessionMiniSheet: View {
 }
 
 #Preview {
-    VStack(spacing: .spacing3x) {
-        ExerciseUpcomingWidget()
-        ExerciseUpcomingWidget(sessions: [])
-    }
-    .padding(.spacing4x)
+    ExerciseUpcomingWidget()
+        .padding(.spacing4x)
+        .environment(ExerciseSessionBuilder())
 }

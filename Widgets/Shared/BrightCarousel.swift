@@ -152,6 +152,7 @@ struct BrightCarousel<Item: Identifiable & Hashable, Card: View>: View {
             }
             .animation(.brightBouncy, value: selected?.id)
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
     }
 }

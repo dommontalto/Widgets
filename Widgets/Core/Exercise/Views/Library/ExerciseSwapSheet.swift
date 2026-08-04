@@ -39,6 +39,11 @@ struct ExerciseSwapSheet: View {
                 .padding(.bottom, .spacing4x)
             }
             .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: title, file: #file)
+                }
+            }
         }
     }
 

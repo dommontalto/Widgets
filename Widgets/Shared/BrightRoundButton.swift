@@ -18,8 +18,16 @@ struct BrightRoundButton: View {
     private let imageSource: ImageSource
     let size: BrightButtonSizes
     let color: Color?
+    /// Tints the glyph while leaving the circle clear — `color` fills the circle
+    /// and forces a black glyph instead.
+    let imageColor: Color?
     let imageRotation: Angle
+    /// Extra-large buttons are primary controls, so they give light feedback by
+    /// default. Pass a value to override, or `.none` to silence one.
+    let haptic: BrightHaptic?
     let onTapCallback: (() -> Void)?
+
+    @State private var tapTick = 0
 
     var systemImage: String {
         if case .system(let name) = imageSource { return name }
@@ -30,13 +38,17 @@ struct BrightRoundButton: View {
         systemImage: String,
         size: BrightButtonSizes = .medium,
         color: Color? = nil,
+        imageColor: Color? = nil,
         imageRotation: Angle = .zero,
+        haptic: BrightHaptic? = .light,
         onTapCallback: (() -> Void)? = nil
     ) {
         self.imageSource = .system(systemImage)
         self.size = size
         self.color = color
+        self.imageColor = imageColor
         self.imageRotation = imageRotation
+        self.haptic = haptic
         self.onTapCallback = onTapCallback
     }
 
@@ -44,13 +56,17 @@ struct BrightRoundButton: View {
         imageName: String,
         size: BrightButtonSizes = .medium,
         color: Color? = nil,
+        imageColor: Color? = nil,
         imageRotation: Angle = .zero,
+        haptic: BrightHaptic? = .light,
         onTapCallback: (() -> Void)? = nil
     ) {
         self.imageSource = .asset(imageName)
         self.size = size
         self.color = color
+        self.imageColor = imageColor
         self.imageRotation = imageRotation
+        self.haptic = haptic
         self.onTapCallback = onTapCallback
     }
 
@@ -63,8 +79,15 @@ struct BrightRoundButton: View {
         self.imageSource = .text(title)
         self.size = size
         self.color = color
+        self.imageColor = nil
         self.imageRotation = .zero
+        self.haptic = .light
         self.onTapCallback = onTapCallback
+    }
+
+    private func tapped() {
+        tapTick += 1
+        onTapCallback?()
     }
 
     private var isChevronForward: Bool {
@@ -92,20 +115,27 @@ struct BrightRoundButton: View {
         }
     }
 
+    /// Only the primary size speaks up; smaller round buttons stay silent unless
+    /// a haptic is asked for explicitly.
+    private var resolvedHaptic: BrightHaptic? {
+        size == .extraLarge ? haptic : nil
+    }
+
     var body: some View {
-        Button(action: { onTapCallback?() }) {
+        Button(action: tapped) {
             imageView
                 .rotationEffect(imageRotation)
                 .frame(width: size.rawValue, height: size.rawValue)
-                .foregroundStyle(color != nil ? Color.defaultBlack : Color.textColor)
+                .foregroundStyle(imageColor ?? (color != nil ? Color.defaultBlack : Color.textColor))
                 .background(color ?? .clear, in: Circle())
                 .contentShape(Circle())
         }
         .modifier(BrightRoundButtonBackground(isGlass: !isChevronForward))
         .highPriorityGesture(TapGesture().onEnded { _ in
-            onTapCallback?()
+            tapped()
         })
         .allowsHitTesting(onTapCallback != nil)
+        .brightHaptic(trigger: tapTick) { _, _ in resolvedHaptic }
     }
 }
 

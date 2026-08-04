@@ -36,8 +36,8 @@ struct ExerciseTrainingLoad {
 
 struct ExerciseScores {
     let recovery: Int
-    let fatigue: Int
-    let readiness: Int
+    let stress: Int
+    let strain: Int
 }
 
 struct ExerciseMuscleGroup {
@@ -101,53 +101,51 @@ struct ExerciseIntervalSegment: Identifiable {
 
         var color: Color {
             switch self {
-            case .work: .defaultBrightGreen
-            case .rest: .defaultSkyBlue
+            case .work: .defaultGreen
+            case .rest: .defaultCyan
             }
         }
     }
 
     let id = UUID()
-    /// Relative share of the interval strip; normalised against the other segments.
-    let weight: Double
     let kind: Kind
 }
 
 struct ExerciseLiveSession {
-    let icon: String
+    let currentPace: String
     let distance: String
-    let timeElapsed: String
+    let heartRate: String
+    let heartRateZone: String
     let averagePace: String
     let splitPace: String
-    let sectionNumber: Int
-    let sectionRemaining: String
+    /// Signed difference between the split and the average pace, in seconds.
+    let splitDelta: String
+    let intervalName: String
+    let intervalRemaining: String
+    let intervalKind: ExerciseIntervalSegment.Kind
     let segments: [ExerciseIntervalSegment]
-    /// Position along the full interval strip, gaps included.
-    let progress: Double
-    let currentIntervalName: String
-    let currentIntervalKind: ExerciseIntervalSegment.Kind
 
-    var currentIntervalColor: Color { currentIntervalKind.color }
+    var intervalColor: Color { intervalKind.color }
 }
 
 enum ExerciseDemoData {
     static let liveSession = ExerciseLiveSession(
-        icon: "figure.run",
-        distance: "5.25 KM",
-        timeElapsed: "29:34:18",
-        averagePace: "5\u{2019}38",
-        splitPace: "5\u{2019}26",
-        sectionNumber: 2,
-        sectionRemaining: "43 SEC",
+        currentPace: "3\u{2019}23 / KM",
+        distance: "5.24 KM",
+        heartRate: "136",
+        heartRateZone: "ZONE 2",
+        averagePace: "5\u{2019}21",
+        splitPace: "5\u{2019}19",
+        splitDelta: "-2",
+        intervalName: "RUN",
+        intervalRemaining: "2:49",
+        intervalKind: .work,
         segments: [
-            ExerciseIntervalSegment(weight: 68, kind: .rest),
-            ExerciseIntervalSegment(weight: 160, kind: .work),
-            ExerciseIntervalSegment(weight: 26, kind: .rest),
-            ExerciseIntervalSegment(weight: 91, kind: .work),
-        ],
-        progress: 0.596,
-        currentIntervalName: "RUN",
-        currentIntervalKind: .work
+            ExerciseIntervalSegment(kind: .rest),
+            ExerciseIntervalSegment(kind: .work),
+            ExerciseIntervalSegment(kind: .rest),
+            ExerciseIntervalSegment(kind: .work),
+        ]
     )
 
     static let programStatus = ExerciseProgramStatus(
@@ -165,7 +163,7 @@ enum ExerciseDemoData {
         bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
     )
 
-    static let scores = ExerciseScores(recovery: 92, fatigue: 34, readiness: 84)
+    static let scores = ExerciseScores(recovery: 92, stress: 34, strain: 84)
 
     static let muscleGroups = [
         ExerciseMuscleGroup(name: "Shoulders", sets: 5, status: "Optimal"),
@@ -176,44 +174,22 @@ enum ExerciseDemoData {
         ExerciseMuscleGroup(name: "Legs", sets: 10, status: "Optimal"),
     ]
 
-    static let upcomingSessions = [
-        ExerciseUpcomingSession(
-            name: "Gym session",
-            time: "6:00 - 7:00 PM",
-            type: .strength,
-            goals: [
-                ExerciseSessionGoal(icon: "text.append", iconColor: .defaultGreen, label: "Total sets", value: "20"),
-                ExerciseSessionGoal(icon: "text.line.first.and.arrowtriangle.forward", iconColor: .defaultOrange, label: "Target RPE", value: "8"),
-            ],
-            note: "Based off your recovery and sleep, we recommend adjusting a lower RPE today."
-        ),
-        ExerciseUpcomingSession(
-            name: "5K Run",
-            time: "8:30 - 9:00 PM",
-            type: .cardio,
-            goals: [
-                ExerciseSessionGoal(icon: "clock", iconColor: .defaultSkyBlue, label: "Pace", value: "4\u{2019}26"),
-                ExerciseSessionGoal(icon: "arrow.up.heart", iconColor: .defaultRed, label: "Zone", value: "3"),
-            ],
-            note: "Based off your recovery and sleep, we recommend adjusting for a slower run."
-        ),
-    ]
-
     static let strengthDetail = ExerciseSessionDetail(
-        stats: [
-            ExerciseSessionStat(label: "Duration", value: "58:24"),
-            ExerciseSessionStat(label: "Volume", value: "12,480", unit: "kg"),
-            ExerciseSessionStat(label: "Total sets", value: "21"),
-            ExerciseSessionStat(label: "Records", value: "2", unit: "PRs"),
-            ExerciseSessionStat(label: "Avg heart rate", value: "121", unit: "bpm"),
-            ExerciseSessionStat(label: "Calories", value: "412", unit: "kcal"),
+        tiles: [
+            ExerciseStatTile(label: "Personal Best", value: "100", unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
+            ExerciseStatTile(label: "EST. 1RM", value: "112", unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
+            ExerciseStatTile(label: "Total volume", value: "12,480", unit: "kg", symbol: "text.line.3.summary", color: .defaultGreen),
+            ExerciseStatTile(label: "Total sets", value: "21", unit: "sets", symbol: "chart.line.flattrend.xyaxis", color: .defaultSkyBlue),
+            ExerciseStatTile(label: "AVG heart rate", value: "121", unit: "bpm", symbol: "heart.fill", color: .defaultRed),
+            ExerciseStatTile(label: "Calories", value: "412", unit: "kcal", symbol: "flame.fill", color: .defaultOrange),
         ],
         exercises: [
             ExerciseLoggedExercise(name: "Bench Press (Barbell)", sets: [
-                ExerciseLoggedSet(weight: "60", reps: "12"),
+                ExerciseLoggedSet(weight: "60", reps: "12", kind: .warmUp),
                 ExerciseLoggedSet(weight: "80", reps: "10"),
                 ExerciseLoggedSet(weight: "90", reps: "8"),
                 ExerciseLoggedSet(weight: "100", reps: "5", isRecord: true),
+                ExerciseLoggedSet(weight: "70", reps: "8", kind: .dropSet),
             ]),
             ExerciseLoggedExercise(name: "Incline Press (Dumbbell)", sets: [
                 ExerciseLoggedSet(weight: "26", reps: "12"),
@@ -232,7 +208,7 @@ enum ExerciseDemoData {
                 ExerciseLoggedSet(weight: "70", reps: "8"),
             ]),
             ExerciseLoggedExercise(name: "Bicep Curl (EZ-Bar)", sets: [
-                ExerciseLoggedSet(weight: "30", reps: "12"),
+                ExerciseLoggedSet(weight: "30", reps: "12", kind: .warmUp),
                 ExerciseLoggedSet(weight: "35", reps: "10"),
                 ExerciseLoggedSet(weight: "40", reps: "8", isRecord: true),
             ]),
@@ -242,13 +218,13 @@ enum ExerciseDemoData {
     )
 
     static let cardioDetail = ExerciseSessionDetail(
-        stats: [
-            ExerciseSessionStat(label: "Distance", value: "5.02", unit: "km"),
-            ExerciseSessionStat(label: "Time", value: "24:56"),
-            ExerciseSessionStat(label: "Avg pace", value: "4\u{2019}58\u{201D}", unit: "/km"),
-            ExerciseSessionStat(label: "Avg heart rate", value: "158", unit: "bpm"),
-            ExerciseSessionStat(label: "Elevation", value: "42", unit: "m"),
-            ExerciseSessionStat(label: "Calories", value: "386", unit: "kcal"),
+        tiles: [
+            ExerciseStatTile(label: "Distance", value: "5.02", unit: "km", symbol: "figure.run", color: .defaultSkyBlue),
+            ExerciseStatTile(label: "AVG pace", value: "4\u{2019}58\u{201D}", unit: "/km", symbol: "dial.high.fill", color: .defaultRed),
+            ExerciseStatTile(label: "Time", value: "24:56", unit: "", symbol: "text.line.3.summary", color: .defaultGreen),
+            ExerciseStatTile(label: "Elevation", value: "42", unit: "m", symbol: "chart.line.flattrend.xyaxis", color: .defaultSkyBlue),
+            ExerciseStatTile(label: "AVG heart rate", value: "158", unit: "bpm", symbol: "heart.fill", color: .defaultRed),
+            ExerciseStatTile(label: "Calories", value: "386", unit: "kcal", symbol: "flame.fill", color: .defaultOrange),
         ],
         exercises: [],
         splits: [
@@ -371,36 +347,36 @@ enum ExerciseDemoData {
         description: nil
     )
 
-    static let detailHistory: [ExerciseHistorySession] = [
-        ExerciseHistorySession(date: "Mon, 18 Jul, 2026", sets: [
-            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
-            ExerciseHistorySet(label: "1", reps: "4 reps", weight: "80 KG"),
-            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG", prLabel: "Weight PR"),
-            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG", prLabel: "Rep PR"),
+    static let detailHistory: [ExerciseSetGroup] = [
+        ExerciseSetGroup(title: "Mon, 18 Jul, 2026", lines: [
+            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG"),
+            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "60 KG", prLabel: "Weight PR"),
+            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG", prLabel: "Rep PR"),
         ]),
-        ExerciseHistorySession(date: "Thu, 14 Jul, 2026", sets: [
-            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "60 KG"),
-            ExerciseHistorySet(label: "1", reps: "4 reps", weight: "80 KG"),
-            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "60 KG"),
-            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "80 KG"),
+        ExerciseSetGroup(title: "Thu, 14 Jul, 2026", lines: [
+            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG"),
+            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "60 KG"),
+            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG"),
         ]),
-        ExerciseHistorySession(date: "Mon, 11 Jul, 2026", sets: [
-            ExerciseHistorySet(label: nil, reps: "8 reps", weight: "50 KG"),
-            ExerciseHistorySet(label: "1", reps: "6 reps", weight: "75 KG", prLabel: "Rep PR"),
-            ExerciseHistorySet(label: "2", reps: "6 reps", weight: "75 KG"),
-            ExerciseHistorySet(label: "3", reps: "5 reps", weight: "75 KG"),
+        ExerciseSetGroup(title: "Mon, 11 Jul, 2026", lines: [
+            ExerciseSetLine(kind: .warmUp, reps: "8 reps", weight: "50 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "6 reps", weight: "75 KG", prLabel: "Rep PR"),
+            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "75 KG"),
+            ExerciseSetLine(kind: .working(3), reps: "5 reps", weight: "75 KG"),
         ]),
-        ExerciseHistorySession(date: "Thu, 7 Jul, 2026", sets: [
-            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "50 KG"),
-            ExerciseHistorySet(label: "1", reps: "5 reps", weight: "75 KG"),
-            ExerciseHistorySet(label: "2", reps: "5 reps", weight: "72.5 KG"),
-            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "72.5 KG"),
+        ExerciseSetGroup(title: "Thu, 7 Jul, 2026", lines: [
+            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "50 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "5 reps", weight: "75 KG"),
+            ExerciseSetLine(kind: .working(2), reps: "5 reps", weight: "72.5 KG"),
+            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "72.5 KG"),
         ]),
-        ExerciseHistorySession(date: "Mon, 4 Jul, 2026", sets: [
-            ExerciseHistorySet(label: nil, reps: "6 reps", weight: "50 KG"),
-            ExerciseHistorySet(label: "1", reps: "5 reps", weight: "70 KG"),
-            ExerciseHistorySet(label: "2", reps: "4 reps", weight: "70 KG"),
-            ExerciseHistorySet(label: "3", reps: "4 reps", weight: "70 KG"),
+        ExerciseSetGroup(title: "Mon, 4 Jul, 2026", lines: [
+            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "50 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "5 reps", weight: "70 KG"),
+            ExerciseSetLine(kind: .working(2), reps: "4 reps", weight: "70 KG"),
+            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "70 KG"),
         ]),
     ]
 
@@ -408,7 +384,7 @@ enum ExerciseDemoData {
 
     static let activeExercises: [ExerciseActiveExercise] = [
         ExerciseActiveExercise(name: "Bench Press (Barbell)", sets: [
-            ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", isWarmup: true, isDone: true),
+            ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", kind: .warmUp, isDone: true),
             ExerciseActiveSet(weight: "80", reps: "10", previous: "77.5 \u{00D7} 10", isDone: true),
             ExerciseActiveSet(weight: "90", reps: "8", previous: "87.5 \u{00D7} 8"),
             ExerciseActiveSet(weight: "100", reps: "5", previous: "97.5 \u{00D7} 5", isRecord: true),

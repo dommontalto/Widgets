@@ -7,7 +7,7 @@
 
 import Foundation
 
-class ImageNames {
+nonisolated class ImageNames {
 
     // MARK: - Genome
 
@@ -48,8 +48,8 @@ class ImageNames {
     static let exerciseWeeklyPlanV5 = "Exercise/exercise_weekly_plan_v5"
     static let exerciseBodymapV5    = "Exercise/exercise_bodymap_v5"
     static let exerciseRecoveryV5   = "Exercise/exercise_recovery_v5"
-    static let exerciseFatigueV5    = "Exercise/exercise_fatigue_v5"
-    static let exerciseReadinessV5  = "Exercise/exercise_readiness_v5"
+    static let exerciseStressV5     = "Exercise/exercise_stress_v5"
+    static let exerciseStrainV5     = "Exercise/exercise_strain_v5"
     static let exerciseRecordHexagonV5     = "Exercise/exercise_record_hexagon_v5"
     static let exerciseRecordHexagonGoldV5 = "Exercise/exercise_record_hexagon_gold_v5"
 

@@ -16,11 +16,14 @@ struct ExerciseCategoryView: View {
 
     var body: some View {
         BrightPageView(
-            title: title,
             scrollableTitle: false,
             horizontalPadding: .spacing0x,
             backgroundColor: .defaultSheetBackground,
             toolbar: {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: title, file: #file)
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
                         Button("Add") {

@@ -1,5 +1,5 @@
 //
-//  ExerciseCustomiseSetsView.swift
+//  ExerciseCreateSessionView.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -11,7 +11,7 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
-struct ExerciseCustomiseSetsView: View {
+struct ExerciseCreateSessionView: View {
     var onSave: () -> Void
 
     @Environment(ExerciseSessionBuilder.self) private var builder
@@ -28,11 +28,14 @@ struct ExerciseCustomiseSetsView: View {
 
     var body: some View {
         BrightPageView(
-            title: "Customise sets",
             scrollableTitle: false,
             horizontalPadding: .spacing0x,
             backgroundColor: .defaultSheetBackground,
             toolbar: {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: "Customise sets", file: #file)
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         guard !isNameEmpty else {
@@ -309,7 +312,7 @@ struct ExerciseCustomiseSetsView: View {
 
 #Preview {
     NavigationStack {
-        ExerciseCustomiseSetsView {}
+        ExerciseCreateSessionView {}
             .environment(previewBuilder)
     }
 }

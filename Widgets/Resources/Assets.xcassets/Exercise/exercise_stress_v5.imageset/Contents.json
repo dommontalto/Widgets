@@ -1,17 +1,17 @@
 {
   "images": [
     {
-      "filename": "exercise_readiness_v5.png",
+      "filename": "exercise_stress_v5.png",
       "idiom": "universal",
       "scale": "1x"
     },
     {
-      "filename": "exercise_readiness_v5@2x.png",
+      "filename": "exercise_stress_v5@2x.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
-      "filename": "exercise_readiness_v5@3x.png",
+      "filename": "exercise_stress_v5@3x.png",
       "idiom": "universal",
       "scale": "3x"
     }
