@@ -288,36 +288,6 @@ enum ExerciseDemoData {
         }
     }
 
-    // MARK: - Session planner
-
-    static let plannerTemplates: [ExercisePlannedSession] = [
-        ExercisePlannedSession(title: "Back & Biceps", subtitle: "10 exercises", kind: .strength),
-        ExercisePlannedSession(title: "Chest & Legs", subtitle: "10 exercises", kind: .strength),
-        ExercisePlannedSession(title: "Back & Core", subtitle: "6 exercises", kind: .strength),
-        ExercisePlannedSession(title: "3K Run", subtitle: "Target: Zone 2", kind: .run),
-        ExercisePlannedSession(title: "10K Run", subtitle: "Target: Zone 3", kind: .run),
-        ExercisePlannedSession(title: "20K Cycle", subtitle: "Target: Zone 2", kind: .cycle),
-        ExercisePlannedSession(title: "Rest Day", subtitle: "", kind: .rest),
-    ]
-
-    static var plannerWeek: [ExercisePlanDay] {
-        [
-            ExercisePlanDay(name: "Mon", sessions: [plannerTemplates[0].duplicated]),
-            ExercisePlanDay(name: "Tue", sessions: [plannerTemplates[1].duplicated]),
-            ExercisePlanDay(name: "Wed", sessions: [plannerTemplates[6].duplicated]),
-            ExercisePlanDay(name: "Thu", sessions: [plannerTemplates[4].duplicated]),
-            ExercisePlanDay(name: "Fri", sessions: [plannerTemplates[2].duplicated, plannerTemplates[3].duplicated]),
-            ExercisePlanDay(name: "Sat", sessions: [plannerTemplates[6].duplicated]),
-            ExercisePlanDay(name: "Sun", sessions: [plannerTemplates[5].duplicated]),
-        ]
-    }
-
-    static var plannerEmptyWeek: [ExercisePlanDay] {
-        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map {
-            ExercisePlanDay(name: $0, sessions: [])
-        }
-    }
-
     // MARK: - Exercise detail
 
     static let detailStats: [ExerciseStatTile] = [

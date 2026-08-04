@@ -51,7 +51,7 @@ nonisolated struct ExercisePlanDay: Identifiable {
 struct ExerciseAddSessionsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var days = ExerciseDemoData.plannerWeek
+    @State private var days = ExerciseDemoPlanner.week
     @State private var repeatsWeekly = false
     @State private var clipboard: ExercisePlannedSession?
     @State private var weekClipboard: [ExercisePlanDay]?
@@ -110,16 +110,16 @@ struct ExerciseAddSessionsSheet: View {
 
             Menu {
                 Button("Add variable week", systemImage: "calendar.badge.plus") {
-                    days = ExerciseDemoData.plannerWeek
+                    days = ExerciseDemoPlanner.week
                 }
 
                 Divider()
 
                 Button("Clear week", systemImage: "eraser.line.dashed") {
-                    days = ExerciseDemoData.plannerEmptyWeek
+                    days = ExerciseDemoPlanner.emptyWeek
                 }
                 Button("Delete week", systemImage: "trash", role: .destructive) {
-                    days = ExerciseDemoData.plannerEmptyWeek
+                    days = ExerciseDemoPlanner.emptyWeek
                     dismiss()
                 }
             } label: {
@@ -176,7 +176,7 @@ struct ExerciseAddSessionsSheet: View {
 
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
         Menu {
-            ForEach(ExerciseDemoData.plannerTemplates) { template in
+            ForEach(ExerciseDemoPlanner.templates) { template in
                 Button(template.title, systemImage: templateSymbol(template.kind)) {
                     day.wrappedValue.sessions.append(template.duplicated)
                 }
@@ -250,7 +250,7 @@ struct ExerciseAddSessionsSheet: View {
     private var bottomBar: some View {
         HStack(spacing: .spacing0x) {
             BrightRoundButton(systemImage: "arrow.counterclockwise", size: .large) {
-                days = ExerciseDemoData.plannerWeek
+                days = ExerciseDemoPlanner.week
                 clipboard = nil
                 weekClipboard = nil
             }
