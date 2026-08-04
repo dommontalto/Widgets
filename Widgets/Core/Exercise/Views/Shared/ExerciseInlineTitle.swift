@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-/// Inline nav title with the screen's source file beneath it. Pass `file: #file`
-/// so the label names the screen rather than this component.
 struct ExerciseInlineTitle: View {
     var title = ""
     let file: String

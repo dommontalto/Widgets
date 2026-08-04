@@ -1,5 +1,5 @@
 //
-//  ExerciseSessionStatusCard.swift
+//  ExerciseLiveSessionStatusWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 4/8/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ExerciseSessionStatusCard: View {
+struct ExerciseLiveSessionStatusWidget: View {
     enum Status {
         /// Mid-set: the four set controls.
         case working(label: String, upNext: String)
@@ -189,17 +189,17 @@ struct ExerciseSessionStatusCard: View {
 
 #Preview {
     VStack(spacing: .spacing3x) {
-        ExerciseSessionStatusCard(status: .working(label: "Set 2", upNext: "REST"))
+        ExerciseLiveSessionStatusWidget(status: .working(label: "Set 2", upNext: "REST"))
 
-        ExerciseSessionStatusCard(
+        ExerciseLiveSessionStatusWidget(
             status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(269))
         )
 
-        ExerciseSessionStatusCard(
+        ExerciseLiveSessionStatusWidget(
             status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(5))
         )
 
-        ExerciseSessionStatusCard(status: .allSetsComplete)
+        ExerciseLiveSessionStatusWidget(status: .allSetsComplete)
     }
     .padding(.spacing3x)
     .frame(maxWidth: .infinity, maxHeight: .infinity)

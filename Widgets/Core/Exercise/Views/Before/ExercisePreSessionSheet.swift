@@ -143,7 +143,7 @@ struct ExercisePreSessionSheet: View {
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
     @ViewBuilder

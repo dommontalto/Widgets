@@ -73,7 +73,7 @@ struct ExerciseSetHistoryCard: View {
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing1x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
     }
 
     @ViewBuilder private var title: some View {

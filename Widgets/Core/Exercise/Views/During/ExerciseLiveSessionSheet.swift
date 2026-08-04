@@ -19,7 +19,6 @@ struct ExerciseLiveSessionSheet: View {
     @State private var startDate = Date()
     @State private var exercises: [ExerciseActiveExercise]
     @State private var currentIndex = 0
-    @State private var showAddExercise = false
     @State private var openedExercise: ExerciseDefinition?
     @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
@@ -47,6 +46,7 @@ struct ExerciseLiveSessionSheet: View {
         BrightPageView(
             horizontalPadding: .spacing0x,
             backgroundColor: .defaultBackground,
+            bottomSafeArea: false,
             toolbar: {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -71,22 +71,25 @@ struct ExerciseLiveSessionSheet: View {
                 }
             },
             content: {
-                VStack(spacing: .spacing0x) {
-                    logAllPill
-                        .padding(.horizontal, .spacing3x)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: .spacing0x) {
+                        logAllPill
+                            .padding(.horizontal, .spacing3x)
 
-                    // Runs edge to edge so a swipe-to-delete reaches the screen
-                    // edge; the rows carry the margin themselves.
-                    setRows
-                        .padding(.top, .spacing3x)
-
-                    Spacer(minLength: .spacing4x)
-
-                    statusCard
-                        .padding(.horizontal, .spacing3x)
+                        // Runs edge to edge so a swipe-to-delete reaches the
+                        // screen edge; the rows carry the margin themselves.
+                        setRows
+                            .padding(.top, .spacing3x)
+                    }
+                    .padding(.top, .spacing3x)
+                    .padding(.bottom, .spacing4x)
                 }
-                .padding(.top, .spacing3x)
-                .padding(.bottom, .spacing1x)
+                // Floats above the rows while they scroll underneath.
+                .safeAreaInset(edge: .bottom) {
+                    statusWidget
+                        .padding(.horizontal, .spacing3x)
+                        .padding(.bottom, .spacing2x)
+                }
             }
         )
         .task(id: restEndDate) {
@@ -108,22 +111,13 @@ struct ExerciseLiveSessionSheet: View {
                 ExerciseDetailSheet(exercise: exercise)
             }
         }
-        .sheet(isPresented: $showAddExercise) {
-            BrightPageSheetView(title: "Exercises") {
-                BrightPlaceholderView(
-                    systemImage: "dumbbell",
-                    title: "Exercise library",
-                    subtitle: "This screen hasn\u{2019}t been ported yet."
-                )
-            }
-        }
     }
 
     private var sideMenu: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing0x) {
                 BrightText(sessionName, size: .standout1)
-                    .padding(.top, .spacing2x)
+                    .padding(.top, .spacing6x)
                     .padding(.bottom, .spacing6x)
 
                 VStack(alignment: .leading, spacing: .spacing4x) {
@@ -139,16 +133,12 @@ struct ExerciseLiveSessionSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: .spacing4x) {
-                    sideMenuItem("Add exercise", symbol: "plus", color: .defaultSkyBlue) {
-                        showAddExercise = true
+                    sideMenuItem("Cancel workout", symbol: "xmark", color: .defaultRed, isDestructive: true) {
+                        dismiss()
                     }
 
                     sideMenuItem("End workout", symbol: "flag.checkered", color: .defaultRed, isDestructive: true) {
                         finish()
-                    }
-
-                    sideMenuItem("Cancel workout", symbol: "xmark", color: .defaultRed, isDestructive: true) {
-                        dismiss()
                     }
                 }
                 .padding(.top, .spacing6x)
@@ -259,8 +249,8 @@ struct ExerciseLiveSessionSheet: View {
 
     // MARK: - Status
 
-    private var statusCard: some View {
-        ExerciseSessionStatusCard(
+    private var statusWidget: some View {
+        ExerciseLiveSessionStatusWidget(
             status: status,
             onTag: cycleActiveSetKind,
             onRestart: restart,
@@ -269,7 +259,7 @@ struct ExerciseLiveSessionSheet: View {
         )
     }
 
-    private var status: ExerciseSessionStatusCard.Status {
+    private var status: ExerciseLiveSessionStatusWidget.Status {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
         } else if activeSet == nil {
@@ -315,12 +305,10 @@ struct ExerciseLiveSessionSheet: View {
         }
     }
 
-    /// Resting restarts the countdown; mid-set it un-logs the set before this one.
+    /// Steps back a set: un-logs the last logged one, ending any rest so that set
+    /// becomes active again.
     private func restart() {
-        if restEndDate != nil {
-            restEndDate = Date().addingTimeInterval(Constants.restSeconds)
-            return
-        }
+        restEndDate = nil
         guard let index = currentExercise.sets.lastIndex(where: \.isDone) else { return }
         exercises[currentIndex].sets[index].isDone = false
     }
@@ -536,7 +524,7 @@ private struct ExerciseLiveSetRow: View {
             .multilineTextAlignment(.center)
             .monospacedDigit()
             .frame(width: Constants.rpeFieldWidth, height: Constants.rpeFieldHeight)
-            .background(Color.defaultBackground, in: Capsule())
+            .background(Color.defaultSheetBackground, in: Capsule())
     }
 
     private func valueField(_ text: Binding<String>, placeholder: String) -> some View {
