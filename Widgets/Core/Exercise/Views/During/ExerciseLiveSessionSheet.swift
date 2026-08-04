@@ -52,7 +52,7 @@ struct ExerciseLiveSessionSheet: View {
                     Button {
                         withAnimation(.brightSnappy) { isSideMenuExpanded.toggle() }
                     } label: {
-                        Image(systemName: "line.3.horizontal")
+                        Image(systemName: "line.3.horizontal.decrease")
                     }
                 }
 
@@ -262,11 +262,15 @@ struct ExerciseLiveSessionSheet: View {
     private var status: ExerciseLiveSessionStatusWidget.Status {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
-        } else if activeSet == nil {
+        } else if activeSet == nil, isLastExercise {
             .allSetsComplete
         } else {
             .working(label: currentBlockName, upNext: upNextName)
         }
+    }
+
+    private var isLastExercise: Bool {
+        currentIndex == exercises.count - 1
     }
 
     // MARK: - Actions
