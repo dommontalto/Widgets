@@ -117,7 +117,7 @@ struct ExerciseLiveSessionSheet: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing0x) {
                 BrightText(sessionName, size: .standout1)
-                    .padding(.top, .spacing6x)
+                    .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing6x)
 
                 VStack(alignment: .leading, spacing: .spacing4x) {
