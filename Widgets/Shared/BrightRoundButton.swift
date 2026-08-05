@@ -18,12 +18,8 @@ struct BrightRoundButton: View {
     private let imageSource: ImageSource
     let size: BrightButtonSizes
     let color: Color?
-    /// Tints the glyph while leaving the circle clear — `color` fills the circle
-    /// and forces a black glyph instead.
     let imageColor: Color?
     let imageRotation: Angle
-    /// Extra-large buttons are primary controls, so they give light feedback by
-    /// default. Pass a value to override, or `.none` to silence one.
     let haptic: BrightHaptic?
     let onTapCallback: (() -> Void)?
 
@@ -115,8 +111,6 @@ struct BrightRoundButton: View {
         }
     }
 
-    /// Only the primary size speaks up; smaller round buttons stay silent unless
-    /// a haptic is asked for explicitly.
     private var resolvedHaptic: BrightHaptic? {
         size == .extraLarge ? haptic : nil
     }

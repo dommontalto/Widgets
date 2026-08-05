@@ -11,21 +11,14 @@ enum ExerciseSessionRoute: Hashable {
     case category(ExerciseSessionCategory)
     case exercise(String)
     case newSession
+    /// Carries the saved workout's id — the draft itself lives on the builder.
+    case editSession(String)
 }
 
 struct ExerciseSheet: View {
     @State private var searchText = ""
-    @State private var isLoggingCardio = false
     @Environment(ExerciseSessionBuilder.self) private var builder
-    @State private var renamingSession: ExerciseQuickSession?
-    @State private var renameText = ""
-    @State private var viewedSession: ExerciseQuickSession?
-    /// Each stage is held until the presentation above it has closed, so the next
-    /// one isn't presented by a view that's on its way out.
-    @State private var pendingStart: ExerciseQuickSession?
-    @State private var startedSession: ExerciseQuickSession?
-    @State private var pendingCompletion: ExerciseSession?
-    @State private var completedSession: ExerciseSession?
+    @State private var sessionStage: ExerciseSessionStage?
 
     private let columns = [
         GridItem(.flexible(), spacing: .spacing2x),
@@ -35,7 +28,7 @@ struct ExerciseSheet: View {
     var body: some View {
         @Bindable var builder = builder
 
-        return BrightPageSheetView(title: "Start Session", horizontalPadding: .spacing0x, path: $builder.path) {
+        return BrightPageSheetView(title: "Start Workout", horizontalPadding: .spacing0x, path: $builder.path) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     VStack(alignment: .leading, spacing: .spacing2x) {
@@ -48,7 +41,7 @@ struct ExerciseSheet: View {
 
                     if searchText.isEmpty {
                         section("Categories") { categoryCards }
-                        section("My Sessions") { sessionCards }
+                        section("Saved Workouts") { sessionCards }
                     } else {
                         searchResults
                     }
@@ -61,12 +54,12 @@ struct ExerciseSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Start Session", file: #file)
+                    ExerciseInlineTitle(title: "Start Workout", file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
-                        Button("Add") {
+                        Button("Create") {
                             builder.path.append(ExerciseSessionRoute.newSession)
                         }
                         .buttonStyle(.borderedProminent)
@@ -76,55 +69,9 @@ struct ExerciseSheet: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $isLoggingCardio) {
-            ExerciseLiveCardioSheet { isLoggingCardio = false }
-        }
-        .sheet(item: $viewedSession, onDismiss: presentStart) { session in
-            ExercisePreSessionSheet(session: session) { started in
-                pendingStart = started
-            }
-        }
-        .fullScreenCover(item: $startedSession, onDismiss: presentCompletion) { session in
-            NavigationStack {
-                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items) { finished in
-                    pendingCompletion = finished
-                }
-            }
-        }
-        .sheet(item: $completedSession) { session in
-            ExerciseSessionCompleteSheet(session: session)
-        }
-        .alert("Rename session", isPresented: renameBinding) {
-            TextField("Session name", text: $renameText)
-
-            Button("Cancel", role: .cancel) {}
-
-            Button("Save") {
-                guard let renamingSession else { return }
-                withAnimation(.brightSnappy) { builder.rename(renamingSession, to: renameText) }
-            }
-        }
+        .exerciseSessionFlow($sessionStage)
         .animation(.brightEaseInOut, value: searchText.isEmpty)
         .animation(.brightSnappy, value: builder.count)
-    }
-
-    private func presentStart() {
-        guard let pendingStart else { return }
-        startedSession = pendingStart
-        self.pendingStart = nil
-    }
-
-    private func presentCompletion() {
-        guard let pendingCompletion else { return }
-        completedSession = pendingCompletion
-        self.pendingCompletion = nil
-    }
-
-    private var renameBinding: Binding<Bool> {
-        Binding(
-            get: { renamingSession != nil },
-            set: { if !$0 { renamingSession = nil } }
-        )
     }
 
     @ViewBuilder
@@ -136,6 +83,15 @@ struct ExerciseSheet: View {
             exerciseDetail(named: name)
         case .newSession:
             ExerciseCreateSessionView { builder.path = NavigationPath() }
+        case let .editSession(id):
+            editor(forSessionID: id)
+        }
+    }
+
+    @ViewBuilder
+    private func editor(forSessionID id: String) -> some View {
+        if let session = builder.saved.first(where: { $0.id == id }) {
+            ExerciseCreateSessionView(editing: session) { builder.path = NavigationPath() }
         }
     }
 
@@ -177,14 +133,14 @@ struct ExerciseSheet: View {
             Group {
                 if session.isCardio {
                     Button {
-                        isLoggingCardio = true
+                        sessionStage = .cardio
                     } label: {
                         sessionCard(session)
                     }
                     .buttonStyle(.plain)
                 } else {
                     Button {
-                        viewedSession = session
+                        sessionStage = .preSession(session)
                     } label: {
                         sessionCard(session)
                     }
@@ -204,9 +160,9 @@ struct ExerciseSheet: View {
             withAnimation(.brightSnappy) { builder.duplicate(session) }
         }
 
-        Button("Rename", systemImage: "pencil") {
-            renameText = session.name
-            renamingSession = session
+        Button("Edit", systemImage: "pencil") {
+            builder.loadDraft(from: session)
+            builder.path.append(ExerciseSessionRoute.editSession(session.id))
         }
 
         Button("Delete", systemImage: "trash", role: .destructive) {

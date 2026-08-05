@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ExerciseThisWeekWidget: View {
     private let stats = [
-        ExerciseSessionStat(label: "Sessions", value: "4"),
+        ExerciseSessionStat(label: "Workouts", value: "4"),
         ExerciseSessionStat(label: "Volume", value: "38,420", unit: "kg"),
         ExerciseSessionStat(label: "Distance", value: "15.1", unit: "km"),
         ExerciseSessionStat(label: "Time training", value: "4:12", unit: "hrs"),

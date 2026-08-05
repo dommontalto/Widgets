@@ -14,12 +14,7 @@ struct ContentView: View {
     @State private var showingAddSessions = false
     @State private var showingExerciseDetail = false
     @State private var builder = ExerciseSessionBuilder()
-    @State private var startedSession: ExerciseQuickSession?
-    @State private var isLoggingCardio = false
-    /// Held until the live cover has closed, so its summary sheet isn't presented
-    /// by a view that's on its way out.
-    @State private var pendingCompletion: ExerciseSession?
-    @State private var completedSession: ExerciseSession?
+    @State private var sessionStage: ExerciseSessionStage?
 
     var body: some View {
         NavigationStack {
@@ -32,18 +27,8 @@ struct ContentView: View {
         builder.saved
     }
 
-    private func presentCompletion() {
-        guard let pendingCompletion else { return }
-        completedSession = pendingCompletion
-        self.pendingCompletion = nil
-    }
-
     private func start(_ session: ExerciseQuickSession) {
-        if session.isCardio {
-            isLoggingCardio = true
-        } else {
-            startedSession = session
-        }
+        sessionStage = session.isCardio ? .cardio : .live(session)
     }
 
     private var content: some View {
@@ -149,7 +134,7 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Section("My Sessions") {
+                    Section("Saved Workouts") {
                         ForEach(sessions) { session in
                             Button(session.name, systemImage: session.symbol) {
                                 start(session)
@@ -157,7 +142,7 @@ struct ContentView: View {
                         }
                     }
                 } label: {
-                    Label("Start session", systemImage: "play.fill")
+                    Label("Start workout", systemImage: "play.fill")
                         .labelStyle(.iconOnly)
                 } primaryAction: {
                     showingSession = true
@@ -177,19 +162,7 @@ struct ContentView: View {
                 }
             }
         }
-        .fullScreenCover(item: $startedSession, onDismiss: presentCompletion) { session in
-            NavigationStack {
-                ExerciseLiveSessionSheet(sessionName: session.name, templateItems: session.items) { finished in
-                    pendingCompletion = finished
-                }
-            }
-        }
-        .sheet(item: $completedSession) { session in
-            ExerciseSessionCompleteSheet(session: session)
-        }
-        .fullScreenCover(isPresented: $isLoggingCardio) {
-            ExerciseLiveCardioSheet { isLoggingCardio = false }
-        }
+        .exerciseSessionFlow($sessionStage)
         .sheet(isPresented: $showingOrder) {
             GenomeOrderSheet()
         }

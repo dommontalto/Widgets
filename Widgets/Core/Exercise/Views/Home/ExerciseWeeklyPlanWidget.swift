@@ -28,7 +28,7 @@ struct ExerciseWeeklyPlanWidget: View {
             RoundedRectangle(cornerRadius: 1, style: .continuous)
                 .fill(Color.defaultGreen)
                 .frame(width: 2, height: 35)
-            BrightText("No sessions this week", size: .body1, color: .defaultGreen)
+            BrightText("No workouts this week", size: .body1, color: .defaultGreen)
         }
         .padding(.horizontal, .spacing105x)
         .frame(maxWidth: .infinity, alignment: .leading)

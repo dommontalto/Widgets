@@ -267,7 +267,7 @@ struct ExerciseDetailSheet: View {
                 Image(systemName: "backward.end.alt")
                     .font(.system(size: Constants.statIconSize, weight: .medium))
                     .foregroundStyle(Color.textColor)
-                BrightText("Session history", size: .body1, weight: .regular)
+                BrightText("Workout history", size: .body1, weight: .regular)
             }
             .padding(.leading, .spacing2x)
 

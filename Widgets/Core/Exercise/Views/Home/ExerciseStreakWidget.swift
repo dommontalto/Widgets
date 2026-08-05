@@ -23,7 +23,7 @@ struct ExerciseStreakWidget: View {
                         .monospacedDigit()
                 }
                 BrightText("week streak", size: .body3, color: .semiLightTextColor)
-                BrightText("\(weekTarget)+ sessions / week", size: .body4, color: .lightTextColor)
+                BrightText("\(weekTarget)+ workouts / week", size: .body4, color: .lightTextColor)
             }
 
             Spacer(minLength: .spacing2x)

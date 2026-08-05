@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ExercisePreSessionSheet: View {
     let session: ExerciseQuickSession
-    /// Called as this sheet dismisses, so the presenter starts the workout.
+    /// Hands the session to the presenter, which swaps this screen for the live
+    /// one inside the same presentation.
     var onStart: (ExerciseQuickSession) -> Void = { _ in }
 
     @Environment(ExerciseSessionBuilder.self) private var builder
@@ -182,7 +183,6 @@ struct ExercisePreSessionSheet: View {
 
             BrightRoundButton(systemImage: "play.fill", size: .extraLarge, color: .defaultGreen) {
                 onStart(session)
-                dismiss()
             }
         }
         .padding(.horizontal, .spacing4x)

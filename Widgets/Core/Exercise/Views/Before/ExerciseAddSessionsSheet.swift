@@ -59,12 +59,12 @@ struct ExerciseAddSessionsSheet: View {
 
     var body: some View {
         BrightPageSheetView(
-            title: "Add Sessions",
+            title: "Add Workouts",
             horizontalPadding: .spacing0x,
             showBackButton: true,
             trailing: {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Add Sessions", file: #file)
+                    ExerciseInlineTitle(title: "Add Workouts", file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {

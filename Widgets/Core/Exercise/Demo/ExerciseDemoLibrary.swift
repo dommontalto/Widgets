@@ -161,13 +161,13 @@ nonisolated enum ExerciseDemoLibrary {
                     ExerciseSessionStat(label: "Est 1RM", value: format(oneRepMax), unit: "kg"),
                     ExerciseSessionStat(label: "Best set", value: "\(format(base)) \u{00D7} 5"),
                     ExerciseSessionStat(label: "Best volume", value: format(base * 42), unit: "kg"),
-                    ExerciseSessionStat(label: "Sessions", value: "\(sessionsCount(for: name))"),
+                    ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
                 ]
                 : [
                     ExerciseSessionStat(label: "Best", value: format(base), unit: metric.lowercased()),
                     ExerciseSessionStat(label: "Best set", value: "\(format(base * 0.9)) \(metric.lowercased())"),
                     ExerciseSessionStat(label: "Total \(metric.lowercased())", value: format(base * 38)),
-                    ExerciseSessionStat(label: "Sessions", value: "\(sessionsCount(for: name))"),
+                    ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
                 ],
             history: demoHistory(base: base, unit: isWeight ? "kg" : metric.lowercased()),
             progression: progressionSeries(base: base, seed: name.count),
@@ -203,7 +203,7 @@ nonisolated enum ExerciseDemoLibrary {
                 ExerciseSessionStat(label: "Best \(metricLabel.lowercased())", value: best),
                 ExerciseSessionStat(label: "Longest", value: longest),
                 ExerciseSessionStat(label: "Avg HR", value: "156", unit: "bpm"),
-                ExerciseSessionStat(label: "Sessions", value: "\(sessionsCount(for: name))"),
+                ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
             ],
             history: [
                 ExerciseHistoryEntry(date: "22 Jul", summary: "5.02 km \u{2022} 24:56", bestSet: "Best km 4\u{2019}46\u{201D}"),

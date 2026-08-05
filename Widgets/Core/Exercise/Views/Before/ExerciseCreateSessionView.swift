@@ -12,19 +12,30 @@ private struct ExerciseSwapTarget: Identifiable {
 }
 
 struct ExerciseCreateSessionView: View {
+    /// The saved workout being edited, or nil when building a new one.
+    var editing: ExerciseQuickSession?
     var onSave: () -> Void
 
     @Environment(ExerciseSessionBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
-    @State private var name = ""
-    @State private var symbol = ExerciseSessionIcon.allCases[0]
+    @State private var name: String
+    @State private var symbol: ExerciseSessionIcon
     @State private var swapTarget: ExerciseSwapTarget?
     @State private var isAddingExercise = false
     @State private var addedExercise: String?
     @State private var iconPickerWidth: CGFloat = 0
     @State private var nameNudge = 0
+    /// The draft as it looked on arrival, so Save can tell edits from a no-op.
+    @State private var baselineDraft: String?
     @Namespace private var iconPickerSpace
+
+    init(editing: ExerciseQuickSession? = nil, onSave: @escaping () -> Void) {
+        self.editing = editing
+        self.onSave = onSave
+        _name = State(initialValue: editing?.name ?? "")
+        _symbol = State(initialValue: editing.flatMap(ExerciseSessionIcon.matching) ?? ExerciseSessionIcon.allCases[0])
+    }
 
     var body: some View {
         BrightPageView(
@@ -37,17 +48,10 @@ struct ExerciseCreateSessionView: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        guard !isNameEmpty else {
-                            nameNudge += 1
-                            return
-                        }
-                        builder.save(named: name, icon: symbol)
-                        onSave()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(isNameEmpty ? .defaultMainGrey : .defaultSkyBlue)
-                    .id(isNameEmpty)
+                    Button("Save", action: save)
+                        .buttonStyle(.borderedProminent)
+                        .tint(canSave ? .defaultSkyBlue : .defaultMainGrey)
+                        .id(canSave)
                 }
             },
             content: {
@@ -91,15 +95,55 @@ struct ExerciseCreateSessionView: View {
                 addedExercise = exercise.name
             }
         }
+        .onAppear {
+            // The builder is already loaded by the time we arrive, so the first
+            // signature is the untouched workout.
+            if baselineDraft == nil { baselineDraft = draftSignature }
+        }
+    }
+
+    private func save() {
+        guard !isNameEmpty else {
+            nameNudge += 1
+            return
+        }
+        if let editing {
+            builder.update(editing, named: name, icon: symbol)
+        } else {
+            builder.save(named: name, icon: symbol)
+        }
+        onSave()
     }
 
     private var isNameEmpty: Bool {
         name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// Editing only offers Save once something actually differs; a new workout
+    /// just needs a name.
+    private var canSave: Bool {
+        guard !isNameEmpty else { return false }
+        guard let editing else { return true }
+        guard let baselineDraft else { return false }
+        return name != editing.name
+            || symbol.symbol != editing.symbol
+            || draftSignature != baselineDraft
+    }
+
+    private var draftSignature: String {
+        builder.added
+            .map { exercise in
+                let sets = (builder.sets[exercise] ?? [])
+                    .map { "\($0.kind)|\($0.weight)|\($0.reps)|\($0.rest)" }
+                    .joined(separator: ";")
+                return "\(exercise)>\(sets)"
+            }
+            .joined(separator: "\n")
+    }
+
     private var nameField: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            TextField("Session name", text: $name)
+            TextField("Workout name", text: $name)
                 .focused($isTyping)
                 .font(.standard(size: .standout28, weight: .regular))
                 .foregroundStyle(Color.textColor)

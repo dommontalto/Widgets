@@ -94,7 +94,7 @@ struct ExerciseUpcomingWidget: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("No sessions today", size: .body1)
+            BrightText("No workouts today", size: .body1)
 
             quickWorkoutMenu
                 .frame(maxWidth: .infinity)
@@ -106,7 +106,7 @@ struct ExerciseUpcomingWidget: View {
 
     private var quickWorkoutMenu: some View {
         Menu {
-            Section("My Sessions") {
+            Section("Saved Workouts") {
                 ForEach(builder.saved) { session in
                     Button(session.name, systemImage: session.symbol) {
                         onQuickWorkout(session)
@@ -146,7 +146,7 @@ struct ExerciseSessionMiniSheet: View {
             }
 
             VStack(alignment: .leading, spacing: .spacing3x) {
-                BrightText("Session Goals", size: .body1, color: .semiLightTextColor)
+                BrightText("Workout Goals", size: .body1, color: .semiLightTextColor)
 
                 HStack(spacing: .spacing3x) {
                     ForEach(session.goals.indices, id: \.self) { i in
@@ -166,7 +166,7 @@ struct ExerciseSessionMiniSheet: View {
                 .contentTransition(.numericText())
                 .padding(.vertical, .spacing2x)
 
-            BrightPillButton("Start session", color: .defaultGreen, buttonSize: .large) {}
+            BrightPillButton("Start workout", color: .defaultGreen, buttonSize: .large) {}
                 .frame(maxWidth: .infinity)
                 .padding(.top, .spacing1x)
         }

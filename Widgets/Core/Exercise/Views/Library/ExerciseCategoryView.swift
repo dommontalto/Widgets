@@ -26,7 +26,7 @@ struct ExerciseCategoryView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
-                        Button("Add") {
+                        Button("Create") {
                             builder.path.append(ExerciseSessionRoute.newSession)
                         }
                         .buttonStyle(.borderedProminent)

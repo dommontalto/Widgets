@@ -160,7 +160,7 @@ enum ExerciseDemoData {
         microDaysPerWeek: 7,
         microCompletedDays: 9,
         note: "We\u{2019}re ramping up your training intensity this week.",
-        bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
+        bullets: ["+ 1km to your run.", "Increasing weights in gym workouts."]
     )
 
     static let scores = ExerciseScores(recovery: 92, stress: 34, strain: 84)
@@ -293,7 +293,7 @@ enum ExerciseDemoData {
     static let detailStats: [ExerciseStatTile] = [
         ExerciseStatTile(label: "Personal Best", value: "120", unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
         ExerciseStatTile(label: "EST. 1RM", value: "120", unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
-        ExerciseStatTile(label: "Total Sessions", value: "54", unit: "Sessions", symbol: "text.line.3.summary", color: .defaultGreen),
+        ExerciseStatTile(label: "Total Workouts", value: "54", unit: "Workouts", symbol: "text.line.3.summary", color: .defaultGreen),
         ExerciseStatTile(label: "AVG weekly sets", value: "12", unit: "sets", symbol: "chart.line.flattrend.xyaxis", color: .defaultSkyBlue),
     ]
 

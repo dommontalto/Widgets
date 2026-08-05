@@ -28,4 +28,7 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     case mono
     case ocean
     case sunset
+    /// `colorful` with every blob remapped to the Bright palette
+    /// (`Color+StylingExtensions`) — same geometry, branded hues.
+    case brand
 }

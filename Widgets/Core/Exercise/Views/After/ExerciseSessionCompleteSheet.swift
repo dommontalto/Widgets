@@ -26,7 +26,7 @@ struct ExerciseSessionCompleteSheet: View {
 
     private func sheet(expandedMapHeight: CGFloat) -> some View {
         BrightPageSheetView(
-            title: "Session Complete",
+            title: "Workout Complete",
             horizontalPadding: .spacing0x
         ) {
             ScrollView(showsIndicators: false) {
@@ -53,7 +53,7 @@ struct ExerciseSessionCompleteSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Session Complete", file: #file)
+                    ExerciseInlineTitle(title: "Workout Complete", file: #file)
                 }
             }
         }

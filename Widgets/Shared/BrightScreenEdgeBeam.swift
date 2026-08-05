@@ -14,26 +14,23 @@ struct BrightScreenEdgeBeam: View {
 
     var body: some View {
         GeometryReader { geo in
-            ZStack {
-                beamLayer(in: geo.size, mirrored: false)
-                beamLayer(in: geo.size, mirrored: true)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: Constants.screenCornerRadius))
+            beamLayer(in: geo.size)
+                .clipShape(RoundedRectangle(cornerRadius: Constants.screenCornerRadius))
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
     }
 
-    /// Each layer draws on a canvas shrunk by `renderScale` and is scaled back
+    /// The layer draws on a canvas shrunk by `renderScale` and is scaled back
     /// up: the palette sizes its blobs in card-scale pixels, so a screen-sized
     /// canvas leaves most of the ring unlit. Dividing the radius by the same
     /// factor lands the canvas corners on the display's real corners.
-    private func beamLayer(in screen: CGSize, mirrored: Bool) -> some View {
+    private func beamLayer(in screen: CGSize) -> some View {
         BorderBeam(
             size: .md,
-            colorVariant: .colorful,
+            colorVariant: .brand,
             theme: .dark,
-            duration: mirrored ? Constants.mirroredDuration : Constants.duration,
+            duration: Constants.duration,
             active: isActive,
             borderRadius: Constants.screenCornerRadius / Constants.renderScale,
             brightness: Constants.brightness,
@@ -42,29 +39,12 @@ struct BrightScreenEdgeBeam: View {
         ) {
             Color.clear
         }
-        .mask(bottomFade)
         .frame(
             width: screen.width / Constants.renderScale,
-            height: screen.height * Constants.boxHeight / Constants.renderScale
+            height: screen.height / Constants.renderScale
         )
-        .scaleEffect(
-            x: mirrored ? -Constants.renderScale : Constants.renderScale,
-            y: Constants.renderScale,
-            anchor: .bottom
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-    }
-
-    private var bottomFade: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .clear, location: 0.45),
-                .init(color: .white, location: 0.62),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        .scaleEffect(Constants.renderScale, anchor: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private enum Constants {
@@ -72,12 +52,13 @@ struct BrightScreenEdgeBeam: View {
         /// the hairline stroke at the corners.
         static let screenCornerRadius: Double = 62
         static let renderScale: CGFloat = 2.6
-        static let boxHeight: CGFloat = 1.3
-        static let duration: Double = 2.8
-        static let mirroredDuration: Double = 3.6
-        static let brightness: Double = 1.5
-        static let saturation: Double = 1.35
-        static let hueRange: Double = 120
+        static let duration: Double = 4
+        static let brightness: Double = 1.7
+        static let saturation: Double = 1.5
+        /// The rotate family ping-pongs the whole ring's hue by ±this much. Wide
+        /// ranges drift the blobs off the brand palette entirely, so keep it to
+        /// a shimmer.
+        static let hueRange: Double = 15
     }
 }
 

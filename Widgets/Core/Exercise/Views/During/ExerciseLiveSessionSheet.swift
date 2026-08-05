@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct ExerciseLiveSessionSheet: View {
-    var sessionName = "Gym session"
+    var sessionName = "Gym workout"
     var templateItems: [ExerciseTemplateItem]? = nil
-    /// Handed the logged session as this screen dismisses, so the presenter owns
-    /// what comes next.
+    /// Handed the logged session, so the presenter owns what comes next — it
+    /// swaps this screen for the summary inside the same presentation.
     var onFinish: (ExerciseSession) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
@@ -19,12 +19,12 @@ struct ExerciseLiveSessionSheet: View {
     @State private var startDate = Date()
     @State private var exercises: [ExerciseActiveExercise]
     @State private var currentIndex = 0
-    @State private var openedExercise: ExerciseDefinition?
+    @State private var openedExerciseName: String?
     @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
 
     init(
-        sessionName: String = "Gym session",
+        sessionName: String = "Gym workout",
         templateItems: [ExerciseTemplateItem]? = nil,
         onFinish: @escaping (ExerciseSession) -> Void = { _ in }
     ) {
@@ -45,7 +45,7 @@ struct ExerciseLiveSessionSheet: View {
     private var page: some View {
         BrightPageView(
             horizontalPadding: .spacing0x,
-            backgroundColor: .defaultBackground,
+            backgroundColor: .defaultSheetBackground,
             bottomSafeArea: false,
             toolbar: {
                 ToolbarItem(placement: .topBarLeading) {
@@ -62,11 +62,11 @@ struct ExerciseLiveSessionSheet: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        openedExercise = ExerciseDemoLibrary.exercise(named: currentExercise.name)
+                        openedExerciseName = currentExercise.name
                     } label: {
                         Image(systemName: "dumbbell")
                             .font(.standardSFPro(size: .subheading, weight: .regular))
-                            .foregroundStyle(Color.defaultPurple)
+                            .foregroundStyle(Color.textColor)
                     }
                 }
             },
@@ -106,9 +106,11 @@ struct ExerciseLiveSessionSheet: View {
         .animation(.brightEaseInOut, value: restEndDate)
         .animation(.brightEaseInOut, value: currentIndex)
         .animation(.brightEaseInOut, value: completedSets)
-        .sheet(item: $openedExercise) { exercise in
-            BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
+        .navigationDestination(item: $openedExerciseName) { name in
+            if let exercise = ExerciseDemoLibrary.exercise(named: name) {
                 ExerciseDetailSheet(exercise: exercise)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .background(Color.defaultSheetBackground.ignoresSafeArea())
             }
         }
     }
@@ -277,7 +279,6 @@ struct ExerciseLiveSessionSheet: View {
 
     private func finish() {
         onFinish(finishedSession)
-        dismiss()
     }
 
     /// Only the done state flips, so a mis-tap doesn't wipe typed weights or RPE.
@@ -391,7 +392,7 @@ struct ExerciseLiveSessionSheet: View {
                 ],
                 exercises: logged,
                 splits: [],
-                note: "Nice work — that's another session logged."
+                note: "Nice work — that's another workout logged."
             )
         )
     }

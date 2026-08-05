@@ -68,6 +68,10 @@ enum ExerciseSessionIcon: String, CaseIterable, Identifiable {
         }
     }
 
+    static func matching(_ session: ExerciseQuickSession) -> ExerciseSessionIcon? {
+        allCases.first { $0.symbol == session.symbol }
+    }
+
     var accentColor: Color {
         switch self {
         case .dumbbell, .strength: .defaultPurple
@@ -148,19 +152,42 @@ final class ExerciseSessionBuilder {
         }
     }
 
-    func rename(_ session: ExerciseQuickSession, to name: String) {
+    /// Pulls a saved workout back into the draft so the create screen can edit it.
+    /// Template sets carry no rest interval, so they take the default.
+    func loadDraft(from session: ExerciseQuickSession) {
+        reset()
+        for item in session.items {
+            guard !isAdded(item.exerciseName) else { continue }
+            added.append(item.exerciseName)
+            sets[item.exerciseName] = item.sets.isEmpty
+                ? ExerciseSessionBuilder.defaultSets
+                : renumbered(item.sets.map { set in
+                    ExerciseSetDraft(
+                        kind: set.kind,
+                        weight: set.weight,
+                        reps: set.reps,
+                        rest: ExerciseSessionBuilder.defaultRest
+                    )
+                })
+        }
+    }
+
+    func update(_ session: ExerciseQuickSession, named name: String, icon: ExerciseSessionIcon) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !title.isEmpty, title != session.name,
+        guard !title.isEmpty,
               let index = saved.firstIndex(where: { $0.id == session.id })
         else { return }
+        // Cardio workouts have no exercises to edit, so an empty draft means the
+        // name and icon changed and the original plan stands.
         saved[index] = ExerciseQuickSession(
-            name: uniqueName(from: title),
-            symbol: session.symbol,
-            accentColor: session.accentColor,
-            subtitle: session.subtitle,
+            name: title,
+            symbol: icon.symbol,
+            accentColor: icon.accentColor,
+            subtitle: added.isEmpty ? session.subtitle : subtitle,
             isCardio: session.isCardio,
-            items: session.items
+            items: added.isEmpty ? session.items : templateItems
         )
+        reset()
     }
 
     private func uniqueName(from name: String) -> String {
@@ -178,7 +205,25 @@ final class ExerciseSessionBuilder {
     func save(named name: String, icon: ExerciseSessionIcon = .dumbbell) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty, !added.isEmpty else { return }
-        let items = added.map { exercise in
+        saved.append(
+            ExerciseQuickSession(
+                name: title,
+                symbol: icon.symbol,
+                accentColor: icon.accentColor,
+                subtitle: subtitle,
+                isCardio: false,
+                items: templateItems
+            )
+        )
+        reset()
+    }
+
+    private var subtitle: String {
+        "\(added.count) exercise\(added.count == 1 ? "" : "s")"
+    }
+
+    private var templateItems: [ExerciseTemplateItem] {
+        added.map { exercise in
             ExerciseTemplateItem(
                 exerciseName: exercise,
                 target: target(for: exercise),
@@ -191,17 +236,6 @@ final class ExerciseSessionBuilder {
                 }
             )
         }
-        saved.append(
-            ExerciseQuickSession(
-                name: title,
-                symbol: icon.symbol,
-                accentColor: icon.accentColor,
-                subtitle: "\(added.count) exercise\(added.count == 1 ? "" : "s")",
-                isCardio: false,
-                items: items
-            )
-        )
-        reset()
     }
 
     /// Plain-text export of the session, for sharing out of the sets editor.
@@ -288,6 +322,8 @@ final class ExerciseSessionBuilder {
         }
         sets[exercise]?.insert(draft, at: dropSetIndex)
     }
+
+    static let defaultRest = "1:00"
 
     private static let defaultSets: [ExerciseSetDraft] = [
         ExerciseSetDraft(kind: .warmUp, weight: "10 kg", reps: "5", rest: "1:00"),
