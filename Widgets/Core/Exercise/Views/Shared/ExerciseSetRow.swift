@@ -18,6 +18,13 @@ struct ExerciseSetRow: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
+    // The row is a fixed-height grid of fields, so every measurement has to grow
+    // with the text or the numbers clip at accessibility sizes.
+    @ScaledMetric(relativeTo: .body) private var rowHeight = Constants.rowHeight
+    @ScaledMetric(relativeTo: .body) private var badgeSize = Constants.badgeSize
+    @ScaledMetric(relativeTo: .body) private var fieldWidth = Constants.fieldWidth
+    @ScaledMetric(relativeTo: .body) private var fieldGap = Constants.fieldGap
+
     var body: some View {
         HStack(spacing: .spacing0x) {
             Button(action: onCycleKind) {
@@ -38,7 +45,7 @@ struct ExerciseSetRow: View {
             field(text: $rest)
         }
         .padding(.horizontal, .spacing2x)
-        .frame(height: Constants.rowHeight)
+        .frame(height: rowHeight)
         .background {
             if isTinted {
                 RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
@@ -66,12 +73,12 @@ struct ExerciseSetRow: View {
                 BrightText(label, size: .body1)
             }
         }
-        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
+        .frame(width: badgeSize, height: badgeSize)
     }
 
     private var divider: some View {
         BrightVerticalDivider(height: Constants.dividerHeight)
-            .frame(width: Constants.fieldGap)
+            .frame(width: fieldGap)
     }
 
     private func field(text: Binding<String>) -> some View {
@@ -81,7 +88,7 @@ struct ExerciseSetRow: View {
             .foregroundStyle(Color.textColor)
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.center)
-            .frame(width: Constants.fieldWidth, height: Constants.badgeSize)
+            .frame(width: fieldWidth, height: badgeSize)
             .background(Color.defaultMainGrey.opacity(.minimalOpacity), in: Capsule())
     }
 

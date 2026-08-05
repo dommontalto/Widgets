@@ -13,8 +13,8 @@ private struct ExerciseSwapTarget: Identifiable {
 
 struct ExerciseCreateSessionView: View {
     /// The saved workout being edited, or nil when building a new one.
-    var editing: ExerciseQuickSession?
-    var onSave: () -> Void
+    let editing: ExerciseQuickSession?
+    let onSave: () -> Void
 
     @Environment(ExerciseSessionBuilder.self) private var builder
 
@@ -30,11 +30,21 @@ struct ExerciseCreateSessionView: View {
     @State private var baselineDraft: String?
     @Namespace private var iconPickerSpace
 
+    // Mirrors the set row's own scaling so the headers stay over their columns
+    // and the list's height matches the rows it holds.
+    @ScaledMetric(relativeTo: .body) private var rowHeight = ExerciseSetRow.Constants.rowHeight
+    @ScaledMetric(relativeTo: .body) private var fieldWidth = ExerciseSetRow.Constants.fieldWidth
+    @ScaledMetric(relativeTo: .body) private var fieldGap = ExerciseSetRow.Constants.fieldGap
+
     init(editing: ExerciseQuickSession? = nil, onSave: @escaping () -> Void) {
         self.editing = editing
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? "")
-        _symbol = State(initialValue: editing.flatMap(ExerciseSessionIcon.matching) ?? ExerciseSessionIcon.allCases[0])
+        if let editing, let icon = ExerciseSessionIcon.matching(editing) {
+            _symbol = State(initialValue: icon)
+        } else {
+            _symbol = State(initialValue: ExerciseSessionIcon.allCases[0])
+        }
     }
 
     var body: some View {
@@ -64,7 +74,6 @@ struct ExerciseCreateSessionView: View {
 
                             ForEach(builder.added, id: \.self) { exercise in
                                 exerciseCard(exercise)
-                                    .id(exercise)
                             }
 
                             BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .medium) {
@@ -249,8 +258,6 @@ struct ExerciseCreateSessionView: View {
 
     private func cardFooter(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            circleButton("chart.line.uptrend.xyaxis") {}
-
             BrightText(volumeLabel(for: exercise), size: .body2, color: .textColor.opacity(.veryLowOpacity))
 
             Spacer(minLength: .spacing2x)
@@ -288,22 +295,17 @@ struct ExerciseCreateSessionView: View {
             let reps = Double(set.reps.filter(\.isNumber)) ?? 0
             total += weight * reps
         }
-        return "\(Int(volume)) kg /week"
+        return "\(Int(volume)) kg total"
     }
 
     private var columnHeaders: some View {
-        HStack(spacing: .spacing0x) {
+        HStack(spacing: fieldGap) {
             Spacer(minLength: .spacing0x)
 
             ForEach(Constants.columnTitles, id: \.self) { title in
                 BrightText(title, size: .body2, color: .semiLightTextColor, weight: .regular)
                     .multilineTextAlignment(.center)
-                    .frame(width: Constants.fieldWidth)
-
-                if title != Constants.columnTitles.last {
-                    Spacer()
-                        .frame(width: Constants.fieldGap)
-                }
+                    .frame(width: fieldWidth)
             }
         }
     }
@@ -340,15 +342,13 @@ struct ExerciseCreateSessionView: View {
         .scrollContentBackground(.hidden)
         .scrollDisabled(true)
         .contentMargins(.vertical, .spacing0x, for: .scrollContent)
-        .environment(\.defaultMinListRowHeight, ExerciseSetRow.Constants.rowHeight)
-        .frame(height: ExerciseSetRow.Constants.rowHeight * CGFloat(drafts.count))
+        .environment(\.defaultMinListRowHeight, rowHeight)
+        .frame(height: rowHeight * CGFloat(drafts.count))
         .animation(.brightSnappy, value: drafts.count)
     }
 
     private enum Constants {
         static let columnTitles = ["Weights", "Reps", "Rest"]
-        static let fieldWidth: CGFloat = 60
-        static let fieldGap: CGFloat = 24
         static let iconTile: CGFloat = 44
         static let footerButtonSize: CGFloat = 36
     }

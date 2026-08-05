@@ -16,14 +16,12 @@ struct ExerciseLiveCardioSheet: View {
     @State private var runningSince = Date()
     @State private var bankedElapsed: TimeInterval = 0
     @State private var isBeamActive = false
-    /// Bumped on each play/pause tap to restart the beam's burst.
+    /// Bumped on each play to restart the beam's burst. Opening the sheet counts
+    /// as the first play, so the burst runs from the initial `.task`.
     @State private var beamBurst = 0
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            ExerciseInlineTitle(file: #file)
-                .padding(.top, .spacing2x)
-
             metric("CURRENT PACE", value: session.currentPace, color: .defaultCyan)
 
             BrightDivider()
@@ -51,12 +49,15 @@ struct ExerciseLiveCardioSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.defaultBackground.ignoresSafeArea())
         .overlay {
-            BrightScreenEdgeBeam(isActive: isBeamActive)
+            BrightScreenEdgeBeam(
+                isActive: isBeamActive,
+                cornerRadius: CGFloat.modalCornerRadius,
+                edgesToIgnore: .bottom
+            )
         }
         .presentationBackground(Color.defaultBackground)
         .presentationDragIndicator(.hidden)
         .task(id: beamBurst) {
-            guard beamBurst > 0 else { return }
             isBeamActive = true
             // A new tap cancels this sleep; leave the beam lit for the burst
             // that replaced it rather than switching it off on the way out.
@@ -228,11 +229,12 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private func togglePause() {
-        beamBurst += 1
-
         if isPaused {
+            beamBurst += 1
             runningSince = Date()
         } else {
+            // Pausing mid-burst puts the beam out rather than letting it finish.
+            isBeamActive = false
             bankedElapsed += Date().timeIntervalSince(runningSince)
         }
         isPaused.toggle()
