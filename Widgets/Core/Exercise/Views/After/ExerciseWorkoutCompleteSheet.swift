@@ -1,5 +1,5 @@
 //
-//  ExerciseSessionCompleteSheet.swift
+//  ExerciseWorkoutCompleteSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct ExerciseSessionCompleteSheet: View {
-    let session: ExerciseSession
+struct ExerciseWorkoutCompleteSheet: View {
+    let workout: ExerciseWorkout
 
     @State private var openedExerciseName: String?
     @State private var isMapExpanded = false
@@ -33,17 +33,17 @@ struct ExerciseSessionCompleteSheet: View {
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     header
 
-                    ExerciseStatTileGrid(tiles: session.detail.tiles)
+                    ExerciseStatTileGrid(tiles: workout.detail.tiles)
 
-                    if !session.detail.exercises.isEmpty {
+                    if !workout.detail.exercises.isEmpty {
                         exercisesList
                     }
 
-                    if session.type == .cardio {
+                    if workout.type == .cardio {
                         zonesCard
                     }
 
-                    if !session.detail.splits.isEmpty {
+                    if !workout.detail.splits.isEmpty {
                         splitsCard
                     }
                 }
@@ -72,12 +72,12 @@ struct ExerciseSessionCompleteSheet: View {
     }
 
     private var accentColor: Color {
-        session.type == .cardio ? .defaultSkyBlue : .defaultPurple
+        workout.type == .cardio ? .defaultSkyBlue : .defaultPurple
     }
 
     private var header: some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: session.type == .cardio ? "figure.run" : "dumbbell")
+            Image(systemName: workout.type == .cardio ? "figure.run" : "dumbbell")
                 .resizable()
                 .scaledToFit()
                 .fontWeight(.light)
@@ -85,8 +85,8 @@ struct ExerciseSessionCompleteSheet: View {
                 .foregroundStyle(accentColor)
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(session.name, size: .standout3)
-                BrightText(session.timestamp, size: .body2, color: .semiLightTextColor)
+                BrightText(workout.name, size: .standout3)
+                BrightText(workout.timestamp, size: .body2, color: .semiLightTextColor)
             }
         }
     }
@@ -98,7 +98,7 @@ struct ExerciseSessionCompleteSheet: View {
     }
 
     private var exerciseGroups: [ExerciseSetGroup] {
-        session.detail.exercises.map { exercise in
+        workout.detail.exercises.map { exercise in
             ExerciseSetGroup(title: exercise.name, lines: lines(for: exercise))
         }
     }
@@ -183,8 +183,8 @@ struct ExerciseSessionCompleteSheet: View {
                         .frame(width: splitTrailingWidth, alignment: .trailing)
                 }
 
-                ForEach(session.detail.splits.indices, id: \.self) { i in
-                    splitRow(session.detail.splits[i])
+                ForEach(workout.detail.splits.indices, id: \.self) { i in
+                    splitRow(workout.detail.splits[i])
                 }
             }
         }
@@ -222,9 +222,9 @@ struct ExerciseSessionCompleteSheet: View {
 }
 
 #Preview("Strength") {
-    ExerciseSessionCompleteSheet(session: ExerciseDemoData.sessionHistory[0])
+    ExerciseWorkoutCompleteSheet(workout: ExerciseDemoData.workoutHistory[0])
 }
 
 #Preview("Cardio") {
-    ExerciseSessionCompleteSheet(session: ExerciseDemoData.sessionHistory[1])
+    ExerciseWorkoutCompleteSheet(workout: ExerciseDemoData.workoutHistory[1])
 }

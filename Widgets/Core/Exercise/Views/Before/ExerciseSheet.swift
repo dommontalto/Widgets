@@ -7,18 +7,18 @@
 
 import SwiftUI
 
-enum ExerciseSessionRoute: Hashable {
-    case category(ExerciseSessionCategory)
+enum ExerciseWorkoutRoute: Hashable {
+    case category(ExerciseWorkoutCategory)
     case exercise(String)
-    case newSession
+    case newWorkout
     /// Carries the saved workout's id — the draft itself lives on the builder.
-    case editSession(String)
+    case editWorkout(String)
 }
 
 struct ExerciseSheet: View {
     @State private var searchText = ""
-    @Environment(ExerciseSessionBuilder.self) private var builder
-    @State private var sessionStage: ExerciseSessionStage?
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @State private var workoutStage: ExerciseWorkoutStage?
 
     private let columns = [
         GridItem(.flexible(), spacing: .spacing2x),
@@ -41,7 +41,7 @@ struct ExerciseSheet: View {
 
                     if searchText.isEmpty {
                         section("Categories") { categoryCards }
-                        section("Saved Workouts") { sessionCards }
+                        section("Saved Workouts") { workoutCards }
                     } else {
                         searchResults
                     }
@@ -49,7 +49,7 @@ struct ExerciseSheet: View {
                 .padding(.spacing3x)
                 .padding(.top, .spacing1x)
             }
-            .navigationDestination(for: ExerciseSessionRoute.self) { route in
+            .navigationDestination(for: ExerciseWorkoutRoute.self) { route in
                 destination(for: route)
             }
             .toolbar {
@@ -60,7 +60,7 @@ struct ExerciseSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
                         Button("Create") {
-                            builder.path.append(ExerciseSessionRoute.newSession)
+                            builder.path.append(ExerciseWorkoutRoute.newWorkout)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)
@@ -69,29 +69,29 @@ struct ExerciseSheet: View {
                 }
             }
         }
-        .exerciseSessionFlow($sessionStage)
+        .exerciseWorkoutFlow($workoutStage)
         .animation(.brightEaseInOut, value: searchText.isEmpty)
         .animation(.brightSnappy, value: builder.count)
     }
 
     @ViewBuilder
-    private func destination(for route: ExerciseSessionRoute) -> some View {
+    private func destination(for route: ExerciseWorkoutRoute) -> some View {
         switch route {
         case let .category(category):
             ExerciseCategoryView(category: category)
         case let .exercise(name):
             exerciseDetail(named: name)
-        case .newSession:
-            ExerciseCreateSessionView { builder.path = NavigationPath() }
-        case let .editSession(id):
-            editor(forSessionID: id)
+        case .newWorkout:
+            ExerciseCreateWorkoutView { builder.path = NavigationPath() }
+        case let .editWorkout(id):
+            editor(forWorkoutID: id)
         }
     }
 
     @ViewBuilder
-    private func editor(forSessionID id: String) -> some View {
-        if let session = builder.saved.first(where: { $0.id == id }) {
-            ExerciseCreateSessionView(editing: session) { builder.path = NavigationPath() }
+    private func editor(forWorkoutID id: String) -> some View {
+        if let workout = builder.saved.first(where: { $0.id == id }) {
+            ExerciseCreateWorkoutView(editing: workout) { builder.path = NavigationPath() }
         }
     }
 
@@ -115,8 +115,8 @@ struct ExerciseSheet: View {
     }
 
     private var categoryCards: some View {
-        ForEach(ExerciseSessionCategory.standard) { category in
-            NavigationLink(value: ExerciseSessionRoute.category(category)) {
+        ForEach(ExerciseWorkoutCategory.standard) { category in
+            NavigationLink(value: ExerciseWorkoutRoute.category(category)) {
                 cardContent(
                     symbol: category.symbol,
                     color: category.accentColor,
@@ -128,58 +128,58 @@ struct ExerciseSheet: View {
         }
     }
 
-    private var sessionCards: some View {
-        ForEach(sessions) { session in
+    private var workoutCards: some View {
+        ForEach(workouts) { workout in
             Group {
-                if session.isCardio {
+                if workout.isCardio {
                     Button {
-                        sessionStage = .cardio
+                        workoutStage = .cardio
                     } label: {
-                        sessionCard(session)
+                        workoutCard(workout)
                     }
                     .buttonStyle(.plain)
                 } else {
                     Button {
-                        sessionStage = .preSession(session)
+                        workoutStage = .preWorkout(workout)
                     } label: {
-                        sessionCard(session)
+                        workoutCard(workout)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .contextMenu {
-                sessionMenu(for: session)
+                workoutMenu(for: workout)
             }
         }
     }
 
     @ViewBuilder
-    private func sessionMenu(for session: ExerciseQuickSession) -> some View {
+    private func workoutMenu(for workout: ExerciseQuickWorkout) -> some View {
         Button("Duplicate", systemImage: "plus.square.on.square") {
-            withAnimation(.brightSnappy) { builder.duplicate(session) }
+            withAnimation(.brightSnappy) { builder.duplicate(workout) }
         }
 
         Button("Edit", systemImage: "pencil") {
-            builder.loadDraft(from: session)
-            builder.path.append(ExerciseSessionRoute.editSession(session.id))
+            builder.loadDraft(from: workout)
+            builder.path.append(ExerciseWorkoutRoute.editWorkout(workout.id))
         }
 
         Button("Delete", systemImage: "trash", role: .destructive) {
-            withAnimation(.brightSnappy) { builder.delete(session) }
+            withAnimation(.brightSnappy) { builder.delete(workout) }
         }
     }
 
-    private var sessions: [ExerciseQuickSession] {
+    private var workouts: [ExerciseQuickWorkout] {
         builder.saved
     }
 
-    private func sessionCard(_ session: ExerciseQuickSession) -> some View {
+    private func workoutCard(_ workout: ExerciseQuickWorkout) -> some View {
         cardContent(
-            symbol: session.symbol,
-            color: session.accentColor,
-            title: session.name,
-            subtitle: session.subtitle
+            symbol: workout.symbol,
+            color: workout.accentColor,
+            title: workout.name,
+            subtitle: workout.subtitle
         )
     }
 
@@ -232,5 +232,5 @@ struct ExerciseSheet: View {
 
 #Preview {
     ExerciseSheet()
-        .environment(ExerciseSessionBuilder())
+        .environment(ExerciseWorkoutBuilder())
 }

@@ -18,7 +18,7 @@ nonisolated struct ExerciseSetLine: Identifiable {
 
 nonisolated struct ExerciseSetGroup: Identifiable {
     let id = UUID()
-    /// A session date in the exercise library, an exercise name after a workout.
+    /// A workout date in the exercise library, an exercise name after a workout.
     let title: String
     let lines: [ExerciseSetLine]
 }

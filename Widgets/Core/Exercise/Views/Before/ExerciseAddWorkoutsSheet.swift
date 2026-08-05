@@ -1,5 +1,5 @@
 //
-//  ExerciseAddSessionsSheet.swift
+//  ExerciseAddWorkoutsSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 31/7/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
+nonisolated struct ExercisePlannedWorkout: Identifiable, Equatable {
     enum Kind {
         case strength
         case run
@@ -36,24 +36,24 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
         }
     }
 
-    var duplicated: ExercisePlannedSession {
-        ExercisePlannedSession(title: title, subtitle: subtitle, kind: kind)
+    var duplicated: ExercisePlannedWorkout {
+        ExercisePlannedWorkout(title: title, subtitle: subtitle, kind: kind)
     }
 }
 
 nonisolated struct ExercisePlanDay: Identifiable {
     let name: String
-    var sessions: [ExercisePlannedSession]
+    var workouts: [ExercisePlannedWorkout]
 
     var id: String { name }
 }
 
-struct ExerciseAddSessionsSheet: View {
+struct ExerciseAddWorkoutsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var days = ExerciseDemoPlanner.week
     @State private var repeatsWeekly = false
-    @State private var clipboard: ExercisePlannedSession?
+    @State private var clipboard: ExercisePlannedWorkout?
     @State private var weekClipboard: [ExercisePlanDay]?
     @State private var copyTick = 0
 
@@ -90,7 +90,7 @@ struct ExerciseAddSessionsSheet: View {
             }
         )
         .brightHaptic(.light, trigger: copyTick)
-        .animation(.brightSnappy, value: days.map(\.sessions))
+        .animation(.brightSnappy, value: days.map(\.workouts))
     }
 
     private var repeatRow: some View {
@@ -155,8 +155,8 @@ struct ExerciseAddSessionsSheet: View {
                 .padding(.top, .spacing05x)
 
             VStack(spacing: .spacing1x) {
-                ForEach(day.wrappedValue.sessions) { session in
-                    sessionCard(session, in: day)
+                ForEach(day.wrappedValue.workouts) { workout in
+                    workoutCard(workout, in: day)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -178,14 +178,14 @@ struct ExerciseAddSessionsSheet: View {
         Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
                 Button(template.title, systemImage: templateSymbol(template.kind)) {
-                    day.wrappedValue.sessions.append(template.duplicated)
+                    day.wrappedValue.workouts.append(template.duplicated)
                 }
             }
 
             if let clipboard {
                 Divider()
                 Button("Paste \"\(clipboard.title)\"", systemImage: "arrow.right.page.on.clipboard") {
-                    day.wrappedValue.sessions.append(clipboard.duplicated)
+                    day.wrappedValue.workouts.append(clipboard.duplicated)
                 }
             }
         } label: {
@@ -195,25 +195,25 @@ struct ExerciseAddSessionsSheet: View {
         }
     }
 
-    private func sessionCard(_ session: ExercisePlannedSession, in day: Binding<ExercisePlanDay>) -> some View {
+    private func workoutCard(_ workout: ExercisePlannedWorkout, in day: Binding<ExercisePlanDay>) -> some View {
         HStack(spacing: .spacing105x) {
-            if session.kind == .rest {
-                BrightText(session.title, size: .body2, color: session.accentColor, weight: .regular)
+            if workout.kind == .rest {
+                BrightText(workout.title, size: .body2, color: workout.accentColor, weight: .regular)
             } else {
                 RoundedRectangle(cornerRadius: 1, style: .continuous)
-                    .fill(session.accentColor)
+                    .fill(workout.accentColor)
                     .frame(width: Constants.accentLineWidth, height: Constants.accentLineHeight)
 
                 VStack(alignment: .leading, spacing: .spacing025x) {
-                    BrightText(session.title, size: .body2, color: session.accentColor, weight: .regular)
-                    BrightText(session.subtitle, size: .body2, color: session.accentColor)
+                    BrightText(workout.title, size: .body2, color: workout.accentColor, weight: .regular)
+                    BrightText(workout.subtitle, size: .body2, color: workout.accentColor)
                 }
             }
 
             Spacer(minLength: .spacing0x)
 
             Button {
-                clipboard = session
+                clipboard = workout
                 copyTick += 1
             } label: {
                 Image(systemName: "square.on.square")
@@ -228,16 +228,16 @@ struct ExerciseAddSessionsSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Constants.cardHeight)
         .background {
-            if session.kind == .rest {
+            if workout.kind == .rest {
                 restBackground
             } else {
-                session.accentColor.opacity(.ultraLowOpacity)
+                workout.accentColor.opacity(.ultraLowOpacity)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: .cornerRadius14, style: .continuous))
         .contextMenu {
             Button("Remove", systemImage: "trash", role: .destructive) {
-                day.wrappedValue.sessions.removeAll { $0.id == session.id }
+                day.wrappedValue.workouts.removeAll { $0.id == workout.id }
             }
         }
     }
@@ -273,7 +273,7 @@ struct ExerciseAddSessionsSheet: View {
                 Button {
                     if let weekClipboard {
                         days = weekClipboard.map { day in
-                            ExercisePlanDay(name: day.name, sessions: day.sessions.map(\.duplicated))
+                            ExercisePlanDay(name: day.name, workouts: day.workouts.map(\.duplicated))
                         }
                     }
                 } label: {
@@ -294,7 +294,7 @@ struct ExerciseAddSessionsSheet: View {
         .padding(.bottom, .spacing1x)
     }
 
-    private func templateSymbol(_ kind: ExercisePlannedSession.Kind) -> String {
+    private func templateSymbol(_ kind: ExercisePlannedWorkout.Kind) -> String {
         switch kind {
         case .strength: "dumbbell"
         case .run: "figure.run"
@@ -332,5 +332,5 @@ private struct DiagonalStripesShape: Shape {
 }
 
 #Preview {
-    ExerciseAddSessionsSheet()
+    ExerciseAddWorkoutsSheet()
 }

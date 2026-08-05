@@ -14,7 +14,7 @@ struct ExerciseLibraryRow: View {
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            NavigationLink(value: ExerciseSessionRoute.exercise(exercise.name)) {
+            NavigationLink(value: ExerciseWorkoutRoute.exercise(exercise.name)) {
                 HStack(spacing: .spacing2x) {
                     thumbnail
 
@@ -43,8 +43,8 @@ struct ExerciseLibraryRow: View {
             .disabled(onToggle == nil)
         }
         .padding(.spacing2x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .frame(maxWidth: .infinity, minHeight: Constants.minHeight, alignment: .leading)
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     private var thumbnail: some View {
@@ -58,9 +58,12 @@ struct ExerciseLibraryRow: View {
         "\(exercise.primaryMuscle.displayName) \u{2022} \(exercise.equipmentLabel)"
     }
 
-    private enum Constants {
+    enum Constants {
         static let thumbnailWidth: CGFloat = 40
         static let tickTouchSize: CGFloat = 44
+        /// The tick's touch target plus the row padding. Rows without a tick match
+        /// it so every exercise cell is the same height.
+        static let minHeight = tickTouchSize + 2 * CGFloat.spacing2x
     }
 }
 

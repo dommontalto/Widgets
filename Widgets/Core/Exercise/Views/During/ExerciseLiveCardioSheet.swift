@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseLiveCardioSheet: View {
-    var session: ExerciseLiveSession = ExerciseDemoData.liveSession
+    var workout: ExerciseLiveWorkout = ExerciseDemoData.liveWorkout
     var isInterval = true
     var onStop: () -> Void = {}
 
@@ -22,11 +22,11 @@ struct ExerciseLiveCardioSheet: View {
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            metric("CURRENT PACE", value: session.currentPace, color: .defaultCyan)
+            metric("CURRENT PACE", value: workout.currentPace, color: .defaultCyan)
 
             BrightDivider()
 
-            metric("DISTANCE", value: session.distance, color: .defaultYellow)
+            metric("DISTANCE", value: workout.distance, color: .defaultYellow)
 
             BrightDivider()
 
@@ -87,7 +87,7 @@ struct ExerciseLiveCardioSheet: View {
                     .font(.standard(size: .huge, weight: .light))
                     .foregroundStyle(Color.defaultRed)
 
-                BrightText(session.heartRate, size: .enormous, color: .defaultRed)
+                BrightText(workout.heartRate, size: .enormous, color: .defaultRed)
                     .monospacedDigit()
             }
 
@@ -99,7 +99,7 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var zoneChip: some View {
-        BrightText(session.heartRateZone, size: .standout28, color: .defaultYellow)
+        BrightText(workout.heartRateZone, size: .standout28, color: .defaultYellow)
             .padding(.horizontal, .spacing105x)
             .padding(.vertical, .spacing2x)
             .overlay {
@@ -113,15 +113,15 @@ struct ExerciseLiveCardioSheet: View {
 
     private var paceRow: some View {
         HStack(spacing: .spacing0x) {
-            paceColumn("AVG PACE", value: session.averagePace, color: .textColor)
+            paceColumn("AVG PACE", value: workout.averagePace, color: .textColor)
 
             BrightVerticalDivider()
 
             paceColumn(
                 "SPLIT",
-                value: session.splitPace,
+                value: workout.splitPace,
                 color: .defaultGreen,
-                delta: session.splitDelta
+                delta: workout.splitDelta
             )
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -165,23 +165,23 @@ struct ExerciseLiveCardioSheet: View {
 
     private var intervalPill: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(session.intervalName, size: .heading, color: session.intervalColor)
+            BrightText(workout.intervalName, size: .heading, color: workout.intervalColor)
 
             Spacer(minLength: .spacing2x)
 
-            BrightText(session.intervalRemaining, size: .heading, color: session.intervalColor)
+            BrightText(workout.intervalRemaining, size: .heading, color: workout.intervalColor)
                 .monospacedDigit()
         }
         .padding(.horizontal, .spacing2x)
         .frame(height: .spacing9x)
         .background(
-            session.intervalColor.opacity(.ultraLowOpacity),
+            workout.intervalColor.opacity(.ultraLowOpacity),
             in: RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
         )
         .overlay {
             RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
                 .strokeBorder(
-                    session.intervalColor.opacity(.lowOpacity),
+                    workout.intervalColor.opacity(.lowOpacity),
                     lineWidth: Constants.hairline
                 )
         }
@@ -189,7 +189,7 @@ struct ExerciseLiveCardioSheet: View {
 
     private var segmentBars: some View {
         HStack(spacing: .spacing1x) {
-            ForEach(session.segments) { segment in
+            ForEach(workout.segments) { segment in
                 Capsule()
                     .fill(segment.kind.color.opacity(.veryLowOpacity))
                     .frame(width: Constants.segmentWidth, height: Constants.segmentHeight)

@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct ExerciseCategoryView: View {
-    let category: ExerciseSessionCategory
+    let category: ExerciseWorkoutCategory
 
-    @Environment(ExerciseSessionBuilder.self) private var builder
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
 
     @State private var searchText = ""
 
@@ -27,7 +27,7 @@ struct ExerciseCategoryView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if builder.count > 0 {
                         Button("Create") {
-                            builder.path.append(ExerciseSessionRoute.newSession)
+                            builder.path.append(ExerciseWorkoutRoute.newWorkout)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)
@@ -74,6 +74,6 @@ struct ExerciseCategoryView: View {
 #Preview {
     NavigationStack {
         ExerciseCategoryView(category: .gym)
-            .environment(ExerciseSessionBuilder())
+            .environment(ExerciseWorkoutBuilder())
     }
 }

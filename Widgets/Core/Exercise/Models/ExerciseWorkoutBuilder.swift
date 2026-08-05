@@ -1,5 +1,5 @@
 //
-//  ExerciseSessionBuilder.swift
+//  ExerciseWorkoutBuilder.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -45,7 +45,7 @@ enum ExerciseSetKind: Hashable {
     }
 }
 
-enum ExerciseSessionIcon: String, CaseIterable, Identifiable {
+enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
     case dumbbell
     case strength
     case bodyweight
@@ -68,8 +68,8 @@ enum ExerciseSessionIcon: String, CaseIterable, Identifiable {
         }
     }
 
-    static func matching(_ session: ExerciseQuickSession) -> ExerciseSessionIcon? {
-        allCases.first { $0.symbol == session.symbol }
+    static func matching(_ workout: ExerciseQuickWorkout) -> ExerciseWorkoutIcon? {
+        allCases.first { $0.symbol == workout.symbol }
     }
 
     var accentColor: Color {
@@ -91,10 +91,10 @@ struct ExerciseSetDraft: Identifiable, Hashable {
 }
 
 @MainActor @Observable
-final class ExerciseSessionBuilder {
+final class ExerciseWorkoutBuilder {
     var added: [String] = []
     var sets: [String: [ExerciseSetDraft]] = [:]
-    var saved: [ExerciseQuickSession] = ExerciseDemoSessions.all
+    var saved: [ExerciseQuickWorkout] = ExerciseDemoWorkouts.all
     var path = NavigationPath()
 
     var count: Int { added.count }
@@ -106,7 +106,7 @@ final class ExerciseSessionBuilder {
     func add(_ name: String) {
         guard !isAdded(name) else { return }
         added.append(name)
-        sets[name] = ExerciseSessionBuilder.defaultSets
+        sets[name] = ExerciseWorkoutBuilder.defaultSets
     }
 
     func toggle(_ name: String) {
@@ -132,20 +132,20 @@ final class ExerciseSessionBuilder {
         sets.removeAll()
     }
 
-    func delete(_ session: ExerciseQuickSession) {
-        saved.removeAll { $0.id == session.id }
+    func delete(_ workout: ExerciseQuickWorkout) {
+        saved.removeAll { $0.id == workout.id }
     }
 
-    func duplicate(_ session: ExerciseQuickSession) {
-        let copy = ExerciseQuickSession(
-            name: uniqueName(from: session.name),
-            symbol: session.symbol,
-            accentColor: session.accentColor,
-            subtitle: session.subtitle,
-            isCardio: session.isCardio,
-            items: session.items
+    func duplicate(_ workout: ExerciseQuickWorkout) {
+        let copy = ExerciseQuickWorkout(
+            name: uniqueName(from: workout.name),
+            symbol: workout.symbol,
+            accentColor: workout.accentColor,
+            subtitle: workout.subtitle,
+            isCardio: workout.isCardio,
+            items: workout.items
         )
-        if let index = saved.firstIndex(where: { $0.id == session.id }) {
+        if let index = saved.firstIndex(where: { $0.id == workout.id }) {
             saved.insert(copy, at: index + 1)
         } else {
             saved.append(copy)
@@ -154,38 +154,38 @@ final class ExerciseSessionBuilder {
 
     /// Pulls a saved workout back into the draft so the create screen can edit it.
     /// Template sets carry no rest interval, so they take the default.
-    func loadDraft(from session: ExerciseQuickSession) {
+    func loadDraft(from workout: ExerciseQuickWorkout) {
         reset()
-        for item in session.items {
+        for item in workout.items {
             guard !isAdded(item.exerciseName) else { continue }
             added.append(item.exerciseName)
             sets[item.exerciseName] = item.sets.isEmpty
-                ? ExerciseSessionBuilder.defaultSets
+                ? ExerciseWorkoutBuilder.defaultSets
                 : renumbered(item.sets.map { set in
                     ExerciseSetDraft(
                         kind: set.kind,
                         weight: set.weight,
                         reps: set.reps,
-                        rest: ExerciseSessionBuilder.defaultRest
+                        rest: ExerciseWorkoutBuilder.defaultRest
                     )
                 })
         }
     }
 
-    func update(_ session: ExerciseQuickSession, named name: String, icon: ExerciseSessionIcon) {
+    func update(_ workout: ExerciseQuickWorkout, named name: String, icon: ExerciseWorkoutIcon) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty,
-              let index = saved.firstIndex(where: { $0.id == session.id })
+              let index = saved.firstIndex(where: { $0.id == workout.id })
         else { return }
         // Cardio workouts have no exercises to edit, so an empty draft means the
         // name and icon changed and the original plan stands.
-        saved[index] = ExerciseQuickSession(
+        saved[index] = ExerciseQuickWorkout(
             name: title,
             symbol: icon.symbol,
             accentColor: icon.accentColor,
-            subtitle: added.isEmpty ? session.subtitle : subtitle,
-            isCardio: session.isCardio,
-            items: added.isEmpty ? session.items : templateItems
+            subtitle: added.isEmpty ? workout.subtitle : subtitle,
+            isCardio: workout.isCardio,
+            items: added.isEmpty ? workout.items : templateItems
         )
         reset()
     }
@@ -202,11 +202,11 @@ final class ExerciseSessionBuilder {
         return candidate
     }
 
-    func save(named name: String, icon: ExerciseSessionIcon = .dumbbell) {
+    func save(named name: String, icon: ExerciseWorkoutIcon = .dumbbell) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty, !added.isEmpty else { return }
         saved.append(
-            ExerciseQuickSession(
+            ExerciseQuickWorkout(
                 name: title,
                 symbol: icon.symbol,
                 accentColor: icon.accentColor,
@@ -238,7 +238,7 @@ final class ExerciseSessionBuilder {
         }
     }
 
-    /// Plain-text export of the session, for sharing out of the sets editor.
+    /// Plain-text export of the workout, for sharing out of the sets editor.
     func exportText(for exercise: String) -> String {
         let drafts = sets[exercise] ?? []
         let rows = drafts.map { draft in

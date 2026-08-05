@@ -10,11 +10,11 @@ import SwiftUI
 struct ContentView: View {
     @State private var showingOrder = false
     @State private var showingVaultTests = false
-    @State private var showingSession = false
-    @State private var showingAddSessions = false
+    @State private var showingWorkout = false
+    @State private var showingAddWorkouts = false
     @State private var showingExerciseDetail = false
-    @State private var builder = ExerciseSessionBuilder()
-    @State private var sessionStage: ExerciseSessionStage?
+    @State private var builder = ExerciseWorkoutBuilder()
+    @State private var workoutStage: ExerciseWorkoutStage?
 
     var body: some View {
         NavigationStack {
@@ -23,12 +23,12 @@ struct ContentView: View {
         .environment(builder)
     }
 
-    private var sessions: [ExerciseQuickSession] {
+    private var workouts: [ExerciseQuickWorkout] {
         builder.saved
     }
 
-    private func start(_ session: ExerciseQuickSession) {
-        sessionStage = session.isCardio ? .cardio : .live(session)
+    private func start(_ workout: ExerciseQuickWorkout) {
+        workoutStage = workout.isCardio ? .cardio : .live(workout)
     }
 
     private var content: some View {
@@ -36,7 +36,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
                     VStack(alignment: .leading, spacing: .spacing2x) {
-                        addSessionsButton
+                        addWorkoutsButton
                         viewExerciseButton
                     }
                     .padding(.top, .spacing2x)
@@ -63,8 +63,8 @@ struct ContentView: View {
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseUpcomingWidget")
-                    ExerciseUpcomingWidget { session in
-                        start(session)
+                    ExerciseUpcomingWidget { workout in
+                        start(workout)
                     }
                         .padding(.bottom, .spacing3x)
 
@@ -135,9 +135,9 @@ struct ContentView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section("Saved Workouts") {
-                        ForEach(sessions) { session in
-                            Button(session.name, systemImage: session.symbol) {
-                                start(session)
+                        ForEach(workouts) { workout in
+                            Button(workout.name, systemImage: workout.symbol) {
+                                start(workout)
                             }
                         }
                     }
@@ -145,15 +145,15 @@ struct ContentView: View {
                     Label("Start workout", systemImage: "play.fill")
                         .labelStyle(.iconOnly)
                 } primaryAction: {
-                    showingSession = true
+                    showingWorkout = true
                 }
             }
         }
-        .sheet(isPresented: $showingSession) {
+        .sheet(isPresented: $showingWorkout) {
             ExerciseSheet()
         }
-        .sheet(isPresented: $showingAddSessions) {
-            ExerciseAddSessionsSheet()
+        .sheet(isPresented: $showingAddWorkouts) {
+            ExerciseAddWorkoutsSheet()
         }
         .sheet(isPresented: $showingExerciseDetail) {
             if let exercise = ExerciseDemoLibrary.exercise(named: "Squat") {
@@ -162,7 +162,7 @@ struct ContentView: View {
                 }
             }
         }
-        .exerciseSessionFlow($sessionStage)
+        .exerciseWorkoutFlow($workoutStage)
         .sheet(isPresented: $showingOrder) {
             GenomeOrderSheet()
         }
@@ -173,11 +173,11 @@ struct ContentView: View {
         }
     }
 
-    private var addSessionsButton: some View {
+    private var addWorkoutsButton: some View {
         Button {
-            showingAddSessions = true
+            showingAddWorkouts = true
         } label: {
-            BrightText("ExerciseAddSessionsSheet", size: .body2, weight: .regular)
+            BrightText("ExerciseAddWorkoutsSheet", size: .body2, weight: .regular)
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing105x)
                 .overlay {

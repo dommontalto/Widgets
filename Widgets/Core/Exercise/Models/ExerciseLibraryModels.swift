@@ -68,13 +68,13 @@ nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
     }
 }
 
-nonisolated enum ExerciseSessionCategory: String, CaseIterable, Identifiable {
+nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
     case gym
     case bodyweight
     case cardio
     case sports
 
-    static let standard: [ExerciseSessionCategory] = allCases
+    static let standard: [ExerciseWorkoutCategory] = allCases
 
     var id: String { rawValue }
 
@@ -123,7 +123,7 @@ nonisolated struct ExerciseDefinition: Identifiable {
     let secondaryMuscles: [ExerciseMuscle]
     let category: ExerciseLibraryCategory
     let instructions: [String]
-    let records: [ExerciseSessionStat]
+    let records: [ExerciseWorkoutStat]
     let history: [ExerciseHistoryEntry]
     let progression: [ExerciseProgressionPoint]
     let progressionMetric: String

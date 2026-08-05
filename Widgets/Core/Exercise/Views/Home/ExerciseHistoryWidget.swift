@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct ExerciseHistoryWidget: View {
-    @State private var sessions = ExerciseDemoData.sessionHistory
-    @State private var selectedSession: ExerciseSession?
+    @State private var workouts = ExerciseDemoData.workoutHistory
+    @State private var selectedWorkout: ExerciseWorkout?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -19,10 +19,10 @@ struct ExerciseHistoryWidget: View {
             }
 
             VStack(spacing: .spacing0x) {
-                ForEach(sessions) { session in
-                    sessionRow(session)
+                ForEach(workouts) { workout in
+                    workoutRow(workout)
 
-                    if session.id != sessions.last?.id {
+                    if workout.id != workouts.last?.id {
                         Rectangle()
                             .fill(Color.textColor.opacity(.ultraLowOpacity))
                             .frame(height: 1)
@@ -33,33 +33,33 @@ struct ExerciseHistoryWidget: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
-        .sheet(item: $selectedSession) { session in
-            ExerciseSessionCompleteSheet(session: session)
+        .sheet(item: $selectedWorkout) { workout in
+            ExerciseWorkoutCompleteSheet(workout: workout)
         }
     }
 
-    private func sessionRow(_ session: ExerciseSession) -> some View {
-        let color = color(for: session.type)
+    private func workoutRow(_ workout: ExerciseWorkout) -> some View {
+        let color = color(for: workout.type)
         return Button {
-            guard session.type != .cardio else { return }
-            selectedSession = session
+            guard workout.type != .cardio else { return }
+            selectedWorkout = workout
         } label: {
             HStack(spacing: .spacing105x) {
-                Image(systemName: session.type == .cardio ? "figure.run" : "dumbbell")
+                Image(systemName: workout.type == .cardio ? "figure.run" : "dumbbell")
                     .font(.standardSFPro(size: .subheading2, weight: .light))
                     .foregroundStyle(color)
                     .frame(width: Constants.iconWidth)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(session.name, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    BrightText(session.summary, size: .body3, color: .lightTextColor)
+                    BrightText(workout.name, size: .body2, color: .semiLightTextColor, weight: .regular)
+                    BrightText(workout.summary, size: .body3, color: .lightTextColor)
                         .monospacedDigit()
                 }
 
                 Spacer(minLength: .spacing2x)
 
                 VStack(alignment: .trailing, spacing: .spacing05x) {
-                    BrightText(session.timestamp, size: .body3, color: .lightTextColor)
+                    BrightText(workout.timestamp, size: .body3, color: .lightTextColor)
                     Image(systemName: "chevron.right")
                         .font(.standardSFPro(size: .body5, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)

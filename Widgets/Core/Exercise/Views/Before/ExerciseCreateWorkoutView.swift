@@ -1,5 +1,5 @@
 //
-//  ExerciseCreateSessionView.swift
+//  ExerciseCreateWorkoutView.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -11,16 +11,16 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
-struct ExerciseCreateSessionView: View {
+struct ExerciseCreateWorkoutView: View {
     /// The saved workout being edited, or nil when building a new one.
-    let editing: ExerciseQuickSession?
+    let editing: ExerciseQuickWorkout?
     let onSave: () -> Void
 
-    @Environment(ExerciseSessionBuilder.self) private var builder
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
     @State private var name: String
-    @State private var symbol: ExerciseSessionIcon
+    @State private var symbol: ExerciseWorkoutIcon
     @State private var swapTarget: ExerciseSwapTarget?
     @State private var isAddingExercise = false
     @State private var addedExercise: String?
@@ -36,14 +36,14 @@ struct ExerciseCreateSessionView: View {
     @ScaledMetric(relativeTo: .body) private var fieldWidth = ExerciseSetRow.Constants.fieldWidth
     @ScaledMetric(relativeTo: .body) private var fieldGap = ExerciseSetRow.Constants.fieldGap
 
-    init(editing: ExerciseQuickSession? = nil, onSave: @escaping () -> Void) {
+    init(editing: ExerciseQuickWorkout? = nil, onSave: @escaping () -> Void) {
         self.editing = editing
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? "")
-        if let editing, let icon = ExerciseSessionIcon.matching(editing) {
+        if let editing, let icon = ExerciseWorkoutIcon.matching(editing) {
             _symbol = State(initialValue: icon)
         } else {
-            _symbol = State(initialValue: ExerciseSessionIcon.allCases[0])
+            _symbol = State(initialValue: ExerciseWorkoutIcon.allCases[0])
         }
     }
 
@@ -164,7 +164,7 @@ struct ExerciseCreateSessionView: View {
 
     private var iconPicker: some View {
         HStack(spacing: .spacing0x) {
-            ForEach(ExerciseSessionIcon.allCases) { icon in
+            ForEach(ExerciseWorkoutIcon.allCases) { icon in
                 Image(systemName: icon.symbol)
                     .font(.standardSFPro(size: .heading, weight: .light))
                     .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
@@ -201,7 +201,7 @@ struct ExerciseCreateSessionView: View {
     /// One gesture drives both tap and drag, so the glass follows the finger
     /// across the row instead of jumping between taps.
     private func select(at x: CGFloat) {
-        let icons = ExerciseSessionIcon.allCases
+        let icons = ExerciseWorkoutIcon.allCases
         guard iconPickerWidth > 0 else { return }
         let slot = iconPickerWidth / CGFloat(icons.count)
         let index = min(max(0, Int(x / slot)), icons.count - 1)
@@ -356,13 +356,13 @@ struct ExerciseCreateSessionView: View {
 
 #Preview {
     NavigationStack {
-        ExerciseCreateSessionView {}
+        ExerciseCreateWorkoutView {}
             .environment(previewBuilder)
     }
 }
 
-@MainActor private let previewBuilder: ExerciseSessionBuilder = {
-    let builder = ExerciseSessionBuilder()
+@MainActor private let previewBuilder: ExerciseWorkoutBuilder = {
+    let builder = ExerciseWorkoutBuilder()
     builder.add("Bench Press")
     builder.add("Shoulder Press")
     return builder

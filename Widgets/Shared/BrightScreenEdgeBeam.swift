@@ -17,6 +17,7 @@ struct BrightScreenEdgeBeam: View {
     /// Sheets start below the display's top edge, so the beam has to stay inside
     /// the safe area or its top run is cut off by the presentation.
     var edgesToIgnore: Edge.Set = .all
+    var colorVariant: BeamColorVariant = .brand
 
     var body: some View {
         GeometryReader { geo in
@@ -34,7 +35,7 @@ struct BrightScreenEdgeBeam: View {
     private func beamLayer(in screen: CGSize) -> some View {
         BorderBeam(
             size: .md,
-            colorVariant: .brand,
+            colorVariant: colorVariant,
             theme: .dark,
             duration: Constants.duration,
             active: isActive,

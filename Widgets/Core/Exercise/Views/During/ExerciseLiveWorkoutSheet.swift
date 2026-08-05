@@ -1,5 +1,5 @@
 //
-//  ExerciseLiveSessionSheet.swift
+//  ExerciseLiveWorkoutSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-struct ExerciseLiveSessionSheet: View {
-    var sessionName = "Gym workout"
+struct ExerciseLiveWorkoutSheet: View {
+    var workoutName = "Gym workout"
     var templateItems: [ExerciseTemplateItem]? = nil
-    /// Handed the logged session, so the presenter owns what comes next — it
+    /// Handed the logged workout, so the presenter owns what comes next — it
     /// swaps this screen for the summary inside the same presentation.
-    var onFinish: (ExerciseSession) -> Void = { _ in }
+    var onFinish: (ExerciseWorkout) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -24,11 +24,11 @@ struct ExerciseLiveSessionSheet: View {
     @State private var isSideMenuExpanded = false
 
     init(
-        sessionName: String = "Gym workout",
+        workoutName: String = "Gym workout",
         templateItems: [ExerciseTemplateItem]? = nil,
-        onFinish: @escaping (ExerciseSession) -> Void = { _ in }
+        onFinish: @escaping (ExerciseWorkout) -> Void = { _ in }
     ) {
-        self.sessionName = sessionName
+        self.workoutName = workoutName
         self.templateItems = templateItems
         self.onFinish = onFinish
         _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseDemoData.activeExercises)
@@ -40,6 +40,21 @@ struct ExerciseLiveSessionSheet: View {
         } content: { _ in
             page
         }
+        // Rest rings the whole sheet; working is signalled on the active set row
+        // itself. Outside the side menu so the ring stays put while the content
+        // slides, and past every safe-area edge so the nav bar doesn't clip its
+        // top run.
+        .overlay {
+            BrightScreenEdgeBeam(
+                isActive: isResting,
+                cornerRadius: CGFloat.modalCornerRadius,
+                colorVariant: .skyBlue
+            )
+        }
+    }
+
+    private var isResting: Bool {
+        restEndDate != nil
     }
 
     private var page: some View {
@@ -118,7 +133,7 @@ struct ExerciseLiveSessionSheet: View {
     private var sideMenu: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing0x) {
-                BrightText(sessionName, size: .standout1)
+                BrightText(workoutName, size: .standout1)
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing6x)
 
@@ -209,7 +224,8 @@ struct ExerciseLiveSessionSheet: View {
                 ExerciseLiveSetRow(
                     set: $set,
                     index: workingIndex(of: $set.wrappedValue, in: currentExercise),
-                    isActive: $set.wrappedValue.id == activeSet?.id
+                    isActive: $set.wrappedValue.id == activeSet?.id,
+                    isResting: isResting
                 )
                 .listRowInsets(EdgeInsets(top: .spacing0x, leading: .spacing3x, bottom: .spacing0x, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
@@ -252,7 +268,7 @@ struct ExerciseLiveSessionSheet: View {
     // MARK: - Status
 
     private var statusWidget: some View {
-        ExerciseLiveSessionStatusWidget(
+        ExerciseLiveWorkoutStatusWidget(
             status: status,
             onTag: cycleActiveSetKind,
             onRestart: restart,
@@ -261,7 +277,7 @@ struct ExerciseLiveSessionSheet: View {
         )
     }
 
-    private var status: ExerciseLiveSessionStatusWidget.Status {
+    private var status: ExerciseLiveWorkoutStatusWidget.Status {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
         } else if activeSet == nil, isLastExercise {
@@ -278,7 +294,7 @@ struct ExerciseLiveSessionSheet: View {
     // MARK: - Actions
 
     private func finish() {
-        onFinish(finishedSession)
+        onFinish(finishedWorkout)
     }
 
     /// Only the done state flips, so a mis-tap doesn't wipe typed weights or RPE.
@@ -363,7 +379,7 @@ struct ExerciseLiveSessionSheet: View {
         return "REST"
     }
 
-    private var finishedSession: ExerciseSession {
+    private var finishedWorkout: ExerciseWorkout {
         let logged = exercises.compactMap { exercise -> ExerciseLoggedExercise? in
             let done = exercise.sets.filter(\.isDone)
             guard !done.isEmpty else { return nil }
@@ -376,12 +392,12 @@ struct ExerciseLiveSessionSheet: View {
         }
         let duration = elapsedString(at: Date())
 
-        return ExerciseSession(
-            name: sessionName,
+        return ExerciseWorkout(
+            name: workoutName,
             timestamp: Date().formatted(date: .abbreviated, time: .shortened),
             type: .strength,
             summary: "\(duration) • \(volumeString) kg • \(completedSets) sets",
-            detail: ExerciseSessionDetail(
+            detail: ExerciseWorkoutDetail(
                 tiles: [
                     ExerciseStatTile(label: "Personal Best", value: personalBest, unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
                     ExerciseStatTile(label: "EST. 1RM", value: estimatedOneRepMax, unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
@@ -444,7 +460,7 @@ struct ExerciseLiveSessionSheet: View {
         static let rowHeight = ExerciseSetRow.Constants.rowHeight
         static let restSeconds: TimeInterval = 90
         static let menuIconSize: CGFloat = 24
-        /// Stands in for HealthKit until the session is wired to real samples.
+        /// Stands in for HealthKit until the workout is wired to real samples.
         static let demoHeartRate = "132"
         static let demoCalories = "412"
     }
@@ -454,6 +470,9 @@ private struct ExerciseLiveSetRow: View {
     @Binding var set: ExerciseActiveSet
     let index: Int
     let isActive: Bool
+    /// The active row still marks what's up next during rest, but the beam is the
+    /// working signal, so it stands down while the sheet's rest ring is up.
+    let isResting: Bool
 
     var body: some View {
         HStack(spacing: .spacing0x) {
@@ -501,8 +520,18 @@ private struct ExerciseLiveSetRow: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, .spacing2x)
-        .frame(height: ExerciseLiveSessionSheet.Constants.rowHeight)
+        .frame(height: ExerciseLiveWorkoutSheet.Constants.rowHeight)
         .modifier(CardModifier(cornerRadius: .cornerRadius18))
+        // Marks the set you're working on. hueRange is kept low so the ring stays
+        // orange instead of drifting off the brand hue.
+        .borderBeam(
+            .md,
+            colorVariant: .orange,
+            theme: .auto,
+            active: isActive && !isResting,
+            borderRadius: CGFloat.cornerRadius18,
+            hueRange: Constants.beamHueRange
+        )
     }
 
     @ViewBuilder private var setLabel: some View {
@@ -548,6 +577,7 @@ private struct ExerciseLiveSetRow: View {
         static let dividerHeight: CGFloat = 28
         static let rpeFieldWidth: CGFloat = 43
         static let rpeFieldHeight: CGFloat = 30
+        static let beamHueRange: Double = 15
     }
 }
 
@@ -614,6 +644,6 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
 
 #Preview {
     NavigationStack {
-        ExerciseLiveSessionSheet()
+        ExerciseLiveWorkoutSheet()
     }
 }

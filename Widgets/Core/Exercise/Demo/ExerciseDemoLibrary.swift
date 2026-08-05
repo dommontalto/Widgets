@@ -15,7 +15,7 @@ nonisolated enum ExerciseDemoLibrary {
             ?? all.first { name.hasPrefix($0.name) || $0.name.hasPrefix(name) }
     }
 
-    static func exercises(in category: ExerciseSessionCategory) -> [ExerciseDefinition] {
+    static func exercises(in category: ExerciseWorkoutCategory) -> [ExerciseDefinition] {
         switch category {
         case .gym: strength.filter { $0.equipment != .bodyweight }
         case .bodyweight: strength.filter { $0.equipment == .bodyweight }
@@ -158,16 +158,16 @@ nonisolated enum ExerciseDemoLibrary {
             instructions: steps ?? defaultSteps(for: category, equipment: equipment),
             records: isWeight
                 ? [
-                    ExerciseSessionStat(label: "Est 1RM", value: format(oneRepMax), unit: "kg"),
-                    ExerciseSessionStat(label: "Best set", value: "\(format(base)) \u{00D7} 5"),
-                    ExerciseSessionStat(label: "Best volume", value: format(base * 42), unit: "kg"),
-                    ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
+                    ExerciseWorkoutStat(label: "Est 1RM", value: format(oneRepMax), unit: "kg"),
+                    ExerciseWorkoutStat(label: "Best set", value: "\(format(base)) \u{00D7} 5"),
+                    ExerciseWorkoutStat(label: "Best volume", value: format(base * 42), unit: "kg"),
+                    ExerciseWorkoutStat(label: "Workouts", value: "\(workoutsCount(for: name))"),
                 ]
                 : [
-                    ExerciseSessionStat(label: "Best", value: format(base), unit: metric.lowercased()),
-                    ExerciseSessionStat(label: "Best set", value: "\(format(base * 0.9)) \(metric.lowercased())"),
-                    ExerciseSessionStat(label: "Total \(metric.lowercased())", value: format(base * 38)),
-                    ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
+                    ExerciseWorkoutStat(label: "Best", value: format(base), unit: metric.lowercased()),
+                    ExerciseWorkoutStat(label: "Best set", value: "\(format(base * 0.9)) \(metric.lowercased())"),
+                    ExerciseWorkoutStat(label: "Total \(metric.lowercased())", value: format(base * 38)),
+                    ExerciseWorkoutStat(label: "Workouts", value: "\(workoutsCount(for: name))"),
                 ],
             history: demoHistory(base: base, unit: isWeight ? "kg" : metric.lowercased()),
             progression: progressionSeries(base: base, seed: name.count),
@@ -200,10 +200,10 @@ nonisolated enum ExerciseDemoLibrary {
                 "Cool down easy and stretch after finishing.",
             ],
             records: [
-                ExerciseSessionStat(label: "Best \(metricLabel.lowercased())", value: best),
-                ExerciseSessionStat(label: "Longest", value: longest),
-                ExerciseSessionStat(label: "Avg HR", value: "156", unit: "bpm"),
-                ExerciseSessionStat(label: "Workouts", value: "\(sessionsCount(for: name))"),
+                ExerciseWorkoutStat(label: "Best \(metricLabel.lowercased())", value: best),
+                ExerciseWorkoutStat(label: "Longest", value: longest),
+                ExerciseWorkoutStat(label: "Avg HR", value: "156", unit: "bpm"),
+                ExerciseWorkoutStat(label: "Workouts", value: "\(workoutsCount(for: name))"),
             ],
             history: [
                 ExerciseHistoryEntry(date: "22 Jul", summary: "5.02 km \u{2022} 24:56", bestSet: "Best km 4\u{2019}46\u{201D}"),
@@ -242,7 +242,7 @@ nonisolated enum ExerciseDemoLibrary {
         }
     }
 
-    private static func sessionsCount(for name: String) -> Int {
+    private static func workoutsCount(for name: String) -> Int {
         18 + (name.count * 7) % 41
     }
 

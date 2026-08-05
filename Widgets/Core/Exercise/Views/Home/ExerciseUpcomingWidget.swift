@@ -8,16 +8,16 @@
 import SwiftUI
 
 struct ExerciseUpcomingWidget: View {
-    var sessions: [ExerciseUpcomingSession] = []
-    var onQuickWorkout: (ExerciseQuickSession) -> Void = { _ in }
+    var workouts: [ExerciseUpcomingWorkout] = []
+    var onQuickWorkout: (ExerciseQuickWorkout) -> Void = { _ in }
 
-    @Environment(ExerciseSessionBuilder.self) private var builder
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
 
     @State private var selectedIndex: Int?
 
     var body: some View {
         Group {
-            if sessions.isEmpty {
+            if workouts.isEmpty {
                 emptyState
             } else {
                 todayState
@@ -27,7 +27,7 @@ struct ExerciseUpcomingWidget: View {
         .modifier(CardModifier())
         .brightMiniSheet(isPresented: sheetBinding) {
             if let selectedIndex {
-                ExerciseSessionMiniSheet(session: sessions[selectedIndex]) {
+                ExerciseWorkoutMiniSheet(workout: workouts[selectedIndex]) {
                     withAnimation(.brightEaseInOut) { self.selectedIndex = nil }
                 }
             }
@@ -46,8 +46,8 @@ struct ExerciseUpcomingWidget: View {
             BrightText("Today", size: .body1)
 
             VStack(spacing: .spacing1x) {
-                ForEach(sessions.indices, id: \.self) { i in
-                    sessionRow(sessions[i], isSelected: selectedIndex == i) {
+                ForEach(workouts.indices, id: \.self) { i in
+                    workoutRow(workouts[i], isSelected: selectedIndex == i) {
                         withAnimation(.brightEaseInOut) { selectedIndex = i }
                     }
                 }
@@ -56,8 +56,8 @@ struct ExerciseUpcomingWidget: View {
         .padding(.spacing3x)
     }
 
-    private func sessionRow(_ session: ExerciseUpcomingSession, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
-        let color = color(for: session.type)
+    private func workoutRow(_ workout: ExerciseUpcomingWorkout, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
+        let color = color(for: workout.type)
         return Button(action: onTap) {
             HStack(spacing: .spacing105x) {
                 RoundedRectangle(cornerRadius: 1, style: .continuous)
@@ -65,8 +65,8 @@ struct ExerciseUpcomingWidget: View {
                     .frame(width: 2, height: 35)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(session.name, size: .body2, color: color, weight: .regular)
-                    BrightText(session.time, size: .body2, color: color)
+                    BrightText(workout.name, size: .body2, color: color, weight: .regular)
+                    BrightText(workout.time, size: .body2, color: color)
                 }
             }
             .padding(.horizontal, .spacing105x)
@@ -107,9 +107,9 @@ struct ExerciseUpcomingWidget: View {
     private var quickWorkoutMenu: some View {
         Menu {
             Section("Saved Workouts") {
-                ForEach(builder.saved) { session in
-                    Button(session.name, systemImage: session.symbol) {
-                        onQuickWorkout(session)
+                ForEach(builder.saved) { workout in
+                    Button(workout.name, systemImage: workout.symbol) {
+                        onQuickWorkout(workout)
                     }
                 }
             }
@@ -123,8 +123,8 @@ struct ExerciseUpcomingWidget: View {
 
 // MARK: - Supporting Views
 
-struct ExerciseSessionMiniSheet: View {
-    let session: ExerciseUpcomingSession
+struct ExerciseWorkoutMiniSheet: View {
+    let workout: ExerciseUpcomingWorkout
     let onClose: () -> Void
 
     var body: some View {
@@ -138,7 +138,7 @@ struct ExerciseSessionMiniSheet: View {
                         .frame(width: 40, height: 40)
                         .foregroundStyle(Color.textColor)
                         .contentTransition(.symbolEffect(.replace))
-                    BrightText(session.name, size: .standout1)
+                    BrightText(workout.name, size: .standout1)
                         .contentTransition(.numericText())
                 }
                 Spacer()
@@ -149,19 +149,19 @@ struct ExerciseSessionMiniSheet: View {
                 BrightText("Workout Goals", size: .body1, color: .semiLightTextColor)
 
                 HStack(spacing: .spacing3x) {
-                    ForEach(session.goals.indices, id: \.self) { i in
+                    ForEach(workout.goals.indices, id: \.self) { i in
                         if i > 0 {
                             Rectangle()
                                 .fill(Color.textColor.opacity(.minimalOpacity))
                                 .frame(width: 1)
                         }
-                        goalColumn(session.goals[i])
+                        goalColumn(workout.goals[i])
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            BrightText(session.note, size: .body2, color: .semiLightTextColor)
+            BrightText(workout.note, size: .body2, color: .semiLightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
                 .padding(.vertical, .spacing2x)
@@ -170,13 +170,13 @@ struct ExerciseSessionMiniSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, .spacing1x)
         }
-        .animation(.brightBouncy, value: session.name)
+        .animation(.brightBouncy, value: workout.name)
         .padding([.top, .horizontal], .spacing4x)
         .padding(.bottom, .spacing1x)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func goalColumn(_ goal: ExerciseSessionGoal) -> some View {
+    private func goalColumn(_ goal: ExerciseWorkoutGoal) -> some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
             HStack(spacing: .spacing1x) {
                 Image(systemName: goal.icon)
@@ -192,12 +192,12 @@ struct ExerciseSessionMiniSheet: View {
     }
 
     private var icon: String {
-        session.type == .cardio ? "figure.run" : "dumbbell"
+        workout.type == .cardio ? "figure.run" : "dumbbell"
     }
 }
 
 #Preview {
     ExerciseUpcomingWidget()
         .padding(.spacing4x)
-        .environment(ExerciseSessionBuilder())
+        .environment(ExerciseWorkoutBuilder())
 }

@@ -31,4 +31,8 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     /// `colorful` with every blob remapped to the Bright palette
     /// (`Color+StylingExtensions`) — same geometry, branded hues.
     case brand
+    /// Single-hue takes on `brand`, shaded per blob so the ring still reads as a
+    /// sweep: `defaultOrange` and `defaultSkyBlue`.
+    case orange
+    case skyBlue
 }

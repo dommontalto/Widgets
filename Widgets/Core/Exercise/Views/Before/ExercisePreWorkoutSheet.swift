@@ -1,5 +1,5 @@
 //
-//  ExercisePreSessionSheet.swift
+//  ExercisePreWorkoutSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 3/8/2026.
@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct ExercisePreSessionSheet: View {
-    let session: ExerciseQuickSession
-    /// Hands the session to the presenter, which swaps this screen for the live
+struct ExercisePreWorkoutSheet: View {
+    let workout: ExerciseQuickWorkout
+    /// Hands the workout to the presenter, which swaps this screen for the live
     /// one inside the same presentation.
-    var onStart: (ExerciseQuickSession) -> Void = { _ in }
+    var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
 
-    @Environment(ExerciseSessionBuilder.self) private var builder
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
     @State private var openedExercise: ExerciseDefinition?
@@ -23,6 +23,7 @@ struct ExercisePreSessionSheet: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: .spacing0x) {
                     header
+                        .padding(.top, .spacing3x)
 
                     statsRow
                         .padding(.top, .spacing4x)
@@ -53,11 +54,11 @@ struct ExercisePreSessionSheet: View {
 
     private var header: some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: session.symbol)
+            Image(systemName: workout.symbol)
                 .font(.standard(size: .huge2, weight: .light))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(session.name, size: .standout4, scaleTextSize: 0.7)
+            BrightText(workout.name, size: .standout4, scaleTextSize: 0.7)
                 .lineLimit(1)
         }
     }
@@ -68,7 +69,7 @@ struct ExercisePreSessionSheet: View {
                 symbol: "text.line.magnify",
                 color: .defaultBlue,
                 label: "Exercises:",
-                value: "\(session.items.count)"
+                value: "\(workout.items.count)"
             )
 
             BrightVerticalDivider(height: Constants.statDividerHeight)
@@ -111,8 +112,8 @@ struct ExercisePreSessionSheet: View {
     // MARK: - Exercises
 
     private var exerciseRows: some View {
-        VStack(spacing: .spacing105x) {
-            ForEach(session.items) { item in
+        VStack(spacing: .spacing2x) {
+            ForEach(workout.items) { item in
                 Button {
                     openedExercise = ExerciseDemoLibrary.exercise(named: item.exerciseName)
                 } label: {
@@ -138,13 +139,14 @@ struct ExercisePreSessionSheet: View {
 
             Spacer(minLength: .spacing2x)
 
-            BrightText(setsLabel(for: item), size: .body2, color: .lightTextColor)
+            BrightText(setsLabel(for: item), size: .subheading, color: .lightTextColor)
                 .monospacedDigit()
                 .fixedSize()
+                .padding(.trailing, .spacing1x)
         }
         .padding(.spacing2x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius18))
+        .frame(maxWidth: .infinity, minHeight: ExerciseLibraryRow.Constants.minHeight, alignment: .leading)
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     @ViewBuilder
@@ -166,11 +168,11 @@ struct ExercisePreSessionSheet: View {
         HStack(spacing: .spacing2x) {
             Menu {
                 Button("Duplicate", systemImage: "plus.square.on.square") {
-                    withAnimation(.brightSnappy) { builder.duplicate(session) }
+                    withAnimation(.brightSnappy) { builder.duplicate(workout) }
                 }
 
                 Button("Delete", systemImage: "trash", role: .destructive) {
-                    builder.delete(session)
+                    builder.delete(workout)
                     dismiss()
                 }
             } label: {
@@ -182,7 +184,7 @@ struct ExercisePreSessionSheet: View {
             Spacer(minLength: .spacing2x)
 
             BrightRoundButton(systemImage: "play.fill", size: .extraLarge, color: .defaultGreen) {
-                onStart(session)
+                onStart(workout)
             }
         }
         .padding(.horizontal, .spacing4x)
@@ -192,7 +194,7 @@ struct ExercisePreSessionSheet: View {
     // MARK: - Derived state
 
     private var totalSets: Int {
-        session.items.reduce(0) { $0 + setCount(for: $1) }
+        workout.items.reduce(0) { $0 + setCount(for: $1) }
     }
 
     private func setCount(for item: ExerciseTemplateItem) -> Int {
@@ -223,7 +225,7 @@ struct ExercisePreSessionSheet: View {
     Color.defaultBackground
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
-            ExercisePreSessionSheet(session: ExerciseDemoSessions.quickPush)
-                .environment(ExerciseSessionBuilder())
+            ExercisePreWorkoutSheet(workout: ExerciseDemoWorkouts.quickPush)
+                .environment(ExerciseWorkoutBuilder())
         }
 }

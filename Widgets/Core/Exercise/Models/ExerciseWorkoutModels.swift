@@ -1,5 +1,5 @@
 //
-//  ExerciseSessionModels.swift
+//  ExerciseWorkoutModels.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-nonisolated struct ExerciseSessionDetail {
+nonisolated struct ExerciseWorkoutDetail {
     let tiles: [ExerciseStatTile]
     let exercises: [ExerciseLoggedExercise]
     let splits: [ExerciseSplit]
     let note: String
 }
  
-nonisolated struct ExerciseSessionStat {
+nonisolated struct ExerciseWorkoutStat {
     let label: String
     let value: String
     var unit: String?

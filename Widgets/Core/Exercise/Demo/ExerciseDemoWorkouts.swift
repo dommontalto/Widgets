@@ -1,5 +1,5 @@
 //
-//  ExerciseDemoSessions.swift
+//  ExerciseDemoWorkouts.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ExerciseQuickSession: Identifiable {
+struct ExerciseQuickWorkout: Identifiable {
     let name: String
     let symbol: String
     let accentColor: Color
@@ -18,10 +18,10 @@ struct ExerciseQuickSession: Identifiable {
     var id: String { name }
 }
 
-enum ExerciseDemoSessions {
-    static let all: [ExerciseQuickSession] = [quickFiveK, quickPush]
+enum ExerciseDemoWorkouts {
+    static let all: [ExerciseQuickWorkout] = [quickFiveK, quickPush]
 
-    static let quickFiveK = ExerciseQuickSession(
+    static let quickFiveK = ExerciseQuickWorkout(
         name: "Quick 5K",
         symbol: "figure.run",
         accentColor: .defaultSkyBlue,
@@ -29,7 +29,7 @@ enum ExerciseDemoSessions {
         isCardio: true
     )
 
-    static let quickPush = ExerciseQuickSession(
+    static let quickPush = ExerciseQuickWorkout(
         name: "Quick Push",
         symbol: "dumbbell",
         accentColor: .defaultPurple,

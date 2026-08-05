@@ -9,10 +9,10 @@ import SwiftUI
 
 struct ExerciseThisWeekWidget: View {
     private let stats = [
-        ExerciseSessionStat(label: "Workouts", value: "4"),
-        ExerciseSessionStat(label: "Volume", value: "38,420", unit: "kg"),
-        ExerciseSessionStat(label: "Distance", value: "15.1", unit: "km"),
-        ExerciseSessionStat(label: "Time training", value: "4:12", unit: "hrs"),
+        ExerciseWorkoutStat(label: "Workouts", value: "4"),
+        ExerciseWorkoutStat(label: "Volume", value: "38,420", unit: "kg"),
+        ExerciseWorkoutStat(label: "Distance", value: "15.1", unit: "km"),
+        ExerciseWorkoutStat(label: "Time training", value: "4:12", unit: "hrs"),
     ]
 
     var body: some View {
@@ -26,7 +26,7 @@ struct ExerciseThisWeekWidget: View {
         }
     }
 
-    private func statTile(_ stat: ExerciseSessionStat) -> some View {
+    private func statTile(_ stat: ExerciseWorkoutStat) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
                 BrightText(stat.value, size: .standout3, weight: .regular)
