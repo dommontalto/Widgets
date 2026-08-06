@@ -43,11 +43,16 @@ struct ExerciseDetailSheet: View {
 
     var body: some View {
         GeometryReader { proxy in
-            pager(expandedFormHeight: proxy.size.height + proxy.safeAreaInsets.bottom)
+            pager(
+                expandedFormHeight: proxy.size.height
+                    + proxy.safeAreaInsets.top
+                    + proxy.safeAreaInsets.bottom,
+                topInset: proxy.safeAreaInsets.top
+            )
         }
     }
 
-    private func pager(expandedFormHeight: CGFloat) -> some View {
+    private func pager(expandedFormHeight: CGFloat, topInset: CGFloat) -> some View {
         BrightSwipePageView(
             pages: [
                 SwipePage(title: "Summary", systemImage: "ellipsis.calendar"),
@@ -67,13 +72,14 @@ struct ExerciseDetailSheet: View {
         ) { index in
             Group {
                 switch index {
-                case 0: summaryPage(expandedFormHeight: expandedFormHeight)
+                case 0: summaryPage(expandedFormHeight: expandedFormHeight, topInset: topInset)
                 case 1: impactPage
                 default: dataPage
                 }
             }
             .padding(.top, isFormExpanded ? -Constants.reservedPillRow : .spacing0x)
         }
+        .ignoresSafeArea(edges: isFormExpanded ? .top : [])
         .toolbar {
             ToolbarItem(placement: .principal) {
                 ExerciseInlineTitle(title: exercise.name, file: #file)
@@ -90,14 +96,14 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Summary
 
-    private func summaryPage(expandedFormHeight: CGFloat) -> some View {
+    private func summaryPage(expandedFormHeight: CGFloat, topInset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             formCard(expandedHeight: expandedFormHeight)
             muscleChips
             statsSection
             progressionCard
         }
-        .padding(.top, isFormExpanded ? .spacing0x : .spacing3x)
+        .padding(.top, isFormExpanded ? -topInset : .spacing3x)
         .padding([.horizontal, .bottom], .spacing3x)
     }
 

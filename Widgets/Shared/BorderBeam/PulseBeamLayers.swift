@@ -23,7 +23,6 @@ struct PulseBeamConfig {
     var themeConfig: BeamSpec.ThemeColors { spec.sizeThemePresets[size.rawValue]![theme]! }
     var sizeConfig: BeamSpec.SizeConfig { spec.sizePresets[size.rawValue]! }
     var radius: Double { borderRadius ?? sizeConfig.borderRadius }
-    var monoMul: Double { variant == .mono ? spec.defaults.monoOpacityMultiplier : 1 }
     var finalBrightness: Double { brightness ?? themeConfig.brightness ?? spec.defaults.brightnessFallback }
     var finalSaturation: Double { saturation ?? themeConfig.saturation }
     var themeSection: BeamSpec.PulseThemeSection {
@@ -213,7 +212,7 @@ struct PulseBeamLayers: View {
     private func layers(at t: Double, elementSize: CGSize, fade: Double) -> some View {
         let spec = config.spec
         let osc = PulseDriver.sample(config.themeSection, at: t, durationScale: config.durationScale)
-        let hue = (config.staticColors || config.reduceMotion)
+        let hue = (config.staticColors || config.reduceMotion || config.variant.isSingleHue)
             ? 0
             : PulseDriver.hueDegrees(at: t, period: config.huePeriod)
         let tuning = config.tuning
@@ -227,7 +226,7 @@ struct PulseBeamLayers: View {
             brightness: tuning.glowBrightness ?? config.finalBrightness,
             saturation: tuning.glowSaturate ?? config.finalSaturation
         )
-        let base = fade * config.strength * config.monoMul
+        let base = fade * config.strength
         let oc = config.oc
         let scale = config.glowScale(for: elementSize)
         let bloomBlur = tuning.bloomBlur ?? (config.isOutside
@@ -339,9 +338,12 @@ struct PulseBeamLayers: View {
         matrix: [Float],
         opacity: Double
     ) -> some View {
+        // A padded box can go negative — or NaN, if the element is mid-layout —
+        // and SwiftUI rejects the frame outright either way. `max` alone won't
+        // do: it returns NaN back when the comparison against it is false.
         let boxSize = CGSize(
-            width: elementSize.width + boxPad * 2,
-            height: elementSize.height + boxPad * 2
+            width: (elementSize.width + boxPad * 2).clampedToFrame,
+            height: (elementSize.height + boxPad * 2).clampedToFrame
         )
         let shader = ShaderLibrary.default.beamBlobLayer(
             .float2(0, 0),
@@ -362,4 +364,10 @@ struct PulseBeamLayers: View {
             .frame(width: boxSize.width, height: boxSize.height)
             .position(x: elementSize.width / 2, y: elementSize.height / 2)
     }
+}
+
+
+private extension Double {
+    /// A dimension SwiftUI will accept: finite and non-negative.
+    var clampedToFrame: Double { isFinite ? Swift.max(self, 0) : 0 }
 }

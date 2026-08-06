@@ -18,11 +18,30 @@ struct BrightScreenEdgeBeam: View {
     /// the safe area or its top run is cut off by the presentation.
     var edgesToIgnore: Edge.Set = .all
     var colorVariant: BeamColorVariant = .brand
+    var size: BeamSize = .md
+    var duration: Double = Constants.duration
+    var brightness: Double = Constants.brightness
+    var saturation: Double = Constants.saturation
+    var strength: Double = 1
+    /// How far the ring's blobs spread: the canvas is drawn this much smaller
+    /// then scaled back up, so a bigger number means a fatter, softer ring.
+    var renderScale: Double = Constants.renderScale
+    var tuning: BeamTuning = .none
+
+    static var defaultCornerRadius: Double { Constants.screenCornerRadius }
+    static var defaultDuration: Double { Constants.duration }
+    static var defaultBrightness: Double { Constants.brightness }
+    static var defaultSaturation: Double { Constants.saturation }
+    static var defaultRenderScale: Double { Constants.renderScale }
 
     var body: some View {
         GeometryReader { geo in
-            beamLayer(in: geo.size)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            // The canvas is derived by dividing through `renderScale`, so a
+            // zero on either side of that hands the layers a non-finite frame.
+            if geo.size.width > 0, geo.size.height > 0, renderScale > 0 {
+                beamLayer(in: geo.size)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            }
         }
         .ignoresSafeArea(edges: edgesToIgnore)
         .allowsHitTesting(false)
@@ -34,31 +53,34 @@ struct BrightScreenEdgeBeam: View {
     /// factor lands the canvas corners on the container's real corners.
     private func beamLayer(in screen: CGSize) -> some View {
         BorderBeam(
-            size: .md,
+            size: size,
             colorVariant: colorVariant,
             theme: .dark,
-            duration: Constants.duration,
+            duration: duration,
             active: isActive,
-            borderRadius: cornerRadius / Constants.renderScale,
-            brightness: Constants.brightness,
-            saturation: Constants.saturation,
-            hueRange: Constants.hueRange
+            borderRadius: cornerRadius / renderScale,
+            brightness: brightness,
+            saturation: saturation,
+            hueRange: Constants.hueRange,
+            strength: strength,
+            tuning: tuning
         ) {
             Color.clear
         }
         .frame(
-            width: screen.width / Constants.renderScale,
-            height: screen.height / Constants.renderScale
+            width: screen.width / renderScale,
+            height: screen.height / renderScale
         )
-        .scaleEffect(Constants.renderScale, anchor: .center)
+        .scaleEffect(renderScale, anchor: .center)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private enum Constants {
-        /// The iPhone 16/17 Pro display curve — a smaller radius visibly cuts
-        /// the hairline stroke at the corners.
-        static let screenCornerRadius: Double = 62
-        static let renderScale: CGFloat = 2.6
+        /// Runs a little wider than the true display curve (~62pt on a 16/17
+        /// Pro): the ring draws on a canvas shrunk by `renderScale`, so its
+        /// corners read tighter than the radius says once scaled back up.
+        static let screenCornerRadius: Double = 60
+        static let renderScale: CGFloat = 3
         static let duration: Double = 4
         static let brightness: Double = 1.7
         static let saturation: Double = 1.5

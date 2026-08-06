@@ -9,9 +9,16 @@ import SwiftUI
 
 struct ExerciseWorkoutCompleteSheet: View {
     let workout: ExerciseWorkout
+    /// Presented over the app it reads as a sheet; presented as the last leg of
+    /// a workout run it owns the whole screen, so it takes the screen's own
+    /// background there.
+    var backgroundColor: Color = .defaultSheetBackground
+    var chrome: ExercisePageChrome = .sheet
+    /// Ends the whole run. Only the flow can do that from a pushed leg, where
+    /// `dismiss` would pop back instead.
+    var onClose: (() -> Void)?
 
     @State private var openedExerciseName: String?
-    @State private var isMapExpanded = false
 
     private let splitLabelWidth: CGFloat = 24
     private let splitPaceWidth: CGFloat = 48
@@ -24,37 +31,63 @@ struct ExerciseWorkoutCompleteSheet: View {
         }
     }
 
-    private func sheet(expandedMapHeight: CGFloat) -> some View {
-        BrightPageSheetView(
-            title: "Workout Complete",
-            horizontalPadding: .spacing0x
-        ) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing4x) {
-                    header
-
-                    ExerciseStatTileGrid(tiles: workout.detail.tiles)
-
-                    if !workout.detail.exercises.isEmpty {
-                        exercisesList
-                    }
-
-                    if workout.type == .cardio {
-                        zonesCard
-                    }
-
-                    if !workout.detail.splits.isEmpty {
-                        splitsCard
-                    }
-                }
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing4x)
+    @ViewBuilder private func sheet(expandedMapHeight: CGFloat) -> some View {
+        switch chrome {
+        case .sheet:
+            BrightPageSheetView(
+                title: "Workout Complete",
+                horizontalPadding: .spacing0x,
+                backgroundColor: backgroundColor
+            ) {
+                page
             }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Workout Complete", file: #file)
+
+        case .pushed:
+            BrightPageView(
+                title: "Workout Complete",
+                horizontalPadding: .spacing0x,
+                backgroundColor: backgroundColor,
+                toolbar: {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            onClose?()
+                        } label: {
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
+                    }
+                },
+                content: { page }
+            )
+        }
+    }
+
+    private var page: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: .spacing4x) {
+                header
+
+                ExerciseStatTileGrid(tiles: workout.detail.tiles)
+
+                if !workout.detail.exercises.isEmpty {
+                    exercisesList
                 }
+
+                if workout.type == .cardio {
+                    zonesCard
+                }
+
+                if !workout.detail.splits.isEmpty {
+                    splitsCard
+                }
+            }
+            .padding(.horizontal, .spacing3x)
+            .padding(.top, .spacing2x)
+            .padding(.bottom, .spacing4x)
+        }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                ExerciseInlineTitle(title: "Workout Complete", file: #file)
             }
         }
         .sheet(item: openedExerciseBinding) { exercise in

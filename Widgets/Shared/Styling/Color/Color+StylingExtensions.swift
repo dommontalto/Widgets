@@ -54,6 +54,7 @@ nonisolated extension Color {
     static let defaultCherry = Color(hex: "#4D132D")
     static let defaultBlackCurrent = Color(hex: "#412F45")
     static let defaultBrightPink = Color(hex: "#FF80B5")
+    static let defaultPink = Color(hex: "#FF4CC9")
     
     static let defaultRed = Color(hex: "#FF3939")
     static let defaultOrange = Color(hex: "#FF512D")

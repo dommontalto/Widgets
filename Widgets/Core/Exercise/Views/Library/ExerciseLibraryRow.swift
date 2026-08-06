@@ -61,8 +61,6 @@ struct ExerciseLibraryRow: View {
     enum Constants {
         static let thumbnailWidth: CGFloat = 40
         static let tickTouchSize: CGFloat = 44
-        /// The tick's touch target plus the row padding. Rows without a tick match
-        /// it so every exercise cell is the same height.
         static let minHeight = tickTouchSize + 2 * CGFloat.spacing2x
     }
 }

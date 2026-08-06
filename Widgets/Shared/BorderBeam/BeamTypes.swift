@@ -24,15 +24,21 @@ public enum BeamTheme: String, CaseIterable, Sendable {
 
 /// Color variant for the beam effect.
 public enum BeamColorVariant: String, CaseIterable, Sendable {
-    case colorful
-    case mono
-    case ocean
-    case sunset
-    /// `colorful` with every blob remapped to the Bright palette
-    /// (`Color+StylingExtensions`) — same geometry, branded hues.
+    /// The Bright palette (`Color+StylingExtensions`) across the ring — the
+    /// only variant whose blobs carry different hues.
     case brand
     /// Single-hue takes on `brand`, shaded per blob so the ring still reads as a
-    /// sweep: `defaultOrange` and `defaultSkyBlue`.
+    /// sweep: `defaultOrange` and `defaultBlue`.
     case orange
-    case skyBlue
+    case defaultBlue
+
+    /// Every blob shares one hue, so a hue shift doesn't sweep the ring through
+    /// colours the way it does on `brand` — it just drags the single colour off
+    /// the brand hue.
+    var isSingleHue: Bool {
+        switch self {
+        case .orange, .defaultBlue: true
+        case .brand: false
+        }
+    }
 }

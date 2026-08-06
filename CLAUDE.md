@@ -219,7 +219,7 @@ Menu { … } label: {
 }
 ```
 
-`.extraLarge` is 62pt — the primary control on live/session screens — and is the
+`.extraLarge` is 48pt — the primary control on live/session screens — and is the
 only size that plays a haptic by default (`.light`); pass `haptic:` to override.
 
 When you must build a custom label, remember an icon-only `Button` is tappable

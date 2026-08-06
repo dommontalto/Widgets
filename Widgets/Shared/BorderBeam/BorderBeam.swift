@@ -7,7 +7,7 @@ import SwiftUI
 ///     Card()
 /// }
 /// // or
-/// Card().borderBeam(.md, colorVariant: .ocean)
+/// Card().borderBeam(.md, colorVariant: .brand)
 /// ```
 ///
 /// Rendering matches the web version layer-for-layer: an inner glow layer, a
@@ -43,7 +43,7 @@ public struct BorderBeam<Content: View>: View {
 
     public init(
         size: BeamSize = .md,
-        colorVariant: BeamColorVariant = .colorful,
+        colorVariant: BeamColorVariant = .brand,
         theme: BeamTheme = .dark,
         staticColors: Bool = false,
         duration: Double? = nil,
@@ -144,8 +144,8 @@ public struct BorderBeam<Content: View>: View {
         }
     }
 
-    private var finalStaticColors: Bool {
-        colorVariant == .mono ? true : staticColors
+    private var finalHueRange: Double {
+        colorVariant.isSingleHue ? 0 : hueRange
     }
 
     private var rotateConfig: RotateBeamConfig {
@@ -153,12 +153,12 @@ public struct BorderBeam<Content: View>: View {
             size: size,
             variant: colorVariant,
             theme: resolvedTheme,
-            staticColors: finalStaticColors,
+            staticColors: staticColors,
             duration: duration ?? BeamSpec.shared.defaults.duration.rotate,
             borderRadius: borderRadius,
             brightness: brightness,
             saturation: saturation,
-            hueRange: hueRange,
+            hueRange: finalHueRange,
             strength: min(max(strength, 0), 1)
         )
     }
@@ -168,13 +168,13 @@ public struct BorderBeam<Content: View>: View {
         return LineBeamConfig(
             variant: colorVariant,
             theme: resolvedTheme,
-            staticColors: finalStaticColors,
+            staticColors: staticColors,
             duration: duration ?? spec.defaults.duration.line,
             borderRadius: borderRadius,
             brightness: brightness,
             saturation: saturation,
             // The line family caps the hue range at 13° (web parity).
-            hueRange: min(hueRange, spec.defaults.lineHueRangeCap),
+            hueRange: min(finalHueRange, spec.defaults.lineHueRangeCap),
             strength: min(max(strength, 0), 1)
         )
     }
@@ -184,7 +184,7 @@ public struct BorderBeam<Content: View>: View {
             size: size,
             variant: colorVariant,
             theme: resolvedTheme,
-            staticColors: finalStaticColors,
+            staticColors: staticColors,
             duration: duration ?? BeamSpec.shared.defaults.duration.pulse,
             borderRadius: borderRadius,
             brightness: brightness,
@@ -203,7 +203,7 @@ public extension View {
     /// Wraps the view in a ``BorderBeam``.
     func borderBeam(
         _ size: BeamSize = .md,
-        colorVariant: BeamColorVariant = .colorful,
+        colorVariant: BeamColorVariant = .brand,
         theme: BeamTheme = .dark,
         staticColors: Bool = false,
         duration: Double? = nil,

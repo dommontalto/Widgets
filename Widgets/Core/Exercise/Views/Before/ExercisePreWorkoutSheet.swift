@@ -9,8 +9,12 @@ import SwiftUI
 
 struct ExercisePreWorkoutSheet: View {
     let workout: ExerciseQuickWorkout
-    /// Hands the workout to the presenter, which swaps this screen for the live
-    /// one inside the same presentation.
+    var chrome: ExercisePageChrome = .sheet
+    /// Ends the whole run. Only the flow can do that from a pushed leg, where
+    /// `dismiss` would pop back instead.
+    var onClose: (() -> Void)?
+    /// Hands the workout to the presenter, which pushes the live screen inside
+    /// the same presentation.
     var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
 
     @Environment(ExerciseWorkoutBuilder.self) private var builder
@@ -19,34 +23,74 @@ struct ExercisePreWorkoutSheet: View {
     @State private var openedExercise: ExerciseDefinition?
 
     var body: some View {
-        BrightPageSheetView(horizontalPadding: .spacing0x) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing0x) {
-                    header
-                        .padding(.top, .spacing3x)
-
-                    statsRow
-                        .padding(.top, .spacing4x)
-
-                    exerciseRows
-                        .padding(.top, .spacing5x)
-                }
-                .padding(.horizontal, .spacing3x)
-                .padding(.bottom, Constants.controlSize + .spacing5x)
-            }
-            .safeAreaInset(edge: .bottom) {
-                controls
-            }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(file: #file)
+        page
+            .sheet(item: $openedExercise) { exercise in
+                BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
+                    ExerciseDetailSheet(exercise: exercise)
                 }
             }
+    }
+
+    @ViewBuilder private var page: some View {
+        switch chrome {
+        case .sheet:
+            BrightPageSheetView(horizontalPadding: .spacing0x, backgroundColor: .defaultBackground) {
+                content
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            ExerciseInlineTitle(file: #file)
+                        }
+                    }
+            }
+
+        case .pushed:
+            BrightPageView(
+                horizontalPadding: .spacing0x,
+                backgroundColor: .defaultBackground,
+                toolbar: {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            close()
+                        } label: {
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
+                    }
+
+                    ToolbarItem(placement: .principal) {
+                        ExerciseInlineTitle(file: #file)
+                    }
+                },
+                content: { content }
+            )
         }
-        .sheet(item: $openedExercise) { exercise in
-            BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
-                ExerciseDetailSheet(exercise: exercise)
+    }
+
+    private var content: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: .spacing0x) {
+                header
+                    .padding(.top, .spacing3x)
+
+                statsRow
+                    .padding(.top, .spacing4x)
+
+                exerciseRows
+                    .padding(.top, .spacing5x)
             }
+            .padding(.horizontal, .spacing3x)
+            .padding(.bottom, Constants.controlSize + .spacing5x)
+        }
+        .safeAreaInset(edge: .bottom) {
+            controls
+        }
+    }
+
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
         }
     }
 
@@ -173,7 +217,7 @@ struct ExercisePreWorkoutSheet: View {
 
                 Button("Delete", systemImage: "trash", role: .destructive) {
                     builder.delete(workout)
-                    dismiss()
+                    close()
                 }
             } label: {
                 // The Menu owns the tap, so the button is label only.

@@ -24,7 +24,6 @@ struct ExerciseCreateWorkoutView: View {
     @State private var swapTarget: ExerciseSwapTarget?
     @State private var isAddingExercise = false
     @State private var addedExercise: String?
-    @State private var iconPickerWidth: CGFloat = 0
     @State private var nameNudge = 0
     /// The draft as it looked on arrival, so Save can tell edits from a no-op.
     @State private var baselineDraft: String?
@@ -163,7 +162,7 @@ struct ExerciseCreateWorkoutView: View {
     }
 
     private var iconPicker: some View {
-        HStack(spacing: .spacing0x) {
+        HStack(spacing: Constants.iconTileGap) {
             ForEach(ExerciseWorkoutIcon.allCases) { icon in
                 Image(systemName: icon.symbol)
                     .font(.standardSFPro(size: .heading, weight: .light))
@@ -174,19 +173,14 @@ struct ExerciseCreateWorkoutView: View {
                             .fill(Color.defaultMainGrey.opacity(.finalBossLowOpacity))
                     }
                     .matchedGeometryEffect(id: icon, in: iconPickerSpace)
-                    .frame(maxWidth: .infinity)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(alignment: .leading) {
             Color.clear
                 .frame(width: Constants.iconTile, height: Constants.iconTile)
                 .modifier(GlassEffect(shape: .circle))
                 .matchedGeometryEffect(id: symbol, in: iconPickerSpace, isSource: false)
-        }
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.width
-        } action: { width in
-            iconPickerWidth = width
         }
         .gesture(
             DragGesture(minimumDistance: 0)
@@ -202,8 +196,7 @@ struct ExerciseCreateWorkoutView: View {
     /// across the row instead of jumping between taps.
     private func select(at x: CGFloat) {
         let icons = ExerciseWorkoutIcon.allCases
-        guard iconPickerWidth > 0 else { return }
-        let slot = iconPickerWidth / CGFloat(icons.count)
+        let slot = Constants.iconTile + Constants.iconTileGap
         let index = min(max(0, Int(x / slot)), icons.count - 1)
         guard icons[index] != symbol else { return }
         symbol = icons[index]
@@ -350,6 +343,7 @@ struct ExerciseCreateWorkoutView: View {
     private enum Constants {
         static let columnTitles = ["Weights", "Reps", "Rest"]
         static let iconTile: CGFloat = 44
+        static let iconTileGap: CGFloat = .spacing2x
         static let footerButtonSize: CGFloat = 36
     }
 }

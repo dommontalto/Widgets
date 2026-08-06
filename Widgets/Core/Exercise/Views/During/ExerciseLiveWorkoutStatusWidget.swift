@@ -9,115 +9,206 @@ import SwiftUI
 
 struct ExerciseLiveWorkoutStatusWidget: View {
     enum Status {
-        /// Mid-set: the four set controls.
-        case working(label: String, upNext: String)
+        /// Mid-set: the tick logs `label`.
+        case working(label: String)
+        /// Every set here is logged, so the button opens the next exercise.
+        case nextExercise(name: String)
         /// Between sets, counting down to `until`.
         case resting(upNext: String, until: Date)
         case allSetsComplete
     }
 
     let status: Status
-    var onTag: () -> Void = {}
-    var onRestart: () -> Void = {}
+    var heartRate: String?
+    var onRestTime: () -> Void = {}
+    var onStop: () -> Void = {}
     var onSkip: () -> Void = {}
     var onComplete: () -> Void = {}
 
+    @State private var showsSource = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            switch status {
-            case let .working(label, upNext):
-                workingHeader(label: label, upNext: upNext)
+            HStack(spacing: .spacing2x) {
+                if let heartRate {
+                    heartRatePill(heartRate)
+                }
 
-                Spacer(minLength: .spacing4x)
+                Spacer(minLength: .spacing2x)
 
-                workingControls
+                if let upNext {
+                    upNextLabel(upNext)
+                }
+            }
 
-            case let .resting(upNext, until):
-                restingHeader(upNext: upNext, until: until)
+            Spacer(minLength: .spacing0x)
 
-                Spacer(minLength: .spacing4x)
+            // Aligned on the value rather than the whole stack, so the caption
+            // sits above it without dragging it off the buttons' centre line.
+            HStack(alignment: .valueCentre, spacing: .spacing2x) {
+                VStack(alignment: .leading, spacing: .spacing1x) {
+                    captionLabel
 
-                restingControls
+                    value
+                        .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
+                }
+                .animation(.brightSnappy, value: caption)
 
-            case .allSetsComplete:
-                completeContent
+                Spacer(minLength: .spacing2x)
+
+                controls
+                    .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
             }
         }
-        .padding(.spacing3x)
+        .padding(.horizontal, .spacing3x)
+        .padding(.vertical, .spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Constants.cardHeight)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(GlassCardModifier(cornerRadius: .cornerRadius24))
     }
 
-    // MARK: - Working
+    // MARK: - Controls
 
-    private func workingHeader(label: String, upNext: String) -> some View {
-        HStack(alignment: .top, spacing: .spacing2x) {
-            HStack(spacing: .spacing1x) {
-                Image(systemName: "play.fill")
-                    .font(.standardSFPro(size: .subheading, weight: .medium))
-                    .foregroundStyle(Color.defaultBrightPink)
-
-                BrightText(label, size: .standout4)
-            }
-
-            Spacer(minLength: .spacing2x)
-
-            VStack(alignment: .trailing, spacing: .spacing0x) {
-                BrightText("Up next:", size: .body1, color: .lightTextColor)
-
-                BrightText(upNext, size: .heading)
-            }
-        }
-    }
-
-    private var workingControls: some View {
+    private var controls: some View {
         HStack(spacing: .spacing105x) {
-            BrightRoundButton(
-                systemImage: "tag",
-                size: .extraLarge,
-                imageColor: .defaultOrange,
-                onTapCallback: onTag
-            )
+            if showsSetControls {
+                control(.restTime)
+                control(.stop)
+                control(.skip)
+            }
 
-            BrightRoundButton(
-                systemImage: "arrow.counterclockwise",
-                size: .extraLarge,
-                imageColor: .defaultCyan,
-                onTapCallback: onRestart
-            )
+            control(primary)
+        }
+        .animation(.brightSnappy, value: showsSetControls)
+        .animation(.brightSnappy, value: primary)
+    }
 
-            Spacer(minLength: .spacing2x)
+    private func control(_ control: Control) -> some View {
+        BrightRoundButton(
+            systemImage: control.symbol,
+            size: .extraLarge,
+            color: control.tint,
+            haptic: control.haptic,
+            onTapCallback: action(for: control)
+        )
+        .contentTransition(.symbolEffect(.replace))
+        .transition(.scale.combined(with: .opacity))
+    }
 
-            BrightRoundButton(
-                systemImage: "forward.end.alt",
-                size: .extraLarge,
-                imageColor: .defaultYellow,
-                onTapCallback: onSkip
-            )
+    private enum Control {
+        case restTime
+        case stop
+        case skip
+        case complete
+        case start
 
-            BrightRoundButton(
-                systemImage: "checkmark",
-                size: .extraLarge,
-                imageColor: .defaultGreen,
-                haptic: .success,
-                onTapCallback: onComplete
-            )
+        var symbol: String {
+            switch self {
+            case .restTime: "gauge.with.needle"
+            case .stop: "xmark.octagon"
+            case .skip: "forward.end"
+            case .complete: "checkmark"
+            case .start: "play.fill"
+            }
+        }
+
+        var tint: Color {
+            switch self {
+            case .restTime: .defaultPink
+            case .stop: .defaultRed
+            case .skip: .defaultBlue
+            case .complete, .start: .defaultGreen
+            }
+        }
+
+        var haptic: BrightHaptic {
+            switch self {
+            case .complete: .success
+            default: .light
+            }
         }
     }
 
-    // MARK: - Resting
+    private var showsSetControls: Bool {
+        if case .working = status { true } else { false }
+    }
 
-    private func restingHeader(upNext: String, until: Date) -> some View {
-        HStack(alignment: .top, spacing: .spacing2x) {
-            VStack(alignment: .leading, spacing: .spacing0x) {
-                BrightText("Rest", size: .heading)
+    private var primary: Control {
+        switch status {
+        case .working, .allSetsComplete: .complete
+        case .nextExercise: .start
+        case .resting: .skip
+        }
+    }
 
-                BrightText("Up next: \(upNext)", size: .body2, color: .lightTextColor)
+    private func action(for control: Control) -> () -> Void {
+        switch control {
+        case .restTime: onRestTime
+        case .stop: onStop
+        case .skip: onSkip
+        case .complete, .start: onComplete
+        }
+    }
+
+    @ViewBuilder private var captionLabel: some View {
+        if let caption {
+            BrightText(caption, size: .body1, color: .lightTextColor, weight: .regular)
+                .lineLimit(1)
+                .fixedSize()
+                .contentTransition(.numericText())
+        }
+    }
+
+    // MARK: - Header
+
+    private func heartRatePill(_ rate: String) -> some View {
+        Button {
+            withAnimation(.brightSnappy) { showsSource = true }
+        } label: {
+            HStack(spacing: .spacing1x) {
+                Image(systemName: "heart.fill")
+                    .font(.standardSFPro(size: .subheading, weight: .regular))
+                    .foregroundStyle(Color.defaultRed)
+
+                BrightText(showsSource ? "Apple Watch" : "\(rate) BPM", size: .body1, weight: .regular)
+                    .contentTransition(.numericText())
             }
+            .padding(.horizontal, .spacing2x)
+            .frame(height: Constants.pillHeight)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .modifier(GlassEffect(shape: .capsule, interactive: false))
+        .task(id: showsSource) {
+            guard showsSource else { return }
+            try? await Task.sleep(for: .seconds(Constants.sourceReveal))
+            guard !Task.isCancelled else { return }
+            withAnimation(.brightSnappy) { showsSource = false }
+        }
+    }
 
-            Spacer(minLength: .spacing2x)
+    private func upNextLabel(_ name: String) -> some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: "arrow.turn.up.right")
+                .font(.standardSFPro(size: .body1, weight: .regular))
+                .foregroundStyle(Color.lightTextColor)
 
+            BrightText("Up next: \(name)", size: .body1, color: .lightTextColor, weight: .regular)
+        }
+        .lineLimit(1)
+    }
+
+    // MARK: - Value
+
+    @ViewBuilder private var value: some View {
+        switch status {
+        case let .working(label):
+            valueText(label)
+
+        case let .nextExercise(name):
+            valueText(name)
+
+        case let .resting(_, until):
             TimelineView(.animation(minimumInterval: Constants.tick, paused: false)) { context in
                 let remaining = max(0, until.timeIntervalSince(context.date))
 
@@ -129,79 +220,100 @@ struct ExerciseLiveWorkoutStatusWidget: View {
                 .monospacedDigit()
                 .lineLimit(1)
             }
+
+        case .allSetsComplete:
+            valueText("Finish")
         }
     }
 
-    private var restingControls: some View {
-        HStack(spacing: .spacing2x) {
-            BrightRoundButton(
-                systemImage: "arrow.counterclockwise",
-                size: .extraLarge,
-                imageColor: .defaultCyan,
-                onTapCallback: onRestart
-            )
-
-            Spacer(minLength: .spacing2x)
-
-            BrightRoundButton(
-                systemImage: "forward.end.alt",
-                size: .extraLarge,
-                imageColor: .defaultYellow,
-                onTapCallback: onSkip
-            )
-        }
+    private func valueText(_ text: String) -> some View {
+        BrightText(text, size: .standout1, scaleTextSize: Constants.valueScale)
+            .lineLimit(1)
     }
 
     private func countdown(_ remaining: TimeInterval) -> String {
-        let centiseconds = Int(remaining * 100)
-        return String(
-            format: "%d:%02d:%02d",
-            centiseconds / 6000,
-            centiseconds / 100 % 60,
-            centiseconds % 100
-        )
+        let seconds = Int(remaining.rounded(.up))
+        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 
-    // MARK: - Complete
+    // MARK: - Per-status presentation
 
-    private var completeContent: some View {
-        VStack(spacing: .spacing2x) {
-            Spacer(minLength: .spacing0x)
-
-            Image(systemName: "checkmark")
-                .font(.standardSFPro(size: .standout2, weight: .medium))
-                .foregroundStyle(Color.defaultGreen)
-
-            BrightText("ALL SETS COMPLETE", size: .heading)
-
-            Spacer(minLength: .spacing0x)
+    /// The start state leads with the value alone — nothing sits above it.
+    private var caption: String? {
+        switch status {
+        case .working: "In progress"
+        case .nextExercise: nil
+        case .resting: "Rest"
+        case .allSetsComplete: "Workout complete"
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private var upNext: String? {
+        guard case let .resting(upNext, _) = status else { return nil }
+        return upNext
     }
 
     private enum Constants {
-        static let cardHeight: CGFloat = 172
-        static let tick: TimeInterval = 0.03
-        /// Below this the countdown turns red.
+        static let cardHeight: CGFloat = 150
+        static let pillHeight: CGFloat = 30
+        static let sourceReveal: TimeInterval = 2
+        static let tick: TimeInterval = 1
+        static let valueScale: CGFloat = 0.6
         static let urgentRemaining: TimeInterval = 10
     }
 }
 
+private extension VerticalAlignment {
+    /// Lines the buttons up with the value alone — the caption above it would
+    /// otherwise pull a plain `.center` off the button row.
+    enum ValueCentre: AlignmentID {
+        static func defaultValue(in context: ViewDimensions) -> CGFloat {
+            context[VerticalAlignment.center]
+        }
+    }
+
+    static let valueCentre = VerticalAlignment(ValueCentre.self)
+}
+
 #Preview {
     VStack(spacing: .spacing3x) {
-        ExerciseLiveWorkoutStatusWidget(status: .working(label: "Set 2", upNext: "REST"))
+        ExerciseLiveWorkoutStatusWidget(status: .nextExercise(name: "Warmup"), heartRate: "121")
+
+        ExerciseLiveWorkoutStatusWidget(status: .working(label: "Set 1"), heartRate: "121")
 
         ExerciseLiveWorkoutStatusWidget(
-            status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(269))
+            status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(263)),
+            heartRate: "121"
         )
 
         ExerciseLiveWorkoutStatusWidget(
-            status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(5))
+            status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(5)),
+            heartRate: "121"
         )
 
-        ExerciseLiveWorkoutStatusWidget(status: .allSetsComplete)
+        ExerciseLiveWorkoutStatusWidget(status: .allSetsComplete, heartRate: "121")
     }
     .padding(.spacing3x)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.defaultSheetBackground.ignoresSafeArea())
+    .background(Color.defaultBackground.ignoresSafeArea())
+}
+
+#Preview("Skip slides into the tick's slot") {
+    @Previewable @State var isResting = false
+
+    VStack(spacing: .spacing3x) {
+        ExerciseLiveWorkoutStatusWidget(
+            status: isResting
+                ? .resting(upNext: "Set 2", until: Date().addingTimeInterval(263))
+                : .working(label: "Set 1"),
+            heartRate: "121",
+            onSkip: { isResting = false },
+            onComplete: { isResting = true }
+        )
+
+        Button("Toggle rest") { isResting.toggle() }
+    }
+    .padding(.spacing3x)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.defaultBackground.ignoresSafeArea())
 }

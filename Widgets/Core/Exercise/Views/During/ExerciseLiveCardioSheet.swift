@@ -11,6 +11,11 @@ struct ExerciseLiveCardioSheet: View {
     var workout: ExerciseLiveWorkout = ExerciseDemoData.liveWorkout
     var isInterval = true
     var onStop: () -> Void = {}
+    /// Ends the whole run. Only the flow can do that from a pushed leg, where
+    /// `dismiss` would pop back instead.
+    var onClose: (() -> Void)?
+
+    @Environment(\.dismiss) private var dismiss
 
     @State private var isPaused = false
     @State private var runningSince = Date()
@@ -48,15 +53,22 @@ struct ExerciseLiveCardioSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.defaultBackground.ignoresSafeArea())
+        // Full-screen cover, so the beam takes the display's own curve and rings
+        // every edge.
         .overlay {
-            BrightScreenEdgeBeam(
-                isActive: isBeamActive,
-                cornerRadius: CGFloat.modalCornerRadius,
-                edgesToIgnore: .bottom
-            )
+            BrightScreenEdgeBeam(isActive: isBeamActive)
         }
-        .presentationBackground(Color.defaultBackground)
-        .presentationDragIndicator(.hidden)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    if let onClose { onClose() } else { dismiss() }
+                } label: {
+                    Image(systemName: "arrow.down.right.and.arrow.up.left")
+                        .font(.standardSFPro(size: .subheading, weight: .regular))
+                        .foregroundStyle(Color.textColor)
+                }
+            }
+        }
         .task(id: beamBurst) {
             isBeamActive = true
             // A new tap cancels this sleep; leave the beam lit for the burst
@@ -263,15 +275,19 @@ struct ExerciseLiveCardioSheet: View {
 #Preview("Interval") {
     Color.defaultBackground
         .ignoresSafeArea()
-        .sheet(isPresented: .constant(true)) {
-            ExerciseLiveCardioSheet()
+        .fullScreenCover(isPresented: .constant(true)) {
+            NavigationStack {
+                ExerciseLiveCardioSheet()
+            }
         }
 }
 
 #Preview("Non interval") {
     Color.defaultBackground
         .ignoresSafeArea()
-        .sheet(isPresented: .constant(true)) {
-            ExerciseLiveCardioSheet(isInterval: false)
+        .fullScreenCover(isPresented: .constant(true)) {
+            NavigationStack {
+                ExerciseLiveCardioSheet(isInterval: false)
+            }
         }
 }

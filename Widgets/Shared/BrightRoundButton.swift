@@ -86,6 +86,23 @@ struct BrightRoundButton: View {
         onTapCallback?()
     }
 
+    /// At `.extraLarge` a passed colour reads as a tint rather than a fill: the
+    /// glyph takes the colour at full strength over a 30% wash of it.
+    private var isTinted: Bool {
+        size == .extraLarge && color != nil
+    }
+
+    private var resolvedImageColor: Color {
+        if let imageColor { return imageColor }
+        guard let color else { return .textColor }
+        return isTinted ? color : .defaultBlack
+    }
+
+    private var resolvedBackground: Color {
+        guard let color else { return .clear }
+        return isTinted ? color.opacity(.veryLowOpacity) : color
+    }
+
     private var isChevronForward: Bool {
         if case .system(let name) = imageSource {
             return name == "chevron.left" || name == "chevron.right"
@@ -107,7 +124,7 @@ struct BrightRoundButton: View {
                 .scaledToFit()
                 .frame(width: size.rawValue * 0.5, height: size.rawValue * 0.5)
         case .text(let title):
-            BrightText(title, size: size.defaultFontSize, color: color != nil ? .defaultBlack : .textColor, weight: .regular)
+            BrightText(title, size: size.defaultFontSize, color: resolvedImageColor, weight: .regular)
         }
     }
 
@@ -120,8 +137,8 @@ struct BrightRoundButton: View {
             imageView
                 .rotationEffect(imageRotation)
                 .frame(width: size.rawValue, height: size.rawValue)
-                .foregroundStyle(imageColor ?? (color != nil ? Color.defaultBlack : Color.textColor))
-                .background(color ?? .clear, in: Circle())
+                .foregroundStyle(resolvedImageColor)
+                .background(resolvedBackground, in: Circle())
                 .contentShape(Circle())
         }
         .modifier(BrightRoundButtonBackground(isGlass: !isChevronForward))

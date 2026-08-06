@@ -53,8 +53,7 @@ struct LineBeamLayers: View {
             ? 0
             : -bloomRange + 2 * bloomRange * PulseDriver.pingPong(t / spec.defaults.lineBloomHueShiftPeriod)
         // Web parity: with staticColors the line layers carry no filter (the
-        // brightness/saturate live only in the hue-shift keyframes); mono's
-        // bloom keeps just its 6px blur, applied below.
+        // brightness/saturate live only in the hue-shift keyframes).
         let identity: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         let cm = config.staticColors ? identity : BeamColorMatrix.composed(
             hueDegrees: hue, brightness: config.finalBrightness, saturation: config.finalSaturation
@@ -83,9 +82,7 @@ struct LineBeamLayers: View {
 
         // Web parity: the animated bloom filter includes blur(8px); mono with
         // static colors gets base blur(6px); other static variants none.
-        let bloomBlur: Double = config.staticColors
-            ? (config.variant == .mono ? spec.line.monoBloomExtraBlurPx : 0)
-            : spec.line.bloomBlurPx
+        let bloomBlur: Double = config.staticColors ? 0 : spec.line.bloomBlurPx
 
         ZStack {
             shaderLayer(
@@ -150,7 +147,7 @@ struct LineBeamLayers: View {
 
     private func bloomBlobs(v: BeamAnimation.LineFrameValues, bx: Double, width: Double, height: Double) -> [Float] {
         var blobs: [Float] = []
-        let grads = config.spec.line.bloomGradients[config.variant.rawValue]![config.theme]!
+        let grads = config.spec.line.bloomGradients[config.variant.rawValue]?[config.theme] ?? []
         for g in grads {
             let cx = g.xPct.map { $0 / 100 * width } ?? bx
             blobs += BlobEncoder.stops(

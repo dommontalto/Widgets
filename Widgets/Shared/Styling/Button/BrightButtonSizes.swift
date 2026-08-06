@@ -15,8 +15,8 @@ enum BrightButtonSizes: CGFloat {
     case medium = 36
     /// Forced by iOS to use for toolbars
     case large = 44
-    /// Round button size 62pt — the primary control on live/workout screens.
-    case extraLarge = 62
+    /// Round button size 48pt — the primary control on live/workout screens.
+    case extraLarge = 48
 
     var defaultFontSize: FontSizes {
         switch self {

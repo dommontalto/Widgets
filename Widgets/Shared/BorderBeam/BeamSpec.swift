@@ -66,7 +66,6 @@ struct BeamSpec: Decodable {
     struct InnerGradientDerivation: Decodable {
         let sizeScale: Double
         let alpha: Double
-        let monoAlpha: Double
     }
 
     struct InnerShadowBlur: Decodable {
@@ -163,7 +162,6 @@ struct BeamSpec: Decodable {
         let bloomMaskEllipse: MaskEllipse
         let whiteHighlight: [String: WhiteHighlight]
         let bloomGradients: [String: [String: [BloomGradient]]]
-        let monoBloomExtraBlurPx: Double
         let bloomBlurPx: Double
     }
 
@@ -255,7 +253,6 @@ struct BeamSpec: Decodable {
         let rotateHueShiftPeriod: Double
         let lineBloomHueShiftPeriod: Double
         let lineBloomHueRangeBonus: Double
-        let monoOpacityMultiplier: Double
         let pulseDriverFps: Double
     }
 

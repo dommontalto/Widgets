@@ -24,7 +24,7 @@ struct ExerciseInlineTitle: View {
 
 #Preview {
     NavigationStack {
-        Color.defaultSheetBackground
+        Color.defaultBackground
             .ignoresSafeArea()
             .toolbar {
                 ToolbarItem(placement: .principal) {

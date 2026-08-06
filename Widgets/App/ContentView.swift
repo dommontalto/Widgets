@@ -13,8 +13,14 @@ struct ContentView: View {
     @State private var showingWorkout = false
     @State private var showingAddWorkouts = false
     @State private var showingExerciseDetail = false
+    @State private var showingBeam = false
+    @State private var beamTarget = BeamTarget.screen
+    @State private var screenBeam = BeamConfig()
+    @State private var cardBeam = BeamConfig.card(.dark)
     @State private var builder = ExerciseWorkoutBuilder()
     @State private var workoutStage: ExerciseWorkoutStage?
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -132,6 +138,15 @@ struct ContentView: View {
         }
         .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showingBeam = true
+                } label: {
+                    Label("Show beam", systemImage: "sparkles")
+                        .labelStyle(.iconOnly)
+                }
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section("Saved Workouts") {
@@ -162,6 +177,9 @@ struct ContentView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showingBeam) {
+            beamScreen
+        }
         .exerciseWorkoutFlow($workoutStage)
         .sheet(isPresented: $showingOrder) {
             GenomeOrderSheet()
@@ -171,6 +189,95 @@ struct ContentView: View {
                 showingVaultTests = false
             })
         }
+    }
+
+    private var beamScreen: some View {
+        NavigationStack {
+            VStack(spacing: .spacing3x) {
+                beamCard
+                    .padding(.top, .spacing2x)
+
+                BeamControlsView(defaults: controlDefaults, config: controlBinding)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color.defaultBackground.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingBeam = false
+                    } label: {
+                        Label("Close", systemImage: "xmark")
+                            .labelStyle(.iconOnly)
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation(.brightSnappy) { beamTarget = beamTarget.next }
+                    } label: {
+                        Label(beamTarget.title, systemImage: beamTarget.symbol)
+                    }
+                    .brightHaptic(.light, trigger: beamTarget)
+                }
+            }
+            .toolbarBackground(.hidden, for: .navigationBar)
+        }
+        .overlay {
+            BrightScreenEdgeBeam(
+                isActive: screenBeam.isActive,
+                cornerRadius: screenBeam.cornerRadius,
+                colorVariant: screenBeam.colorVariant,
+                size: screenBeam.size,
+                duration: screenBeam.duration,
+                brightness: screenBeam.brightness,
+                saturation: screenBeam.saturation,
+                strength: screenBeam.strength,
+                renderScale: screenBeam.renderScale,
+                tuning: screenBeam.tuning
+            )
+        }
+        .statusBarHidden()
+        // The environment isn't readable when the state is initialised, so the
+        // scheme's defaults land as the screen opens — and again when the
+        // scheme flips underneath it, since light needs its own glow boost.
+        .onAppear { applyDefaults(for: colorScheme) }
+        .onChange(of: colorScheme) { _, scheme in
+            withAnimation(.brightEaseInOut) { applyDefaults(for: scheme) }
+        }
+    }
+
+    private func applyDefaults(for colorScheme: ColorScheme) {
+        screenBeam = .screen(colorScheme)
+        cardBeam = .card(colorScheme)
+    }
+
+    private var controlDefaults: BeamConfig {
+        beamTarget == .card ? .card(colorScheme) : .screen(colorScheme)
+    }
+
+    private var controlBinding: Binding<BeamConfig> {
+        beamTarget == .card ? $cardBeam : $screenBeam
+    }
+
+    /// Matches the live workout sheet's set row — same width inset, corner and
+    /// beam — with nothing in it.
+    private var beamCard: some View {
+        Color.clear
+            .frame(height: Constants.beamCardHeight)
+            .modifier(CardModifier(cornerRadius: .cornerRadius24))
+            .borderBeam(
+                cardBeam.size,
+                colorVariant: cardBeam.colorVariant,
+                theme: .auto,
+                duration: cardBeam.duration,
+                active: cardBeam.isActive,
+                borderRadius: cardBeam.cornerRadius,
+                brightness: cardBeam.brightness,
+                saturation: cardBeam.saturation,
+                strength: cardBeam.strength,
+                tuning: cardBeam.tuning
+            )
+            .padding(.horizontal, .spacing3x)
     }
 
     private var addWorkoutsButton: some View {
@@ -230,6 +337,10 @@ struct ContentView: View {
 
     private func widgetLabel(_ name: String) -> some View {
         WidgetLabelRow(name: name)
+    }
+
+    private enum Constants {
+        static let beamCardHeight: CGFloat = 68
     }
 }
 

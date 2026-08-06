@@ -29,7 +29,6 @@ struct RotateBeamConfig {
 
     var radius: Double { borderRadius ?? sizeConfig.borderRadius }
     var borderWidth: Double { sizeConfig.borderWidth }
-    var monoMul: Double { variant == .mono ? spec.defaults.monoOpacityMultiplier : 1 }
     var finalBrightness: Double { brightness ?? themeConfig.brightness ?? spec.defaults.brightnessFallback }
     var finalSaturation: Double { saturation ?? themeConfig.saturation }
 
@@ -63,14 +62,14 @@ struct RotateBeamConfig {
     }
 
     /// Inner-layer blobs (::before). `sm` has a dedicated palette; `md` derives
-    /// from the border palette (size × 0.9, alpha 0.45 / 0.225 for mono).
+    /// from the border palette (size × 0.9, alpha 0.45).
     var innerBlobs: [Float] {
         switch size {
         case .sm:
             return blobFloats(spec.palettes.small[variant.rawValue]!.inner)
         default:
             let d = spec.rotate.innerGradientDerivation
-            let alpha = variant == .mono ? d.monoAlpha : d.alpha
+            let alpha = d.alpha
             return blobFloats(
                 spec.palettes.border[variant.rawValue]!.border,
                 sizeScale: d.sizeScale,
@@ -143,7 +142,7 @@ struct RotateBeamLayers: View {
             brightness: config.finalBrightness,
             saturation: config.finalSaturation
         )
-        let baseOpacity = fade * config.strength * config.monoMul
+        let baseOpacity = fade * config.strength
 
         GeometryReader { geo in
             let size = geo.size

@@ -10,6 +10,9 @@ import SwiftUI
 struct ExerciseLiveWorkoutSheet: View {
     var workoutName = "Gym workout"
     var templateItems: [ExerciseTemplateItem]? = nil
+    /// Ends the whole run. Only the flow can do that from a pushed leg, where
+    /// `dismiss` would pop back to the pre-workout screen instead.
+    var onClose: (() -> Void)?
     /// Handed the logged workout, so the presenter owns what comes next — it
     /// swaps this screen for the summary inside the same presentation.
     var onFinish: (ExerciseWorkout) -> Void = { _ in }
@@ -22,14 +25,19 @@ struct ExerciseLiveWorkoutSheet: View {
     @State private var openedExerciseName: String?
     @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
+    @State private var isPickingRestTime = false
+    @State private var restMinutes = Constants.restMinutes
+    @State private var restTrailingSeconds = Constants.restTrailingSeconds
 
     init(
         workoutName: String = "Gym workout",
         templateItems: [ExerciseTemplateItem]? = nil,
+        onClose: (() -> Void)? = nil,
         onFinish: @escaping (ExerciseWorkout) -> Void = { _ in }
     ) {
         self.workoutName = workoutName
         self.templateItems = templateItems
+        self.onClose = onClose
         self.onFinish = onFinish
         _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseDemoData.activeExercises)
     }
@@ -47,8 +55,7 @@ struct ExerciseLiveWorkoutSheet: View {
         .overlay {
             BrightScreenEdgeBeam(
                 isActive: isResting,
-                cornerRadius: CGFloat.modalCornerRadius,
-                colorVariant: .skyBlue
+                colorVariant: .defaultBlue
             )
         }
     }
@@ -60,7 +67,7 @@ struct ExerciseLiveWorkoutSheet: View {
     private var page: some View {
         BrightPageView(
             horizontalPadding: .spacing0x,
-            backgroundColor: .defaultSheetBackground,
+            backgroundColor: .defaultBackground,
             bottomSafeArea: false,
             toolbar: {
                 ToolbarItem(placement: .topBarLeading) {
@@ -72,14 +79,14 @@ struct ExerciseLiveWorkoutSheet: View {
                 }
 
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: currentExercise.name, file: #file)
+                    elapsedPill
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        openedExerciseName = currentExercise.name
+                        close()
                     } label: {
-                        Image(systemName: "dumbbell")
+                        Image(systemName: "arrow.down.right.and.arrow.up.left")
                             .font(.standardSFPro(size: .subheading, weight: .regular))
                             .foregroundStyle(Color.textColor)
                     }
@@ -88,13 +95,14 @@ struct ExerciseLiveWorkoutSheet: View {
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: .spacing0x) {
-                        logAllPill
+                        exerciseHeader
                             .padding(.horizontal, .spacing3x)
+                            .padding(.leading, .spacing1x)
+                            .padding(.bottom, .spacing3x)
 
                         // Runs edge to edge so a swipe-to-delete reaches the
                         // screen edge; the rows carry the margin themselves.
                         setRows
-                            .padding(.top, .spacing3x)
                     }
                     .padding(.top, .spacing3x)
                     .padding(.bottom, .spacing4x)
@@ -125,7 +133,7 @@ struct ExerciseLiveWorkoutSheet: View {
             if let exercise = ExerciseDemoLibrary.exercise(named: name) {
                 ExerciseDetailSheet(exercise: exercise)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .background(Color.defaultSheetBackground.ignoresSafeArea())
+                    .background(Color.defaultBackground.ignoresSafeArea())
             }
         }
     }
@@ -151,7 +159,7 @@ struct ExerciseLiveWorkoutSheet: View {
 
                 VStack(alignment: .leading, spacing: .spacing4x) {
                     sideMenuItem("Cancel workout", symbol: "xmark", color: .defaultRed, isDestructive: true) {
-                        dismiss()
+                        close()
                     }
 
                     sideMenuItem("End workout", symbol: "flag.checkered", color: .defaultRed, isDestructive: true) {
@@ -198,12 +206,49 @@ struct ExerciseLiveWorkoutSheet: View {
         .buttonStyle(.plain)
     }
 
-    private var logAllPill: some View {
-        BrightPillButton(allSetsLogged ? "Clear all" : "Log all", buttonSize: .small) {
-            setAllSets(done: !allSetsLogged)
+    // MARK: - Header
+
+    private var elapsedPill: some View {
+        TimelineView(.periodic(from: startDate, by: Constants.elapsedTick)) { context in
+            BrightText(elapsed(at: context.date), size: .heading)
+                .monospacedDigit()
         }
-        .contentTransition(.numericText())
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, .spacing2x)
+        .frame(height: Constants.pillHeight)
+        .modifier(GlassEffect(shape: .capsule, interactive: false))
+    }
+
+    private func elapsed(at date: Date) -> String {
+        let seconds = Int(max(0, date.timeIntervalSince(startDate)))
+        return String(format: "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
+    }
+
+    private var exerciseHeader: some View {
+        HStack(spacing: .spacing105x) {
+            Button {
+                openedExerciseName = currentExercise.name
+            } label: {
+                RoundedRectangle(cornerRadius: .cornerRadius14, style: .continuous)
+                    .fill(Color.defaultCards)
+                    .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
+                    .overlay {
+                        Image(systemName: "dumbbell")
+                            .font(.standardSFPro(size: .standout3, weight: .light))
+                            .foregroundStyle(Color.lightTextColor)
+                    }
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            BrightText(currentExercise.name, size: .standout3)
+                .lineLimit(1)
+
+            Spacer(minLength: .spacing2x)
+
+            BrightRoundButton(systemImage: "chart.line.uptrend.xyaxis", size: .medium) {
+                openedExerciseName = currentExercise.name
+            }
+        }
     }
 
     // MARK: - Sets
@@ -242,12 +287,12 @@ struct ExerciseLiveWorkoutSheet: View {
             }
         }
         .listStyle(.plain)
-        .listRowSpacing(.spacing105x)
+        .listRowSpacing(.spacing2x)
         .scrollContentBackground(.hidden)
         .scrollDisabled(true)
         .contentMargins(.vertical, .spacing0x, for: .scrollContent)
         .environment(\.defaultMinListRowHeight, Constants.rowHeight)
-        .frame(height: (Constants.rowHeight + .spacing105x) * CGFloat(currentExercise.sets.count))
+        .frame(height: (Constants.rowHeight + .spacing2x) * CGFloat(currentExercise.sets.count))
         .animation(.brightSnappy, value: currentExercise.sets.count)
     }
 
@@ -270,20 +315,50 @@ struct ExerciseLiveWorkoutSheet: View {
     private var statusWidget: some View {
         ExerciseLiveWorkoutStatusWidget(
             status: status,
-            onTag: cycleActiveSetKind,
-            onRestart: restart,
+            heartRate: Constants.demoHeartRate,
+            onRestTime: { isPickingRestTime = true },
+            onStop: finish,
             onSkip: skip,
             onComplete: completeActiveSet
         )
+        .brightMiniSheet(isPresented: $isPickingRestTime) {
+            restPicker
+        }
+    }
+
+    private var restPicker: some View {
+        VStack(spacing: .spacing2x) {
+            BrightText("Rest Time", size: .standout1, weight: .medium)
+
+            HStack(spacing: .spacing0x) {
+                Picker("Minutes", selection: $restMinutes) {
+                    ForEach(0...Constants.restMaxMinutes, id: \.self) { minutes in
+                        BrightText("\(minutes) min", size: .heading, weight: .regular)
+                            .tag(minutes)
+                    }
+                }
+
+                Picker("Seconds", selection: $restTrailingSeconds) {
+                    ForEach(Constants.restSecondSteps, id: \.self) { seconds in
+                        BrightText("\(seconds) sec", size: .heading, weight: .regular)
+                            .tag(seconds)
+                    }
+                }
+            }
+            .pickerStyle(.wheel)
+        }
+        .padding(.horizontal, .spacing3x)
+        .padding(.top, .spacing4x)
+        .padding(.bottom, .spacing3x)
     }
 
     private var status: ExerciseLiveWorkoutStatusWidget.Status {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
-        } else if activeSet == nil, isLastExercise {
-            .allSetsComplete
+        } else if activeSet == nil {
+            isLastExercise ? .allSetsComplete : .nextExercise(name: exercises[currentIndex + 1].name)
         } else {
-            .working(label: currentBlockName, upNext: upNextName)
+            .working(label: currentBlockName)
         }
     }
 
@@ -293,15 +368,20 @@ struct ExerciseLiveWorkoutSheet: View {
 
     // MARK: - Actions
 
-    private func finish() {
-        onFinish(finishedWorkout)
+    private var restInterval: TimeInterval {
+        TimeInterval(restMinutes * 60 + restTrailingSeconds)
     }
 
-    /// Only the done state flips, so a mis-tap doesn't wipe typed weights or RPE.
-    private func setAllSets(done: Bool) {
-        for index in exercises[currentIndex].sets.indices {
-            exercises[currentIndex].sets[index].isDone = done
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
         }
+    }
+
+    private func finish() {
+        onFinish(finishedWorkout)
     }
 
     private func completeActiveSet() {
@@ -311,36 +391,13 @@ struct ExerciseLiveWorkoutSheet: View {
         }
         exercises[currentIndex].sets[index].isDone = true
         if self.activeSet != nil {
-            restEndDate = Date().addingTimeInterval(Constants.restSeconds)
+            restEndDate = Date().addingTimeInterval(restInterval)
         }
     }
 
-    /// Tag cycles the active set between warm-up, working and drop set, matching
-    /// the sets editor.
-    private func cycleActiveSetKind() {
-        guard let activeSet, let index = currentExercise.sets.firstIndex(where: { $0.id == activeSet.id }) else { return }
-        exercises[currentIndex].sets[index].kind = switch activeSet.kind {
-        case .warmUp: .working(0)
-        case .working: .dropSet
-        case .dropSet: .warmUp
-        }
-    }
-
-    /// Steps back a set: un-logs the last logged one, ending any rest so that set
-    /// becomes active again.
-    private func restart() {
-        restEndDate = nil
-        guard let index = currentExercise.sets.lastIndex(where: \.isDone) else { return }
-        exercises[currentIndex].sets[index].isDone = false
-    }
-
-    /// Resting skips to the next set; mid-set it moves on to the next exercise.
+    /// Cuts rest short so the next set becomes active straight away.
     private func skip() {
-        if restEndDate != nil {
-            restEndDate = nil
-        } else {
-            advance()
-        }
+        restEndDate = nil
     }
 
     private func advance() {
@@ -357,10 +414,6 @@ struct ExerciseLiveWorkoutSheet: View {
         exercises[currentIndex]
     }
 
-    private var allSetsLogged: Bool {
-        !currentExercise.sets.isEmpty && currentExercise.sets.allSatisfy(\.isDone)
-    }
-
     private var activeSet: ExerciseActiveSet? {
         currentExercise.sets.first { !$0.isDone }
     }
@@ -369,14 +422,6 @@ struct ExerciseLiveWorkoutSheet: View {
         guard let activeSet else { return "Finished" }
         if activeSet.isWarmup { return "Warmup" }
         return "Set \(workingIndex(of: activeSet, in: currentExercise))"
-    }
-
-    private var upNextName: String {
-        guard activeSet != nil else {
-            let next = currentIndex + 1
-            return next < exercises.count ? exercises[next].name : "FINISH"
-        }
-        return "REST"
     }
 
     private var finishedWorkout: ExerciseWorkout {
@@ -422,10 +467,6 @@ struct ExerciseLiveWorkoutSheet: View {
         exercises.reduce(0) { $0 + $1.sets.filter(\.isDone).count }
     }
 
-    private var recordCount: Int {
-        exercises.reduce(0) { $0 + $1.sets.filter { $0.isDone && $0.isRecord }.count }
-    }
-
     private var heaviestSet: Int {
         exercises
             .flatMap(\.sets)
@@ -457,9 +498,19 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     fileprivate enum Constants {
-        static let rowHeight = ExerciseSetRow.Constants.rowHeight
-        static let restSeconds: TimeInterval = 90
+        /// The live rows run taller than the ones on customise sets — the design
+        /// gives the chips more room here.
+        /// Set rows match the exercise cells everywhere else in the feature, so
+        /// the height lives in one place rather than being repeated as 68.
+        static let rowHeight = ExerciseLibraryRow.Constants.minHeight
+        static let restMinutes = 1
+        static let restTrailingSeconds = 30
+        static let restMaxMinutes = 10
+        static let restSecondSteps = Array(stride(from: 0, to: 60, by: 5))
         static let menuIconSize: CGFloat = 24
+        static let pillHeight: CGFloat = 30
+        static let elapsedTick: TimeInterval = 1
+        static let thumbnailSize: CGFloat = 60
         /// Stands in for HealthKit until the workout is wired to real samples.
         static let demoHeartRate = "132"
         static let demoCalories = "412"
@@ -476,73 +527,52 @@ private struct ExerciseLiveSetRow: View {
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            HStack(spacing: .spacing105x) {
-                setLabel
+            setChip
 
-                if let symbol = set.kind.symbol {
-                    Image(systemName: symbol)
-                        .font(.standard(size: .body1, weight: .light))
-                        .foregroundStyle(set.kind.color)
-                }
-            }
-            .frame(width: Constants.leadingColumnWidth, alignment: .leading)
+            divider
+
+            valueChip($set.weight, unit: "kg", keyboard: .decimalPad)
+
+            divider
+
+            valueChip($set.reps, keyboard: .numberPad)
 
             Spacer(minLength: .spacing2x)
-
-            HStack(spacing: .spacing05x) {
-                valueField($set.weight, placeholder: "0")
-                    .frame(width: Constants.weightColumnWidth, alignment: .trailing)
-
-                BrightText("kg", size: .subheading, weight: .regular)
-                    .fixedSize()
-            }
-
-            divider
-
-            valueField($set.reps, placeholder: "0")
-                .frame(width: Constants.repsColumnWidth, alignment: .center)
-
-            divider
-
-            BrightText("RPE", size: .subheading, weight: .regular)
-                .fixedSize()
-
-            rpeField
-                .padding(.leading, .spacing1x)
 
             Button {
                 set.isDone.toggle()
             } label: {
                 BrightTick(isTicked: set.isDone)
-                    .padding(.leading, .spacing2x)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, .spacing2x)
+        .padding(.horizontal, .spacing3x)
         .frame(height: ExerciseLiveWorkoutSheet.Constants.rowHeight)
-        .modifier(CardModifier(cornerRadius: .cornerRadius18))
-        // Marks the set you're working on. hueRange is kept low so the ring stays
-        // orange instead of drifting off the brand hue.
+        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        // Marks the set you're working on.
         .borderBeam(
             .md,
             colorVariant: .orange,
             theme: .auto,
             active: isActive && !isResting,
-            borderRadius: CGFloat.cornerRadius18,
-            hueRange: Constants.beamHueRange
+            borderRadius: CGFloat.cornerRadius24
         )
     }
 
-    @ViewBuilder private var setLabel: some View {
-        if isActive {
-            Image(systemName: "play.fill")
-                .font(.standard(size: .body1, weight: .medium))
-                .foregroundStyle(Color.defaultBrightPink)
-        } else if set.kind.isWorking {
-            BrightText("\(index)", size: .body1)
-                .monospacedDigit()
+    @ViewBuilder private var setChip: some View {
+        Group {
+            if let symbol = set.kind.symbol {
+                Image(systemName: symbol)
+                    .font(.standard(size: .body1, weight: .regular))
+                    .foregroundStyle(set.kind.color)
+            } else {
+                BrightText("\(index)", size: .body1)
+                    .monospacedDigit()
+            }
         }
+        .frame(width: Constants.chipHeight, height: Constants.chipHeight)
+        .background(Color.defaultCapsule, in: Circle())
     }
 
     private var divider: some View {
@@ -550,34 +580,33 @@ private struct ExerciseLiveSetRow: View {
             .padding(.horizontal, .spacing2x)
     }
 
-    private var rpeField: some View {
-        TextField("0", text: $set.rpe)
-            .font(.standardSFPro(size: .body2, weight: .regular))
-            .foregroundStyle(Color.textColor)
-            .keyboardType(.numberPad)
-            .multilineTextAlignment(.center)
-            .monospacedDigit()
-            .frame(width: Constants.rpeFieldWidth, height: Constants.rpeFieldHeight)
-            .background(Color.defaultSheetBackground, in: Capsule())
-    }
+    private func valueChip(
+        _ text: Binding<String>,
+        unit: String? = nil,
+        keyboard: UIKeyboardType
+    ) -> some View {
+        HStack(spacing: .spacing05x) {
+            TextField("0", text: text)
+                .font(.standard(size: .body2, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                .keyboardType(keyboard)
+                .multilineTextAlignment(unit == nil ? .center : .trailing)
+                .monospacedDigit()
+                .fixedSize()
 
-    private func valueField(_ text: Binding<String>, placeholder: String) -> some View {
-        TextField(placeholder, text: text)
-            .font(.standardSFPro(size: .subheading, weight: .regular))
-            .foregroundStyle(Color.textColor)
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.center)
-            .monospacedDigit()
+            if let unit {
+                BrightText(unit, size: .body2, weight: .regular)
+                    .fixedSize()
+            }
+        }
+        .frame(width: Constants.valueChipWidth, height: Constants.chipHeight)
+        .background(Color.defaultBackground, in: Capsule())
     }
 
     private enum Constants {
-        static let leadingColumnWidth: CGFloat = 40
-        static let weightColumnWidth: CGFloat = 48
-        static let repsColumnWidth: CGFloat = 28
-        static let dividerHeight: CGFloat = 28
-        static let rpeFieldWidth: CGFloat = 43
-        static let rpeFieldHeight: CGFloat = 30
-        static let beamHueRange: Double = 15
+        static let chipHeight: CGFloat = 30
+        static let valueChipWidth: CGFloat = 60
+        static let dividerHeight: CGFloat = 34
     }
 }
 
@@ -599,7 +628,6 @@ struct ExerciseActiveSet: Identifiable, Sendable {
     let id = UUID()
     var weight: String
     var reps: String
-    var rpe = ""
     var previous = "\u{2014}"
     var kind: ExerciseSetKind = .working(0)
     var isRecord = false
@@ -613,10 +641,6 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
     var name: String
     var notes = ""
     var sets: [ExerciseActiveSet]
-
-    nonisolated static func fresh(named name: String) -> ExerciseActiveExercise {
-        ExerciseActiveExercise(name: name, sets: blankSets)
-    }
 
     nonisolated static func fromTemplate(_ items: [ExerciseTemplateItem]) -> [ExerciseActiveExercise] {
         items.map { item in

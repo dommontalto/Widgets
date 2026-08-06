@@ -47,24 +47,14 @@ enum ExerciseSetKind: Hashable {
 
 enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
     case dumbbell
-    case strength
-    case bodyweight
     case run
-    case bike
-    case swim
-    case sports
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
         case .dumbbell: "dumbbell"
-        case .strength: "figure.strengthtraining.traditional"
-        case .bodyweight: "figure.play"
         case .run: "figure.run"
-        case .bike: "figure.outdoor.cycle"
-        case .swim: "figure.pool.swim"
-        case .sports: "figure.rugby"
         }
     }
 
@@ -72,12 +62,14 @@ enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
         allCases.first { $0.symbol == workout.symbol }
     }
 
+    /// The run icon is the cardio pick — it routes the workout to the live
+    /// cardio screen instead of the set-by-set one.
+    var isCardio: Bool { self == .run }
+
     var accentColor: Color {
         switch self {
-        case .dumbbell, .strength: .defaultPurple
-        case .bodyweight: .defaultGreen
-        case .run, .bike, .swim: .defaultSkyBlue
-        case .sports: .defaultOrange
+        case .dumbbell: .defaultPurple
+        case .run: .defaultSkyBlue
         }
     }
 }
@@ -184,7 +176,7 @@ final class ExerciseWorkoutBuilder {
             symbol: icon.symbol,
             accentColor: icon.accentColor,
             subtitle: added.isEmpty ? workout.subtitle : subtitle,
-            isCardio: workout.isCardio,
+            isCardio: icon.isCardio,
             items: added.isEmpty ? workout.items : templateItems
         )
         reset()
@@ -204,19 +196,22 @@ final class ExerciseWorkoutBuilder {
 
     func save(named name: String, icon: ExerciseWorkoutIcon = .dumbbell) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !title.isEmpty, !added.isEmpty else { return }
+        // A cardio workout is the run itself, so it saves with no exercises.
+        guard !title.isEmpty, icon.isCardio || !added.isEmpty else { return }
         saved.append(
             ExerciseQuickWorkout(
                 name: title,
                 symbol: icon.symbol,
                 accentColor: icon.accentColor,
-                subtitle: subtitle,
-                isCardio: false,
+                subtitle: icon.isCardio ? ExerciseWorkoutBuilder.cardioSubtitle : subtitle,
+                isCardio: icon.isCardio,
                 items: templateItems
             )
         )
         reset()
     }
+
+    private static let cardioSubtitle = "Cardio"
 
     private var subtitle: String {
         "\(added.count) exercise\(added.count == 1 ? "" : "s")"
