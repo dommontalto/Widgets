@@ -169,8 +169,7 @@ Defined in `CGFloat+StylingExtensions.swift`.
 | `.cornerRadius8` | 8pt | Small chips |
 | `.cornerRadius12` | 12pt | Progress bars |
 | `.cornerRadius20` | 20pt | Speech bubbles |
-| `.cardCornerRadius` | 30pt | Cards (default in CardModifier) |
-| `.modalCornerRadius` | 30pt | Modal sheets |
+| `.cardCornerRadius` | 30pt | Cards (default in CardModifier) and modal sheets |
 | `.largePillCornerRadius` | 27pt | CTA buttons |
 | `.smallPillCornerRadius` | 32pt | Small pills |
 

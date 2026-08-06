@@ -37,7 +37,7 @@ struct VaultDatapointMiniSheet: View {
                     metric: VaultDemoData.Metric(title: title, value: "\(value ?? "–") \(unit)"),
                     hasData: hasData
                 )
-                .presentationCornerRadius(.modalCornerRadius)
+                .presentationCornerRadius(.cardCornerRadius)
             }
     }
 

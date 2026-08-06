@@ -104,8 +104,6 @@ nonisolated extension CGFloat {
 
     static let secondarySmallPillCornerRadius: CGFloat = 17
 
-    static let modalCornerRadius: CGFloat = 30
-
     static let cardCornerRadius: CGFloat = 30
 
     // MARK: - View

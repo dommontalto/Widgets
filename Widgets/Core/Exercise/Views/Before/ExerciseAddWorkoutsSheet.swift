@@ -5,6 +5,8 @@
 //  Created by Dom Montalto on 31/7/2026.
 //
 
+// DONT PORT THIS FILE TO IOS YET
+
 import SwiftUI
 
 nonisolated struct ExercisePlannedWorkout: Identifiable, Equatable {

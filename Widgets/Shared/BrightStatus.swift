@@ -54,8 +54,21 @@ struct BrightStatus: View {
             : AnyShape(Capsule())
     }
 
+    private var rpeColor: Color? {
+        guard text.hasPrefix("RPE "), let value = Int(text.dropFirst(4)) else { return nil }
+        let ramp: Color = switch value {
+        case ...3: .defaultBlue
+        case 4...5: .defaultBrightPink
+        case 6...7: .defaultOrange
+        default: .defaultRed
+        }
+        return ramp
+    }
+
     var color: Color {
-        switch text.uppercased() {
+        if let rpeColor { return rpeColor }
+
+        return switch text.uppercased() {
         case "EXCELLENT", "OPTIMAL", "AVG ZONE 2", "IN RANGE":
             Color.defaultBrightGreen
         case "GOOD":

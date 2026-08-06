@@ -25,9 +25,12 @@ struct ExerciseLiveWorkoutSheet: View {
     @State private var openedExerciseName: String?
     @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
-    @State private var isPickingRestTime = false
-    @State private var restMinutes = Constants.restMinutes
-    @State private var restTrailingSeconds = Constants.restTrailingSeconds
+    @State private var isPickingRPE = false
+    @State private var isPickingFailedRep = false
+    /// The set rows sit in a `List`, which re-derives its width when the rest
+    /// beam's full-screen overlay changes the safe area. Measured from the page
+    /// once and pinned, so the rows can't be squeezed mid-animation.
+    @State private var pageWidth: CGFloat = 0
 
     init(
         workoutName: String = "Gym workout",
@@ -113,6 +116,12 @@ struct ExerciseLiveWorkoutSheet: View {
                         .padding(.horizontal, .spacing3x)
                         .padding(.bottom, .spacing2x)
                 }
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { width in
+                    guard width > 0, pageWidth == 0 else { return }
+                    pageWidth = width
+                }
             }
         )
         .task(id: restEndDate) {
@@ -162,7 +171,7 @@ struct ExerciseLiveWorkoutSheet: View {
                         close()
                     }
 
-                    sideMenuItem("End workout", symbol: "flag.checkered", color: .defaultRed, isDestructive: true) {
+                    sideMenuItem("End workout", symbol: "flag", color: .defaultRed, isDestructive: true) {
                         finish()
                     }
                 }
@@ -212,6 +221,8 @@ struct ExerciseLiveWorkoutSheet: View {
         TimelineView(.periodic(from: startDate, by: Constants.elapsedTick)) { context in
             BrightText(elapsed(at: context.date), size: .heading)
                 .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.brightSnappy, value: elapsed(at: context.date))
         }
         .padding(.horizontal, .spacing2x)
         .frame(height: Constants.pillHeight)
@@ -224,7 +235,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var exerciseHeader: some View {
-        HStack(spacing: .spacing105x) {
+        HStack(spacing: .spacing2x) {
             Button {
                 openedExerciseName = currentExercise.name
             } label: {
@@ -292,7 +303,10 @@ struct ExerciseLiveWorkoutSheet: View {
         .scrollDisabled(true)
         .contentMargins(.vertical, .spacing0x, for: .scrollContent)
         .environment(\.defaultMinListRowHeight, Constants.rowHeight)
-        .frame(height: (Constants.rowHeight + .spacing2x) * CGFloat(currentExercise.sets.count))
+        .frame(
+            width: pageWidth > 0 ? pageWidth : nil,
+            height: (Constants.rowHeight + .spacing2x) * CGFloat(currentExercise.sets.count)
+        )
         .animation(.brightSnappy, value: currentExercise.sets.count)
     }
 
@@ -316,40 +330,54 @@ struct ExerciseLiveWorkoutSheet: View {
         ExerciseLiveWorkoutStatusWidget(
             status: status,
             heartRate: Constants.demoHeartRate,
-            onRestTime: { isPickingRestTime = true },
-            onStop: finish,
+            onRPE: { isPickingRPE = true },
+            onFailedSet: { isPickingFailedRep = true },
+            onExtendRest: { restEndDate = restEndDate?.addingTimeInterval($0) },
             onSkip: skip,
             onComplete: completeActiveSet
         )
-        .brightMiniSheet(isPresented: $isPickingRestTime) {
-            restPicker
+        .brightMiniSheet(isPresented: $isPickingRPE) {
+            ExerciseValuePicker.rpe(ratedSet(\.rpe)) { isPickingRPE = false }
+        }
+        .brightMiniSheet(isPresented: $isPickingFailedRep) {
+            ExerciseValuePicker.failedSet(targetReps: ratedSetReps, failedRep: failedRep) {
+                isPickingFailedRep = false
+            }
         }
     }
 
-    private var restPicker: some View {
-        VStack(spacing: .spacing2x) {
-            BrightText("Rest Time", size: .standout1, weight: .medium)
+    /// The set the pickers write to: the one being worked on, or the last one
+    /// logged once the exercise is done.
+    private var ratedIndex: Int? {
+        currentExercise.sets.firstIndex { !$0.isDone } ?? currentExercise.sets.indices.last
+    }
 
-            HStack(spacing: .spacing0x) {
-                Picker("Minutes", selection: $restMinutes) {
-                    ForEach(0...Constants.restMaxMinutes, id: \.self) { minutes in
-                        BrightText("\(minutes) min", size: .heading, weight: .regular)
-                            .tag(minutes)
-                    }
-                }
+    /// A failed set is over, so recording the rep logs it and moves on exactly
+    /// the way the tick does.
+    private var failedRep: Binding<Int?> {
+        let rated = ratedSet(\.failedRep)
 
-                Picker("Seconds", selection: $restTrailingSeconds) {
-                    ForEach(Constants.restSecondSteps, id: \.self) { seconds in
-                        BrightText("\(seconds) sec", size: .heading, weight: .regular)
-                            .tag(seconds)
-                    }
-                }
+        return Binding(
+            get: { rated.wrappedValue },
+            set: { rep in
+                rated.wrappedValue = rep
+                guard rep != nil else { return }
+                withAnimation(.brightSnappy) { completeActiveSet() }
             }
-            .pickerStyle(.wheel)
-        }
-        .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing4x)
-        .padding(.bottom, .spacing3x)
+        )
+    }
+
+    private func ratedSet(_ field: WritableKeyPath<ExerciseActiveSet, Int?>) -> Binding<Int?> {
+        guard let ratedIndex else { return .constant(nil) }
+        return Binding(
+            get: { exercises[currentIndex].sets[ratedIndex][keyPath: field] },
+            set: { exercises[currentIndex].sets[ratedIndex][keyPath: field] = $0 }
+        )
+    }
+
+    private var ratedSetReps: Int {
+        guard let ratedIndex else { return 0 }
+        return Int(currentExercise.sets[ratedIndex].reps) ?? 0
     }
 
     private var status: ExerciseLiveWorkoutStatusWidget.Status {
@@ -367,10 +395,6 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     // MARK: - Actions
-
-    private var restInterval: TimeInterval {
-        TimeInterval(restMinutes * 60 + restTrailingSeconds)
-    }
 
     private func close() {
         if let onClose {
@@ -391,7 +415,7 @@ struct ExerciseLiveWorkoutSheet: View {
         }
         exercises[currentIndex].sets[index].isDone = true
         if self.activeSet != nil {
-            restEndDate = Date().addingTimeInterval(restInterval)
+            restEndDate = Date().addingTimeInterval(Constants.restSeconds)
         }
     }
 
@@ -503,10 +527,7 @@ struct ExerciseLiveWorkoutSheet: View {
         /// Set rows match the exercise cells everywhere else in the feature, so
         /// the height lives in one place rather than being repeated as 68.
         static let rowHeight = ExerciseLibraryRow.Constants.minHeight
-        static let restMinutes = 1
-        static let restTrailingSeconds = 30
-        static let restMaxMinutes = 10
-        static let restSecondSteps = Array(stride(from: 0, to: 60, by: 5))
+        static let restSeconds: TimeInterval = 90
         static let menuIconSize: CGFloat = 24
         static let pillHeight: CGFloat = 30
         static let elapsedTick: TimeInterval = 1
@@ -539,10 +560,24 @@ private struct ExerciseLiveSetRow: View {
 
             Spacer(minLength: .spacing2x)
 
+            if let rpe = set.rpe {
+                BrightStatus(status: "RPE \(rpe)")
+                    .padding(.trailing, .spacing2x)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
+            if let failedRep = set.failedRep {
+                BrightText("Rep \(failedRep)", size: .body2, color: .defaultRed, weight: .regular)
+                    .monospacedDigit()
+                    .fixedSize()
+                    .padding(.trailing, .spacing2x)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
             Button {
                 set.isDone.toggle()
             } label: {
-                BrightTick(isTicked: set.isDone)
+                tickControl
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -558,6 +593,32 @@ private struct ExerciseLiveSetRow: View {
             active: isActive && !isResting,
             borderRadius: CGFloat.cornerRadius24
         )
+        // The pickers write straight through their bindings, so the row owns the
+        // animation for the chip, the rep and the cross landing on it.
+        .animation(.brightSnappy, value: set.rpe)
+        .animation(.brightSnappy, value: set.failedRep)
+    }
+
+    /// A failed set takes the cross in the tick's place. Both stay mounted so the
+    /// cross lands with its own symbol replace and haptic, the way the tick does,
+    /// rather than being swapped in cold — and the tick holds its unticked state
+    /// while the cross is up so only one of them speaks.
+    private var tickControl: some View {
+        ZStack {
+            BrightTick(isTicked: set.isDone && !isFailed)
+                .opacity(isFailed ? .zero : .opaque)
+                .scaleEffect(isFailed ? Constants.hiddenTickScale : 1)
+
+            BrightCross(isCrossed: isFailed)
+                .opacity(isFailed ? .opaque : .zero)
+                .scaleEffect(isFailed ? 1 : Constants.hiddenTickScale)
+        }
+    }
+
+    private var isFailed: Bool {
+        // Qualified: a bare `set` at the head of an accessor body parses as the
+        // setter keyword, not the binding.
+        self.set.failedRep != nil
     }
 
     @ViewBuilder private var setChip: some View {
@@ -607,6 +668,7 @@ private struct ExerciseLiveSetRow: View {
         static let chipHeight: CGFloat = 30
         static let valueChipWidth: CGFloat = 60
         static let dividerHeight: CGFloat = 34
+        static let hiddenTickScale: CGFloat = 0.6
     }
 }
 
@@ -628,6 +690,10 @@ struct ExerciseActiveSet: Identifiable, Sendable {
     let id = UUID()
     var weight: String
     var reps: String
+    /// Rated after the set is logged, so it stays empty until the picker sets it.
+    var rpe: Int?
+    /// The rep the set went down on, once it's been marked as failed.
+    var failedRep: Int?
     var previous = "\u{2014}"
     var kind: ExerciseSetKind = .working(0)
     var isRecord = false

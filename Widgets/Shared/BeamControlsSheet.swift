@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+// Do NOT port this file to the Bright iOS app — it's a tuning rig for dialling
+// the beam in on device, reached from ContentView's sparkles button. What ports
+// over is the result: the values it settles on, promoted to the defaults on
+// `BrightScreenEdgeBeam`/`BorderBeam` and the beam spec.
+
 struct BeamConfig {
     var colorVariant: BeamColorVariant = .defaultBlue
     var size: BeamSize = .md

@@ -43,9 +43,26 @@ struct BrightTick: View {
     }
 }
 
+struct BrightCross: View {
+    var isCrossed: Bool
+    var style: BrightTickStyle = .empty
+    var crossTint: Color = .defaultRed
+
+    var body: some View {
+        Image(systemName: isCrossed ? "xmark.circle.fill" : style.symbol)
+            .font(.standardSFPro(size: .standout2, weight: .light))
+            .foregroundStyle(isCrossed ? crossTint : style.tint)
+            .contentTransition(.symbolEffect(.replace))
+            .brightHaptic(trigger: isCrossed) { _, isCrossed in
+                isCrossed ? .medium : .light
+            }
+    }
+}
+
 #Preview {
     @Previewable @State var isEmptyTicked = false
     @Previewable @State var isPlusTicked = false
+    @Previewable @State var isCrossed = false
 
     VStack(spacing: .spacing4x) {
         Button {
@@ -58,6 +75,12 @@ struct BrightTick: View {
             isPlusTicked.toggle()
         } label: {
             BrightTick(isTicked: isPlusTicked, style: .plus)
+        }
+
+        Button {
+            isCrossed.toggle()
+        } label: {
+            BrightCross(isCrossed: isCrossed)
         }
     }
     .buttonStyle(.plain)

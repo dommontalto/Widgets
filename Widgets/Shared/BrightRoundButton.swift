@@ -17,6 +17,7 @@ struct BrightRoundButton: View {
 
     private let imageSource: ImageSource
     let size: BrightButtonSizes
+    let fontSize: FontSizes?
     let color: Color?
     let imageColor: Color?
     let imageRotation: Angle
@@ -41,6 +42,7 @@ struct BrightRoundButton: View {
     ) {
         self.imageSource = .system(systemImage)
         self.size = size
+        self.fontSize = nil
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
@@ -59,6 +61,7 @@ struct BrightRoundButton: View {
     ) {
         self.imageSource = .asset(imageName)
         self.size = size
+        self.fontSize = nil
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
@@ -69,11 +72,13 @@ struct BrightRoundButton: View {
     init(
         title: String,
         size: BrightButtonSizes = .medium,
+        fontSize: FontSizes? = nil,
         color: Color? = nil,
         onTapCallback: (() -> Void)? = nil
     ) {
         self.imageSource = .text(title)
         self.size = size
+        self.fontSize = fontSize
         self.color = color
         self.imageColor = nil
         self.imageRotation = .zero
@@ -124,7 +129,7 @@ struct BrightRoundButton: View {
                 .scaledToFit()
                 .frame(width: size.rawValue * 0.5, height: size.rawValue * 0.5)
         case .text(let title):
-            BrightText(title, size: size.defaultFontSize, color: resolvedImageColor, weight: .regular)
+            BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor, weight: .regular)
         }
     }
 
