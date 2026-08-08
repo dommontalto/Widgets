@@ -109,8 +109,6 @@ struct ExerciseSheet: View {
         Button("Delete", systemImage: "trash", role: .destructive) {
             withAnimation(.brightSnappy) { builder.delete(workout) }
         }
-        // The app tints its whole TabView, which outranks the destructive role
-        // inside a menu just as it does on a swipe action.
         .tint(.defaultRed)
     }
 
@@ -165,4 +163,5 @@ struct ExerciseSheet: View {
 #Preview {
     ExerciseSheet()
         .environment(ExerciseWorkoutBuilder())
+        .environment(ExerciseLiveWorkoutStore())
 }

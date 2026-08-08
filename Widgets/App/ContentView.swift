@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
     @State private var builder = ExerciseWorkoutBuilder()
+    @State private var liveWorkout = ExerciseLiveWorkoutStore()
     @State private var workoutStage: ExerciseWorkoutStage?
 
     var body: some View {
@@ -25,6 +26,7 @@ struct ContentView: View {
             content
         }
         .environment(builder)
+        .environment(liveWorkout)
     }
 
     private var workouts: [ExerciseQuickWorkout] {

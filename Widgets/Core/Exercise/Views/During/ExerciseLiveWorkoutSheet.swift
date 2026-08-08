@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct ExerciseLiveWorkoutSheet: View {
-    var workoutName = "Gym workout"
-    var templateItems: [ExerciseTemplateItem]? = nil
+    @Bindable var run: ExerciseLiveWorkoutRun
+    // Puts the run away without ending it — the card stays docked behind.
+    var onMinimise: (() -> Void)?
     // Ends the whole run. Only the flow can do that from a pushed leg, where
     // `dismiss` would pop back to the pre-workout screen instead.
     var onClose: (() -> Void)?
@@ -22,11 +23,7 @@ struct ExerciseLiveWorkoutSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var startDate = Date()
-    @State private var exercises: [ExerciseActiveExercise]
-    @State private var currentIndex = 0
     @State private var openedExerciseName: String?
-    @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
     @State private var visibleRows: Set<Int> = []
     @State private var isPickingRPE = false
@@ -38,21 +35,6 @@ struct ExerciseLiveWorkoutSheet: View {
     @State private var isConfirmingWorkoutUpdate = false
     @State private var isShowingProgression = false
     @FocusState private var focusedField: ExerciseSetField?
-
-    init(
-        workoutName: String = "Gym workout",
-        templateItems: [ExerciseTemplateItem]? = nil,
-        onClose: (() -> Void)? = nil,
-        onUpdateWorkout: @escaping ([ExerciseTemplateItem]) -> Void = { _ in },
-        onFinish: @escaping (ExerciseWorkout) -> Void = { _ in }
-    ) {
-        self.workoutName = workoutName
-        self.templateItems = templateItems
-        self.onClose = onClose
-        self.onUpdateWorkout = onUpdateWorkout
-        self.onFinish = onFinish
-        _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseDemoData.activeExercises)
-    }
 
     var body: some View {
         BrightSideMenu(isExpanded: $isSideMenuExpanded) { _ in
@@ -73,7 +55,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var isResting: Bool {
-        restEndDate != nil
+        run.restEndDate != nil
     }
 
     private var page: some View {
@@ -96,7 +78,7 @@ struct ExerciseLiveWorkoutSheet: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        close()
+                        minimise()
                     } label: {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
                             .font(.standard(size: .subheading, weight: .regular))
@@ -109,51 +91,29 @@ struct ExerciseLiveWorkoutSheet: View {
                 }
             },
             content: {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: .spacing0x) {
-                        exerciseHeader
-                            .padding(.horizontal, .spacing3x)
-                            .padding(.leading, .spacing1x)
-                            .padding(.bottom, .spacing3x)
-
-                        // Runs edge to edge so a swipe-to-delete reaches the
-                        // screen edge; the rows carry the margin themselves.
-                        setRows
-                    }
-                    .padding(.top, .spacing3x)
-                    .padding(.bottom, .spacing4x)
-                }
-                // Floats above the rows while they scroll underneath.
-                .safeAreaInset(edge: .bottom) {
-                    statusWidget
-                        // Pinned rather than padded: the card's controls can ask
-                        // for more than the screen, and an inset that wide drags
-                        // the whole page out with it, taking the margins off.
-                        .frame(width: pageWidth > 0 ? pageWidth - 2 * .spacing3x : nil)
-                        .padding(.horizontal, .spacing3x)
-                        .padding(.bottom, .spacing3x)
-                }
-                // The keyboard is in there so a tapped weight field doesn't lift
-                // the card off the bottom of the screen.
-                .ignoresSafeArea([.container, .keyboard], edges: .bottom)
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.width
-                } action: { width in
-                    guard width > 0, pageWidth == 0 else { return }
-                    pageWidth = width
+                // The page width has to come from the container, not from the
+                // scroll view: the scroll view is sized by its own status-card
+                // inset, so measuring it there feeds the card's over-wide
+                // intrinsic width straight back into the margins.
+                GeometryReader { proxy in
+                    scrollContent
+                        .onChange(of: proxy.size.width, initial: true) { _, width in
+                            guard width > 0 else { return }
+                            pageWidth = width
+                        }
                 }
             }
         )
-        .task(id: restEndDate) {
-            guard let restEndDate else { return }
+        .task(id: run.restEndDate) {
+            guard let restEndDate = run.restEndDate else { return }
             let delay = restEndDate.timeIntervalSinceNow
             guard delay > 0 else {
-                self.restEndDate = nil
+                run.restEndDate = nil
                 return
             }
             try? await Task.sleep(for: .seconds(delay))
             guard !Task.isCancelled else { return }
-            withAnimation(.brightEaseInOut) { self.restEndDate = nil }
+            withAnimation(.brightEaseInOut) { run.restEndDate = nil }
         }
         .alert("Workout Changed", isPresented: $isConfirmingWorkoutUpdate) {
             Button {
@@ -168,10 +128,10 @@ struct ExerciseLiveWorkoutSheet: View {
                 onFinish(finishedWorkout)
             }
         } message: {
-            Text("This run added sets or exercises the workout doesn't have.")
+            Text("This run added sets or run.exercises the workout doesn't have.")
         }
-        .animation(.brightEaseInOut, value: restEndDate)
-        .animation(.brightEaseInOut, value: currentIndex)
+        .animation(.brightEaseInOut, value: run.restEndDate)
+        .animation(.brightEaseInOut, value: run.currentIndex)
         .animation(.brightEaseInOut, value: completedSets)
         .navigationDestination(item: $openedExerciseName) { name in
             if let exercise = ExerciseDemoLibrary.exercise(named: name) {
@@ -182,22 +142,52 @@ struct ExerciseLiveWorkoutSheet: View {
         }
     }
 
+    private var scrollContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: .spacing0x) {
+                exerciseHeader
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.leading, .spacing1x)
+                    .padding(.bottom, .spacing3x)
+
+                // Runs edge to edge so a swipe-to-delete reaches the
+                // screen edge; the rows carry the margin themselves.
+                setRows
+            }
+            .padding(.top, .spacing3x)
+            .padding(.bottom, .spacing4x)
+        }
+        // Floats above the rows while they scroll underneath.
+        .safeAreaInset(edge: .bottom) {
+            statusWidget
+                // Pinned rather than padded: the card's controls can ask for
+                // more than the screen, and an inset that wide drags the whole
+                // page out with it, taking the margins off.
+                .frame(width: pageWidth > 0 ? pageWidth - 2 * .spacing3x : nil)
+                .padding(.horizontal, .spacing3x)
+                .padding(.bottom, .spacing3x)
+        }
+        // The keyboard is in there so a tapped weight field doesn't lift
+        // the card off the bottom of the screen.
+        .ignoresSafeArea([.container, .keyboard], edges: .bottom)
+    }
+
     private var sideMenu: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing0x) {
-                BrightText(workoutName, size: .standout1)
+                BrightText(run.name, size: .standout1)
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing6x)
                     .staggered(at: 0, in: visibleRows)
 
                 VStack(alignment: .leading, spacing: .spacing4x) {
-                    ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
+                    ForEach(Array(run.exercises.enumerated()), id: \.element.id) { index, exercise in
                         sideMenuItem(
                             exercise.name,
-                            symbol: index == currentIndex ? "checkmark" : "dumbbell",
-                            color: index == currentIndex ? .defaultGreen : .textColor
+                            symbol: index == run.currentIndex ? "checkmark" : "dumbbell",
+                            color: index == run.currentIndex ? .defaultGreen : .textColor
                         ) {
-                            currentIndex = index
+                            run.currentIndex = index
                         }
                         .staggered(at: index + 1, in: visibleRows)
                     }
@@ -207,12 +197,12 @@ struct ExerciseLiveWorkoutSheet: View {
                     sideMenuItem("Cancel workout", symbol: "xmark", color: .defaultRed, isDestructive: true) {
                         close()
                     }
-                    .staggered(at: exercises.count + 1, in: visibleRows)
+                    .staggered(at: run.exercises.count + 1, in: visibleRows)
 
                     sideMenuItem("End workout", symbol: "flag", color: .defaultRed, isDestructive: true) {
                         finish()
                     }
-                    .staggered(at: exercises.count + 2, in: visibleRows)
+                    .staggered(at: run.exercises.count + 2, in: visibleRows)
                 }
                 .padding(.top, .spacing6x)
 
@@ -238,7 +228,7 @@ struct ExerciseLiveWorkoutSheet: View {
         visibleRows = []
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Constants.rowStartDelay))
-            for row in 0...(exercises.count + 2) {
+            for row in 0...(run.exercises.count + 2) {
                 withAnimation(.bouncy(duration: Constants.rowDuration, extraBounce: Constants.rowBounce)) {
                     _ = visibleRows.insert(row)
                 }
@@ -280,7 +270,7 @@ struct ExerciseLiveWorkoutSheet: View {
     // MARK: - Header
 
     private var elapsedPill: some View {
-        TimelineView(.periodic(from: startDate, by: Constants.elapsedTick)) { context in
+        TimelineView(.periodic(from: run.startDate, by: Constants.elapsedTick)) { context in
             BrightText(elapsed(at: context.date), size: .heading)
                 .monospacedDigit()
                 .contentTransition(.numericText())
@@ -292,7 +282,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private func elapsed(at date: Date) -> String {
-        let seconds = Int(max(0, date.timeIntervalSince(startDate)))
+        let seconds = Int(max(0, date.timeIntervalSince(run.startDate)))
         return String(format: "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
     }
 
@@ -418,7 +408,7 @@ struct ExerciseLiveWorkoutSheet: View {
 
     private var setsList: some View {
         List {
-            ForEach($exercises[currentIndex].sets) { $set in
+            ForEach($run.exercises[run.currentIndex].sets) { $set in
                 ExerciseLiveSetRow(
                     set: $set,
                     index: workingIndex(of: $set.wrappedValue, in: currentExercise),
@@ -432,13 +422,11 @@ struct ExerciseLiveWorkoutSheet: View {
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
                         withAnimation(.brightSnappy) {
-                            exercises[currentIndex].sets.removeAll { $0.id == $set.wrappedValue.id }
+                            run.exercises[run.currentIndex].sets.removeAll { $0.id == $set.wrappedValue.id }
                         }
                     } label: {
                         Image(systemName: "trash")
                     }
-                    // The Bright app tints its whole TabView, which outranks the
-                    // destructive role's red on a swipe action.
                     .tint(.defaultRed)
 
                     if $set.wrappedValue.isTagged {
@@ -447,8 +435,6 @@ struct ExerciseLiveWorkoutSheet: View {
                         } label: {
                             Image(systemName: "tag.slash")
                         }
-                        // Same reason as the trash: the app's tint would colour
-                        // this one too, so it states its own.
                         .tint(.defaultMainGrey)
                     }
                 }
@@ -475,7 +461,7 @@ struct ExerciseLiveWorkoutSheet: View {
     private var addSetButton: some View {
         BrightRoundButton(systemImage: "plus", size: .medium) {
             let last = currentExercise.sets.last
-            exercises[currentIndex].sets.append(
+            run.exercises[run.currentIndex].sets.append(
                 ExerciseActiveSet(
                     weight: last?.weight ?? "20",
                     reps: last?.reps ?? "10",
@@ -490,12 +476,12 @@ struct ExerciseLiveWorkoutSheet: View {
 
     private var statusWidget: some View {
         ExerciseLiveWorkoutStatusWidget(
-            status: status,
+            status: run.status,
             heartRate: Constants.demoHeartRate,
             onRPE: { isPickingRPE = true },
             onFailedSet: { isPickingFailedRep = true },
-            onExtendRest: { restEndDate = restEndDate?.addingTimeInterval($0) },
-            onSkip: skip,
+            onExtendRest: run.extendRest(by:),
+            onSkip: run.skip,
             onComplete: completeActiveSet
         )
         .brightMiniSheet(isPresented: $isPickingRPE) {
@@ -517,8 +503,8 @@ struct ExerciseLiveWorkoutSheet: View {
     private func ratedSet(_ field: WritableKeyPath<ExerciseActiveSet, Int?>) -> Binding<Int?> {
         guard let ratedIndex else { return .constant(nil) }
         return Binding(
-            get: { exercises[currentIndex].sets[ratedIndex][keyPath: field] },
-            set: { exercises[currentIndex].sets[ratedIndex][keyPath: field] = $0 }
+            get: { run.exercises[run.currentIndex].sets[ratedIndex][keyPath: field] },
+            set: { run.exercises[run.currentIndex].sets[ratedIndex][keyPath: field] = $0 }
         )
     }
 
@@ -527,21 +513,17 @@ struct ExerciseLiveWorkoutSheet: View {
         return Int(currentExercise.sets[ratedIndex].reps) ?? 0
     }
 
-    private var status: ExerciseLiveWorkoutStatusWidget.Status {
-        if let restEndDate {
-            .resting(upNext: currentBlockName, until: restEndDate)
-        } else if activeSet == nil {
-            isLastExercise ? .allSetsComplete : .nextExercise(name: exercises[currentIndex + 1].name)
+    // MARK: - Actions
+
+    // The chevron parks the run instead of ending it; the side menu still has
+    // Cancel and End for that.
+    private func minimise() {
+        if let onMinimise {
+            onMinimise()
         } else {
-            .working(label: currentBlockName)
+            close()
         }
     }
-
-    private var isLastExercise: Bool {
-        currentIndex == exercises.count - 1
-    }
-
-    // MARK: - Actions
 
     private func close() {
         if let onClose {
@@ -562,9 +544,9 @@ struct ExerciseLiveWorkoutSheet: View {
     // True once the run has more (or fewer) exercises or sets than the workout
     // it started from — a typed weight isn't a change to the plan.
     private var divergesFromTemplate: Bool {
-        guard let templateItems else { return false }
-        guard templateItems.count == exercises.count else { return true }
-        return zip(templateItems, exercises).contains { template, live in
+        guard let templateItems = run.workout?.items else { return false }
+        guard templateItems.count == run.exercises.count else { return true }
+        return zip(templateItems, run.exercises).contains { template, live in
             plannedSetCount(for: template) != live.sets.count
         }
     }
@@ -574,7 +556,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var runTemplateItems: [ExerciseTemplateItem] {
-        exercises.map { exercise in
+        run.exercises.map { exercise in
             let working = exercise.sets.filter(\.kind.countsAsSet).count
             return ExerciseTemplateItem(
                 exerciseName: exercise.name,
@@ -587,55 +569,31 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private func completeActiveSet() {
-        guard let activeSet, let index = currentExercise.sets.firstIndex(where: { $0.id == activeSet.id }) else {
-            advance()
-            return
-        }
-        exercises[currentIndex].sets[index].isDone = true
-        if self.activeSet != nil {
-            restEndDate = Date().addingTimeInterval(Constants.restSeconds)
-        }
+        // The run says when there's nothing left to advance to; finishing is
+        // this screen's job, not the run's.
+        if !run.completeActiveSet() { finish() }
     }
 
     // Clears the row's tags together — the rating and the failed rep are one
     // gesture's worth of undo.
     private func clearTags(of set: ExerciseActiveSet) {
         guard let index = currentExercise.sets.firstIndex(where: { $0.id == set.id }) else { return }
-        exercises[currentIndex].sets[index].rpe = nil
-        exercises[currentIndex].sets[index].failedRep = nil
-    }
-
-    // Cuts rest short so the next set becomes active straight away.
-    private func skip() {
-        restEndDate = nil
-    }
-
-    private func advance() {
-        guard currentIndex + 1 < exercises.count else {
-            finish()
-            return
-        }
-        currentIndex += 1
+        run.exercises[run.currentIndex].sets[index].rpe = nil
+        run.exercises[run.currentIndex].sets[index].failedRep = nil
     }
 
     // MARK: - Derived state
 
     private var currentExercise: ExerciseActiveExercise {
-        exercises[currentIndex]
+        run.exercises[run.currentIndex]
     }
 
     private var activeSet: ExerciseActiveSet? {
         currentExercise.sets.first { !$0.isDone }
     }
 
-    private var currentBlockName: String {
-        guard let activeSet else { return "Finished" }
-        if activeSet.isWarmup { return "Warmup" }
-        return "Set \(workingIndex(of: activeSet, in: currentExercise))"
-    }
-
     private var finishedWorkout: ExerciseWorkout {
-        let logged = exercises.compactMap { exercise -> ExerciseLoggedExercise? in
+        let logged = run.exercises.compactMap { exercise -> ExerciseLoggedExercise? in
             let done = exercise.sets.filter(\.isDone)
             guard !done.isEmpty else { return nil }
             return ExerciseLoggedExercise(
@@ -648,7 +606,7 @@ struct ExerciseLiveWorkoutSheet: View {
         let duration = elapsedString(at: Date())
 
         return ExerciseWorkout(
-            name: workoutName,
+            name: run.name,
             timestamp: Date().formatted(date: .abbreviated, time: .shortened),
             type: .strength,
             summary: "\(duration) • \(volumeString) kg • \(completedSets) sets",
@@ -674,11 +632,11 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var completedSets: Int {
-        exercises.reduce(0) { $0 + $1.sets.filter(\.isDone).count }
+        run.exercises.reduce(0) { $0 + $1.sets.filter(\.isDone).count }
     }
 
     private var heaviestSet: Int {
-        exercises
+        run.exercises
             .flatMap(\.sets)
             .filter(\.isDone)
             .compactMap { Int($0.weight) }
@@ -695,7 +653,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var volumeString: String {
-        let volume = exercises
+        let volume = run.exercises
             .flatMap(\.sets)
             .filter(\.isDone)
             .reduce(0) { $0 + (Int($1.weight) ?? 0) * (Int($1.reps) ?? 0) }
@@ -703,7 +661,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private func elapsedString(at date: Date) -> String {
-        let elapsed = max(0, Int(date.timeIntervalSince(startDate)))
+        let elapsed = max(0, Int(date.timeIntervalSince(run.startDate)))
         return String(format: "%d:%02d", elapsed / 60, elapsed % 60)
     }
 
@@ -993,6 +951,6 @@ private extension View {
 
 #Preview {
     NavigationStack {
-        ExerciseLiveWorkoutSheet()
+        ExerciseLiveWorkoutSheet(run: ExerciseLiveWorkoutRun())
     }
 }
