@@ -10,14 +10,22 @@ import SwiftUI
 
 struct ExerciseFormViewer: View {
     var tint: Color = .defaultPurple
+    var cardColor: Color = .defaultSheetModalCards
+
     @Binding var isExpanded: Bool
+
     let expandedHeight: CGFloat
 
     @State private var controller: AnimationPlaybackController?
+
     @State private var duration: TimeInterval = 1
+
     @State private var progress: Double = 0
+
     @State private var isScrubbing = false
+
     @State private var playbackSpeed: Double = 1
+
     @State private var isPaused = false
 
     var body: some View {
@@ -62,7 +70,7 @@ struct ExerciseFormViewer: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: isExpanded ? expandedHeight : Constants.viewerHeight)
-        .background(Color.defaultSheetModalCards)
+        .background(cardColor)
         .clipShape(
             RoundedRectangle(
                 cornerRadius: isExpanded ? .spacing0x : .cardCornerRadius,
@@ -94,13 +102,7 @@ struct ExerciseFormViewer: View {
         }
     }
 
-    private func toggleExpansion() {
-        BrightHaptic.medium.play()
-
-        withAnimation(.brightEaseInOut) {
-            isExpanded.toggle()
-        }
-    }
+    // MARK: - Controls
 
     private var controls: some View {
         HStack(spacing: .spacing1x) {
@@ -124,10 +126,6 @@ struct ExerciseFormViewer: View {
         .brightHaptic(.light, trigger: isPaused)
     }
 
-    private var controlSize: BrightButtonSizes {
-        isExpanded ? .large : .medium
-    }
-
     private func speedButton(_ speed: Double) -> some View {
         BrightRoundButton(
             title: speedLabel(speed),
@@ -137,6 +135,22 @@ struct ExerciseFormViewer: View {
             playbackSpeed = speed
             controller?.speed = Float(speed)
         }
+    }
+
+    // MARK: - Actions
+
+    private func toggleExpansion() {
+        BrightHaptic.medium.play()
+
+        withAnimation(.brightEaseInOut) {
+            isExpanded.toggle()
+        }
+    }
+
+    // MARK: - Derived state
+
+    private var controlSize: BrightButtonSizes {
+        isExpanded ? .large : .medium
     }
 
     private func speedLabel(_ speed: Double) -> String {

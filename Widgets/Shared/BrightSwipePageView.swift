@@ -19,8 +19,8 @@ struct SwipePage {
     }
 }
 
-/// Preference key used by pages that don't scroll directly (e.g. Insights)
-/// to report a manually-computed under-header opacity.
+// Preference key used by pages that don't scroll directly (e.g. Insights)
+// to report a manually-computed under-header opacity.
 struct ScrollBlurOpacityKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -28,8 +28,8 @@ struct ScrollBlurOpacityKey: PreferenceKey {
     }
 }
 
-/// Normalized vertical scroll geometry for a page: `y` is 0 at the top,
-/// `maxY` is the largest offset the content can scroll to.
+// Normalized vertical scroll geometry for a page: `y` is 0 at the top,
+// `maxY` is the largest offset the content can scroll to.
 private struct PageScrollMetrics: Equatable {
     let y: CGFloat
     let maxY: CGFloat
@@ -37,8 +37,8 @@ private struct PageScrollMetrics: Equatable {
 
 // MARK: - State
 
-/// Scroll-derived state. Writes during scroll only invalidate the header /
-/// floating pill, not the parent or paged content.
+// Scroll-derived state. Writes during scroll only invalidate the header /
+// floating pill, not the parent or paged content.
 @MainActor
 @Observable
 final class BrightSwipePageState {
@@ -56,49 +56,49 @@ final class BrightSwipePageState {
 
 // MARK: - BrightSwipePageView
 
-/// Horizontal paging view with either a floating glass-pill header
-/// (`showHeader: true`) or an inline pill row below an optional big title.
+// Horizontal paging view with either a floating glass-pill header
+// (`showHeader: true`) or an inline pill row below an optional big title.
 struct BrightSwipePageView<Content: View>: View {
     let pages: [SwipePage]
     let fakeLargeTitle: String?
     let titleAccessory: AnyView?
-    /// Size / weight of the large title. Defaults match the screen-level call
-    /// sites; sheets that follow a tighter header spec can shrink it.
+    // Size / weight of the large title. Defaults match the screen-level call
+    // sites; sheets that follow a tighter header spec can shrink it.
     let titleSize: FontSizes
     let titleWeight: Font.Weight
-    /// Rendered directly beneath the large title (e.g. a workout's time range and
-    /// source), so it scrolls, fades and blurs away with it.
+    // Rendered directly beneath the large title (e.g. a workout's time range and
+    // source), so it scrolls, fades and blurs away with it.
     let titleSubtitle: AnyView?
-    /// How far the pill row travels upward as the large title scrolls away,
-    /// stopping it just below the nav bar. Sheets sit lower than a full screen,
-    /// so they need a longer run than the default.
+    // How far the pill row travels upward as the large title scrolls away,
+    // stopping it just below the nav bar. Sheets sit lower than a full screen,
+    // so they need a longer run than the default.
     let pillFollowMaxShift: CGFloat
     let showInlineTabs: Bool
     let disableHorizontalScroll: Bool
-    /// When `true` (default), the large title collapses into a small nav-bar
-    /// title as it scrolls away. When `false`, nothing replaces it in the nav bar.
+    // When `true` (default), the large title collapses into a small nav-bar
+    // title as it scrolls away. When `false`, nothing replaces it in the nav bar.
     let collapsesTitleToToolbar: Bool
-    /// Keyboard-dismiss behaviour for the per-page vertical scroll view. Set
-    /// `.interactively` when a page contains a text field that should follow a
-    /// drag (e.g. Vault's Data search). Must live on the inner vertical scroll,
-    /// not an ancestor — an ancestor binds it to the horizontal pager instead.
+    // Keyboard-dismiss behaviour for the per-page vertical scroll view. Set
+    // `.interactively` when a page contains a text field that should follow a
+    // drag (e.g. Vault's Data search). Must live on the inner vertical scroll,
+    // not an ancestor — an ancestor binds it to the horizontal pager instead.
     let scrollDismissesKeyboardMode: ScrollDismissesKeyboardMode
-    /// Reports a page's vertical scroll as (page index, y, max scrollable y).
+    // Reports a page's vertical scroll as (page index, y, max scrollable y).
     let onPageScroll: ((Int, CGFloat, CGFloat) -> Void)?
-    /// Optional programmatic scroll control for a single page's vertical scroll
-    /// view (used by Health edit-mode drag auto-scroll). Applied only to the page
-    /// at `scrollControlledPageIndex`, leaving the other tabs untouched.
+    // Optional programmatic scroll control for a single page's vertical scroll
+    // view (used by Health edit-mode drag auto-scroll). Applied only to the page
+    // at `scrollControlledPageIndex`, leaving the other tabs untouched.
     let verticalScrollPosition: Binding<ScrollPosition>?
     let scrollControlledPageIndex: Int?
     let verticalScrollDisabledPageIndex: Int?
-    /// When `false`, the pager doesn't pad its content by the bottom safe area,
-    /// letting a page (e.g. Genome's full-bleed Metal strand) reach the screen
-    /// edge. Defaults to `true` — no effect on existing call sites.
+    // When `false`, the pager doesn't pad its content by the bottom safe area,
+    // letting a page (e.g. Genome's full-bleed Metal strand) reach the screen
+    // edge. Defaults to `true` — no effect on existing call sites.
     let bottomSafeArea: Bool
-    /// Full-bleed page background. Defaults to `nil` (no background) so sheet
-    /// call sites keep their own; standalone screens pass `.defaultBackground`.
+    // Full-bleed page background. Defaults to `nil` (no background) so sheet
+    // call sites keep their own; standalone screens pass `.defaultBackground`.
     let backgroundColor: Color?
-    /// Hide it to give a page the full sheet, e.g. an expanded map.
+    // Hide it to give a page the full sheet, e.g. an expanded map.
     let navigationBarVisibility: Visibility
     let onRefresh: (() async -> Void)?
     @Binding var selectedIndex: Int
@@ -428,8 +428,8 @@ struct BrightSwipePageView<Content: View>: View {
 
 // MARK: - Optional scroll position
 
-/// Applies `.scrollPosition` only when a binding is supplied, so pages without
-/// programmatic scroll control are left exactly as they were.
+// Applies `.scrollPosition` only when a binding is supplied, so pages without
+// programmatic scroll control are left exactly as they were.
 private struct OptionalScrollPosition: ViewModifier {
     let position: Binding<ScrollPosition>?
 
@@ -515,13 +515,13 @@ private struct InlineTabPill: View {
     }
 }
 
-/// Not `private`: `pillFollowMaxShift` is the default for an initialiser parameter,
-/// so it has to be at least as visible as the initialiser itself.
+// Not `private`: `pillFollowMaxShift` is the default for an initialiser parameter,
+// so it has to be at least as visible as the initialiser itself.
 enum SwipePageConstants {
     static let pillHeight: CGFloat = BrightButtonSizes.small.rawValue
     static let pillIconSize: CGFloat = 16
     static let inlineTabSpacing: CGFloat = .spacing1x
-    /// Max upward distance the floating pill travels as the big title scrolls away,
-    /// stopping it just below the nav bar.
+    // Max upward distance the floating pill travels as the big title scrolls away,
+    // stopping it just below the nav bar.
     static let pillFollowMaxShift: CGFloat = 52
 }

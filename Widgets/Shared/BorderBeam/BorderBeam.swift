@@ -1,19 +1,19 @@
 import SwiftUI
 
-/// Animated border beam effect — SwiftUI port of the `border-beam` web library.
-///
-/// ```swift
-/// BorderBeam(size: .md) {
-///     Card()
-/// }
-/// // or
-/// Card().borderBeam(.md, colorVariant: .brand)
-/// ```
-///
-/// Rendering matches the web version layer-for-layer: an inner glow layer, a
-/// stroke ring layer window-masked by a rotating conic gradient, and a blurred
-/// bloom ring — all drawn by the `beamRotateLayer` Metal shader from data in
-/// the shared `beam-spec.json`.
+// Animated border beam effect — SwiftUI port of the `border-beam` web library.
+//
+// ```swift
+// BorderBeam(size: .md) {
+//     Card()
+// }
+// // or
+// Card().borderBeam(.md, colorVariant: .brand)
+// ```
+//
+// Rendering matches the web version layer-for-layer: an inner glow layer, a
+// stroke ring layer window-masked by a rotating conic gradient, and a blurred
+// bloom ring — all drawn by the `beamRotateLayer` Metal shader from data in
+// the shared `beam-spec.json`.
 public struct BorderBeam<Content: View>: View {
     private let size: BeamSize
     private let colorVariant: BeamColorVariant
@@ -32,13 +32,13 @@ public struct BorderBeam<Content: View>: View {
     private let content: Content
 
     @Environment(\.colorScheme) private var colorScheme
-    /// Web parity: only the pulse family honors reduced motion.
+    // Web parity: only the pulse family honors reduced motion.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Time-based fade evaluated per-frame in the layers' TimelineViews.
+    // Time-based fade evaluated per-frame in the layers' TimelineViews.
     @State private var fade: BeamFade = .hidden
-    /// Keeps layers mounted while fading out. Seeded from `active` so a render
-    /// that never delivers `onAppear` (e.g. `ImageRenderer`) still draws.
+    // Keeps layers mounted while fading out. Seeded from `active` so a render
+    // that never delivers `onAppear` (e.g. `ImageRenderer`) still draws.
     @State private var mounted: Bool
 
     public init(
@@ -200,7 +200,7 @@ public struct BorderBeam<Content: View>: View {
 // MARK: - View modifier sugar
 
 public extension View {
-    /// Wraps the view in a ``BorderBeam``.
+    // Wraps the view in a ``BorderBeam``.
     func borderBeam(
         _ size: BeamSize = .md,
         colorVariant: BeamColorVariant = .brand,

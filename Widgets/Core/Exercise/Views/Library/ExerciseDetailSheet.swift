@@ -15,6 +15,9 @@ nonisolated struct ExerciseProgressionSample: Identifiable {
 
 struct ExerciseDetailSheet: View {
     let exercise: ExerciseDefinition
+    // Pushed onto a screen it takes the screen's card colour; presented as a
+    // sheet it takes the sheet's.
+    var cardColor: Color = .defaultSheetModalCards
 
     private enum Timescale: String, CaseIterable, Identifiable {
         case oneWeek = "1W"
@@ -127,6 +130,7 @@ struct ExerciseDetailSheet: View {
     private func formCard(expandedHeight: CGFloat) -> some View {
         ExerciseFormViewer(
             tint: exercise.category.accentColor,
+            cardColor: cardColor,
             isExpanded: $isFormExpanded,
             expandedHeight: expandedHeight
         )
@@ -136,7 +140,7 @@ struct ExerciseDetailSheet: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText("Stats", size: .heading)
 
-            ExerciseStatTileGrid(tiles: ExerciseDemoData.detailStats)
+            ExerciseStatTileGrid(tiles: ExerciseDemoData.detailStats, cardColor: cardColor)
         }
     }
 
@@ -177,7 +181,7 @@ struct ExerciseDetailSheet: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: cardColor))
     }
 
     private var timescalePill: some View {
@@ -253,7 +257,7 @@ struct ExerciseDetailSheet: View {
                 type: .summary,
                 title: "Summary",
                 data: ExerciseDemoData.detailImpact,
-                cardColor: .defaultSheetModalCards
+                cardColor: cardColor
             )
         }
         .padding(.spacing3x)
@@ -271,7 +275,7 @@ struct ExerciseDetailSheet: View {
             }
             .padding(.leading, .spacing2x)
 
-            ExerciseSetHistoryList(groups: ExerciseDemoData.detailHistory)
+            ExerciseSetHistoryList(groups: ExerciseDemoData.detailHistory, cardColor: cardColor)
         }
         .padding(.spacing3x)
     }

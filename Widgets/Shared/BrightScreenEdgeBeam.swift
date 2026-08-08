@@ -8,30 +8,28 @@
 import SwiftUI
 
 struct BrightScreenEdgeBeam: View {
-    /// Set false to fade the beam out — BorderBeam keeps its layers mounted so it
-    /// settles rather than cutting.
+    // Set false to fade the beam out — BorderBeam keeps its layers mounted so it
+    // settles rather than cutting.
     var isActive = true
-    /// Match the curve of whatever the beam runs around. A sheet's own radius is
-    /// far tighter than the display's, and the mismatch clips the ring's corners.
+    // Match the curve of whatever the beam runs around. A sheet's own radius is
+    // far tighter than the display's, and the mismatch clips the ring's corners.
     var cornerRadius: Double = Constants.screenCornerRadius
-    /// Sheets start below the display's top edge, so the beam has to stay inside
-    /// the safe area or its top run is cut off by the presentation.
+    // Sheets start below the display's top edge, so the beam has to stay inside
+    // the safe area or its top run is cut off by the presentation.
     var edgesToIgnore: Edge.Set = .all
     var colorVariant: BeamColorVariant = .brand
     var size: BeamSize = .md
-    var duration: Double = Constants.duration
-    var brightness: Double = Constants.brightness
-    var saturation: Double = Constants.saturation
+    // nil resolves to the beam spec's defaults, matching the untuned web demo.
+    var duration: Double?
+    var brightness: Double?
+    var saturation: Double?
     var strength: Double = 1
-    /// How far the ring's blobs spread: the canvas is drawn this much smaller
-    /// then scaled back up, so a bigger number means a fatter, softer ring.
+    // How far the ring's blobs spread: the canvas is drawn this much smaller
+    // then scaled back up, so a bigger number means a fatter, softer ring.
     var renderScale: Double = Constants.renderScale
     var tuning: BeamTuning = .none
 
     static var defaultCornerRadius: Double { Constants.screenCornerRadius }
-    static var defaultDuration: Double { Constants.duration }
-    static var defaultBrightness: Double { Constants.brightness }
-    static var defaultSaturation: Double { Constants.saturation }
     static var defaultRenderScale: Double { Constants.renderScale }
 
     var body: some View {
@@ -47,10 +45,10 @@ struct BrightScreenEdgeBeam: View {
         .allowsHitTesting(false)
     }
 
-    /// The layer draws on a canvas shrunk by `renderScale` and is scaled back
-    /// up: the palette sizes its blobs in card-scale pixels, so a screen-sized
-    /// canvas leaves most of the ring unlit. Dividing the radius by the same
-    /// factor lands the canvas corners on the container's real corners.
+    // The layer draws on a canvas shrunk by `renderScale` and is scaled back
+    // up: the palette sizes its blobs in card-scale pixels, so a screen-sized
+    // canvas leaves most of the ring unlit. Dividing the radius by the same
+    // factor lands the canvas corners on the container's real corners.
     private func beamLayer(in screen: CGSize) -> some View {
         BorderBeam(
             size: size,
@@ -61,7 +59,6 @@ struct BrightScreenEdgeBeam: View {
             borderRadius: cornerRadius / renderScale,
             brightness: brightness,
             saturation: saturation,
-            hueRange: Constants.hueRange,
             strength: strength,
             tuning: tuning
         ) {
@@ -76,18 +73,11 @@ struct BrightScreenEdgeBeam: View {
     }
 
     private enum Constants {
-        /// Runs a little wider than the true display curve (~62pt on a 16/17
-        /// Pro): the ring draws on a canvas shrunk by `renderScale`, so its
-        /// corners read tighter than the radius says once scaled back up.
+        // Runs a little wider than the true display curve (~62pt on a 16/17
+        // Pro): the ring draws on a canvas shrunk by `renderScale`, so its
+        // corners read tighter than the radius says once scaled back up.
         static let screenCornerRadius: Double = 60
         static let renderScale: CGFloat = 3
-        static let duration: Double = 4
-        static let brightness: Double = 1.7
-        static let saturation: Double = 1.5
-        /// The rotate family ping-pongs the whole ring's hue by ±this much. Wide
-        /// ranges drift the blobs off the brand palette entirely, so keep it to
-        /// a shimmer.
-        static let hueRange: Double = 15
     }
 }
 

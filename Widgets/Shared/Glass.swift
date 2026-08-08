@@ -11,9 +11,9 @@ struct GlassEffect: ViewModifier {
     var shape: GlassShape = .capsule
     var cornerRadius: CGFloat = .cornerRadius22
     var tint: Color = .clear
-    /// When true, uses the more transparent `.clear` glass (no frosted fill).
+    // When true, uses the more transparent `.clear` glass (no frosted fill).
     var isClear: Bool = false
-    /// When true, the glass reacts to touch (liquid-glass interactivity).
+    // When true, the glass reacts to touch (liquid-glass interactivity).
     var interactive: Bool = true
 
     @Environment(\.colorScheme) private var colorScheme

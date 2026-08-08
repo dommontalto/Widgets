@@ -34,7 +34,7 @@ struct BrightTick: View {
 
     var body: some View {
         Image(systemName: isTicked ? "checkmark.circle.fill" : style.symbol)
-            .font(.standardSFPro(size: .standout2, weight: .light))
+            .font(.standard(size: .standout2, weight: .light))
             .foregroundStyle(isTicked ? tickTint : style.tint)
             .contentTransition(.symbolEffect(.replace))
             .brightHaptic(trigger: isTicked) { _, isTicked in
@@ -50,7 +50,7 @@ struct BrightCross: View {
 
     var body: some View {
         Image(systemName: isCrossed ? "xmark.circle.fill" : style.symbol)
-            .font(.standardSFPro(size: .standout2, weight: .light))
+            .font(.standard(size: .standout2, weight: .light))
             .foregroundStyle(isCrossed ? crossTint : style.tint)
             .contentTransition(.symbolEffect(.replace))
             .brightHaptic(trigger: isCrossed) { _, isCrossed in

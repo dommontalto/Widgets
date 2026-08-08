@@ -16,13 +16,13 @@ enum ExerciseDayType: CaseIterable {
 
 struct ExerciseMonthData {
     let name: String
-    /// Week columns of 7 weekday slots (Monday first); nil = day outside this month.
+    // Week columns of 7 weekday slots (Monday first); nil = day outside this month.
     let columns: [[ExerciseDayType?]]
 }
 
 struct ExerciseWeekLoad {
     let name: String
-    /// Fractions of the row's bar track, so the pair leaves a gap where they meet.
+    // Fractions of the row's bar track, so the pair leaves a gap where they meet.
     let strengthFraction: CGFloat
     let cardioFraction: CGFloat
     let ratio: String
@@ -118,7 +118,7 @@ struct ExerciseLiveWorkout {
     let heartRateZone: String
     let averagePace: String
     let splitPace: String
-    /// Signed difference between the split and the average pace, in seconds.
+    // Signed difference between the split and the average pace, in seconds.
     let splitDelta: String
     let intervalName: String
     let intervalRemaining: String

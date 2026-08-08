@@ -1,10 +1,10 @@
 import Foundation
 
-/// Line-family animation math — CSS keyframe tables sampled with the same
-/// per-segment timing functions the web uses. Mirrors border-beam-native's
-/// lineDriver.ts (keep in sync).
+// Line-family animation math — CSS keyframe tables sampled with the same
+// per-segment timing functions the web uses. Mirrors border-beam-native's
+// lineDriver.ts (keep in sync).
 enum BeamAnimation {
-    /// y for progress x on a CSS cubic-bezier timing curve.
+    // y for progress x on a CSS cubic-bezier timing curve.
     static func cubicBezier(_ x1: Double, _ y1: Double, _ x2: Double, _ y2: Double, _ x: Double) -> Double {
         if x <= 0 { return 0 }
         if x >= 1 { return 1 }
@@ -21,17 +21,17 @@ enum BeamAnimation {
         return 3 * mt * mt * t * y1 + 3 * mt * t * t * y2 + t * t * t
     }
 
-    /// CSS ease-in-out = cubic-bezier(0.42, 0, 0.58, 1).
+    // CSS ease-in-out = cubic-bezier(0.42, 0, 0.58, 1).
     static func cssEaseInOut(_ x: Double) -> Double {
         cubicBezier(0.42, 0, 0.58, 1, x)
     }
 
-    /// CSS `ease` = cubic-bezier(0.25, 0.1, 0.25, 1) — the fade timing curve.
+    // CSS `ease` = cubic-bezier(0.25, 0.1, 0.25, 1) — the fade timing curve.
     static func cssEase(_ x: Double) -> Double {
         cubicBezier(0.25, 0.1, 0.25, 1, x)
     }
 
-    /// Samples a [[percent, value]] keyframe table at cycle progress p (0…1).
+    // Samples a [[percent, value]] keyframe table at cycle progress p (0…1).
     static func sampleKeyframes(_ table: [[Double]], at p: Double, easeInOut: Bool) -> Double {
         let pct = p * 100
         guard let first = table.first, let last = table.last else { return 0 }
@@ -59,7 +59,7 @@ enum BeamAnimation {
         let edge: Double
     }
 
-    /// Samples every line animation at absolute time t (seconds).
+    // Samples every line animation at absolute time t (seconds).
     static func lineFrameValues(
         _ tables: BeamSpec.KeyframeTables,
         at t: Double,
@@ -79,7 +79,7 @@ enum BeamAnimation {
         )
     }
 
-    /// Resolves a bloom-gradient size multiplier variable.
+    // Resolves a bloom-gradient size multiplier variable.
     static func multValue(_ mult: String, _ v: LineFrameValues) -> Double {
         switch mult {
         case "spike": return v.spike
@@ -93,9 +93,9 @@ enum BeamAnimation {
     }
 }
 
-/// Time-based fade state — shader uniforms can't be driven by `withAnimation`,
-/// so the fade is evaluated per-frame inside each layer's `TimelineView`
-/// (web parity: beam-fade-in 0.6 s / beam-fade-out 0.5 s, CSS `ease`).
+// Time-based fade state — shader uniforms can't be driven by `withAnimation`,
+// so the fade is evaluated per-frame inside each layer's `TimelineView`
+// (web parity: beam-fade-in 0.6 s / beam-fade-out 0.5 s, CSS `ease`).
 struct BeamFade: Equatable {
     var from: Double
     var target: Double
@@ -111,11 +111,11 @@ struct BeamFade: Equatable {
     }
 }
 
-/// Blob record encoding for the `beamBlobLayer` shader — 14 floats per blob:
-/// [rx, ry, cxPx, cyPx, r, g, b, a0, p1, a1, p2, a2, p3, reserved].
-/// Mirrors border-beam-native's blobShader.ts encoders.
+// Blob record encoding for the `beamBlobLayer` shader — 14 floats per blob:
+// [rx, ry, cxPx, cyPx, r, g, b, a0, p1, a1, p2, a2, p3, reserved].
+// Mirrors border-beam-native's blobShader.ts encoders.
 enum BlobEncoder {
-    /// Plain 2-stop CSS `color → transparent` blob (linear alpha falloff).
+    // Plain 2-stop CSS `color → transparent` blob (linear alpha falloff).
     static func simple(
         rx: Double, ry: Double, cx: Double, cy: Double, color: BeamRGBA, alpha: Double? = nil
     ) -> [Float] {
@@ -127,7 +127,7 @@ enum BlobEncoder {
         ]
     }
 
-    /// Blob from spec bloom stops (2-4 stops; RGB from the first stop).
+    // Blob from spec bloom stops (2-4 stops; RGB from the first stop).
     static func stops(
         rx: Double, ry: Double, cx: Double, cy: Double, stops: [BeamSpec.BloomStop]
     ) -> [Float] {
@@ -164,6 +164,6 @@ enum BlobEncoder {
         ]
     }
 
-    /// Disabled radial-mask uniform.
+    // Disabled radial-mask uniform.
     static let noRadial: [Float] = [0, 0, 1, 1, 0.5, 0.5, 0]
 }

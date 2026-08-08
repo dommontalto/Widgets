@@ -49,8 +49,8 @@ struct ExerciseLibraryRow: View {
 
     private var thumbnail: some View {
         Image(systemName: exercise.category.symbol)
-            .font(.standardSFPro(size: .standout4, weight: .light))
-            .foregroundStyle(exercise.category.accentColor)
+            .font(.standard(size: .standout4, weight: .light))
+            .foregroundStyle(Color.lightTextColor)
             .frame(width: Constants.thumbnailWidth)
     }
 

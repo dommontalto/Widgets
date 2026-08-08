@@ -9,7 +9,7 @@ import SwiftUI
 
 nonisolated struct ExerciseSetLine: Identifiable {
     let id = UUID()
-    /// Warm-up and drop sets render their own glyph in place of a set number.
+    // Warm-up and drop sets render their own glyph in place of a set number.
     let kind: ExerciseSetKind
     let reps: String
     let weight: String
@@ -18,13 +18,14 @@ nonisolated struct ExerciseSetLine: Identifiable {
 
 nonisolated struct ExerciseSetGroup: Identifiable {
     let id = UUID()
-    /// A workout date in the exercise library, an exercise name after a workout.
+    // A workout date in the exercise library, an exercise name after a workout.
     let title: String
     let lines: [ExerciseSetLine]
 }
 
 struct ExerciseSetHistoryList: View {
     let groups: [ExerciseSetGroup]
+    var cardColor: Color = .defaultSheetModalCards
     var onTitleTap: ((ExerciseSetGroup) -> Void)?
 
     var body: some View {
@@ -34,14 +35,15 @@ struct ExerciseSetHistoryList: View {
                     group: group,
                     repsTemplate: repsTemplate,
                     weightTemplate: weightTemplate,
+                    cardColor: cardColor,
                     onTitleTap: onTitleTap.map { tap in { tap(group) } }
                 )
             }
         }
     }
 
-    /// Longest values across every group, so the columns line up between cards
-    /// rather than per card.
+    // Longest values across every group, so the columns line up between cards
+    // rather than per card.
     private var repsTemplate: String {
         groups.flatMap(\.lines).map(\.reps).max(by: { $0.count < $1.count }) ?? ""
     }
@@ -55,6 +57,7 @@ struct ExerciseSetHistoryCard: View {
     let group: ExerciseSetGroup
     let repsTemplate: String
     let weightTemplate: String
+    var cardColor: Color = .defaultSheetModalCards
     var onTitleTap: (() -> Void)?
 
     var body: some View {
@@ -73,7 +76,7 @@ struct ExerciseSetHistoryCard: View {
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing1x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: cardColor))
     }
 
     @ViewBuilder private var title: some View {

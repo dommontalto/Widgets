@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Resolved configuration for the `line` family.
+// Resolved configuration for the `line` family.
 struct LineBeamConfig {
     let variant: BeamColorVariant
     let theme: String
@@ -22,7 +22,7 @@ struct LineBeamConfig {
     var finalSaturation: Double { saturation ?? themeConfig.saturation }
 }
 
-/// The three `line` layers: inner glow (z1), stroke band (z2), bloom (z3).
+// The three `line` layers: inner glow (z1), stroke band (z2), bloom (z3).
 struct LineBeamLayers: View {
     let config: LineBeamConfig
     let fade: BeamFade

@@ -10,23 +10,29 @@ import SwiftUI
 struct ExercisePreWorkoutSheet: View {
     let workout: ExerciseQuickWorkout
     var chrome: ExercisePageChrome = .sheet
-    /// Ends the whole run. Only the flow can do that from a pushed leg, where
-    /// `dismiss` would pop back instead.
+    // Ends the whole run. Only the flow can do that from a pushed leg, where
+    // `dismiss` would pop back instead.
     var onClose: (() -> Void)?
-    /// Hands the workout to the presenter, which pushes the live screen inside
-    /// the same presentation.
+    // Hands the workout to the presenter, which pushes the live screen inside
+    // the same presentation.
     var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
 
     @Environment(ExerciseWorkoutBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
-    @State private var openedExercise: ExerciseDefinition?
+    @State private var openedExerciseName: String?
+    @State private var isEditing = false
 
     var body: some View {
         page
-            .sheet(item: $openedExercise) { exercise in
-                BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
-                    ExerciseDetailSheet(exercise: exercise)
+            .navigationDestination(isPresented: $isEditing) {
+                ExerciseCreateWorkoutSheet(editing: workout) { isEditing = false }
+            }
+            .navigationDestination(item: $openedExerciseName) { name in
+                if let exercise = ExerciseDemoLibrary.exercise(named: name) {
+                    ExerciseDetailSheet(exercise: exercise, cardColor: .defaultCards)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .background(Color.defaultBackground.ignoresSafeArea())
                 }
             }
     }
@@ -68,18 +74,14 @@ struct ExercisePreWorkoutSheet: View {
 
     private var content: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing0x) {
+            VStack(alignment: .leading, spacing: .spacing3x) {
                 header
-                    .padding(.top, .spacing3x)
 
                 statsRow
-                    .padding(.top, .spacing4x)
 
                 exerciseRows
-                    .padding(.top, .spacing5x)
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.bottom, Constants.controlSize + .spacing5x)
+            .padding(.spacing3x)
         }
         .safeAreaInset(edge: .bottom) {
             controls
@@ -111,7 +113,7 @@ struct ExercisePreWorkoutSheet: View {
         HStack(spacing: .spacing0x) {
             statColumn(
                 symbol: "text.line.magnify",
-                color: .defaultBlue,
+                color: .lightTextColor,
                 label: "Exercises:",
                 value: "\(workout.items.count)"
             )
@@ -121,7 +123,7 @@ struct ExercisePreWorkoutSheet: View {
 
             statColumn(
                 symbol: "text.line.3.summary",
-                color: .defaultGreen,
+                color: .lightTextColor,
                 label: "Total sets:",
                 value: "\(totalSets)"
             )
@@ -139,7 +141,7 @@ struct ExercisePreWorkoutSheet: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing1x) {
                 Image(systemName: symbol)
-                    .font(.standardSFPro(size: .body1, weight: .regular))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(color)
 
                 BrightText(label, size: .body1)
@@ -159,7 +161,7 @@ struct ExercisePreWorkoutSheet: View {
         VStack(spacing: .spacing2x) {
             ForEach(workout.items) { item in
                 Button {
-                    openedExercise = ExerciseDemoLibrary.exercise(named: item.exerciseName)
+                    openedExerciseName = item.exerciseName
                 } label: {
                     exerciseRow(item)
                 }
@@ -168,7 +170,7 @@ struct ExercisePreWorkoutSheet: View {
         }
     }
 
-    /// Mirrors ExerciseLibraryRow, with the set count where its add button sits.
+    // Mirrors ExerciseLibraryRow, with the set count where its add button sits.
     private func exerciseRow(_ item: ExerciseTemplateItem) -> some View {
         HStack(spacing: .spacing2x) {
             thumbnail(for: item)
@@ -190,15 +192,15 @@ struct ExercisePreWorkoutSheet: View {
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, minHeight: ExerciseLibraryRow.Constants.minHeight, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
+        .modifier(CardModifier(cornerRadius: .cornerRadius24))
     }
 
     @ViewBuilder
     private func thumbnail(for item: ExerciseTemplateItem) -> some View {
         if let exercise = ExerciseDemoLibrary.exercise(named: item.exerciseName) {
             Image(systemName: exercise.category.symbol)
-                .font(.standardSFPro(size: .standout4, weight: .light))
-                .foregroundStyle(exercise.category.accentColor)
+                .font(.standard(size: .standout4, weight: .light))
+                .foregroundStyle(Color.lightTextColor)
                 .frame(width: Constants.thumbnailWidth)
         } else {
             Color.clear
@@ -215,24 +217,28 @@ struct ExercisePreWorkoutSheet: View {
                     withAnimation(.brightSnappy) { builder.duplicate(workout) }
                 }
 
+                Button("Edit", systemImage: "pencil") {
+                    builder.loadDraft(from: workout)
+                    isEditing = true
+                }
+
                 Button("Delete", systemImage: "trash", role: .destructive) {
                     builder.delete(workout)
                     close()
                 }
+                .tint(.defaultRed)
             } label: {
-                // The Menu owns the tap, so the button is label only.
-                BrightRoundButton(systemImage: "ellipsis", size: .extraLarge)
+                BrightRoundButton(systemImage: "ellipsis", size: .finalBossLarge)
                     .allowsHitTesting(false)
             }
 
             Spacer(minLength: .spacing2x)
 
-            BrightRoundButton(systemImage: "play.fill", size: .extraLarge, color: .defaultGreen) {
+            BrightRoundButton(systemImage: "play.fill", size: .finalBossLarge, color: .defaultGreen) {
                 onStart(workout)
             }
         }
-        .padding(.horizontal, .spacing4x)
-        .padding(.bottom, .spacing1x)
+        .padding(.spacing4x)
     }
 
     // MARK: - Derived state
@@ -261,7 +267,7 @@ struct ExercisePreWorkoutSheet: View {
         static let statColumnWidth: CGFloat = 110
         static let statDividerHeight: CGFloat = 58
         static let thumbnailWidth: CGFloat = 40
-        static let controlSize = BrightButtonSizes.extraLarge.rawValue
+        static let controlSize = BrightButtonSizes.finalBossLarge.rawValue
     }
 }
 

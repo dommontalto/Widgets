@@ -17,8 +17,8 @@ struct BrightPillButton: View {
     let size: FontSizes?
     let buttonSize: BrightButtonSizes
     let isClear: Bool
-    /// Matches InlineTabPill: unselected dims the whole capsule and drops the
-    /// label to 60%. Defaults to true, so a plain button is full strength.
+    // Matches InlineTabPill: unselected dims the whole capsule and drops the
+    // label to 60%. Defaults to true, so a plain button is full strength.
     let isSelected: Bool
     let onTapCallback: () -> Void
 
@@ -71,7 +71,7 @@ struct BrightPillButton: View {
                 }
                 BrightText(title, size: resolvedSize, color: resolvedTextColor)
             }
-            .padding(.horizontal, .spacing105x)
+            .padding(.horizontal, .spacing2x)
             .frame(height: buttonSize.rawValue)
         }
         .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())

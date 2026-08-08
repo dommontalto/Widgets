@@ -13,46 +13,46 @@ nonisolated extension CGFloat {
 
     private static var base: CGFloat = 6
 
-    /// 0pt spacing.
+    // 0pt spacing.
     static var spacing0x: CGFloat = 0
 
-    /// 1.5pt spacing.
+    // 1.5pt spacing.
     static var spacing025x: CGFloat = base / 4
 
-    /// 3pt spacing.
+    // 3pt spacing.
     static var spacing05x: CGFloat = base / 2
 
-    /// 6pt spacing.
+    // 6pt spacing.
     static var spacing1x: CGFloat = base
 
-    /// 9pt spacing.
+    // 9pt spacing.
     static var spacing105x: CGFloat = base + base / 2
 
-    /// 12pt spacing.
+    // 12pt spacing.
     static var spacing2x: CGFloat = base * 2
 
-    /// 18pt spacing.
+    // 18pt spacing.
     static var spacing3x: CGFloat = base * 3
 
-    /// 24pt spacing.
+    // 24pt spacing.
     static var spacing4x: CGFloat = base * 4
 
-    /// 30pt spacing.
+    // 30pt spacing.
     static var spacing5x: CGFloat = base * 5
 
-    /// 36pt spacing.
+    // 36pt spacing.
     static var spacing6x: CGFloat = base * 6
 
-    /// 42pt spacing.
+    // 42pt spacing.
     static var spacing7x: CGFloat = base * 7
 
-    /// 48pt spacing.
+    // 48pt spacing.
     static var spacing8x: CGFloat = base * 8
 
-    /// 54pt spacing.
+    // 54pt spacing.
     static var spacing9x: CGFloat = base * 9
 
-    /// 60pt spacing.
+    // 60pt spacing.
     static var spacing10x: CGFloat = base * 10
 
     static var spacing11x: CGFloat = base * 11
@@ -61,13 +61,13 @@ nonisolated extension CGFloat {
 
     // MARK: - Kerning
 
-    /// Kerning size 0.
+    // Kerning size 0.
     static var defaultKerning: CGFloat = 0
 
-    /// Kerning size 0.2381.
+    // Kerning size 0.2381.
     static var smallKerning: CGFloat = 0.2381
 
-    /// Kerning size 0.5.
+    // Kerning size 0.5.
     static var mediumKerning: CGFloat = 0.5
 
     // MARK: - Corner Radius

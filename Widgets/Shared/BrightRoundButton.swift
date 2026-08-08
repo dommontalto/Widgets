@@ -21,6 +21,7 @@ struct BrightRoundButton: View {
     let color: Color?
     let imageColor: Color?
     let imageRotation: Angle
+    let imageOffset: CGSize
     let haptic: BrightHaptic?
     let onTapCallback: (() -> Void)?
 
@@ -37,6 +38,7 @@ struct BrightRoundButton: View {
         color: Color? = nil,
         imageColor: Color? = nil,
         imageRotation: Angle = .zero,
+        imageOffset: CGSize = .zero,
         haptic: BrightHaptic? = .light,
         onTapCallback: (() -> Void)? = nil
     ) {
@@ -46,6 +48,7 @@ struct BrightRoundButton: View {
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
+        self.imageOffset = imageOffset
         self.haptic = haptic
         self.onTapCallback = onTapCallback
     }
@@ -65,6 +68,7 @@ struct BrightRoundButton: View {
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
+        self.imageOffset = .zero
         self.haptic = haptic
         self.onTapCallback = onTapCallback
     }
@@ -82,6 +86,7 @@ struct BrightRoundButton: View {
         self.color = color
         self.imageColor = nil
         self.imageRotation = .zero
+        self.imageOffset = .zero
         self.haptic = .light
         self.onTapCallback = onTapCallback
     }
@@ -91,10 +96,10 @@ struct BrightRoundButton: View {
         onTapCallback?()
     }
 
-    /// At `.extraLarge` a passed colour reads as a tint rather than a fill: the
-    /// glyph takes the colour at full strength over a 30% wash of it.
+    // At `.extraLarge` a passed colour reads as a tint rather than a fill: the
+    // glyph takes the colour at full strength over a 30% wash of it.
     private var isTinted: Bool {
-        size == .extraLarge && color != nil
+        size.isPrimary && color != nil
     }
 
     private var resolvedImageColor: Color {
@@ -134,13 +139,14 @@ struct BrightRoundButton: View {
     }
 
     private var resolvedHaptic: BrightHaptic? {
-        size == .extraLarge ? haptic : nil
+        size.isPrimary ? haptic : nil
     }
 
     var body: some View {
         Button(action: tapped) {
             imageView
                 .rotationEffect(imageRotation)
+                .offset(imageOffset)
                 .frame(width: size.rawValue, height: size.rawValue)
                 .foregroundStyle(resolvedImageColor)
                 .background(resolvedBackground, in: Circle())

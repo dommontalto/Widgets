@@ -74,8 +74,8 @@ struct VaultDatapointDetailSheet: View {
 
     // MARK: - Graph
 
-    /// Readings inside the selected window, plotted at their date with
-    /// `markerPosition` as the y-value. One reading renders as a single dot.
+    // Readings inside the selected window, plotted at their date with
+    // `markerPosition` as the y-value. One reading renders as a single dot.
     private var graph: some View {
         let days = Self.windowDays(for: selectedRange)
         let end = readings.compactMap { VaultDemoData.parseDate($0.date) }.max() ?? .now

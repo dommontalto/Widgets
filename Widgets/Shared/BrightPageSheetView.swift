@@ -15,7 +15,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     let showCloseButton: Bool
     let showBackButton: Bool
     let backButtonCallback: (() -> Void)?
-    /// Set false to let content run under the home indicator, e.g. a full-bleed map.
+    // Set false to let content run under the home indicator, e.g. a full-bleed map.
     let bottomSafeArea: Bool
     let path: Binding<NavigationPath>?
     let trailing: Trailing

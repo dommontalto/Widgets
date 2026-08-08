@@ -46,7 +46,7 @@ struct ExerciseHistoryWidget: View {
         } label: {
             HStack(spacing: .spacing105x) {
                 Image(systemName: workout.type == .cardio ? "figure.run" : "dumbbell")
-                    .font(.standardSFPro(size: .subheading2, weight: .light))
+                    .font(.standard(size: .subheading2, weight: .light))
                     .foregroundStyle(color)
                     .frame(width: Constants.iconWidth)
 
@@ -61,7 +61,7 @@ struct ExerciseHistoryWidget: View {
                 VStack(alignment: .trailing, spacing: .spacing05x) {
                     BrightText(workout.timestamp, size: .body3, color: .lightTextColor)
                     Image(systemName: "chevron.right")
-                        .font(.standardSFPro(size: .body5, weight: .regular))
+                        .font(.standard(size: .body5, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)
                 }
             }

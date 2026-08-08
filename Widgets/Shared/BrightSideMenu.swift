@@ -8,9 +8,9 @@
 
 import SwiftUI
 
-/// A reusable left-edge slide-in side menu.
-/// Driven by a horizontal pan gesture (with a left-edge bias for nested scroll views)
-/// and a bindable `isExpanded` flag for programmatic open/close.
+// A reusable left-edge slide-in side menu.
+// Driven by a horizontal pan gesture (with a left-edge bias for nested scroll views)
+// and a bindable `isExpanded` flag for programmatic open/close.
 struct BrightSideMenu<MenuContent: View, Content: View>: View {
     var isEnabled: Bool = true
     var canOpenBySwipe: Bool = true

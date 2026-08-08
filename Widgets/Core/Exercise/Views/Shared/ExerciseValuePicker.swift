@@ -8,20 +8,20 @@
 import SwiftUI
 
 struct ExerciseValuePicker: View {
-    struct Step: Sendable {
+    nonisolated struct Step: Sendable {
         let value: Int
-        /// Spelled out under the rail when the number needs explaining.
+        // Spelled out under the rail when the number needs explaining.
         var label: String?
     }
 
     let title: String
     let symbol: String
     let tint: Color
-    /// Sits above the rail, naming what the number counts.
+    // Sits above the rail, naming what the number counts.
     var caption: String?
     let steps: [Step]
-    /// Where the rail opens when nothing has been picked yet. Defaults to the
-    /// middle of the scale.
+    // Where the rail opens when nothing has been picked yet. Defaults to the
+    // middle of the scale.
     var defaultValue: Int?
     var actionTitle = "Add"
     @Binding var value: Int?
@@ -33,10 +33,10 @@ struct ExerciseValuePicker: View {
     @State private var scrollTick = 0
 
     var body: some View {
-        VStack(spacing: .spacing6x) {
+        VStack(spacing: .spacing4x) {
             header
 
-            VStack(spacing: .spacing4x) {
+            VStack(spacing: .spacing2x) {
                 if let caption {
                     BrightText(caption, size: .body1)
                 }
@@ -56,9 +56,7 @@ struct ExerciseValuePicker: View {
                 onClose()
             }
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing3x)
-        .padding(.bottom, .spacing1x)
+        .padding(.spacing3x)
         .frame(maxWidth: .infinity)
         .onAppear {
             guard !steps.isEmpty else { return }
@@ -73,7 +71,7 @@ struct ExerciseValuePicker: View {
         HStack(spacing: .spacing2x) {
             HStack(spacing: .spacing105x) {
                 Image(systemName: symbol)
-                    .font(.standardSFPro(size: .standout3, weight: .medium))
+                    .font(.standard(size: .standout3, weight: .medium))
                     .foregroundStyle(tint)
 
                 BrightText(title, size: .standout1)
@@ -89,7 +87,7 @@ struct ExerciseValuePicker: View {
 
     private var rail: some View {
         ScrollView(.horizontal) {
-            HStack(spacing: .spacing0x) {
+            HStack(spacing: Constants.itemGap) {
                 ForEach(steps, id: \.value) { step in
                     Button {
                         withAnimation(.brightBouncy) {
@@ -119,11 +117,25 @@ struct ExerciseValuePicker: View {
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
         .contentMargins(.horizontal, railInset, for: .scrollContent)
+        // The neighbours dissolve toward the rail's edges instead of being cut
+        // off by them. The flat middle is exactly the centred item, so only the
+        // flanking values pick up the fade.
+        .mask {
+            HStack(spacing: .spacing0x) {
+                LinearGradient(stops: Constants.fadeInStops, startPoint: .leading, endPoint: .trailing)
+                    .frame(width: railInset)
+
+                Color.black
+
+                LinearGradient(stops: Constants.fadeOutStops, startPoint: .leading, endPoint: .trailing)
+                    .frame(width: railInset)
+            }
+        }
         .onGeometryChange(for: CGFloat.self, of: \.size.width) { railWidth = $0 }
         // Read off the offset rather than which items are visible: four values
         // fit the rail at once, so visibility can't say which one is centred.
         .onScrollGeometryChange(for: Int.self) { geometry in
-            Int(((geometry.contentOffset.x + geometry.contentInsets.leading) / Constants.itemWidth).rounded())
+            Int(((geometry.contentOffset.x + geometry.contentInsets.leading) / Constants.itemPitch).rounded())
         } action: { _, index in
             guard steps.indices.contains(index), steps[index].value != selection else { return }
             selection = steps[index].value
@@ -137,11 +149,27 @@ struct ExerciseValuePicker: View {
         return (railWidth - Constants.itemWidth) / 2
     }
 
-    private enum Constants {
-        static let itemWidth: CGFloat = 80
+    // nonisolated: referenced from Sendable closures (scrollTransition,
+    // onScrollGeometryChange), which can't touch the view's MainActor state.
+    private nonisolated enum Constants {
+        static let itemWidth: CGFloat = 52
+        static let itemGap: CGFloat = .spacing2x
+        static let itemPitch = itemWidth + itemGap
         static let neighbourScale: CGFloat = 0.75
-        /// The 1–9 RPE scale: 1 is a set you could keep going all day, 9 leaves
-        /// nothing behind.
+        // Clear for the first stretch either side, so a neighbour is gone well
+        // before the rail's edge rather than dimming the whole way out.
+        static let fadeInStops: [Gradient.Stop] = [
+            .init(color: .clear, location: 0),
+            .init(color: .clear, location: 0.7),
+            .init(color: .black, location: 0.92),
+        ]
+        static let fadeOutStops: [Gradient.Stop] = [
+            .init(color: .black, location: 0.08),
+            .init(color: .clear, location: 0.3),
+            .init(color: .clear, location: 1),
+        ]
+        // The 1–9 RPE scale: 1 is a set you could keep going all day, 9 leaves
+        // nothing behind.
         static let rpeScale = [
             Step(value: 1, label: "Extremely easy"),
             Step(value: 2, label: "Very easy"),
@@ -153,7 +181,7 @@ struct ExerciseValuePicker: View {
             Step(value: 8, label: "Near maximum"),
             Step(value: 9, label: "Maximum effort"),
         ]
-        /// A set with no reps typed yet still needs a rail to swipe.
+        // A set with no reps typed yet still needs a rail to swipe.
         static let minimumFailedReps = 12
     }
 }
@@ -161,11 +189,11 @@ struct ExerciseValuePicker: View {
 // MARK: - The card's pickers
 
 extension ExerciseValuePicker {
-    /// Rates how hard the set felt.
+    // Rates how hard the set felt.
     static func rpe(_ rpe: Binding<Int?>, onClose: @escaping () -> Void = {}) -> Self {
         ExerciseValuePicker(
             title: "RPE",
-            symbol: "gauge.with.needle",
+            symbol: "gauge.open.with.lines.needle.33percent",
             tint: .defaultPink,
             steps: Constants.rpeScale,
             value: rpe,
@@ -173,8 +201,8 @@ extension ExerciseValuePicker {
         )
     }
 
-    /// Marks a set as failed and records the rep it went down on. The rail can't
-    /// run past the reps the set was going for.
+    // Marks a set as failed and records the rep it went down on. The rail can't
+    // run past the reps the set was going for.
     static func failedSet(
         targetReps: Int,
         failedRep: Binding<Int?>,
@@ -188,7 +216,6 @@ extension ExerciseValuePicker {
             tint: .defaultRed,
             caption: "Failed at rep",
             steps: (1...reps).map { Step(value: $0) },
-            // A set usually goes down on the rep it was aiming for, so start there.
             defaultValue: min(max(targetReps, 1), reps),
             actionTitle: "Confirm",
             value: failedRep,

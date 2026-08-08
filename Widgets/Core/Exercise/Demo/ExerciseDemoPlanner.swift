@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// Demo data for the weekly workout planner. Kept apart from ExerciseDemoData
-/// because it depends on the planner's own models.
+// Demo data for the weekly workout planner. Kept apart from ExerciseDemoData
+// because it depends on the planner's own models.
 enum ExerciseDemoPlanner {
     static let templates: [ExercisePlannedWorkout] = [
         ExercisePlannedWorkout(title: "Back & Biceps", subtitle: "10 exercises", kind: .strength),

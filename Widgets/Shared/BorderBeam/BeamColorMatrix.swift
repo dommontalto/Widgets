@@ -1,12 +1,12 @@
 import Foundation
 
-/// Builds the 3x3 color matrix for the CSS filter chain
-/// `hue-rotate(θ) brightness(b) saturate(s)` — applied left-to-right, so the
-/// composed matrix is `Msaturate × (b · Mhue)`.
-///
-/// Matrices follow the W3C Filter Effects spec (feColorMatrix `hueRotate` /
-/// `saturate`), which is what browsers use — NOT a true HSL rotation. Using the
-/// same math keeps native colors identical to the web version.
+// Builds the 3x3 color matrix for the CSS filter chain
+// `hue-rotate(θ) brightness(b) saturate(s)` — applied left-to-right, so the
+// composed matrix is `Msaturate × (b · Mhue)`.
+//
+// Matrices follow the W3C Filter Effects spec (feColorMatrix `hueRotate` /
+// `saturate`), which is what browsers use — NOT a true HSL rotation. Using the
+// same math keeps native colors identical to the web version.
 enum BeamColorMatrix {
     static func hueRotate(degrees: Double) -> [Double] {
         let rad = degrees * .pi / 180
@@ -41,8 +41,8 @@ enum BeamColorMatrix {
         return out
     }
 
-    /// Composed matrix for `hue-rotate(hueDegrees) brightness(brightness)
-    /// saturate(saturation)` as `Float`s ready for the shader.
+    // Composed matrix for `hue-rotate(hueDegrees) brightness(brightness)
+    // saturate(saturation)` as `Float`s ready for the shader.
     static func composed(hueDegrees: Double, brightness: Double, saturation: Double) -> [Float] {
         let hue = hueRotate(degrees: hueDegrees).map { $0 * brightness }
         return multiply(saturate(saturation), hue).map { Float($0) }

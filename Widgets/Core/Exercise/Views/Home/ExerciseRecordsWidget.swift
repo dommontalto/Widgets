@@ -71,7 +71,7 @@ struct ExerciseRecordsWidget: View {
         } label: {
             HStack(spacing: .spacing105x) {
                 Image(systemName: "trophy")
-                    .font(.standardSFPro(size: .subheading2, weight: .light))
+                    .font(.standard(size: .subheading2, weight: .light))
                     .foregroundStyle(Color.defaultOrange)
                     .frame(width: Constants.iconWidth)
 
@@ -86,7 +86,7 @@ struct ExerciseRecordsWidget: View {
                 VStack(alignment: .trailing, spacing: .spacing05x) {
                     BrightText(record.date, size: .body3, color: .lightTextColor)
                     Image(systemName: "chevron.right")
-                        .font(.standardSFPro(size: .body5, weight: .regular))
+                        .font(.standard(size: .body5, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)
                 }
             }

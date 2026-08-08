@@ -23,37 +23,22 @@ struct ExerciseConsistencyWidget: View {
     }
 
     private let visibleColumns = 16
+
     private let cellSpacing: CGFloat = .spacing05x
+
     private let cellCornerRadius: CGFloat = 4
+
     private let dayLabelWidth: CGFloat = 14
+
     private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
+
     private let swipeThreshold: CGFloat = 40
 
     @State private var months = ExerciseDemoData.consistencyMonths()
+
     @State private var activePage: Int? = 0
+
     @State private var gridWidth: CGFloat = 0
-
-    private var cellSize: CGFloat {
-        guard gridWidth > 0 else { return 14 }
-        let gaps = CGFloat(visibleColumns - 1) * cellSpacing
-        return (gridWidth - dayColumnWidth - gaps) / CGFloat(visibleColumns)
-    }
-
-    private var visibleMonths: [ExerciseMonthData] {
-        var remaining = visibleColumns
-        var result: [ExerciseMonthData] = []
-        for month in months {
-            guard remaining > 0 else { break }
-            let columns = Array(month.columns.prefix(remaining))
-            remaining -= columns.count
-            result.append(ExerciseMonthData(name: month.name, columns: columns))
-        }
-        return result
-    }
-
-    private var currentPage: Page {
-        Page(rawValue: activePage ?? 0) ?? .strength
-    }
 
     var body: some View {
         VStack(spacing: .spacing2x) {
@@ -71,6 +56,8 @@ struct ExerciseConsistencyWidget: View {
         }
         .animation(.brightEaseInOut, value: activePage)
     }
+
+    // MARK: - Heatmap
 
     private func card(_ page: Page) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -164,6 +151,38 @@ struct ExerciseConsistencyWidget: View {
         }
     }
 
+    // MARK: - Derived state
+
+    private var currentPage: Page {
+        Page(rawValue: activePage ?? 0) ?? .strength
+    }
+
+    private var visibleMonths: [ExerciseMonthData] {
+        var remaining = visibleColumns
+        var result: [ExerciseMonthData] = []
+        for month in months {
+            guard remaining > 0 else { break }
+            let columns = Array(month.columns.prefix(remaining))
+            remaining -= columns.count
+            result.append(ExerciseMonthData(name: month.name, columns: columns))
+        }
+        return result
+    }
+
+    private var cellSize: CGFloat {
+        guard gridWidth > 0 else { return 14 }
+        let gaps = CGFloat(visibleColumns - 1) * cellSpacing
+        return (gridWidth - dayColumnWidth - gaps) / CGFloat(visibleColumns)
+    }
+
+    private var dayColumnWidth: CGFloat {
+        dayLabelWidth + .spacing105x
+    }
+
+    private func monthWidth(_ month: ExerciseMonthData) -> CGFloat {
+        CGFloat(month.columns.count) * (cellSize + cellSpacing) - cellSpacing
+    }
+
     private func color(for type: ExerciseDayType?, on page: Page) -> Color {
         guard let type else { return .clear }
         switch page {
@@ -184,18 +203,10 @@ struct ExerciseConsistencyWidget: View {
             }
         }
     }
-
-    private var dayColumnWidth: CGFloat {
-        dayLabelWidth + .spacing105x
-    }
-
-    private func monthWidth(_ month: ExerciseMonthData) -> CGFloat {
-        CGFloat(month.columns.count) * (cellSize + cellSpacing) - cellSpacing
-    }
 }
 
-/// A pan that only claims horizontal movement, so paging the heatmap doesn't
-/// fight the enclosing vertical scroll.
+// A pan that only claims horizontal movement, so paging the heatmap doesn't
+// fight the enclosing vertical scroll.
 private struct HorizontalPagingGesture: UIGestureRecognizerRepresentable {
     var onSwipe: (CGFloat) -> Void
 

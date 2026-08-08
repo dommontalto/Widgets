@@ -43,7 +43,7 @@ struct ExerciseScoresWidget: View {
                 VStack(spacing: .spacing1x) {
                     BrightText("\(value)", size: .huge, color: .black)
                     icon()
-                        .font(.standardSFPro(size: .subheading, weight: .medium))
+                        .font(.standard(size: .subheading, weight: .medium))
                 }
                 .foregroundStyle(Color.black)
                 .blendMode(.overlay)

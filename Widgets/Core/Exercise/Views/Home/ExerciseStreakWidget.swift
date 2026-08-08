@@ -17,7 +17,7 @@ struct ExerciseStreakWidget: View {
             VStack(alignment: .leading, spacing: .spacing05x) {
                 HStack(spacing: .spacing1x) {
                     Image(systemName: "flame")
-                        .font(.standardSFPro(size: .standout3, weight: .light))
+                        .font(.standard(size: .standout3, weight: .light))
                         .foregroundStyle(Color.defaultOrange)
                     BrightText("\(streakWeeks)", size: .huge)
                         .monospacedDigit()

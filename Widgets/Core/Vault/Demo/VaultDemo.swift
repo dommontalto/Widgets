@@ -125,7 +125,7 @@ enum VaultDemoData {
         )
     }
 
-    /// SplitMix64 finalizer — deterministic scatter, identical on every launch.
+    // SplitMix64 finalizer — deterministic scatter, identical on every launch.
     private static func scatterHash(_ x: Int) -> UInt64 {
         var z = UInt64(x) &+ 0x9E37_79B9_7F4A_7C15
         z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
@@ -202,7 +202,7 @@ private extension Double {
     }
 }
 
-/// One day's cohort percentile, driving the VaultOverviewWidget line chart.
+// One day's cohort percentile, driving the VaultOverviewWidget line chart.
 struct VaultWeekPoint: Identifiable {
     var id: String { day }
     let day: String

@@ -1,9 +1,9 @@
 import Foundation
 import CoreGraphics
 
-/// Decoded `beam-spec.json` — the platform-neutral spec generated from the web
-/// library (`npm run spec` in the repo root). All hand-tuned palette/preset/
-/// oscillator data comes from here; nothing visual is hard-coded in Swift.
+// Decoded `beam-spec.json` — the platform-neutral spec generated from the web
+// library (`npm run spec` in the repo root). All hand-tuned palette/preset/
+// oscillator data comes from here; nothing visual is hard-coded in Swift.
 struct BeamSpec: Decodable {
     struct SizeConfig: Decodable {
         let borderRadius: Double
@@ -16,7 +16,7 @@ struct BeamSpec: Decodable {
         let strokeOpacity: Double
         let innerOpacity: Double
         let bloomOpacity: Double
-        /// CSS color string, e.g. "rgba(255, 255, 255, 0.27)" or "transparent".
+        // CSS color string, e.g. "rgba(255, 255, 255, 0.27)" or "transparent".
         let innerShadow: String
         let saturation: Double
         let brightness: Double?
@@ -24,11 +24,11 @@ struct BeamSpec: Decodable {
     }
 
     struct GradientBlob: Decodable {
-        /// CSS color string "rgb(r, g, b)" / "rgba(r, g, b, a)".
+        // CSS color string "rgb(r, g, b)" / "rgba(r, g, b, a)".
         let color: String
-        /// "x% y%" position (values may be negative or >100).
+        // "x% y%" position (values may be negative or >100).
         let pos: String
-        /// "Wpx Hpx" ellipse *radii* per CSS explicit-size radial gradients.
+        // "Wpx Hpx" ellipse *radii* per CSS explicit-size radial gradients.
         let size: String
     }
 
@@ -74,7 +74,7 @@ struct BeamSpec: Decodable {
     }
 
     struct Rotate: Decodable {
-        /// [position%, alpha] stop pairs on white (dark) / black (light).
+        // [position%, alpha] stop pairs on white (dark) / black (light).
         let whiteGradientStops: [String: [[Double]]]
         let bloomGradientStops: [String: [[Double]]]
         let beamMaskStops: [[Double]]
@@ -120,7 +120,7 @@ struct BeamSpec: Decodable {
     struct MaskEllipse: Decodable {
         let w: Double
         let h: Double
-        /// [posPercent, alpha] of the soft middle stop.
+        // [posPercent, alpha] of the soft middle stop.
         let softStop: [Double]
     }
 
@@ -128,7 +128,7 @@ struct BeamSpec: Decodable {
         let w: Double
         let h: Double
         let yOffset: Double
-        /// [posPercent, alpha] pairs.
+        // [posPercent, alpha] pairs.
         let stops: [[Double]]
         let onBlack: Bool?
     }
@@ -143,12 +143,12 @@ struct BeamSpec: Decodable {
 
     struct BloomMult: Decodable {
         let base: Double
-        /// 'spike' | 'spike2' | 'inv-spike' | 'inv-spike2' | 'h' | 'w' | 'one'
+        // 'spike' | 'spike2' | 'inv-spike' | 'inv-spike2' | 'h' | 'w' | 'one'
         let mult: String
     }
 
     struct BloomGradient: Decodable {
-        /// Fixed x as % of width; nil = travels with the beam x.
+        // Fixed x as % of width; nil = travels with the beam x.
         let xPct: Double?
         let yOffPx: Double
         let w: BloomMult
@@ -265,7 +265,7 @@ struct BeamSpec: Decodable {
     let line: Line
     let pulse: Pulse
 
-    /// Shared instance decoded once from the bundled resource.
+    // Shared instance decoded once from the bundled resource.
     static let shared: BeamSpec = {
         guard
             let url = Bundle.main.url(forResource: "beam-spec", withExtension: "json"),
@@ -280,7 +280,7 @@ struct BeamSpec: Decodable {
 
 // MARK: - CSS value parsing
 
-/// Simple RGBA color parsed from the spec's CSS color strings.
+// Simple RGBA color parsed from the spec's CSS color strings.
 struct BeamRGBA: Equatable {
     var r: Double
     var g: Double
@@ -289,7 +289,7 @@ struct BeamRGBA: Equatable {
 
     static let clear = BeamRGBA(r: 0, g: 0, b: 0, a: 0)
 
-    /// Parses "rgb(r, g, b)", "rgba(r, g, b, a)" or "transparent".
+    // Parses "rgb(r, g, b)", "rgba(r, g, b, a)" or "transparent".
     init?(css: String) {
         let s = css.trimmingCharacters(in: .whitespaces)
         if s == "transparent" {
@@ -316,7 +316,7 @@ struct BeamRGBA: Equatable {
     }
 }
 
-/// Parses "33% -7.4%" → (0.33, -0.074).
+// Parses "33% -7.4%" → (0.33, -0.074).
 func parsePercentPair(_ value: String) -> CGPoint {
     let parts = value.split(separator: " ")
     func pct(_ s: Substring) -> CGFloat {
@@ -326,7 +326,7 @@ func parsePercentPair(_ value: String) -> CGPoint {
     return CGPoint(x: pct(parts[0]), y: pct(parts[1]))
 }
 
-/// Parses "70px 40px" → (70, 40).
+// Parses "70px 40px" → (70, 40).
 func parsePixelPair(_ value: String) -> CGSize {
     let parts = value.split(separator: " ")
     func px(_ s: Substring) -> CGFloat {

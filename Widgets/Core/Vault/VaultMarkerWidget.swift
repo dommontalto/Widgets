@@ -14,11 +14,11 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
     let lastUpdated: String
     let value: String
     let unit: String
-    /// 0 ... 1 — where the marker sits along the bar.
+    // 0 ... 1 — where the marker sits along the bar.
     let markerPosition: Double
 
-    /// The single lit segment (0...4), derived from `markerPosition`.
-    /// Half-open bands so a value sitting on a seam lights exactly one segment.
+    // The single lit segment (0...4), derived from `markerPosition`.
+    // Half-open bands so a value sitting on a seam lights exactly one segment.
     var litSegmentIndex: Int {
         switch min(1, max(0, markerPosition)) {
         case ..<0.12: 0   // red (low)
@@ -29,7 +29,7 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
         }
     }
 
-    /// Status label matched to the lit colour, rendered by `BrightStatus`.
+    // Status label matched to the lit colour, rendered by `BrightStatus`.
     var statusLabel: String {
         switch litSegmentIndex {
         case 0, 4: "Out of range"

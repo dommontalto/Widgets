@@ -30,17 +30,36 @@ enum ExerciseSetKind: Hashable {
         return false
     }
 
-    /// Warm-ups sit outside the set count; working and drop sets take a number.
+    // Warm-ups sit outside the set count; working and drop sets take a number.
     var countsAsSet: Bool {
         self != .warmUp
     }
-
 
     var color: Color {
         switch self {
         case .warmUp: .defaultGreen
         case .working: .defaultOrange
         case .dropSet: .defaultBrightPink
+        }
+    }
+
+    // Working carries its number, so the menu offers an unnumbered one and lets
+    // the renumbering settle it.
+    static let pickable: [ExerciseSetKind] = [.working(0), .warmUp, .dropSet]
+
+    var pickerLabel: String {
+        switch self {
+        case .warmUp: "Warm-up set"
+        case .working: "Working set"
+        case .dropSet: "Drop set"
+        }
+    }
+
+    var pickerSymbol: String {
+        switch self {
+        case .warmUp: "figure.cooldown"
+        case .working: "number"
+        case .dropSet: "arrow.down"
         }
     }
 }
@@ -62,8 +81,8 @@ enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
         allCases.first { $0.symbol == workout.symbol }
     }
 
-    /// The run icon is the cardio pick — it routes the workout to the live
-    /// cardio screen instead of the set-by-set one.
+    // The run icon is the cardio pick — it routes the workout to the live
+    // cardio screen instead of the set-by-set one.
     var isCardio: Bool { self == .run }
 
     var accentColor: Color {
@@ -144,8 +163,8 @@ final class ExerciseWorkoutBuilder {
         }
     }
 
-    /// Pulls a saved workout back into the draft so the create screen can edit it.
-    /// Template sets carry no rest interval, so they take the default.
+    // Pulls a saved workout back into the draft so the create screen can edit it.
+    // Template sets carry no rest interval, so they take the default.
     func loadDraft(from workout: ExerciseQuickWorkout) {
         reset()
         for item in workout.items {
@@ -180,6 +199,15 @@ final class ExerciseWorkoutBuilder {
             items: added.isEmpty ? workout.items : templateItems
         )
         reset()
+    }
+
+    // Folds a finished run back into the workout it started from, so the sets
+    // and exercises added along the way are there next time.
+    func updateItems(of workoutID: String, to items: [ExerciseTemplateItem]) {
+        guard let index = saved.firstIndex(where: { $0.id == workoutID }) else { return }
+        var workout = saved[index]
+        workout.items = items
+        saved[index] = workout
     }
 
     private func uniqueName(from name: String) -> String {
@@ -233,7 +261,7 @@ final class ExerciseWorkoutBuilder {
         }
     }
 
-    /// Plain-text export of the workout, for sharing out of the sets editor.
+    // Plain-text export of the workout, for sharing out of the sets editor.
     func exportText(for exercise: String) -> String {
         let drafts = sets[exercise] ?? []
         let rows = drafts.map { draft in
@@ -278,20 +306,14 @@ final class ExerciseWorkoutBuilder {
         sets[exercise] = nil
     }
 
-    /// Warm-up and drop sets go back to working sets. A working set becomes a
-    /// warm-up when it extends the leading warm-up block, and a drop set anywhere
-    /// else — warm-ups are always contiguous and always first.
-    func cycleKind(of id: UUID, in exercise: String) {
+    // Warm-up and drop sets go back to working sets. A working set becomes a
+    // warm-up when it extends the leading warm-up block, and a drop set anywhere
+    // else — warm-ups are always contiguous and always first.
+    func setKind(_ kind: ExerciseSetKind, of id: UUID, in exercise: String) {
         guard var drafts = sets[exercise],
               let index = drafts.firstIndex(where: { $0.id == id }) else { return }
 
-        let extendsWarmUps = drafts[..<index].allSatisfy { $0.kind == .warmUp }
-
-        drafts[index].kind = switch drafts[index].kind {
-        case .warmUp, .dropSet: .working(0)
-        case .working: extendsWarmUps ? .warmUp : .dropSet
-        }
-
+        drafts[index].kind = kind
         sets[exercise] = renumbered(drafts)
     }
 

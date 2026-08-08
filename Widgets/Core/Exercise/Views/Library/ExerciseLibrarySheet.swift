@@ -13,8 +13,11 @@ struct ExerciseLibrarySheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
+
     @State private var selectedEquipment: ExerciseEquipment?
+
     @State private var selectedMuscle: ExerciseMuscle?
+
     @State private var openedExercise: ExerciseDefinition?
 
     var body: some View {
@@ -54,6 +57,8 @@ struct ExerciseLibrarySheet: View {
         }
         .animation(.brightEaseInOut, value: filtered.count)
     }
+
+    // MARK: - Content
 
     private var filters: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -112,8 +117,8 @@ struct ExerciseLibrarySheet: View {
         } label: {
             HStack(spacing: .spacing2x) {
                 Image(systemName: exercise.category.symbol)
-                    .font(.standardSFPro(size: .subheading2, weight: .light))
-                    .foregroundStyle(exercise.category.accentColor)
+                    .font(.standard(size: .subheading2, weight: .light))
+                    .foregroundStyle(Color.lightTextColor)
                     .frame(width: Constants.iconWidth)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
@@ -124,7 +129,7 @@ struct ExerciseLibrarySheet: View {
                 Spacer(minLength: .spacing2x)
 
                 Image(systemName: onSelect == nil ? "chevron.right" : "plus")
-                    .font(.standardSFPro(size: .body5, weight: .regular))
+                    .font(.standard(size: .body5, weight: .regular))
                     .foregroundStyle(Color.lightTextColor)
             }
             .padding(.vertical, .spacing105x)
@@ -132,6 +137,8 @@ struct ExerciseLibrarySheet: View {
         }
         .buttonStyle(.plain)
     }
+
+    // MARK: - Derived state
 
     private var filtered: [ExerciseDefinition] {
         ExerciseDemoLibrary.all.filter { exercise in
@@ -148,7 +155,7 @@ struct ExerciseLibrarySheet: View {
         }
     }
 
-    private class Constants {
+    private enum Constants {
         static let iconWidth: CGFloat = 28
     }
 }

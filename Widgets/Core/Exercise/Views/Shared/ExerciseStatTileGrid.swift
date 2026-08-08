@@ -19,6 +19,7 @@ nonisolated struct ExerciseStatTile: Identifiable {
 
 struct ExerciseStatTileGrid: View {
     let tiles: [ExerciseStatTile]
+    var cardColor: Color = .defaultSheetModalCards
 
     var body: some View {
         LazyVGrid(
@@ -26,7 +27,7 @@ struct ExerciseStatTileGrid: View {
             spacing: Constants.gridSpacing
         ) {
             ForEach(tiles) { tile in
-                ExerciseStatTileView(tile: tile)
+                ExerciseStatTileView(tile: tile, cardColor: cardColor)
             }
         }
     }
@@ -38,6 +39,7 @@ struct ExerciseStatTileGrid: View {
 
 struct ExerciseStatTileView: View {
     let tile: ExerciseStatTile
+    var cardColor: Color = .defaultSheetModalCards
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
@@ -59,7 +61,7 @@ struct ExerciseStatTileView: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .aspectRatio(1, contentMode: .fit)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: cardColor))
     }
 
     private enum Constants {

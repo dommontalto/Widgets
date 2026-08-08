@@ -16,21 +16,23 @@ struct BeamConfig {
     var colorVariant: BeamColorVariant = .defaultBlue
     var size: BeamSize = .md
     var isActive = true
-    var duration = BrightScreenEdgeBeam.defaultDuration
-    var brightness = BrightScreenEdgeBeam.defaultBrightness
+    // The sliders need concrete numbers, so the spec's resolved md/dark values
+    // stand in for the nil "use the preset" the beams themselves default to.
+    var duration = BeamSpec.shared.defaults.duration.rotate
+    var brightness = BeamSpec.shared.defaults.brightnessFallback
     var strength: Double = 1
     var cornerRadius = BrightScreenEdgeBeam.defaultCornerRadius
-    var saturation = BrightScreenEdgeBeam.defaultSaturation
+    var saturation = BeamSpec.shared.sizeThemePresets["md"]?["dark"]?.saturation ?? 1.2
     var renderScale = BrightScreenEdgeBeam.defaultRenderScale
-    /// Multiplier on every layer's opacity. The web demo's tuned preset runs
-    /// 1.71, which is what makes it read stronger than an untuned beam.
+    // Multiplier on every layer's opacity. The web demo's tuned preset runs
+    // 1.71, which is what makes it read stronger than an untuned beam.
     var layerOpacity: Double = 1
     var glowBoost: Double = 1
     var glowBrightness: Double = 1
     var bloomBlur: Double = 0
 
-    /// `BeamTuning` only reaches the pulse family — the rotate sizes take their
-    /// prominence from brightness, saturation and spread instead.
+    // `BeamTuning` only reaches the pulse family — the rotate sizes take their
+    // prominence from brightness, saturation and spread instead.
     var tuning: BeamTuning {
         BeamTuning(
             glowBoost: glowBoost,
@@ -43,29 +45,15 @@ struct BeamConfig {
         )
     }
 
-    static func screen(_ colorScheme: ColorScheme) -> BeamConfig {
-        BeamConfig(glowBoost: glowBoost(for: colorScheme))
-    }
+    static let screen = BeamConfig()
 
-    static func card(_ colorScheme: ColorScheme) -> BeamConfig {
-        BeamConfig(
-            colorVariant: .orange,
-            size: .md,
-            cornerRadius: CGFloat.cornerRadius24,
-            glowBoost: glowBoost(for: colorScheme)
-        )
-    }
-
-    /// A light background swallows the halo, so it needs far more boost than
-    /// the same beam does on black.
-    private static func glowBoost(for colorScheme: ColorScheme) -> Double {
-        colorScheme == .light ? lightGlowBoost : 1
-    }
-
-    static let lightGlowBoost: Double = 5
+    static let card = BeamConfig(
+        colorVariant: .orange,
+        cornerRadius: CGFloat.cornerRadius24
+    )
 }
 
-/// Which of the screen's two beams the inline controls drive.
+// Which of the screen's two beams the inline controls drive.
 enum BeamTarget: String, CaseIterable, Identifiable {
     case screen
     case card

@@ -1,5 +1,5 @@
 //
-//  ExerciseCreateWorkoutView.swift
+//  ExerciseCreateWorkoutSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -11,28 +11,39 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
-struct ExerciseCreateWorkoutView: View {
-    /// The saved workout being edited, or nil when building a new one.
+struct ExerciseCreateWorkoutSheet: View {
+    // The saved workout being edited, or nil when building a new one.
     let editing: ExerciseQuickWorkout?
+
     let onSave: () -> Void
 
     @Environment(ExerciseWorkoutBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
+
     @State private var name: String
+
     @State private var symbol: ExerciseWorkoutIcon
+
     @State private var swapTarget: ExerciseSwapTarget?
+
     @State private var isAddingExercise = false
+
     @State private var addedExercise: String?
+
     @State private var nameNudge = 0
-    /// The draft as it looked on arrival, so Save can tell edits from a no-op.
+
+    // The draft as it looked on arrival, so Save can tell edits from a no-op.
     @State private var baselineDraft: String?
+
     @Namespace private var iconPickerSpace
 
     // Mirrors the set row's own scaling so the headers stay over their columns
     // and the list's height matches the rows it holds.
     @ScaledMetric(relativeTo: .body) private var rowHeight = ExerciseSetRow.Constants.rowHeight
+
     @ScaledMetric(relativeTo: .body) private var fieldWidth = ExerciseSetRow.Constants.fieldWidth
+
     @ScaledMetric(relativeTo: .body) private var fieldGap = ExerciseSetRow.Constants.fieldGap
 
     init(editing: ExerciseQuickWorkout? = nil, onSave: @escaping () -> Void) {
@@ -53,11 +64,11 @@ struct ExerciseCreateWorkoutView: View {
             backgroundColor: .defaultSheetBackground,
             toolbar: {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Customise sets", file: #file)
+                    ExerciseInlineTitle(title: "Edit Workout", file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save", action: save)
+                    Button(saveTitle, action: save)
                         .buttonStyle(.borderedProminent)
                         .tint(canSave ? .defaultSkyBlue : .defaultMainGrey)
                         .id(canSave)
@@ -80,9 +91,7 @@ struct ExerciseCreateWorkoutView: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .padding(.horizontal, .spacing3x)
-                        .padding(.top, .spacing2x)
-                        .padding(.bottom, .spacing4x)
+                        .padding(.spacing3x)
                     }
                     .onChange(of: addedExercise) { _, exercise in
                         guard let exercise else { return }
@@ -93,14 +102,18 @@ struct ExerciseCreateWorkoutView: View {
             }
         )
         .sheet(item: $swapTarget) { target in
-            ExerciseSwapSheet(replacing: target.id) { replacement in
-                builder.replace(target.id, with: replacement.name)
+            NavigationStack {
+                ExerciseCategoryView(category: .gym) { replacement in
+                    builder.replace(target.id, with: replacement.name)
+                }
             }
         }
         .sheet(isPresented: $isAddingExercise) {
-            ExerciseSwapSheet(adding: true) { exercise in
-                builder.add(exercise.name)
-                addedExercise = exercise.name
+            NavigationStack {
+                ExerciseCategoryView(category: .gym) { exercise in
+                    builder.add(exercise.name)
+                    addedExercise = exercise.name
+                }
             }
         }
         .onAppear {
@@ -110,44 +123,7 @@ struct ExerciseCreateWorkoutView: View {
         }
     }
 
-    private func save() {
-        guard !isNameEmpty else {
-            nameNudge += 1
-            return
-        }
-        if let editing {
-            builder.update(editing, named: name, icon: symbol)
-        } else {
-            builder.save(named: name, icon: symbol)
-        }
-        onSave()
-    }
-
-    private var isNameEmpty: Bool {
-        name.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    /// Editing only offers Save once something actually differs; a new workout
-    /// just needs a name.
-    private var canSave: Bool {
-        guard !isNameEmpty else { return false }
-        guard let editing else { return true }
-        guard let baselineDraft else { return false }
-        return name != editing.name
-            || symbol.symbol != editing.symbol
-            || draftSignature != baselineDraft
-    }
-
-    private var draftSignature: String {
-        builder.added
-            .map { exercise in
-                let sets = (builder.sets[exercise] ?? [])
-                    .map { "\($0.kind)|\($0.weight)|\($0.reps)|\($0.rest)" }
-                    .joined(separator: ";")
-                return "\(exercise)>\(sets)"
-            }
-            .joined(separator: "\n")
-    }
+    // MARK: - Content
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -165,7 +141,7 @@ struct ExerciseCreateWorkoutView: View {
         HStack(spacing: Constants.iconTileGap) {
             ForEach(ExerciseWorkoutIcon.allCases) { icon in
                 Image(systemName: icon.symbol)
-                    .font(.standardSFPro(size: .heading, weight: .light))
+                    .font(.standard(size: .heading, weight: .light))
                     .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
                     .frame(width: Constants.iconTile, height: Constants.iconTile)
                     .background {
@@ -192,8 +168,8 @@ struct ExerciseCreateWorkoutView: View {
         .animation(.brightSnappy, value: symbol)
     }
 
-    /// One gesture drives both tap and drag, so the glass follows the finger
-    /// across the row instead of jumping between taps.
+    // One gesture drives both tap and drag, so the glass follows the finger
+    // across the row instead of jumping between taps.
     private func select(at x: CGFloat) {
         let icons = ExerciseWorkoutIcon.allCases
         let slot = Constants.iconTile + Constants.iconTileGap
@@ -224,7 +200,7 @@ struct ExerciseCreateWorkoutView: View {
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: "dumbbell.fill")
-                .font(.standardSFPro(size: .body2, weight: .medium))
+                .font(.standard(size: .body2, weight: .medium))
                 .foregroundStyle(Color.textColor)
 
             BrightText(exercise, size: .body2, color: .semiLightTextColor, weight: .regular)
@@ -243,7 +219,7 @@ struct ExerciseCreateWorkoutView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.standardSFPro(size: .standout4, weight: .light))
+                    .font(.standard(size: .standout4, weight: .light))
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
@@ -256,39 +232,14 @@ struct ExerciseCreateWorkoutView: View {
             Spacer(minLength: .spacing2x)
 
             ShareLink(item: builder.exportText(for: exercise)) {
-                Image(systemName: "link")
-                    .font(.standardSFPro(size: .body2, weight: .medium))
-                    .foregroundStyle(Color.textColor)
-                    .frame(width: Constants.footerButtonSize, height: Constants.footerButtonSize)
-                    .modifier(GlassEffect(shape: .circle))
+                BrightRoundButton(systemImage: "link")
+                    .allowsHitTesting(false)
             }
-            .buttonStyle(.plain)
 
-            circleButton("plus") {
+            BrightRoundButton(systemImage: "plus") {
                 withAnimation(.brightSnappy) { builder.addSet(to: exercise) }
             }
         }
-    }
-
-    private func circleButton(_ symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.standardSFPro(size: .body2, weight: .medium))
-                .foregroundStyle(Color.textColor)
-                .frame(width: Constants.footerButtonSize, height: Constants.footerButtonSize)
-                .modifier(GlassEffect(shape: .circle))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func volumeLabel(for exercise: String) -> String {
-        let sets = builder.sets[exercise] ?? []
-        let volume = sets.reduce(into: 0.0) { total, set in
-            let weight = Double(set.weight.filter { $0.isNumber || $0 == "." }) ?? 0
-            let reps = Double(set.reps.filter(\.isNumber)) ?? 0
-            total += weight * reps
-        }
-        return "\(Int(volume)) kg total"
     }
 
     private var columnHeaders: some View {
@@ -314,8 +265,8 @@ struct ExerciseCreateWorkoutView: View {
                     reps: builder.binding(for: draft.id, in: exercise, keyPath: \.reps),
                     rest: builder.binding(for: draft.id, in: exercise, keyPath: \.rest),
                     isTyping: $isTyping,
-                    onCycleKind: {
-                        withAnimation(.brightSnappy) { builder.cycleKind(of: draft.id, in: exercise) }
+                    onPickKind: { kind in
+                        withAnimation(.brightSnappy) { builder.setKind(kind, of: draft.id, in: exercise) }
                     }
                 )
                 .listRowInsets(EdgeInsets(top: 0, leading: .spacing3x, bottom: 0, trailing: .spacing3x))
@@ -340,17 +291,74 @@ struct ExerciseCreateWorkoutView: View {
         .animation(.brightSnappy, value: drafts.count)
     }
 
+    // MARK: - Actions
+
+    private func save() {
+        guard !isNameEmpty else {
+            nameNudge += 1
+            return
+        }
+        if let editing {
+            builder.update(editing, named: name, icon: symbol)
+        } else {
+            builder.save(named: name, icon: symbol)
+        }
+        onSave()
+    }
+
+    // MARK: - Derived state
+
+    private var isNameEmpty: Bool {
+        name.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    // A new workout is created; an existing one is saved back.
+    private var saveTitle: String {
+        editing == nil ? "Create" : "Save"
+    }
+
+    // Editing only offers Save once something actually differs; a new workout
+    // just needs a name.
+    private var canSave: Bool {
+        guard !isNameEmpty else { return false }
+        guard let editing else { return true }
+        guard let baselineDraft else { return false }
+        return name != editing.name
+            || symbol.symbol != editing.symbol
+            || draftSignature != baselineDraft
+    }
+
+    private var draftSignature: String {
+        builder.added
+            .map { exercise in
+                let sets = (builder.sets[exercise] ?? [])
+                    .map { "\($0.kind)|\($0.weight)|\($0.reps)|\($0.rest)" }
+                    .joined(separator: ";")
+                return "\(exercise)>\(sets)"
+            }
+            .joined(separator: "\n")
+    }
+
+    private func volumeLabel(for exercise: String) -> String {
+        let sets = builder.sets[exercise] ?? []
+        let volume = sets.reduce(into: 0.0) { total, set in
+            let weight = Double(set.weight.filter { $0.isNumber || $0 == "." }) ?? 0
+            let reps = Double(set.reps.filter(\.isNumber)) ?? 0
+            total += weight * reps
+        }
+        return "\(Int(volume)) kg total"
+    }
+
     private enum Constants {
         static let columnTitles = ["Weights", "Reps", "Rest"]
         static let iconTile: CGFloat = 44
         static let iconTileGap: CGFloat = .spacing2x
-        static let footerButtonSize: CGFloat = 36
     }
 }
 
 #Preview {
     NavigationStack {
-        ExerciseCreateWorkoutView {}
+        ExerciseCreateWorkoutSheet {}
             .environment(previewBuilder)
     }
 }

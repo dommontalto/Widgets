@@ -10,7 +10,9 @@ iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always u
 
 ## Comments
 
-Do not add pointless comments. Never write a comment that merely restates what the code or a symbol name already says (e.g. `/// Returns the sorted clinics` above `func sorted(...)`). Only comment when it explains *why* — non-obvious intent, a workaround, or a constraint the code can't express on its own.
+Do not add pointless comments. Never write a comment that merely restates what the code or a symbol name already says (e.g. `// Returns the sorted clinics` above `func sorted(...)`). Only comment when it explains *why* — non-obvious intent, a workaround, or a constraint the code can't express on its own.
+
+**Always `//`, never `///`.** Doc comments are not used in this codebase — if a comment is necessary, write it as `//`.
 
 ---
 

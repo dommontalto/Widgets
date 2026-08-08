@@ -243,7 +243,7 @@ struct VaultTestingServicesView: View {
     }
 }
 
-/// Simple left-aligned wrapping layout for the service tag capsules.
+// Simple left-aligned wrapping layout for the service tag capsules.
 struct FlowLayout: Layout {
     var spacing: CGFloat = .spacing1x
 

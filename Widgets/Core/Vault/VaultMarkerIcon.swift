@@ -7,14 +7,14 @@
 
 import Foundation
 
-/// Maps a marker's display name to an SF Symbol shown to the left of its title
-/// in the Vault Overview and Data lists. Lookup is case-insensitive; anything
-/// not in the catalog falls back to a neutral symbol.
-///
-/// Covers the canonical data points: 134 clinical lab markers, 17 biometric /
-/// wearable markers, and 37 nutrition markers.
+// Maps a marker's display name to an SF Symbol shown to the left of its title
+// in the Vault Overview and Data lists. Lookup is case-insensitive; anything
+// not in the catalog falls back to a neutral symbol.
+//
+// Covers the canonical data points: 134 clinical lab markers, 17 biometric /
+// wearable markers, and 37 nutrition markers.
 enum VaultMarkerIcon {
-    /// Generic backup when nothing more specific matches.
+    // Generic backup when nothing more specific matches.
     static let fallback = "cross.case.fill"
 
     static func systemImage(for name: String) -> String {
@@ -28,8 +28,8 @@ enum VaultMarkerIcon {
         name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    /// Keyword → symbol rules, checked in order (most specific first). Lets an
-    /// unmapped marker fall back to a *related* icon rather than the generic one.
+    // Keyword → symbol rules, checked in order (most specific first). Lets an
+    // unmapped marker fall back to a *related* icon rather than the generic one.
     private static func relatedSymbol(for key: String) -> String? {
         let rules: [(keywords: [String], symbol: String)] = [
             (["cholesterol", "hdl", "ldl", "triglyceride", "lipoprotein", "apolipo", "apob", "heart", "cardio", "bnp"], "heart.fill"),
@@ -58,8 +58,8 @@ enum VaultMarkerIcon {
         return nil
     }
 
-    /// Keyed by lowercased display name. Symbols are grouped by category so the
-    /// list reads coherently; tweak individual entries freely.
+    // Keyed by lowercased display name. Symbols are grouped by category so the
+    // list reads coherently; tweak individual entries freely.
     private static let symbols: [String: String] = [
         // MARK: - Clinical
 

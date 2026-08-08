@@ -11,8 +11,8 @@ struct ExerciseLiveCardioSheet: View {
     var workout: ExerciseLiveWorkout = ExerciseDemoData.liveWorkout
     var isInterval = true
     var onStop: () -> Void = {}
-    /// Ends the whole run. Only the flow can do that from a pushed leg, where
-    /// `dismiss` would pop back instead.
+    // Ends the whole run. Only the flow can do that from a pushed leg, where
+    // `dismiss` would pop back instead.
     var onClose: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -21,8 +21,8 @@ struct ExerciseLiveCardioSheet: View {
     @State private var runningSince = Date()
     @State private var bankedElapsed: TimeInterval = 0
     @State private var isBeamActive = false
-    /// Bumped on each play to restart the beam's burst. Opening the sheet counts
-    /// as the first play, so the burst runs from the initial `.task`.
+    // Bumped on each play to restart the beam's burst. Opening the sheet counts
+    // as the first play, so the burst runs from the initial `.task`.
     @State private var beamBurst = 0
 
     var body: some View {
@@ -64,7 +64,7 @@ struct ExerciseLiveCardioSheet: View {
                     if let onClose { onClose() } else { dismiss() }
                 } label: {
                     Image(systemName: "arrow.down.right.and.arrow.up.left")
-                        .font(.standardSFPro(size: .subheading, weight: .regular))
+                        .font(.standard(size: .subheading, weight: .regular))
                         .foregroundStyle(Color.textColor)
                 }
             }
@@ -215,7 +215,7 @@ struct ExerciseLiveCardioSheet: View {
         HStack(spacing: .spacing1x) {
             BrightRoundButton(
                 systemImage: "stop.fill",
-                size: .extraLarge,
+                size: .finalBossLarge,
                 imageColor: .defaultRed,
                 haptic: .medium,
                 onTapCallback: onStop
@@ -231,7 +231,7 @@ struct ExerciseLiveCardioSheet: View {
 
             Spacer(minLength: .spacing1x)
 
-            BrightRoundButton(systemImage: isPaused ? "play" : "pause", size: .extraLarge) {
+            BrightRoundButton(systemImage: isPaused ? "play" : "pause", size: .finalBossLarge) {
                 withAnimation(.brightEaseInOut) { togglePause() }
             }
             .contentTransition(.symbolEffect(.replace))

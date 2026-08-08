@@ -39,6 +39,8 @@ enum ExercisePageChrome {
 struct ExerciseWorkoutFlow: View {
     @Binding var stage: ExerciseWorkoutStage?
 
+    @Environment(ExerciseWorkoutBuilder.self) private var builder
+
     @State private var path: [ExerciseWorkoutStage] = []
 
     var body: some View {
@@ -62,7 +64,8 @@ struct ExerciseWorkoutFlow: View {
             ExerciseLiveWorkoutSheet(
                 workoutName: workout.name,
                 templateItems: workout.items,
-                onClose: close
+                onClose: close,
+                onUpdateWorkout: { items in builder.updateItems(of: workout.id, to: items) }
             ) { finished in
                 path.append(.complete(finished))
             }

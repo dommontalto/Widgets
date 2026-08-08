@@ -14,7 +14,7 @@ struct ExerciseSetRow: View {
     @Binding var reps: String
     @Binding var rest: String
     var isTyping: FocusState<Bool>.Binding
-    let onCycleKind: () -> Void
+    let onPickKind: (ExerciseSetKind) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -27,10 +27,17 @@ struct ExerciseSetRow: View {
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            Button(action: onCycleKind) {
+            Menu {
+                ForEach(ExerciseSetKind.pickable, id: \.self) { kind in
+                    Button(kind.pickerLabel, systemImage: kind.pickerSymbol) {
+                        onPickKind(kind)
+                    }
+                }
+            } label: {
+                // The Menu owns the tap, so the badge is label only.
                 badge
+                    .allowsHitTesting(false)
             }
-            .buttonStyle(.plain)
 
             Spacer(minLength: .spacing2x)
 
@@ -67,7 +74,7 @@ struct ExerciseSetRow: View {
 
             if let symbol = kind.symbol {
                 Image(systemName: symbol)
-                    .font(.standardSFPro(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .light))
                     .foregroundStyle(kind.color)
             } else if let label = kind.label {
                 BrightText(label, size: .body1)

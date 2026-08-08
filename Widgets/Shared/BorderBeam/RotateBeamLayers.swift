@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Resolved, parse-once configuration for the rotate family (`sm` / `md`).
-/// Built when props/theme change; the per-frame closure only varies the beam
-/// angle and hue-shift matrix.
+// Resolved, parse-once configuration for the rotate family (`sm` / `md`).
+// Built when props/theme change; the per-frame closure only varies the beam
+// angle and hue-shift matrix.
 struct RotateBeamConfig {
     let size: BeamSize
     let variant: BeamColorVariant
@@ -51,7 +51,7 @@ struct RotateBeamConfig {
         }
     }
 
-    /// Stroke-layer blobs (::after color gradients).
+    // Stroke-layer blobs (::after color gradients).
     var strokeBlobs: [Float] {
         switch size {
         case .sm:
@@ -61,8 +61,8 @@ struct RotateBeamConfig {
         }
     }
 
-    /// Inner-layer blobs (::before). `sm` has a dedicated palette; `md` derives
-    /// from the border palette (size × 0.9, alpha 0.45).
+    // Inner-layer blobs (::before). `sm` has a dedicated palette; `md` derives
+    // from the border palette (size × 0.9, alpha 0.45).
     var innerBlobs: [Float] {
         switch size {
         case .sm:
@@ -98,7 +98,7 @@ struct RotateBeamConfig {
         (t / duration).truncatingRemainder(dividingBy: 1)
     }
 
-    /// Rotate-family hue shift: ±hueRange ping-pong over 12 s (web keyframes).
+    // Rotate-family hue shift: ±hueRange ping-pong over 12 s (web keyframes).
     func hueShiftDegrees(at t: Double) -> Double {
         guard !staticColors else { return 0 }
         let phase = t / spec.defaults.rotateHueShiftPeriod
@@ -106,9 +106,9 @@ struct RotateBeamConfig {
     }
 }
 
-/// The three composited layers of the rotate-family beam, driven per-frame by
-/// `TimelineView`. Layer order matches the web z-indices: inner (1), stroke
-/// (2), bloom (3, blurred).
+// The three composited layers of the rotate-family beam, driven per-frame by
+// `TimelineView`. Layer order matches the web z-indices: inner (1), stroke
+// (2), bloom (3, blurred).
 struct RotateBeamLayers: View {
     let config: RotateBeamConfig
     let fade: BeamFade

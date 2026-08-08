@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Resolved configuration for the pulse family.
+// Resolved configuration for the pulse family.
 struct PulseBeamConfig {
     let size: BeamSize // .pulseInner or .pulseOutside
     let variant: BeamColorVariant
@@ -32,9 +32,9 @@ struct PulseBeamConfig {
     var huePeriod: Double { spec.pulse.huePeriod[size.rawValue] ?? 16 }
     var oc: BeamSpec.OutsideConstants { spec.pulse.outsideConstants }
 
-    /// Measured per-element glow scale. The web clamps the *measured* ratio and
-    /// then applies `--pulse-glow-boost` on top, so the boost is deliberately
-    /// outside the clamp.
+    // Measured per-element glow scale. The web clamps the *measured* ratio and
+    // then applies `--pulse-glow-boost` on top, so the boost is deliberately
+    // outside the clamp.
     func glowScale(for elementSize: CGSize) -> (x: Double, y: Double) {
         guard isOutside else { return (1, 1) }
         let clamp = { (v: Double) in
@@ -47,7 +47,7 @@ struct PulseBeamConfig {
     }
 }
 
-/// Static description of one pulse blob, resolved per-frame with oscillators.
+// Static description of one pulse blob, resolved per-frame with oscillators.
 private struct PulseBlobDef {
     let region: Int  // 1-3 size/drift region; 0 = static (corner accents)
     let quad: String
@@ -59,8 +59,8 @@ private struct PulseBlobDef {
     let fadeEnd: Double
 }
 
-/// Which part of the pulse effect to render — `pulse-outside` splits into a
-/// behind-the-content glow (web z-index -1) and an above-content stroke ring.
+// Which part of the pulse effect to render — `pulse-outside` splits into a
+// behind-the-content glow (web z-index -1) and an above-content stroke ring.
 enum PulseBeamPart {
     case all      // pulse-inner single overlay
     case glow     // pulse-outside: core + bloom, in .background
@@ -322,10 +322,10 @@ struct PulseBeamLayers: View {
         }
     }
 
-    /// Renders one shader layer. All shader inputs are in the LAYER BOX's own
-    /// coordinate space (origin at the box top-left); `boxPad` is how far the
-    /// box extends beyond the element on each side — the view is centered on
-    /// the element so a padded box hangs over evenly (SwiftUI doesn't clip).
+    // Renders one shader layer. All shader inputs are in the LAYER BOX's own
+    // coordinate space (origin at the box top-left); `boxPad` is how far the
+    // box extends beyond the element on each side — the view is centered on
+    // the element so a padded box hangs over evenly (SwiftUI doesn't clip).
     private func shaderLayer(
         boxPad: Double,
         elementSize: CGSize,
@@ -368,6 +368,6 @@ struct PulseBeamLayers: View {
 
 
 private extension Double {
-    /// A dimension SwiftUI will accept: finite and non-negative.
+    // A dimension SwiftUI will accept: finite and non-negative.
     var clampedToFrame: Double { isFinite ? Swift.max(self, 0) : 0 }
 }

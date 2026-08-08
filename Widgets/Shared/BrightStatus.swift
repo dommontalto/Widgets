@@ -39,19 +39,32 @@ struct BrightStatus: View {
             .padding(.vertical, isNumber ? -.spacing05x : .zero)
         }
         .background(
-            isNoData ? Color.clear : color.opacity(.minimalOpacity)
+            isNoData || isRPE ? Color.clear : color.opacity(.minimalOpacity)
         )
         .clipShape(shape)
         .overlay(
             shape
-                .stroke(color, lineWidth: withStroke && !isNoData ? 0.5 : 0)
+                .stroke(strokeColor, lineWidth: strokeWidth)
         )
+    }
+
+    private var strokeColor: Color {
+        isRPE ? color.opacity(.veryLowOpacity) : color
+    }
+
+    private var strokeWidth: CGFloat {
+        if isRPE { return 1 }
+        return withStroke && !isNoData ? 0.5 : 0
     }
 
     private var shape: AnyShape {
         isNumber
             ? AnyShape(RoundedRectangle(cornerRadius: .cornerRadius10))
             : AnyShape(Capsule())
+    }
+
+    private var isRPE: Bool {
+        rpeColor != nil
     }
 
     private var rpeColor: Color? {

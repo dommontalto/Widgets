@@ -15,12 +15,10 @@ struct ContentView: View {
     @State private var showingExerciseDetail = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
-    @State private var screenBeam = BeamConfig()
-    @State private var cardBeam = BeamConfig.card(.dark)
+    @State private var screenBeam = BeamConfig.screen
+    @State private var cardBeam = BeamConfig.card
     @State private var builder = ExerciseWorkoutBuilder()
     @State private var workoutStage: ExerciseWorkoutStage?
-
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -34,7 +32,7 @@ struct ContentView: View {
     }
 
     private func start(_ workout: ExerciseQuickWorkout) {
-        workoutStage = workout.isCardio ? .cardio : .live(workout)
+        workoutStage = workout.isCardio ? .cardio : .preWorkout(workout)
     }
 
     private var content: some View {
@@ -47,6 +45,12 @@ struct ContentView: View {
                     }
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseUpcomingWidget")
+                    ExerciseUpcomingWidget { workout in
+                        start(workout)
+                    }
+                        .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExercisePersonalRecordsWidget")
                     ExercisePersonalRecordsWidget()
@@ -66,12 +70,6 @@ struct ContentView: View {
 
                     widgetLabel("ExerciseHistoryWidget")
                     ExerciseHistoryWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseUpcomingWidget")
-                    ExerciseUpcomingWidget { workout in
-                        start(workout)
-                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseWeeklyPlanWidget")
@@ -237,30 +235,18 @@ struct ContentView: View {
             )
         }
         .statusBarHidden()
-        // The environment isn't readable when the state is initialised, so the
-        // scheme's defaults land as the screen opens — and again when the
-        // scheme flips underneath it, since light needs its own glow boost.
-        .onAppear { applyDefaults(for: colorScheme) }
-        .onChange(of: colorScheme) { _, scheme in
-            withAnimation(.brightEaseInOut) { applyDefaults(for: scheme) }
-        }
-    }
-
-    private func applyDefaults(for colorScheme: ColorScheme) {
-        screenBeam = .screen(colorScheme)
-        cardBeam = .card(colorScheme)
     }
 
     private var controlDefaults: BeamConfig {
-        beamTarget == .card ? .card(colorScheme) : .screen(colorScheme)
+        beamTarget == .card ? .card : .screen
     }
 
     private var controlBinding: Binding<BeamConfig> {
         beamTarget == .card ? $cardBeam : $screenBeam
     }
 
-    /// Matches the live workout sheet's set row — same width inset, corner and
-    /// beam — with nothing in it.
+    // Matches the live workout sheet's set row — same width inset, corner and
+    // beam — with nothing in it.
     private var beamCard: some View {
         Color.clear
             .frame(height: Constants.beamCardHeight)

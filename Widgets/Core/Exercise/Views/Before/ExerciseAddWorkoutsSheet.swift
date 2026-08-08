@@ -54,9 +54,13 @@ struct ExerciseAddWorkoutsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var days = ExerciseDemoPlanner.week
+
     @State private var repeatsWeekly = false
+
     @State private var clipboard: ExercisePlannedWorkout?
+
     @State private var weekClipboard: [ExercisePlanDay]?
+
     @State private var copyTick = 0
 
     var body: some View {
@@ -94,6 +98,8 @@ struct ExerciseAddWorkoutsSheet: View {
         .brightHaptic(.light, trigger: copyTick)
         .animation(.brightSnappy, value: days.map(\.workouts))
     }
+
+    // MARK: - Week
 
     private var repeatRow: some View {
         HStack(spacing: .spacing105x) {
@@ -249,6 +255,8 @@ struct ExerciseAddWorkoutsSheet: View {
             .stroke(Color.defaultSkyBlue.opacity(.minimalOpacity), lineWidth: Constants.stripeWidth)
     }
 
+    // MARK: - Bottom bar
+
     private var bottomBar: some View {
         HStack(spacing: .spacing0x) {
             BrightRoundButton(systemImage: "arrow.counterclockwise", size: .large) {
@@ -296,6 +304,8 @@ struct ExerciseAddWorkoutsSheet: View {
         .padding(.bottom, .spacing1x)
     }
 
+    // MARK: - Derived state
+
     private func templateSymbol(_ kind: ExercisePlannedWorkout.Kind) -> String {
         switch kind {
         case .strength: "dumbbell"
@@ -305,9 +315,9 @@ struct ExerciseAddWorkoutsSheet: View {
         }
     }
 
-    private class Constants {
-        static let dayChipWidth: CGFloat = 50
+    private enum Constants {
         static let cardHeight: CGFloat = 53
+        static let dayChipWidth: CGFloat = 50
         static let accentLineWidth: CGFloat = 2
         static let accentLineHeight: CGFloat = 35
         static let plusIconSize: CGFloat = 22

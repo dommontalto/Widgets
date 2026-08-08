@@ -9,11 +9,11 @@ import SwiftUI
 
 struct ExerciseLiveWorkoutStatusWidget: View {
     enum Status {
-        /// Mid-set: the tick logs `label`.
+        // Mid-set: the tick logs `label`.
         case working(label: String)
-        /// Every set here is logged, so the button opens the next exercise.
+        // Every set here is logged, so the button opens the next exercise.
         case nextExercise(name: String)
-        /// Between sets, counting down to `until`.
+        // Between sets, counting down to `until`.
         case resting(upNext: String, until: Date)
         case allSetsComplete
     }
@@ -61,23 +61,26 @@ struct ExerciseLiveWorkoutStatusWidget: View {
                     .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
             }
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.vertical, .spacing2x)
+        .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Constants.cardHeight)
-        .modifier(GlassCardModifier(cornerRadius: .cardCornerRadius))
+        // The Lighthouse input card's glass and geometry — softer at the top,
+        // tighter where it meets the screen edge.
+        .modifier(GlassEffect(shape: .unevenRoundedRect(top: 36, bottom: 44), interactive: false))
     }
 
     // MARK: - Controls
 
     private var controls: some View {
-        HStack(spacing: .spacing105x) {
+        HStack(spacing: .spacing1x) {
             if showsSetControls {
                 control(.rpe)
             }
 
-            restSlot(.failedSet, extending: Constants.shortExtension)
-            restSlot(.skip, extending: Constants.longExtension)
+            if showsSetControls || isResting {
+                control(isResting ? .extendRest(Constants.shortExtension) : .failedSet)
+                control(isResting ? .extendRest(Constants.longExtension) : .skip)
+            }
 
             control(primary)
         }
@@ -86,41 +89,13 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         .animation(.brightSnappy, value: primary)
     }
 
-    /// Rest turns the set controls into rest extensions in place: both stay
-    /// mounted and cross-fade, so the button reads as changing its mind the way
-    /// the tick morphs into skip rather than one popping out for another.
-    @ViewBuilder private func restSlot(_ control: Control, extending seconds: TimeInterval) -> some View {
-        if showsSetControls || isResting {
-            ZStack {
-                self.control(control)
-                    .opacity(isResting ? .zero : .opaque)
-                    .scaleEffect(isResting ? Constants.swapScale : 1)
-                    .allowsHitTesting(!isResting)
-
-                extendRestButton(seconds)
-                    .opacity(isResting ? .opaque : .zero)
-                    .scaleEffect(isResting ? 1 : Constants.swapScale)
-                    .allowsHitTesting(isResting)
-            }
-            .transition(.scale.combined(with: .opacity))
-        }
-    }
-
-    private func extendRestButton(_ seconds: TimeInterval) -> some View {
-        BrightRoundButton(
-            title: "+\(Int(seconds))",
-            size: .extraLarge,
-            fontSize: .subheading
-        ) {
-            onExtendRest(seconds)
-        }
-    }
-
     private func control(_ control: Control) -> some View {
         BrightRoundButton(
             systemImage: control.symbol,
             size: .extraLarge,
             color: control.tint,
+            imageRotation: .zero,
+            imageOffset: control.imageOffset,
             haptic: control.haptic,
             onTapCallback: action(for: control)
         )
@@ -128,29 +103,36 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         .transition(.scale.combined(with: .opacity))
     }
 
-    private enum Control {
+    private enum Control: Hashable {
         case rpe
         case failedSet
         case skip
         case complete
         case start
+        // Adds `seconds` to the rest that's running.
+        case extendRest(TimeInterval)
 
         var symbol: String {
             switch self {
-            case .rpe: "gauge.with.needle"
+            case .rpe: "gauge.open.with.lines.needle.33percent"
             case .failedSet: "xmark.octagon"
             case .skip: "forward.end"
             case .complete: "checkmark"
             case .start: "play.fill"
+            // A glyph either side of the swap, so the button morphs into it the
+            // way the tick morphs into skip — text can't take part in that.
+            case let .extendRest(seconds): "goforward.\(Int(seconds))"
             }
         }
 
-        var tint: Color {
+        // Rest extensions stay clear glass — nil leaves the glyph on `textColor`.
+        var tint: Color? {
             switch self {
             case .rpe: .defaultPink
             case .failedSet: .defaultRed
             case .skip: .defaultBlue
             case .complete, .start: .defaultGreen
+            case .extendRest: nil
             }
         }
 
@@ -159,6 +141,10 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             case .complete: .success
             default: .light
             }
+        }
+
+        var imageOffset: CGSize {
+            self == .rpe ? CGSize(width: 0, height: -2) : .zero
         }
     }
 
@@ -180,12 +166,13 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         case .failedSet: onFailedSet
         case .skip: onSkip
         case .complete, .start: onComplete
+        case let .extendRest(seconds): { onExtendRest(seconds) }
         }
     }
 
-    /// Always drawn, blank states included: one text view that every state writes
-    /// into rolls its letters over, where a view that comes and goes can only cut
-    /// — and it keeps the value pinned to the same line throughout.
+    // Always drawn, blank states included: one text view that every state writes
+    // into rolls its letters over, where a view that comes and goes can only cut
+    // — and it keeps the value pinned to the same line throughout.
     private var captionLabel: some View {
         BrightText(caption ?? " ", size: .body1, color: .lightTextColor, weight: .regular)
             .lineLimit(1)
@@ -202,12 +189,21 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             // tapping while the source shows has to restart the window, and an
             // unchanged flag would leave the first one to run out.
             sourceTaps += 1
-            withAnimation(.brightSnappy) { showsSource = true }
+            withAnimation(.brightSnappy) { showsSource.toggle() }
         } label: {
             HStack(spacing: .spacing1x) {
-                Image(systemName: "heart.fill")
-                    .font(.standardSFPro(size: .subheading, weight: .regular))
-                    .foregroundStyle(Color.defaultRed)
+                // Beats at the rate it's reporting, so the pill reads as live. A
+                // phase animator rather than a repeating animation on a one-shot
+                // flag: the card re-renders every second while resting, which
+                // drops an animation that has no value change left to play.
+                PhaseAnimator([false, true]) { isBeating in
+                    Image(systemName: "heart.fill")
+                        .font(.standard(size: .subheading, weight: .regular))
+                        .foregroundStyle(Color.defaultRed)
+                        .scaleEffect(isBeating ? Constants.beatScale : 1)
+                } animation: { _ in
+                    .easeInOut(duration: beatInterval / 2)
+                }
 
                 BrightText(showsSource ? "Apple Watch" : "\(rate) BPM", size: .body1, weight: .regular)
                     .contentTransition(.numericText())
@@ -219,7 +215,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         .buttonStyle(.plain)
         .modifier(GlassEffect(shape: .capsule, interactive: false))
         .task(id: sourceTaps) {
-            guard sourceTaps > 0 else { return }
+            guard showsSource else { return }
             // A fresh tap cancels this sleep; that tap's own window puts the
             // source away rather than this one cutting it short on the way out.
             do { try await Task.sleep(for: .seconds(Constants.sourceReveal)) } catch { return }
@@ -227,10 +223,17 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         }
     }
 
+    // One beat per reported BPM, falling back to a resting pace when there's no
+    // number to read.
+    private var beatInterval: TimeInterval {
+        guard let rate = heartRate, let bpm = Double(rate), bpm > 0 else { return 1 }
+        return 60 / bpm
+    }
+
     private func upNextLabel(_ name: String) -> some View {
         HStack(spacing: .spacing1x) {
             Image(systemName: "arrow.turn.up.right")
-                .font(.standardSFPro(size: .body1, weight: .regular))
+                .font(.standard(size: .body1, weight: .regular))
                 .foregroundStyle(Color.lightTextColor)
 
             BrightText("Up next: \(name)", size: .body1, color: .lightTextColor, weight: .regular)
@@ -240,9 +243,9 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
     // MARK: - Value
 
-    /// The clock only drives the ticking; every state renders through this one
-    /// text view so a state change rolls into the next value at one size instead
-    /// of swapping in a differently-sized view.
+    // The clock only drives the ticking; every state renders through this one
+    // text view so a state change rolls into the next value at one size instead
+    // of swapping in a differently-sized view.
     private var valueLabel: some View {
         TimelineView(.animation(minimumInterval: Constants.tick, paused: !isResting)) { context in
             let value = value(at: context.date)
@@ -255,7 +258,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             )
             .monospacedDigit()
             .lineLimit(1)
-            .contentTransition(.numericText(countsDown: true))
+            .contentTransition(.numericText())
             .animation(.brightSnappy, value: value.text)
         }
     }
@@ -284,8 +287,8 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
     // MARK: - Per-status presentation
 
-    /// The start and finish states lead with the value alone — nothing sits
-    /// above it.
+    // The start and finish states lead with the value alone — nothing sits
+    // above it.
     private var caption: String? {
         switch status {
         case .working: "In progress"
@@ -304,7 +307,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
     }
 
     private enum Constants {
-        static let cardHeight: CGFloat = 150
+        static let cardHeight: CGFloat = 160
         static let pillHeight: CGFloat = 30
         static let sourceReveal: TimeInterval = 2
         static let tick: TimeInterval = 1
@@ -312,14 +315,14 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15
         static let longExtension: TimeInterval = 30
-        /// How small the half of a swapping slot that isn't showing sits.
-        static let swapScale: CGFloat = 0.6
+        // How small the half of a swapping slot that isn't showing sits.
+        static let beatScale: CGFloat = 1.2
     }
 }
 
 private extension VerticalAlignment {
-    /// Lines the buttons up with the value alone — the caption above it would
-    /// otherwise pull a plain `.center` off the button row.
+    // Lines the buttons up with the value alone — the caption above it would
+    // otherwise pull a plain `.center` off the button row.
     enum ValueCentre: AlignmentID {
         static func defaultValue(in context: ViewDimensions) -> CGFloat {
             context[VerticalAlignment.center]

@@ -29,7 +29,7 @@ struct ExerciseAddedPill: View {
                     withAnimation(.brightBouncy) { builder.reset() }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.standardSFPro(size: .standout3, weight: .light))
+                        .font(.standard(size: .standout3, weight: .light))
                         .foregroundStyle(Color.defaultRed)
                         .frame(width: Constants.clearTouchSize, height: Constants.clearTouchSize)
                         .contentShape(Rectangle())

@@ -99,7 +99,7 @@ struct VaultClinicsMapView: View {
         }
     }
 
-    /// Drives the sheet from the selected pin; dismissing clears the selection.
+    // Drives the sheet from the selected pin; dismissing clears the selection.
     private var sheetShown: Binding<Bool> {
         Binding(
             get: { selectedClinic != nil },
@@ -124,7 +124,7 @@ struct VaultClinicsMapView: View {
 
 // MARK: - Clinic mini sheet (native slide-up, glass background, drag to dismiss)
 
-/// Reports the intrinsic content height so the sheet can size to it.
+// Reports the intrinsic content height so the sheet can size to it.
 private struct SheetHeightKey: PreferenceKey {
     static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {

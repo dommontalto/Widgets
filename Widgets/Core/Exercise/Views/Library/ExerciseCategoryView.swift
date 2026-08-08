@@ -9,10 +9,15 @@ import SwiftUI
 
 struct ExerciseCategoryView: View {
     let category: ExerciseWorkoutCategory
+    // Set to pick one exercise and hand it back — swapping, or adding to a draft
+    // that's already open. Left nil, the plus adds straight to the draft.
+    var onSelect: ((ExerciseDefinition) -> Void)?
 
     @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
+    @State private var selectedCategory: ExerciseWorkoutCategory?
 
     var body: some View {
         BrightPageView(
@@ -25,8 +30,10 @@ struct ExerciseCategoryView: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    if builder.count > 0 {
-                        Button("Create") {
+                    // Picking one exercise for a draft that's already open has
+                    // nothing to add or count.
+                    if onSelect == nil, builder.count > 0 {
+                        Button("Add") {
                             builder.path.append(ExerciseWorkoutRoute.newWorkout)
                         }
                         .buttonStyle(.borderedProminent)
@@ -38,21 +45,23 @@ struct ExerciseCategoryView: View {
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: .spacing3x) {
-                        BrightSearchBar("Search \(category.displayName)", text: $searchText)
+                        BrightSearchBar("Search \(activeCategory.displayName)", text: $searchText)
 
-                        if builder.count > 0 {
-                            ExerciseAddedPill()
-                        }
+                        categoryTags
 
                         VStack(spacing: .spacing2x) {
                             ForEach(filtered) { exercise in
-                                ExerciseLibraryRow(exercise: exercise, isAdded: builder.isAdded(exercise.name)) {
-                                    withAnimation(.brightBouncy) { builder.toggle(exercise.name) }
-                                }
+                                row(for: exercise)
                             }
                         }
                     }
                     .padding(.spacing3x)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if onSelect == nil, builder.count > 0 {
+                        ExerciseAddedPill()
+                            .padding(.spacing3x)
+                    }
                 }
             }
         )
@@ -60,12 +69,47 @@ struct ExerciseCategoryView: View {
         .animation(.brightSnappy, value: builder.count)
     }
 
+    @ViewBuilder private func row(for exercise: ExerciseDefinition) -> some View {
+        if let onSelect {
+            ExerciseLibraryRow(exercise: exercise) {
+                onSelect(exercise)
+                dismiss()
+            }
+        } else {
+            ExerciseLibraryRow(exercise: exercise, isAdded: builder.isAdded(exercise.name)) {
+                withAnimation(.brightBouncy) { builder.toggle(exercise.name) }
+            }
+        }
+    }
+
+    // The categories the sheet no longer lists, so they're switchable from here.
+    private var categoryTags: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: .spacing1x) {
+                ForEach(ExerciseWorkoutCategory.standard) { category in
+                    BrightTag(
+                        title: category.displayName,
+                        systemImage: category.symbol,
+                        isSelected: category == activeCategory
+                    ) {
+                        withAnimation(.brightSnappy) { selectedCategory = category }
+                    }
+                }
+            }
+        }
+        .scrollClipDisabled()
+    }
+
+    private var activeCategory: ExerciseWorkoutCategory {
+        selectedCategory ?? category
+    }
+
     private var title: String {
-        "\(category.displayName) Exercises"
+        "\(activeCategory.displayName) Exercises"
     }
 
     private var filtered: [ExerciseDefinition] {
-        ExerciseDemoLibrary.exercises(in: category)
+        ExerciseDemoLibrary.exercises(in: activeCategory)
             .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
             .sorted { $0.name < $1.name }
     }
