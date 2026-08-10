@@ -278,6 +278,7 @@ struct ExerciseCreateWorkoutSheet: View {
                     } label: {
                         Image(systemName: "trash")
                     }
+                    .tint(.defaultRed)
                 }
             }
         }
