@@ -9,12 +9,13 @@ import RealityKit
 import SwiftUI
 
 struct ExerciseFormViewer: View {
-    var tint: Color = .defaultPurple
     var cardColor: Color = .defaultSheetModalCards
 
-    @Binding var isExpanded: Bool
+    // The pushed page gets orbit controls and larger playback buttons.
+    var isFullScreen = false
 
-    let expandedHeight: CGFloat
+    // Set on the card to show the open button; nil on the pushed page.
+    var onOpen: (() -> Void)?
 
     @State private var controller: AnimationPlaybackController?
 
@@ -43,55 +44,36 @@ struct ExerciseFormViewer: View {
                     }
                 }
             }
-            .realityViewCameraControls(isExpanded ? .orbit : .none)
+            .realityViewCameraControls(isFullScreen ? .orbit : .none)
 
             VStack(spacing: .spacing2x) {
                 Spacer()
 
                 controls
 
-                Slider(value: $progress) { editing in
-                    isScrubbing = editing
-                    if editing {
-                        controller?.pause()
-                    } else if !isPaused {
-                        controller?.resume()
-                    }
-                }
-                .tint(Color.defaultSkyBlue)
-                .onChange(of: progress) {
-                    if isScrubbing {
-                        controller?.time = min(progress * duration, duration - 0.01)
-                    }
-                }
-                .padding(.horizontal, .spacing4x)
-                .padding(.bottom, .spacing3x)
+                scrubber
             }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: isExpanded ? expandedHeight : Constants.viewerHeight)
+        .frame(maxWidth: .infinity, maxHeight: isFullScreen ? .infinity : nil)
+        .frame(height: isFullScreen ? nil : Constants.cardHeight)
         .background(cardColor)
         .clipShape(
             RoundedRectangle(
-                cornerRadius: isExpanded ? .spacing0x : .cardCornerRadius,
+                cornerRadius: isFullScreen ? .spacing0x : .cardCornerRadius,
                 style: .continuous
             )
         )
+        .ignoresSafeArea(.container, edges: isFullScreen ? .bottom : [])
         .overlay(alignment: .topTrailing) {
-            BrightRoundButton(
-                systemImage: isExpanded
-                    ? "arrow.down.right.and.arrow.up.left"
-                    : "arrow.up.left.and.arrow.down.right",
-                size: isExpanded ? .large : .medium,
-                onTapCallback: toggleExpansion
-            )
-            .padding(.top, isExpanded ? .spacing3x : .spacing4x)
-            .padding(.trailing, isExpanded ? .spacing3x : .spacing4x)
+            if let onOpen {
+                BrightRoundButton(
+                    systemImage: "arrow.up.left.and.arrow.down.right",
+                    size: .medium,
+                    onTapCallback: onOpen
+                )
+                .padding(.spacing4x)
+            }
         }
-        .padding(.horizontal, isExpanded ? -CGFloat.spacing3x : .spacing0x)
-        .ignoresSafeArea(.container, edges: isExpanded ? Edge.Set.bottom : [])
-        .contentShape(.rect)
-        .onTapGesture { if !isExpanded { toggleExpansion() } }
         .task {
             while !Task.isCancelled {
                 if let controller, !isScrubbing, duration > 0 {
@@ -126,6 +108,25 @@ struct ExerciseFormViewer: View {
         .brightHaptic(.light, trigger: isPaused)
     }
 
+    private var scrubber: some View {
+        Slider(value: $progress) { editing in
+            isScrubbing = editing
+            if editing {
+                controller?.pause()
+            } else if !isPaused {
+                controller?.resume()
+            }
+        }
+        .tint(Color.defaultSkyBlue)
+        .onChange(of: progress) {
+            if isScrubbing {
+                controller?.time = min(progress * duration, duration - 0.01)
+            }
+        }
+        .padding(.horizontal, .spacing4x)
+        .padding(.bottom, isFullScreen ? .spacing6x : .spacing3x)
+    }
+
     private func speedButton(_ speed: Double) -> some View {
         BrightRoundButton(
             title: speedLabel(speed),
@@ -137,21 +138,11 @@ struct ExerciseFormViewer: View {
         }
     }
 
-    // MARK: - Actions
-
-    private func toggleExpansion() {
-        BrightHaptic.medium.play()
-
-        withAnimation(.brightEaseInOut) {
-            isExpanded.toggle()
-        }
-    }
-
-    // MARK: - Derived state
-
     private var controlSize: BrightButtonSizes {
-        isExpanded ? .large : .medium
+        isFullScreen ? .large : .medium
     }
+
+    // MARK: - Model
 
     private func speedLabel(_ speed: Double) -> String {
         speed == 1 ? "1" : String(String(speed).dropFirst())
@@ -172,7 +163,7 @@ struct ExerciseFormViewer: View {
     private enum Constants {
         static let speeds: [Double] = [1, 0.5, 0.25]
         static let modelName = "14_Squat_Looping_color"
-        static let viewerHeight: CGFloat = 440
+        static let cardHeight: CGFloat = 440
         static let standingHeight: Float = 1.5
         static let targetHeight: Float = 0.5
         static let cameraDistance: Float = 0.9
@@ -181,6 +172,10 @@ struct ExerciseFormViewer: View {
 }
 
 #Preview {
-    ExerciseFormViewer(isExpanded: .constant(false), expandedHeight: 800)
+    ExerciseFormViewer {}
         .padding(.spacing4x)
+}
+
+#Preview("Full screen") {
+    ExerciseFormViewer(isFullScreen: true)
 }

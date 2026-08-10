@@ -41,16 +41,9 @@ struct ExerciseDetailSheet: View {
 
     @State private var selectedPage = 0
     @State private var timescale: Timescale = .oneMonth
-    @State private var isFormExpanded = false
-    @State private var summaryScrollPosition = ScrollPosition()
+    @State private var showingFormViewer = false
 
     var body: some View {
-        GeometryReader { proxy in
-            pager(expandedFormHeight: proxy.size.height + proxy.safeAreaInsets.bottom)
-        }
-    }
-
-    private func pager(expandedFormHeight: CGFloat) -> some View {
         BrightSwipePageView(
             pages: [
                 SwipePage(title: "Summary", systemImage: "ellipsis.calendar"),
@@ -58,50 +51,37 @@ struct ExerciseDetailSheet: View {
                 SwipePage(title: "Data", systemImage: "chart.xyaxis.line"),
             ],
             fakeLargeTitle: "",
-            showInlineTabs: !isFormExpanded,
-            disableHorizontalScroll: isFormExpanded,
             collapsesTitleToToolbar: false,
-            verticalScrollPosition: $summaryScrollPosition,
             scrollControlledPageIndex: 0,
-            verticalScrollDisabledPageIndex: isFormExpanded ? 0 : nil,
-            bottomSafeArea: !isFormExpanded,
-            navigationBarVisibility: isFormExpanded ? .hidden : .visible,
             selectedIndex: $selectedPage
         ) { index in
-            Group {
-                switch index {
-                case 0: summaryPage(expandedFormHeight: expandedFormHeight)
-                case 1: impactPage
-                default: dataPage
-                }
+            switch index {
+            case 0: summaryPage
+            case 1: impactPage
+            default: dataPage
             }
-            .padding(.top, isFormExpanded ? -Constants.reservedPillRow : .spacing0x)
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
                 ExerciseInlineTitle(title: exercise.name, file: #file)
             }
         }
-        .onChange(of: isFormExpanded) { _, expanded in
-            if expanded {
-                withAnimation(.brightEaseInOut) {
-                    summaryScrollPosition.scrollTo(edge: .top)
-                }
-            }
+        .navigationDestination(isPresented: $showingFormViewer) {
+            ExerciseFormViewer(cardColor: cardColor, isFullScreen: true)
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 
     // MARK: - Summary
 
-    private func summaryPage(expandedFormHeight: CGFloat) -> some View {
+    private var summaryPage: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            formCard(expandedHeight: expandedFormHeight)
+            formCard
             muscleChips
             statsSection
             progressionCard
         }
-        .padding(.top, isFormExpanded ? .spacing0x : .spacing3x)
-        .padding([.horizontal, .bottom], .spacing3x)
+        .padding(.spacing3x)
     }
 
     private var muscleChips: some View {
@@ -127,13 +107,8 @@ struct ExerciseDetailSheet: View {
             }
     }
 
-    private func formCard(expandedHeight: CGFloat) -> some View {
-        ExerciseFormViewer(
-            tint: exercise.category.accentColor,
-            cardColor: cardColor,
-            isExpanded: $isFormExpanded,
-            expandedHeight: expandedHeight
-        )
+    private var formCard: some View {
+        ExerciseFormViewer(cardColor: cardColor) { showingFormViewer = true }
     }
 
     private var statsSection: some View {
@@ -281,7 +256,6 @@ struct ExerciseDetailSheet: View {
     }
 
     private class Constants {
-        static let reservedPillRow: CGFloat = SwipePageConstants.pillHeight + .spacing2x
         static let chartHeight: CGFloat = 130
         static let statIconSize: CGFloat = 18
         static let progressionArrowSize: CGFloat = 28
