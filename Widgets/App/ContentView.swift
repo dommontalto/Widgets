@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showingOrder = false
-    @State private var showingVaultTests = false
     @State private var showingWorkout = false
     @State private var showingAddWorkouts = false
     @State private var showingExerciseDetail = false
@@ -84,53 +82,6 @@ struct ContentView: View {
                     ExerciseBodymapWidget()
                         .padding(.bottom, .spacing3x)
                 }
-
-                section("Vault") {
-                    widgetLabel("VaultDatapointsWidget")
-                    VaultDatapointsWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("VaultOverviewWidget")
-                    VaultOverviewWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("VaultGuidedTestingCard")
-                    VaultGuidedTestingCard {
-                        withAnimation(.brightBouncy) {
-                            showingVaultTests = true
-                        }
-                    }
-                    .padding(.bottom, .spacing3x)
-                }
-                
-                section("Genome") {
-                    widgetLabel("GenomeOrderWidget")
-                    Button { showingOrder = true } label: {
-                        GenomeOrderWidget()
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomePercentileGraphWidget")
-                    GenomePercentileGraphWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomePercentileBarWidget")
-                    GenomePercentileBarWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomeImpactContributorWidget")
-                    GenomeImpactContributorWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomeContributorWidget")
-                    GenomeContributorWidget()
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("GenomeOrderStatusWidget")
-                    GenomeOrderStatusWidget()
-                        .padding(.bottom, .spacing3x)
-                }
             }
             .padding(.spacing3x)
         }
@@ -179,14 +130,6 @@ struct ContentView: View {
             beamScreen
         }
         .exerciseWorkoutFlow($workoutStage)
-        .sheet(isPresented: $showingOrder) {
-            GenomeOrderSheet()
-        }
-        .sheet(isPresented: $showingVaultTests) {
-            VaultTestsSheet(onDismiss: {
-                showingVaultTests = false
-            })
-        }
     }
 
     private var beamScreen: some View {
@@ -286,23 +229,6 @@ struct ContentView: View {
             showingExerciseDetail = true
         } label: {
             BrightText("ExerciseDetailSheet", size: .body2, weight: .regular)
-                .padding(.horizontal, .spacing3x)
-                .padding(.vertical, .spacing105x)
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
-                }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var findTestsButton: some View {
-        Button {
-            withAnimation(.brightBouncy) {
-                showingVaultTests = true
-            }
-        } label: {
-            BrightText("Find tests", size: .body2, weight: .regular)
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing105x)
                 .overlay {
