@@ -18,7 +18,7 @@ struct ExerciseProgressionSet: Identifiable, Sendable {
 struct ExerciseProgressionMiniSheet: View {
     let lastSessionDate: String
     let sets: [ExerciseProgressionSet]
-    // How much the working weight moved off the last session, in kg.
+    // How much the working weight moved off thel last session, in kg.
     let weightChange: Double
     var onRevert: () -> Void = {}
     var onClose: () -> Void = {}

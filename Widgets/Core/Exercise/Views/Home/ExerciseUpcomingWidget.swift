@@ -106,17 +106,27 @@ struct ExerciseUpcomingWidget: View {
 
     private var quickWorkoutMenu: some View {
         Menu {
-            Section("Saved Workouts") {
-                ForEach(builder.saved) { workout in
-                    Button(workout.name, systemImage: workout.symbol) {
-                        onQuickWorkout(workout)
-                    }
+            Section("Workouts") {
+                ForEach(builder.savedWorkouts(cardio: false)) { workout in
+                    quickWorkoutButton(workout)
+                }
+            }
+
+            Section("Cardio") {
+                ForEach(builder.savedWorkouts(cardio: true)) { workout in
+                    quickWorkoutButton(workout)
                 }
             }
         } label: {
             BrightPillButton("Quick workout", buttonSize: .large) {}
             // The pill is only the label — let the Menu take the tap.
             .allowsHitTesting(false)
+        }
+    }
+
+    private func quickWorkoutButton(_ workout: ExerciseQuickWorkout) -> some View {
+        Button(workout.name, systemImage: workout.symbol) {
+            onQuickWorkout(workout)
         }
     }
 }

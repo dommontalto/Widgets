@@ -1,5 +1,5 @@
 //
-//  ExerciseCategoryView.swift
+//  ExerciseCategorySheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -7,8 +7,12 @@
 
 import SwiftUI
 
-struct ExerciseCategoryView: View {
+struct ExerciseCategorySheet: View {
     let category: ExerciseWorkoutCategory
+
+    // Presented as a sheet there's no back button, so it needs its own close.
+    var showCloseButton = false
+
     // Set to pick one exercise and hand it back — swapping, or adding to a draft
     // that's already open. Left nil, the plus adds straight to the draft.
     var onSelect: ((ExerciseDefinition) -> Void)?
@@ -27,6 +31,17 @@ struct ExerciseCategoryView: View {
             toolbar: {
                 ToolbarItem(placement: .principal) {
                     ExerciseInlineTitle(title: title, file: #file)
+                }
+
+                if showCloseButton {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
+                    }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -117,7 +132,7 @@ struct ExerciseCategoryView: View {
 
 #Preview {
     NavigationStack {
-        ExerciseCategoryView(category: .gym)
+        ExerciseCategorySheet(category: .gym)
             .environment(ExerciseWorkoutBuilder())
     }
 }

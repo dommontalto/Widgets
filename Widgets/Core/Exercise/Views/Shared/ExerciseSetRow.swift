@@ -70,7 +70,7 @@ struct ExerciseSetRow: View {
     private var badge: some View {
         ZStack {
             Circle()
-                .fill(Color.defaultMainGrey.opacity(.minimalOpacity))
+                .fill(Color.defaultCapsule)
 
             if let symbol = kind.symbol {
                 Image(systemName: symbol)
@@ -96,7 +96,7 @@ struct ExerciseSetRow: View {
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.center)
             .frame(width: fieldWidth, height: badgeSize)
-            .background(Color.defaultMainGrey.opacity(.minimalOpacity), in: Capsule())
+            .background(Color.defaultCapsule, in: Capsule())
     }
 
     enum Constants {

@@ -36,7 +36,6 @@ struct ExerciseCreateWorkoutSheet: View {
     // The draft as it looked on arrival, so Save can tell edits from a no-op.
     @State private var baselineDraft: String?
 
-    @Namespace private var iconPickerSpace
 
     // Mirrors the set row's own scaling so the headers stay over their columns
     // and the list's height matches the rows it holds.
@@ -53,7 +52,7 @@ struct ExerciseCreateWorkoutSheet: View {
         if let editing, let icon = ExerciseWorkoutIcon.matching(editing) {
             _symbol = State(initialValue: icon)
         } else {
-            _symbol = State(initialValue: ExerciseWorkoutIcon.allCases[0])
+            _symbol = State(initialValue: ExerciseWorkoutIcon.strength[0])
         }
     }
 
@@ -64,7 +63,7 @@ struct ExerciseCreateWorkoutSheet: View {
             backgroundColor: .defaultSheetBackground,
             toolbar: {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Edit Workout", file: #file)
+                    ExerciseInlineTitle(title: title, file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -80,7 +79,10 @@ struct ExerciseCreateWorkoutSheet: View {
                         VStack(alignment: .leading, spacing: .spacing3x) {
                             nameField
 
-                            iconPicker
+                            ExerciseIconPicker(
+                                icons: ExerciseWorkoutIcon.strength,
+                                selection: $symbol
+                            )
 
                             ForEach(builder.added, id: \.self) { exercise in
                                 exerciseCard(exercise)
@@ -103,14 +105,14 @@ struct ExerciseCreateWorkoutSheet: View {
         )
         .sheet(item: $swapTarget) { target in
             NavigationStack {
-                ExerciseCategoryView(category: .gym) { replacement in
+                ExerciseCategorySheet(category: .gym, showCloseButton: true) { replacement in
                     builder.replace(target.id, with: replacement.name)
                 }
             }
         }
         .sheet(isPresented: $isAddingExercise) {
             NavigationStack {
-                ExerciseCategoryView(category: .gym) { exercise in
+                ExerciseCategorySheet(category: .gym, showCloseButton: true) { exercise in
                     builder.add(exercise.name)
                     addedExercise = exercise.name
                 }
@@ -135,47 +137,6 @@ struct ExerciseCreateWorkoutSheet: View {
 
             BrightText("\(builder.count) exercise\(builder.count == 1 ? "" : "s")", size: .body1, color: .semiLightTextColor)
         }
-    }
-
-    private var iconPicker: some View {
-        HStack(spacing: Constants.iconTileGap) {
-            ForEach(ExerciseWorkoutIcon.allCases) { icon in
-                Image(systemName: icon.symbol)
-                    .font(.standard(size: .heading, weight: .light))
-                    .foregroundStyle(icon == symbol ? icon.accentColor : .semiLightTextColor)
-                    .frame(width: Constants.iconTile, height: Constants.iconTile)
-                    .background {
-                        Circle()
-                            .fill(Color.defaultMainGrey.opacity(.finalBossLowOpacity))
-                    }
-                    .matchedGeometryEffect(id: icon, in: iconPickerSpace)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alignment: .leading) {
-            Color.clear
-                .frame(width: Constants.iconTile, height: Constants.iconTile)
-                .modifier(GlassEffect(shape: .circle))
-                .matchedGeometryEffect(id: symbol, in: iconPickerSpace, isSource: false)
-        }
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    select(at: value.location.x)
-                }
-        )
-        .brightHaptic(.light, trigger: symbol)
-        .animation(.brightSnappy, value: symbol)
-    }
-
-    // One gesture drives both tap and drag, so the glass follows the finger
-    // across the row instead of jumping between taps.
-    private func select(at x: CGFloat) {
-        let icons = ExerciseWorkoutIcon.allCases
-        let slot = Constants.iconTile + Constants.iconTileGap
-        let index = min(max(0, Int(x / slot)), icons.count - 1)
-        guard icons[index] != symbol else { return }
-        symbol = icons[index]
     }
 
     private func exerciseCard(_ exercise: String) -> some View {
@@ -318,6 +279,10 @@ struct ExerciseCreateWorkoutSheet: View {
         editing == nil ? "Create" : "Save"
     }
 
+    private var title: String {
+        editing == nil ? "Create Workout" : "Edit Workout"
+    }
+
     // Editing only offers Save once something actually differs; a new workout
     // just needs a name.
     private var canSave: Bool {
@@ -352,8 +317,6 @@ struct ExerciseCreateWorkoutSheet: View {
 
     private enum Constants {
         static let columnTitles = ["Weights", "Reps", "Rest"]
-        static let iconTile: CGFloat = 44
-        static let iconTileGap: CGFloat = .spacing2x
     }
 }
 

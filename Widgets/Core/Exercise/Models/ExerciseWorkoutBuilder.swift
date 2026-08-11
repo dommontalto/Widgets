@@ -66,30 +66,52 @@ enum ExerciseSetKind: Hashable {
 
 enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
     case dumbbell
+    case barbell
+    case functional
+    case core
+    case mobility
+    case yoga
+
     case run
+    case ride
+    case swim
+    case row
+    case hike
+    case jumpRope
 
     var id: String { rawValue }
+
+    // Which picker the icon belongs to — and, for a saved workout, whether it
+    // routes to the live cardio screen instead of the set-by-set one.
+    static let strength: [ExerciseWorkoutIcon] = [.dumbbell, .barbell, .functional, .core, .mobility, .yoga]
+
+    static let cardio: [ExerciseWorkoutIcon] = [.run, .ride, .swim, .row, .hike, .jumpRope]
+
+    var isCardio: Bool { ExerciseWorkoutIcon.cardio.contains(self) }
 
     var symbol: String {
         switch self {
         case .dumbbell: "dumbbell"
+        case .barbell: "figure.strengthtraining.traditional"
+        case .functional: "figure.strengthtraining.functional"
+        case .core: "figure.core.training"
+        case .mobility: "figure.cooldown"
+        case .yoga: "figure.yoga"
         case .run: "figure.run"
+        case .ride: "figure.outdoor.cycle"
+        case .swim: "figure.pool.swim"
+        case .row: "figure.outdoor.rowing"
+        case .hike: "figure.hiking"
+        case .jumpRope: "figure.jumprope"
         }
+    }
+
+    var accentColor: Color {
+        isCardio ? .defaultSkyBlue : .defaultPurple
     }
 
     static func matching(_ workout: ExerciseQuickWorkout) -> ExerciseWorkoutIcon? {
         allCases.first { $0.symbol == workout.symbol }
-    }
-
-    // The run icon is the cardio pick — it routes the workout to the live
-    // cardio screen instead of the set-by-set one.
-    var isCardio: Bool { self == .run }
-
-    var accentColor: Color {
-        switch self {
-        case .dumbbell: .defaultPurple
-        case .run: .defaultSkyBlue
-        }
     }
 }
 
@@ -109,6 +131,10 @@ final class ExerciseWorkoutBuilder {
     var path = NavigationPath()
 
     var count: Int { added.count }
+
+    func savedWorkouts(cardio: Bool) -> [ExerciseQuickWorkout] {
+        saved.filter { $0.isCardio == cardio }
+    }
 
     func isAdded(_ name: String) -> Bool {
         added.contains(name)
@@ -183,7 +209,12 @@ final class ExerciseWorkoutBuilder {
         }
     }
 
-    func update(_ workout: ExerciseQuickWorkout, named name: String, icon: ExerciseWorkoutIcon) {
+    func update(
+        _ workout: ExerciseQuickWorkout,
+        named name: String,
+        icon: ExerciseWorkoutIcon,
+        subtitle cardioPlan: String? = nil
+    ) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty,
               let index = saved.firstIndex(where: { $0.id == workout.id })
@@ -194,7 +225,7 @@ final class ExerciseWorkoutBuilder {
             name: title,
             symbol: icon.symbol,
             accentColor: icon.accentColor,
-            subtitle: added.isEmpty ? workout.subtitle : subtitle,
+            subtitle: cardioPlan ?? (added.isEmpty ? workout.subtitle : subtitle),
             isCardio: icon.isCardio,
             items: added.isEmpty ? workout.items : templateItems
         )
@@ -222,7 +253,9 @@ final class ExerciseWorkoutBuilder {
         return candidate
     }
 
-    func save(named name: String, icon: ExerciseWorkoutIcon = .dumbbell) {
+    // Cardio carries its plan in the subtitle, e.g. "5 km • 4 intervals"; a gym
+    // workout counts its exercises instead.
+    func save(named name: String, icon: ExerciseWorkoutIcon = .dumbbell, subtitle cardioPlan: String? = nil) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         // A cardio workout is the run itself, so it saves with no exercises.
         guard !title.isEmpty, icon.isCardio || !added.isEmpty else { return }
@@ -231,7 +264,9 @@ final class ExerciseWorkoutBuilder {
                 name: title,
                 symbol: icon.symbol,
                 accentColor: icon.accentColor,
-                subtitle: icon.isCardio ? ExerciseWorkoutBuilder.cardioSubtitle : subtitle,
+                subtitle: icon.isCardio
+                    ? (cardioPlan ?? ExerciseWorkoutBuilder.cardioSubtitle)
+                    : subtitle,
                 isCardio: icon.isCardio,
                 items: templateItems
             )

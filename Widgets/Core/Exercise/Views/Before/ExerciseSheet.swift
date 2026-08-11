@@ -11,6 +11,7 @@ enum ExerciseWorkoutRoute: Hashable {
     case category(ExerciseWorkoutCategory)
     case exercise(String)
     case newWorkout
+    case newCardio
     // Carries the saved workout's id — the draft itself lives on the builder.
     case editWorkout(String)
 }
@@ -30,8 +31,12 @@ struct ExerciseSheet: View {
 
         return BrightPageSheetView(title: "Start Workout", horizontalPadding: .spacing0x, path: $builder.path) {
             ScrollView(showsIndicators: false) {
-                section("") { workoutCards }
-                    .padding(.spacing3x)
+                VStack(alignment: .leading, spacing: .spacing4x) {
+                    section("Workouts", cardio: false)
+
+                    section("Cardio", cardio: true)
+                }
+                .padding(.spacing3x)
             }
             .safeAreaInset(edge: .bottom) {
                 addButton
@@ -50,18 +55,39 @@ struct ExerciseSheet: View {
 
     // MARK: - Saved workouts
 
-    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+    @ViewBuilder
+    private func section(_ title: String, cardio: Bool) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-//            BrightText(title, size: .subheading)
+            BrightText(title, size: .subheading)
 
-            LazyVGrid(columns: columns, spacing: .spacing2x) {
-                content()
+            if builder.savedWorkouts(cardio: cardio).isEmpty {
+                placeholder(cardio: cardio)
+            } else {
+                LazyVGrid(columns: columns, spacing: .spacing2x) {
+                    workoutCards(cardio: cardio)
+                }
             }
         }
     }
 
-    private var workoutCards: some View {
-        ForEach(builder.saved) { workout in
+    private func placeholder(cardio: Bool) -> some View {
+        BrightPlaceholderView(
+            systemImage: cardio ? "figure.run" : "dumbbell",
+            title: cardio ? "No cardio yet" : "No workouts yet",
+            subtitle: cardio
+                ? "Save a run, ride or swim to start it from here."
+                : "Build a workout to start it from here.",
+            imageColor: cardio ? .defaultSkyBlue : .defaultPurple,
+            buttonTitle: cardio ? "Create cardio" : "Create workout"
+        ) {
+            builder.path.append(
+                cardio ? ExerciseWorkoutRoute.newCardio : ExerciseWorkoutRoute.category(.gym)
+            )
+        }
+    }
+
+    private func workoutCards(cardio: Bool) -> some View {
+        ForEach(builder.savedWorkouts(cardio: cardio)) { workout in
             Button {
                 workoutStage = workout.isCardio ? .cardio : .preWorkout(workout)
             } label: {
@@ -115,8 +141,20 @@ struct ExerciseSheet: View {
     // MARK: - Library
 
     private var addButton: some View {
-        BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {
-            builder.path.append(ExerciseWorkoutRoute.category(.gym))
+        // The menu opens upward from the bottom-right button, so iOS lists the
+        // last item nearest the finger — cardio is declared first to put Create
+        // workout at the top.
+        Menu {
+            Button("Create cardio", systemImage: "figure.run") {
+                builder.path.append(ExerciseWorkoutRoute.newCardio)
+            }
+
+            Button("Create workout", systemImage: "dumbbell") {
+                builder.path.append(ExerciseWorkoutRoute.category(.gym))
+            }
+        } label: {
+            BrightRoundButton(systemImage: "plus", size: .finalBossLarge)
+                .allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.spacing3x)
@@ -128,11 +166,13 @@ struct ExerciseSheet: View {
     private func destination(for route: ExerciseWorkoutRoute) -> some View {
         switch route {
         case let .category(category):
-            ExerciseCategoryView(category: category)
+            ExerciseCategorySheet(category: category)
         case let .exercise(name):
             exerciseDetail(named: name)
         case .newWorkout:
             ExerciseCreateWorkoutSheet { builder.path = NavigationPath() }
+        case .newCardio:
+            ExerciseCreateCardioSheet { builder.path = NavigationPath() }
         case let .editWorkout(id):
             editor(forWorkoutID: id)
         }
@@ -150,7 +190,11 @@ struct ExerciseSheet: View {
     @ViewBuilder
     private func editor(forWorkoutID id: String) -> some View {
         if let workout = builder.saved.first(where: { $0.id == id }) {
-            ExerciseCreateWorkoutSheet(editing: workout) { builder.path = NavigationPath() }
+            if workout.isCardio {
+                ExerciseCreateCardioSheet(editing: workout) { builder.path = NavigationPath() }
+            } else {
+                ExerciseCreateWorkoutSheet(editing: workout) { builder.path = NavigationPath() }
+            }
         }
     }
 

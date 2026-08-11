@@ -87,7 +87,6 @@ struct ExerciseWorkoutFlow: View {
     }
 
     private func close() {
-        path.removeAll()
         stage = nil
     }
 }

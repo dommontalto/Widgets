@@ -98,6 +98,16 @@ struct BrightStatus: View {
             Color.defaultBlue
         case "AVG ZONE 3":
             Color.defaultYellow
+        case "ZONE 1":
+            Color.defaultBlue
+        case "ZONE 2":
+            Color.defaultGreen
+        case "ZONE 3":
+            Color.defaultPink
+        case "ZONE 4":
+            Color.defaultOrange
+        case "ZONE 5":
+            Color.defaultRed
         case "NO DATA":
             Color.textColor
         default:

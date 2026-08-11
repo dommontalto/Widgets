@@ -11,7 +11,7 @@ import SwiftUI
 struct ExerciseFormViewer: View {
     var cardColor: Color = .defaultSheetModalCards
 
-    // The pushed page gets orbit controls and larger playback buttons.
+    // The pushed page gets larger playback buttons.
     var isFullScreen = false
 
     // Set on the card to show the open button; nil on the pushed page.
@@ -33,7 +33,7 @@ struct ExerciseFormViewer: View {
         ZStack {
             RealityView { content in
                 content.camera = .virtual
-                if let entity = try? await Entity(named: Constants.modelName) {
+                if let entity = await ExerciseFormModelCache.entity(named: Constants.modelName) {
                     fit(entity)
                     content.add(entity)
                     content.add(makeCamera())
@@ -44,7 +44,7 @@ struct ExerciseFormViewer: View {
                     }
                 }
             }
-            .realityViewCameraControls(isFullScreen ? .orbit : .none)
+            .realityViewCameraControls(.orbit)
 
             VStack(spacing: .spacing2x) {
                 Spacer()
@@ -162,12 +162,36 @@ struct ExerciseFormViewer: View {
 
     private enum Constants {
         static let speeds: [Double] = [1, 0.5, 0.25]
-        static let modelName = "14_Squat_Looping_color"
+        static let modelName = "KettlebellSwing_Looping_color"
         static let cardHeight: CGFloat = 440
         static let standingHeight: Float = 1.5
         static let targetHeight: Float = 0.5
         static let cameraDistance: Float = 0.9
         static let figureLift: Float = 0.06
+    }
+}
+
+@MainActor
+enum ExerciseFormModelCache {
+    private static var loaded: [String: Entity] = [:]
+    private static var loading: [String: Task<Entity?, Never>] = [:]
+
+    static func entity(named name: String) async -> Entity? {
+        if let entity = loaded[name] {
+            return entity.clone(recursive: true)
+        }
+
+        let task = loading[name] ?? Task { try? await Entity(named: name) }
+        loading[name] = task
+
+        guard let entity = await task.value else {
+            loading[name] = nil
+            return nil
+        }
+
+        loaded[name] = entity
+        loading[name] = nil
+        return entity.clone(recursive: true)
     }
 }
 
