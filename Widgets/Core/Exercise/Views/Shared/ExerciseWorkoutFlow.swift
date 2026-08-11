@@ -39,7 +39,7 @@ enum ExercisePageChrome {
 struct ExerciseWorkoutFlow: View {
     @Binding var stage: ExerciseWorkoutStage?
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @State private var path: [ExerciseWorkoutStage] = []
 

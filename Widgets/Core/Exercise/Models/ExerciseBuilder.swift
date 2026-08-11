@@ -1,5 +1,5 @@
 //
-//  ExerciseWorkoutBuilder.swift
+//  ExerciseBuilder.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -124,7 +124,7 @@ struct ExerciseSetDraft: Identifiable, Hashable {
 }
 
 @MainActor @Observable
-final class ExerciseWorkoutBuilder {
+final class ExerciseBuilder {
     var added: [String] = []
     var sets: [String: [ExerciseSetDraft]] = [:]
     var saved: [ExerciseQuickWorkout] = ExerciseDemoWorkouts.all
@@ -143,7 +143,7 @@ final class ExerciseWorkoutBuilder {
     func add(_ name: String) {
         guard !isAdded(name) else { return }
         added.append(name)
-        sets[name] = ExerciseWorkoutBuilder.defaultSets
+        sets[name] = ExerciseBuilder.defaultSets
     }
 
     func toggle(_ name: String) {
@@ -197,13 +197,13 @@ final class ExerciseWorkoutBuilder {
             guard !isAdded(item.exerciseName) else { continue }
             added.append(item.exerciseName)
             sets[item.exerciseName] = item.sets.isEmpty
-                ? ExerciseWorkoutBuilder.defaultSets
+                ? ExerciseBuilder.defaultSets
                 : renumbered(item.sets.map { set in
                     ExerciseSetDraft(
                         kind: set.kind,
                         weight: set.weight,
                         reps: set.reps,
-                        rest: ExerciseWorkoutBuilder.defaultRest
+                        rest: ExerciseBuilder.defaultRest
                     )
                 })
         }
@@ -265,7 +265,7 @@ final class ExerciseWorkoutBuilder {
                 symbol: icon.symbol,
                 accentColor: icon.accentColor,
                 subtitle: icon.isCardio
-                    ? (cardioPlan ?? ExerciseWorkoutBuilder.cardioSubtitle)
+                    ? (cardioPlan ?? ExerciseBuilder.cardioSubtitle)
                     : subtitle,
                 isCardio: icon.isCardio,
                 items: templateItems

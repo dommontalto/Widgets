@@ -17,7 +17,7 @@ struct ExercisePreWorkoutSheet: View {
     // the same presentation.
     var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
     @State private var openedExerciseName: String?
@@ -276,6 +276,6 @@ struct ExercisePreWorkoutSheet: View {
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
             ExercisePreWorkoutSheet(workout: ExerciseDemoWorkouts.quickPush)
-                .environment(ExerciseWorkoutBuilder())
+                .environment(ExerciseBuilder())
         }
 }

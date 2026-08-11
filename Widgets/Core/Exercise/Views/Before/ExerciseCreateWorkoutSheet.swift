@@ -17,7 +17,7 @@ struct ExerciseCreateWorkoutSheet: View {
 
     let onSave: () -> Void
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
 
@@ -327,8 +327,8 @@ struct ExerciseCreateWorkoutSheet: View {
     }
 }
 
-@MainActor private let previewBuilder: ExerciseWorkoutBuilder = {
-    let builder = ExerciseWorkoutBuilder()
+@MainActor private let previewBuilder: ExerciseBuilder = {
+    let builder = ExerciseBuilder()
     builder.add("Bench Press")
     builder.add("Shoulder Press")
     return builder

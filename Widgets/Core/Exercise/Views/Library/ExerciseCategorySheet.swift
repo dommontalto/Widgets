@@ -17,7 +17,7 @@ struct ExerciseCategorySheet: View {
     // that's already open. Left nil, the plus adds straight to the draft.
     var onSelect: ((ExerciseDefinition) -> Void)?
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
@@ -133,6 +133,6 @@ struct ExerciseCategorySheet: View {
 #Preview {
     NavigationStack {
         ExerciseCategorySheet(category: .gym)
-            .environment(ExerciseWorkoutBuilder())
+            .environment(ExerciseBuilder())
     }
 }

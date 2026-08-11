@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseAddedPill: View {
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @State private var isShowingClear = false
     @State private var clearTask: Task<Void, Never>?
@@ -65,6 +65,6 @@ struct ExerciseAddedPill: View {
 
 #Preview {
     ExerciseAddedPill()
-        .environment(ExerciseWorkoutBuilder())
+        .environment(ExerciseBuilder())
         .padding(.spacing3x)
 }

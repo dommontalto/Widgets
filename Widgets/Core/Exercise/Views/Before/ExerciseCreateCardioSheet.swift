@@ -195,7 +195,7 @@ struct ExerciseCreateCardioSheet: View {
 
     let onSave: () -> Void
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
 
@@ -844,6 +844,6 @@ private struct ExerciseIntervalRow: View {
 #Preview {
     NavigationStack {
         ExerciseCreateCardioSheet {}
-            .environment(ExerciseWorkoutBuilder())
+            .environment(ExerciseBuilder())
     }
 }

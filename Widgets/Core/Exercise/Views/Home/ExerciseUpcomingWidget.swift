@@ -11,7 +11,7 @@ struct ExerciseUpcomingWidget: View {
     var workouts: [ExerciseUpcomingWorkout] = []
     var onQuickWorkout: (ExerciseQuickWorkout) -> Void = { _ in }
 
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @State private var selectedIndex: Int?
 
@@ -209,5 +209,5 @@ struct ExerciseWorkoutMiniSheet: View {
 #Preview {
     ExerciseUpcomingWidget()
         .padding(.spacing4x)
-        .environment(ExerciseWorkoutBuilder())
+        .environment(ExerciseBuilder())
 }

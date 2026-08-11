@@ -17,7 +17,7 @@ enum ExerciseWorkoutRoute: Hashable {
 }
 
 struct ExerciseSheet: View {
-    @Environment(ExerciseWorkoutBuilder.self) private var builder
+    @Environment(ExerciseBuilder.self) private var builder
 
     @State private var workoutStage: ExerciseWorkoutStage?
 
@@ -206,5 +206,5 @@ struct ExerciseSheet: View {
 
 #Preview {
     ExerciseSheet()
-        .environment(ExerciseWorkoutBuilder())
+        .environment(ExerciseBuilder())
 }

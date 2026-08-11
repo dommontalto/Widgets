@@ -17,7 +17,7 @@ struct ContentView: View {
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
-    @State private var builder = ExerciseWorkoutBuilder()
+    @State private var builder = ExerciseBuilder()
     @State private var workoutStage: ExerciseWorkoutStage?
 
     var body: some View {
