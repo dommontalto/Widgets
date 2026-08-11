@@ -837,7 +837,7 @@ private struct ExerciseIntervalRow: View {
         static let unit = "M"
         static let rowHeight: CGFloat = 49
         static let badgeSize: CGFloat = 30
-        static let pillWidth: CGFloat = 72
+        static let pillWidth: CGFloat = 84
     }
 }
 
