@@ -102,14 +102,6 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     }
 }
 
-struct EmptyToolbarContent: ToolbarContent {
-    var body: some ToolbarContent {
-        ToolbarItem(placement: .automatic) {
-            EmptyView()
-        }
-    }
-}
-
 extension BrightPageSheetView where Trailing == EmptyToolbarContent {
     init(
         title: String = "",

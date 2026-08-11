@@ -1,8 +1,9 @@
 //
 //  BrightScreenEdgeBeam.swift
-//  Widgets
+//  Bright
 //
 //  Created by Dom Montalto on 29/7/2026.
+//  Copyright © 2026 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI
@@ -19,10 +20,9 @@ struct BrightScreenEdgeBeam: View {
     var edgesToIgnore: Edge.Set = .all
     var colorVariant: BeamColorVariant = .brand
     var size: BeamSize = .md
-    // nil resolves to the beam spec's defaults, matching the untuned web demo.
-    var duration: Double?
-    var brightness: Double?
-    var saturation: Double?
+    var duration: Double = Constants.duration
+    var brightness: Double = Constants.brightness
+    var saturation: Double = Constants.saturation
     var strength: Double = 1
     // How far the ring's blobs spread: the canvas is drawn this much smaller
     // then scaled back up, so a bigger number means a fatter, softer ring.
@@ -30,6 +30,9 @@ struct BrightScreenEdgeBeam: View {
     var tuning: BeamTuning = .none
 
     static var defaultCornerRadius: Double { Constants.screenCornerRadius }
+    static var defaultDuration: Double { Constants.duration }
+    static var defaultBrightness: Double { Constants.brightness }
+    static var defaultSaturation: Double { Constants.saturation }
     static var defaultRenderScale: Double { Constants.renderScale }
 
     var body: some View {
@@ -78,6 +81,9 @@ struct BrightScreenEdgeBeam: View {
         // corners read tighter than the radius says once scaled back up.
         static let screenCornerRadius: Double = 60
         static let renderScale: CGFloat = 3
+        static let duration: Double = 4
+        static let brightness: Double = 1.7
+        static let saturation: Double = 1.5
     }
 }
 

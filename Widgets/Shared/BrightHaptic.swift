@@ -17,7 +17,7 @@ public enum BrightHaptic {
 
     public var feedback: SensoryFeedback {
         switch self {
-        case .soft: .impact(flexibility: .soft)
+        case .soft: .impact(flexibility: .soft, intensity: 0.75)
         case .light: .impact(weight: .light)
         case .medium: .impact(weight: .medium)
         case .impact: .impact
@@ -29,7 +29,7 @@ public enum BrightHaptic {
     public func play() {
         switch self {
         case .soft:
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.75)
         case .light:
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         case .medium:

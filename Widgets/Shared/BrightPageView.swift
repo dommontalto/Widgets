@@ -1,6 +1,6 @@
 //
 //  BrightPageView.swift
-//  Widgets
+//  Bright
 //
 //  Copyright © 2025 Bryan Jordan. All rights reserved.
 //
@@ -22,6 +22,10 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
 
     private var largeTitleFade: CGFloat {
         1 - min(1, max(0, (scrollY - .spacing2x) / Constants.titleFadeDistance))
+    }
+
+    private var inlineTitleFade: CGFloat {
+        scrollableTitle ? inlineTitleOpacity : 1
     }
 
     init(
@@ -64,7 +68,6 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
             } else {
                 content
                     .padding(.horizontal, horizontalPadding)
-                    .modifier(InlineTitleScrollTracking(inlineTitleOpacity: $inlineTitleOpacity, scrollY: $scrollY))
             }
         }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -86,9 +89,9 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
                 if !title.isEmpty {
                     ToolbarItem(placement: .principal) {
                         BrightText(title, size: .subheading)
-                            .opacity(inlineTitleOpacity)
-                            .blur(radius: (1 - inlineTitleOpacity) * 6)
-                            .scaleEffect(1.15 - 0.15 * inlineTitleOpacity)
+                            .opacity(inlineTitleFade)
+                            .blur(radius: (1 - inlineTitleFade) * 6)
+                            .scaleEffect(1.15 - 0.15 * inlineTitleFade)
                     }
                 }
                 toolbar
@@ -145,5 +148,13 @@ private struct InlineTitleScrollTracking: ViewModifier {
                     }
                 }
             }
+    }
+}
+
+struct EmptyToolbarContent: ToolbarContent {
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .automatic) {
+            EmptyView()
+        }
     }
 }

@@ -1,8 +1,9 @@
 //
 //  BrightText.swift
-//  Widgets
+//  Streamplate
 //
-//  Created by Dom Montalto on 1/7/2026.
+//  Created by Anthony Uccello on 2023-06-14.
+//  Copyright © 2023 Bryan Jordan. All rights reserved.
 //
 
 import SwiftUI
@@ -18,6 +19,7 @@ struct BrightText: View {
     var allowsTightening: Bool
 
     var paddingSize: CGFloat {
+        // Reduce extra vertical padding around text for .standout.
         if size == .standout1 {
             -(size.rawValue * 0.23)
         } else {
@@ -41,7 +43,11 @@ struct BrightText: View {
         self.kerning = kerning
         self.isItalic = isItalic
         self.scaleTextSize = scaleTextSize
-        self.allowsTightening = scaleTextSize != 1
+        if scaleTextSize != 1 {
+            allowsTightening = true
+        } else {
+            allowsTightening = false
+        }
     }
 
     init(
@@ -60,7 +66,34 @@ struct BrightText: View {
         self.kerning = kerning
         self.isItalic = isItalic
         self.scaleTextSize = scaleTextSize
-        self.allowsTightening = scaleTextSize != 1
+        if scaleTextSize != 1 {
+            allowsTightening = true
+        } else {
+            allowsTightening = false
+        }
+    }
+
+    init(
+        localized key: String,
+        size: FontSizes,
+        color: Color = .textColor,
+        weight: Font.Weight = .light,
+        kerning: CGFloat = .defaultKerning,
+        isItalic: Bool = false,
+        scaleTextSize: CGFloat = 1
+    ) {
+        text = AttributedString(String(localized: String.LocalizationValue(key)))
+        self.size = size
+        self.color = color
+        self.weight = weight
+        self.kerning = kerning
+        self.isItalic = isItalic
+        self.scaleTextSize = scaleTextSize
+        if scaleTextSize != 1 {
+            allowsTightening = true
+        } else {
+            allowsTightening = false
+        }
     }
 
     var body: some View {
@@ -78,5 +111,6 @@ struct BrightText: View {
 }
 
 #Preview {
+    // No string catalog in this project, so the key would render as-is.
     BrightText("The future is bright", size: .body1)
 }
