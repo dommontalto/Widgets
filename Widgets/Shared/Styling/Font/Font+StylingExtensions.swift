@@ -9,27 +9,23 @@ import SwiftUI
 
 extension Font {
     static func standard(size: FontSizes, weight: Font.Weight) -> Font {
-        Font(sfCompactRounded(size: size.rawValue, weight: weight))
+        Font.custom(sfCompactRoundedName(for: weight), size: size.rawValue)
     }
 
     static func standardUIFont(size: FontSizes, weight: Font.Weight = .regular) -> UIFont? {
-        sfCompactRounded(size: size.rawValue, weight: weight)
+        UIFont(name: sfCompactRoundedName(for: weight), size: size.rawValue)
     }
 
+    // SF Pro is the system typeface, so there is nothing to bundle.
     static func standardSFPro(size: FontSizes, weight: Font.Weight) -> Font {
         Font.system(size: size.rawValue, weight: weight)
     }
 
-    private static func sfCompactRounded(size: CGFloat, weight: Font.Weight) -> UIFont {
-        let uiWeight: UIFont.Weight = switch weight {
-            case .light:  .light
-            case .medium: .medium
-            default:      .regular
+    private static func sfCompactRoundedName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .light: "SFCompactRounded-Light"
+        case .medium: "SFCompactRounded-Medium"
+        default: "SFCompactRounded-Regular"
         }
-        let base = UIFont.systemFont(ofSize: size, weight: uiWeight)
-        guard let rounded = base.fontDescriptor.withDesign(.rounded),
-              let compact = rounded.withSymbolicTraits(rounded.symbolicTraits.union(.traitCondensed))
-        else { return base }
-        return UIFont(descriptor: compact, size: size)
     }
 }
