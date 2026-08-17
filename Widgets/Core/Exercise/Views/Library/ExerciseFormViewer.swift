@@ -17,6 +17,10 @@ struct ExerciseFormViewer: View {
     // Set on the card to show the open button; nil on the pushed page.
     var onOpen: (() -> Void)?
 
+    // Set on the pushed page, which hides the nav bar to reach the top of the
+    // screen and so carries its own way back.
+    var onClose: (() -> Void)?
+
     @State private var controller: AnimationPlaybackController?
 
     @State private var duration: TimeInterval = 1
@@ -30,6 +34,45 @@ struct ExerciseFormViewer: View {
     @State private var isPaused = false
 
     var body: some View {
+        viewer
+            .overlay(alignment: .topLeading) {
+                if let onClose {
+                    BrightRoundButton(systemImage: "chevron.left", size: .medium, onTapCallback: onClose)
+                        .padding(.spacing4x)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if let onOpen {
+                    BrightRoundButton(
+                        systemImage: "arrow.up.left.and.arrow.down.right",
+                        size: .medium,
+                        onTapCallback: onOpen
+                    )
+                    .padding(.spacing4x)
+                }
+            }
+            .task {
+                while !Task.isCancelled {
+                    if let controller, !isScrubbing, duration > 0 {
+                        progress = min(1, controller.time.truncatingRemainder(dividingBy: duration) / duration)
+                    }
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var viewer: some View {
+        if isFullScreen {
+            // No clip: the model runs to every edge, including under the status
+            // bar the hidden nav bar leaves behind.
+            stage.ignoresSafeArea()
+        } else {
+            stage.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+        }
+    }
+
+    private var stage: some View {
         ZStack {
             RealityView { content in
                 content.camera = .virtual
@@ -43,6 +86,10 @@ struct ExerciseFormViewer: View {
                         controller?.time = 0
                     }
                 }
+            } placeholder: {
+                // The model is cached and swaps in quickly; RealityView's stock
+                // spinner reads as a stall rather than a load.
+                Color.clear
             }
             .realityViewCameraControls(.orbit)
 
@@ -57,31 +104,6 @@ struct ExerciseFormViewer: View {
         .frame(maxWidth: .infinity, maxHeight: isFullScreen ? .infinity : nil)
         .frame(height: isFullScreen ? nil : Constants.cardHeight)
         .background(cardColor)
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: isFullScreen ? .spacing0x : .cardCornerRadius,
-                style: .continuous
-            )
-        )
-        .ignoresSafeArea(.container, edges: isFullScreen ? .bottom : [])
-        .overlay(alignment: .topTrailing) {
-            if let onOpen {
-                BrightRoundButton(
-                    systemImage: "arrow.up.left.and.arrow.down.right",
-                    size: .medium,
-                    onTapCallback: onOpen
-                )
-                .padding(.spacing4x)
-            }
-        }
-        .task {
-            while !Task.isCancelled {
-                if let controller, !isScrubbing, duration > 0 {
-                    progress = min(1, controller.time.truncatingRemainder(dividingBy: duration) / duration)
-                }
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
     }
 
     // MARK: - Controls
@@ -196,7 +218,7 @@ enum ExerciseFormModelCache {
 }
 
 #Preview {
-    ExerciseFormViewer {}
+    ExerciseFormViewer(onOpen: {})
         .padding(.spacing4x)
 }
 

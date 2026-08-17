@@ -87,13 +87,11 @@ struct ExerciseCreateWorkoutSheet: View {
                             ForEach(builder.added, id: \.self) { exercise in
                                 exerciseCard(exercise)
                             }
-
-                            BrightPillButton("Add exercise", systemImage: "plus", buttonSize: .medium) {
-                                isAddingExercise = true
-                            }
-                            .frame(maxWidth: .infinity)
                         }
                         .padding(.spacing3x)
+                    }
+                    .safeAreaInset(edge: .bottom) {
+                        addExerciseButton
                     }
                     .onChange(of: addedExercise) { _, exercise in
                         guard let exercise else { return }
@@ -184,6 +182,14 @@ struct ExerciseCreateWorkoutSheet: View {
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
+    }
+
+    private var addExerciseButton: some View {
+        BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {
+            isAddingExercise = true
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.spacing3x)
     }
 
     private func cardFooter(_ exercise: String) -> some View {

@@ -192,7 +192,7 @@ struct ExercisePreWorkoutSheet: View {
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, minHeight: ExerciseLibraryRow.Constants.minHeight, alignment: .leading)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     @ViewBuilder

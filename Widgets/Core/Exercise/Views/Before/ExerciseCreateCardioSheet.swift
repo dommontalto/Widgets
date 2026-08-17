@@ -476,7 +476,7 @@ struct ExerciseCreateCardioSheet: View {
             HStack(spacing: .spacing2x) {
                 BrightStatus(status: option.title)
 
-                BrightText(option.range, size: .body2, color: .lightTextColor, weight: .regular)
+                BrightText(option.range, size: .body1, color: .lightTextColor, weight: .regular)
 
                 Spacer(minLength: .spacing2x)
 
@@ -625,7 +625,7 @@ struct ExerciseCreateCardioSheet: View {
         HStack(spacing: .spacing2x) {
             badge
 
-            BrightText(title, size: .body2, color: .semiLightTextColor, weight: .regular)
+            BrightText(title, size: .body1, color: .semiLightTextColor, weight: .regular)
 
             Spacer(minLength: .spacing2x)
 
@@ -633,17 +633,18 @@ struct ExerciseCreateCardioSheet: View {
         }
     }
 
+    @ViewBuilder
     private func badge(symbol: String, tint: Color, isCircled: Bool = true) -> some View {
-        Image(systemName: symbol)
+        let glyph = Image(systemName: symbol)
             .font(.standard(size: .subheading2, weight: .medium))
             .foregroundStyle(tint)
             .frame(width: Constants.badgeSize, height: Constants.badgeSize)
-            .background {
-                if isCircled {
-                    Circle()
-                        .fill(Color.defaultCapsule)
-                }
-            }
+
+        if isCircled {
+            glyph.modifier(GlassEffect(shape: .circle))
+        } else {
+            glyph
+        }
     }
 
     private func valueField(
@@ -780,7 +781,7 @@ private struct ExerciseIntervalRow: View {
                     .allowsHitTesting(false)
             }
 
-            BrightText(phase.title, size: .body2, color: .semiLightTextColor, weight: .regular)
+            BrightText(phase.title, size: .body1, color: .semiLightTextColor, weight: .regular)
 
             Spacer(minLength: .spacing2x)
 
@@ -807,10 +808,7 @@ private struct ExerciseIntervalRow: View {
             .font(.standard(size: .body1, weight: .light))
             .foregroundStyle(phase.color)
             .frame(width: badgeSize, height: badgeSize)
-            .background {
-                Circle()
-                    .fill(Color.defaultCapsule)
-            }
+            .modifier(GlassEffect(shape: .circle))
     }
 
     // The unit sits in the same capsule as the number, so the pair reads as one
@@ -820,13 +818,13 @@ private struct ExerciseIntervalRow: View {
         HStack(spacing: .spacing1x) {
             TextField("0", text: $value)
                 .focused(isTyping)
-                .font(.standard(size: .body2, weight: .regular))
+                .font(.standard(size: .body1, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity)
 
-            BrightText(Constants.unit, size: .body2, weight: .regular)
+            BrightText(Constants.unit, size: .body1, weight: .regular)
         }
         .padding(.horizontal, .spacing2x)
         .frame(width: pillWidth, height: badgeSize)

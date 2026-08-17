@@ -68,10 +68,7 @@ struct ExerciseSetRow: View {
     }
 
     private var badge: some View {
-        ZStack {
-            Circle()
-                .fill(Color.defaultCapsule)
-
+        Group {
             if let symbol = kind.symbol {
                 Image(systemName: symbol)
                     .font(.standard(size: .body1, weight: .light))
@@ -81,6 +78,7 @@ struct ExerciseSetRow: View {
             }
         }
         .frame(width: badgeSize, height: badgeSize)
+        .modifier(GlassEffect(shape: .circle))
     }
 
     private var divider: some View {

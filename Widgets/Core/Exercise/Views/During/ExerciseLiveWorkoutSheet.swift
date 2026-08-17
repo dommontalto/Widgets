@@ -60,16 +60,6 @@ struct ExerciseLiveWorkoutSheet: View {
         } content: { _ in
             page
         }
-        // Rest rings the whole sheet; working is signalled on the active set row
-        // itself. Outside the side menu so the ring stays put while the content
-        // slides, and past every safe-area edge so the nav bar doesn't clip its
-        // top run.
-        .overlay {
-            BrightScreenEdgeBeam(
-                isActive: isResting,
-                colorVariant: .defaultBlue
-            )
-        }
     }
 
     private var isResting: Bool {
@@ -424,7 +414,8 @@ struct ExerciseLiveWorkoutSheet: View {
                     index: workingIndex(of: $set.wrappedValue, in: currentExercise),
                     isActive: $set.wrappedValue.id == activeSet?.id,
                     isResting: isResting,
-                    focus: $focusedField
+                    focus: $focusedField,
+                    onTickActiveSet: startRest
                 )
                 .listRowInsets(EdgeInsets(top: .spacing0x, leading: .spacing3x, bottom: .spacing0x, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
@@ -498,6 +489,14 @@ struct ExerciseLiveWorkoutSheet: View {
             onSkip: skip,
             onComplete: completeActiveSet
         )
+        // Rest rings the status card; working is signalled on the active set row.
+        .borderBeam(
+            .md,
+            colorVariant: .defaultBlue,
+            theme: .auto,
+            active: isResting,
+            borderRadius: Constants.statusBeamRadius
+        )
         .brightMiniSheet(isPresented: $isPickingRPE) {
             ExerciseValuePicker.rpe(ratedSet(\.rpe)) { isPickingRPE = false }
         }
@@ -518,7 +517,14 @@ struct ExerciseLiveWorkoutSheet: View {
         guard let ratedIndex else { return .constant(nil) }
         return Binding(
             get: { exercises[currentIndex].sets[ratedIndex][keyPath: field] },
-            set: { exercises[currentIndex].sets[ratedIndex][keyPath: field] = $0 }
+            set: { newValue in
+                exercises[currentIndex].sets[ratedIndex][keyPath: field] = newValue
+                // Rating a set or logging the rep it failed on is only something
+                // you do once it's been worked, so it logs the set as well.
+                guard newValue != nil, !exercises[currentIndex].sets[ratedIndex].isDone else { return }
+                exercises[currentIndex].sets[ratedIndex].isDone = true
+                startRest()
+            }
         )
     }
 
@@ -592,9 +598,13 @@ struct ExerciseLiveWorkoutSheet: View {
             return
         }
         exercises[currentIndex].sets[index].isDone = true
-        if self.activeSet != nil {
-            restEndDate = Date().addingTimeInterval(Constants.restSeconds)
-        }
+        startRest()
+    }
+
+    // No rest once the last set is ticked — the exercise is over.
+    private func startRest() {
+        guard activeSet != nil else { return }
+        restEndDate = Date().addingTimeInterval(Constants.restSeconds)
     }
 
     // Clears the row's tags together — the rating and the failed rep are one
@@ -724,6 +734,12 @@ struct ExerciseLiveWorkoutSheet: View {
         static let pillHeight: CGFloat = 30
         static let elapsedTick: TimeInterval = 1
         static let thumbnailSize: CGFloat = 60
+        // The status card's corners run 36 at the top and 44 at the bottom; the
+        // beam takes one radius, so it splits them.
+        // The beam takes one radius for all four corners, so it follows the
+        // status card's softer top rather than splitting the difference with
+        // the tighter bottom, which sits at the screen edge.
+        static let statusBeamRadius: Double = 36
         // Stands in for HealthKit until the workout is wired to real samples.
         static let demoHeartRate = "132"
         static let demoLastSession = "Fri, 7 Aug"
@@ -790,6 +806,7 @@ private struct ExerciseLiveSetRow: View {
     // working signal, so it stands down while the sheet's rest ring is up.
     let isResting: Bool
     @FocusState.Binding var focus: ExerciseSetField?
+    let onTickActiveSet: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -825,6 +842,9 @@ private struct ExerciseLiveSetRow: View {
 
                 Button {
                     set.isDone.toggle()
+                    // Ticking the working set by hand is the same event as
+                    // tapping Next, so it starts rest too.
+                    if isActive, set.isDone { onTickActiveSet() }
                 } label: {
                     BrightTick(isTicked: set.isDone)
                         .contentShape(Rectangle())
@@ -839,7 +859,7 @@ private struct ExerciseLiveSetRow: View {
         }
         .padding(.horizontal, .spacing3x)
         .frame(height: ExerciseLiveSetRow.height(for: set))
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
         // Marks the set you're working on.
         .borderBeam(
             .md,
@@ -902,7 +922,7 @@ private struct ExerciseLiveSetRow: View {
             }
         }
         .frame(width: Constants.chipHeight, height: Constants.chipHeight)
-        .background(Color.defaultCapsule, in: Circle())
+        .modifier(GlassEffect(shape: .circle))
     }
 
     private var divider: some View {

@@ -35,10 +35,14 @@ struct ExerciseValuePicker: View {
     var body: some View {
         VStack(spacing: .spacing4x) {
             header
+                .padding(.horizontal, .spacing3x)
 
+            // The rail runs the full width so more values fit on screen — only
+            // the text either side of it is inset.
             VStack(spacing: .spacing2x) {
                 if let caption {
                     BrightText(caption, size: .body1)
+                        .padding(.horizontal, .spacing3x)
                 }
 
                 rail
@@ -48,6 +52,7 @@ struct ExerciseValuePicker: View {
                         .lineLimit(1)
                         .contentTransition(.numericText())
                         .animation(.brightSnappy, value: label)
+                        .padding(.horizontal, .spacing3x)
                 }
             }
 
@@ -55,8 +60,9 @@ struct ExerciseValuePicker: View {
                 value = selection
                 onClose()
             }
+            .padding(.horizontal, .spacing3x)
         }
-        .padding(.spacing3x)
+        .padding(.vertical, .spacing3x)
         .frame(maxWidth: .infinity)
         .onAppear {
             guard !steps.isEmpty else { return }

@@ -74,7 +74,7 @@ struct ExerciseProgressionMiniSheet: View {
             }
         }
         .padding(.horizontal, .spacing2x)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     private func row(_ set: ExerciseProgressionSet) -> some View {

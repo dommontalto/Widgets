@@ -67,8 +67,12 @@ struct ExerciseDetailSheet: View {
             }
         }
         .navigationDestination(isPresented: $showingFormViewer) {
-            ExerciseFormViewer(cardColor: cardColor, isFullScreen: true)
-                .navigationBarTitleDisplayMode(.inline)
+            ExerciseFormViewer(
+                cardColor: cardColor,
+                isFullScreen: true,
+                onClose: { showingFormViewer = false }
+            )
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -108,7 +112,7 @@ struct ExerciseDetailSheet: View {
     }
 
     private var formCard: some View {
-        ExerciseFormViewer(cardColor: cardColor) { showingFormViewer = true }
+        ExerciseFormViewer(cardColor: cardColor, onOpen: { showingFormViewer = true })
     }
 
     private var statsSection: some View {
