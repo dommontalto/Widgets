@@ -44,10 +44,6 @@ struct ContentView: View {
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing3x)
 
-                    widgetLabel("ExerciseHeartrateWidget")
-                    ExerciseHeartrateWidget()
-                        .padding(.bottom, .spacing3x)
-
                     widgetLabel("ExerciseUpcomingWidget")
                     ExerciseUpcomingWidget { workout in
                         start(workout)
