@@ -71,7 +71,7 @@ struct BrightPillButton: View {
                 }
                 BrightText(title, size: resolvedSize, color: resolvedTextColor)
             }
-            .padding(.horizontal, .spacing2x)
+            .padding(.horizontal, .spacing105x)
             .frame(height: buttonSize.rawValue)
         }
         .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())
