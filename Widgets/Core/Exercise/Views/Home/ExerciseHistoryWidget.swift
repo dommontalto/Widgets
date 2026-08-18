@@ -45,7 +45,7 @@ struct ExerciseHistoryWidget: View {
             selectedWorkout = workout
         } label: {
             HStack(spacing: .spacing105x) {
-                Image(systemName: workout.type == .cardio ? "figure.run" : "dumbbell")
+                Image(systemName: workout.type == .cardio ? "figure.run" : "figure.strengthtraining.traditional")
                     .font(.standard(size: .subheading2, weight: .light))
                     .foregroundStyle(color)
                     .frame(width: Constants.iconWidth)

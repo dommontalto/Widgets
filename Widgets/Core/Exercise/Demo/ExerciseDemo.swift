@@ -320,9 +320,9 @@ enum ExerciseDemoData {
     static let detailHistory: [ExerciseSetGroup] = [
         ExerciseSetGroup(title: "Mon, 18 Jul, 2026", lines: [
             ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG"),
+            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG", rpe: 8),
             ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "60 KG", prLabel: "Weight PR"),
-            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG", prLabel: "Rep PR"),
+            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG", failedRep: 4, prLabel: "Rep PR"),
         ]),
         ExerciseSetGroup(title: "Thu, 14 Jul, 2026", lines: [
             ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),

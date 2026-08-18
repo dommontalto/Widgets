@@ -65,7 +65,7 @@ struct ExerciseIconPicker: View {
 }
 
 #Preview {
-    @Previewable @State var strength = ExerciseWorkoutIcon.dumbbell
+    @Previewable @State var strength = ExerciseWorkoutIcon.barbell
     @Previewable @State var cardio = ExerciseWorkoutIcon.run
 
     VStack(spacing: .spacing4x) {

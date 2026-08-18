@@ -65,8 +65,8 @@ enum ExerciseSetKind: Hashable {
 }
 
 enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
-    case dumbbell
     case barbell
+    case crossTraining
     case functional
     case core
     case mobility
@@ -83,7 +83,7 @@ enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
 
     // Which picker the icon belongs to — and, for a saved workout, whether it
     // routes to the live cardio screen instead of the set-by-set one.
-    static let strength: [ExerciseWorkoutIcon] = [.dumbbell, .barbell, .functional, .core, .mobility, .yoga]
+    static let strength: [ExerciseWorkoutIcon] = [.barbell, .crossTraining, .functional, .core, .mobility, .yoga]
 
     static let cardio: [ExerciseWorkoutIcon] = [.run, .ride, .swim, .row, .hike, .jumpRope]
 
@@ -91,8 +91,8 @@ enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .dumbbell: "dumbbell"
         case .barbell: "figure.strengthtraining.traditional"
+        case .crossTraining: "figure.cross.training"
         case .functional: "figure.strengthtraining.functional"
         case .core: "figure.core.training"
         case .mobility: "figure.cooldown"
@@ -255,7 +255,7 @@ final class ExerciseBuilder {
 
     // Cardio carries its plan in the subtitle, e.g. "5 km • 4 intervals"; a gym
     // workout counts its exercises instead.
-    func save(named name: String, icon: ExerciseWorkoutIcon = .dumbbell, subtitle cardioPlan: String? = nil) {
+    func save(named name: String, icon: ExerciseWorkoutIcon = .barbell, subtitle cardioPlan: String? = nil) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         // A cardio workout is the run itself, so it saves with no exercises.
         guard !title.isEmpty, icon.isCardio || !added.isEmpty else { return }

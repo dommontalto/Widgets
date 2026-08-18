@@ -192,23 +192,24 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             withAnimation(.brightSnappy) { showsSource.toggle() }
         } label: {
             HStack(spacing: .spacing1x) {
-                // Beats at the rate it's reporting, so the pill reads as live. A
-                // phase animator rather than a repeating animation on a one-shot
-                // flag: the card re-renders every second while resting, which
-                // drops an animation that has no value change left to play.
-                PhaseAnimator([false, true]) { isBeating in
-                    Image(systemName: "heart.fill")
-                        .font(.standard(size: .subheading, weight: .regular))
-                        .foregroundStyle(Color.defaultRed)
-                        .scaleEffect(isBeating ? Constants.beatScale : 1)
-                } animation: { _ in
-                    .easeInOut(duration: beatInterval / 2)
-                }
+                // Beats at the rate it's reporting, so the pill reads as live.
+                Image(systemName: "heart.fill")
+                    .font(.standard(size: .subheading, weight: .regular))
+                    .foregroundStyle(Color.defaultRed)
+                    .exerciseHeartRatePulse(bpm: Double(rate))
 
                 BrightText(showsSource ? "Apple Watch" : "\(rate) BPM", size: .body1, weight: .regular)
                     .contentTransition(.numericText())
+
+                if !showsSource {
+                    ExerciseHeartRateTrace(
+                        width: Constants.traceWidth,
+                        height: Constants.traceHeight
+                    )
+                    .transition(.opacity)
+                }
             }
-            .padding(.horizontal, .spacing2x)
+            .padding(.horizontal, .spacing105x)
             .frame(height: Constants.pillHeight)
             .contentShape(Capsule())
         }
@@ -221,13 +222,6 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             do { try await Task.sleep(for: .seconds(Constants.sourceReveal)) } catch { return }
             withAnimation(.brightSnappy) { showsSource = false }
         }
-    }
-
-    // One beat per reported BPM, falling back to a resting pace when there's no
-    // number to read.
-    private var beatInterval: TimeInterval {
-        guard let rate = heartRate, let bpm = Double(rate), bpm > 0 else { return 1 }
-        return 60 / bpm
     }
 
     private func upNextLabel(_ name: String) -> some View {
@@ -310,13 +304,14 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         static let cardHeight: CGFloat = 160
         static let pillHeight: CGFloat = 30
         static let sourceReveal: TimeInterval = 2
+        static let traceWidth: CGFloat = .spacing7x
+        static let traceHeight: CGFloat = .spacing3x
         static let tick: TimeInterval = 1
         static let valueScale: CGFloat = 0.6
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15
         static let longExtension: TimeInterval = 30
         // How small the half of a swapping slot that isn't showing sits.
-        static let beatScale: CGFloat = 1.2
     }
 }
 

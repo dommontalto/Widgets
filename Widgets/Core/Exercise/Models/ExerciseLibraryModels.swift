@@ -55,7 +55,7 @@ nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .push: "dumbbell"
+        case .push: "figure.cross.training"
         case .pull: "figure.strengthtraining.traditional"
         case .legs: "figure.step.training"
         case .core: "figure.core.training"

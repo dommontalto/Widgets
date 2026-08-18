@@ -93,19 +93,20 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var heartRateRow: some View {
-        HStack(spacing: .spacing4x) {
-            HStack(spacing: .spacing2x) {
-                Image(systemName: "heart.fill")
-                    .font(.standard(size: .huge, weight: .light))
-                    .foregroundStyle(Color.defaultRed)
+        HStack(spacing: .spacing2x) {
+            Image(systemName: "heart.fill")
+                .font(.standard(size: .huge, weight: .light))
+                .foregroundStyle(Color.defaultRed)
+                .exerciseHeartRatePulse(bpm: Double(workout.heartRate))
 
-                BrightText(workout.heartRate, size: .enormous, color: .defaultRed)
-                    .monospacedDigit()
-            }
+            BrightText(workout.heartRate, size: .enormous, color: .defaultRed)
+                .monospacedDigit()
+                .fixedSize()
+
+            ExerciseHeartRateTrace()
 
             zoneChip
         }
-        .frame(maxWidth: .infinity)
         .padding(.horizontal, .spacing4x)
         .padding(.vertical, .spacing5x)
     }

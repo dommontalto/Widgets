@@ -28,15 +28,26 @@ struct ExerciseLiveWorkoutSheet: View {
     @State private var openedExerciseName: String?
     @State private var restEndDate: Date?
     @State private var isSideMenuExpanded = false
-    @State private var visibleRows: Set<Int> = []
     @State private var isPickingRPE = false
     @State private var isPickingFailedRep = false
     // The set rows sit in a `List`, which re-derives its width when the rest
     // beam's full-screen overlay changes the safe area. Measured from the page
     // once and pinned, so the rows can't be squeezed mid-animation.
     @State private var pageWidth: CGFloat = 0
+    @State private var columnWidths: [ExerciseSetColumn: CGFloat] = [:]
     @State private var isConfirmingWorkoutUpdate = false
+    @State private var isConfirmingDiscard = false
+    @State private var isConfirmingFinish = false
     @State private var isShowingProgression = false
+    @State private var isEditingWorkout = false
+    // Names the skip that was just tapped, in place of the clock, until its
+    // window runs out.
+    @State private var transportLabel: String?
+    @State private var transportTaps = 0
+    // Set while the run is paused: the clock and the disc both read from it, and
+    // resuming pushes `startDate` forward by however long it stood still.
+    @State private var pauseDate: Date?
+    @State private var menuWidth = Constants.fallbackMenuWidth
     @FocusState private var focusedField: ExerciseSetField?
 
     init(
@@ -55,15 +66,46 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     var body: some View {
-        BrightSideMenu(isExpanded: $isSideMenuExpanded) { _ in
-            sideMenu
+        BrightSideMenu(sideBarWidth: menuWidth, isExpanded: $isSideMenuExpanded) { _ in
+            ExerciseLiveWorkoutMenu(
+                exercises: $exercises,
+                currentIndex: $currentIndex,
+                isExpanded: $isSideMenuExpanded,
+                startDate: startDate,
+                pauseDate: pauseDate,
+                blockName: currentBlockName,
+                onBack: {
+                    if currentIndex > 0 { showTransport("PREV") }
+                    goBack()
+                },
+                onTogglePause: togglePause,
+                onAdvance: {
+                    if currentIndex + 1 < exercises.count { showTransport("NEXT") }
+                    advance()
+                },
+                onEdit: { isEditingWorkout = true },
+                onCancel: { isConfirmingDiscard = true },
+                onEnd: confirmFinish
+            )
         } content: { _ in
             page
+        }
+        // The player menu leaves only a sliver of the run showing, so its width
+        // is taken off the screen rather than the component's default 280.
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            guard width > 0 else { return }
+            menuWidth = width * Constants.menuWidthRatio
         }
     }
 
     private var isResting: Bool {
         restEndDate != nil
+    }
+
+    private var isPaused: Bool {
+        pauseDate != nil
     }
 
     private var page: some View {
@@ -76,7 +118,7 @@ struct ExerciseLiveWorkoutSheet: View {
                     Button {
                         withAnimation(.brightSnappy) { isSideMenuExpanded.toggle() }
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease")
+                        Image(systemName: "sidebar.left")
                     }
                 }
 
@@ -160,6 +202,27 @@ struct ExerciseLiveWorkoutSheet: View {
         } message: {
             Text("This run added sets or exercises the workout doesn't have.")
         }
+        .alert("Discard?", isPresented: $isConfirmingDiscard) {
+            Button("Cancel", role: .cancel) {}
+
+            Button("Discard", role: .destructive) {
+                close()
+            }
+        } message: {
+            Text("Your workout data will not be saved if you discard this workout.")
+        }
+        .alert("Finish", isPresented: $isConfirmingFinish) {
+            Button("Cancel", role: .cancel) {}
+
+            Button("Finish") {
+                finish()
+            }
+        } message: {
+            Text("You still have some exercises to complete. Are you sure you want to finish your workout?")
+        }
+        .sheet(isPresented: $isEditingWorkout) {
+            ExerciseReorderSheet(exercises: exercises, onSave: applyEdits)
+        }
         .animation(.brightEaseInOut, value: restEndDate)
         .animation(.brightEaseInOut, value: currentIndex)
         .animation(.brightEaseInOut, value: completedSets)
@@ -172,117 +235,55 @@ struct ExerciseLiveWorkoutSheet: View {
         }
     }
 
-    private var sideMenu: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing0x) {
-                BrightText(workoutName, size: .standout1)
-                    .padding(.top, .spacing2x)
-                    .padding(.bottom, .spacing6x)
-                    .staggered(at: 0, in: visibleRows)
-
-                VStack(alignment: .leading, spacing: .spacing4x) {
-                    ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
-                        sideMenuItem(
-                            exercise.name,
-                            symbol: index == currentIndex ? "checkmark" : "dumbbell",
-                            color: index == currentIndex ? .defaultGreen : .textColor
-                        ) {
-                            currentIndex = index
-                        }
-                        .staggered(at: index + 1, in: visibleRows)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: .spacing4x) {
-                    sideMenuItem("Cancel workout", symbol: "xmark", color: .defaultRed, isDestructive: true) {
-                        close()
-                    }
-                    .staggered(at: exercises.count + 1, in: visibleRows)
-
-                    sideMenuItem("End workout", symbol: "flag", color: .defaultRed, isDestructive: true) {
-                        finish()
-                    }
-                    .staggered(at: exercises.count + 2, in: visibleRows)
-                }
-                .padding(.top, .spacing6x)
-
-                Spacer(minLength: .spacing8x)
-            }
-            .padding(.horizontal, .spacing3x)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .safeAreaPadding(.vertical)
-        .onChange(of: isSideMenuExpanded) { _, isExpanded in
-            animateRows(in: isExpanded)
-        }
-    }
-
-    // Rows fall in one after another as the menu opens, and drop together on the
-    // way out — matching the app's main side menu.
-    private func animateRows(in expanded: Bool) {
-        guard expanded else {
-            withAnimation(.easeOut(duration: Constants.rowExitDuration)) { visibleRows.removeAll() }
-            return
-        }
-
-        visibleRows = []
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Constants.rowStartDelay))
-            for row in 0...(exercises.count + 2) {
-                withAnimation(.bouncy(duration: Constants.rowDuration, extraBounce: Constants.rowBounce)) {
-                    _ = visibleRows.insert(row)
-                }
-                try? await Task.sleep(for: .seconds(Constants.rowStaggerDelay))
-            }
-        }
-    }
-
-    private func sideMenuItem(
-        _ title: String,
-        symbol: String,
-        color: Color,
-        isDestructive: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button {
-            withAnimation(.brightSnappy) { isSideMenuExpanded = false }
-            action()
-        } label: {
-            HStack(spacing: .spacing2x) {
-                Image(systemName: symbol)
-                    .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(color)
-                    .frame(width: Constants.menuIconSize)
-
-                BrightText(
-                    title,
-                    size: .subheading2,
-                    color: isDestructive ? .defaultRed : .semiLightTextColor
-                )
-
-                Spacer(minLength: .spacing2x)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: - Header
 
     private var elapsedPill: some View {
-        TimelineView(.periodic(from: startDate, by: Constants.elapsedTick)) { context in
-            BrightText(elapsed(at: context.date), size: .heading)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .animation(.brightSnappy, value: elapsed(at: context.date))
+        Button {
+            togglePause()
+        } label: {
+            TimelineView(.periodic(from: startDate, by: Constants.elapsedTick)) { context in
+                BrightText(pillLabel(at: context.date), size: .standout3, color: pillColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.brightSnappy, value: pillLabel(at: context.date))
+            }
+            .padding(.horizontal, .spacing2x)
+            .frame(height: Constants.pillHeight)
+            .contentShape(Capsule())
         }
-        .padding(.horizontal, .spacing2x)
-        .frame(height: Constants.pillHeight)
+        .buttonStyle(.plain)
+        .brightHaptic(.light, trigger: pauseDate)
+        .animation(.brightSnappy, value: pillColor)
+        .background(pillColor.opacity(.veryMinimalOpacity), in: Capsule())
         .modifier(GlassEffect(shape: .capsule, interactive: false))
+        .task(id: transportTaps) {
+            guard transportLabel != nil else { return }
+            // A fresh skip cancels this sleep; that tap's own window is what
+            // puts the label away rather than this one cutting it short.
+            do { try await Task.sleep(for: .seconds(Constants.transportReveal)) } catch { return }
+            withAnimation(.brightSnappy) { transportLabel = nil }
+        }
+    }
+
+    private var pillColor: Color {
+        if transportLabel != nil { return .defaultPink }
+        return pauseDate == nil ? .defaultGreen : .defaultOrange
+    }
+
+    // The pill doubles as the transport's read-out: a skip names itself for a
+    // moment, and a paused run says so instead of showing a clock that's stopped.
+    private func pillLabel(at date: Date) -> String {
+        if let transportLabel { return transportLabel }
+        return pauseDate == nil ? elapsed(at: date) : "PAUSED"
+    }
+
+    private func showTransport(_ label: String) {
+        transportTaps += 1
+        withAnimation(.brightSnappy) { transportLabel = label }
     }
 
     private func elapsed(at date: Date) -> String {
-        let seconds = Int(max(0, date.timeIntervalSince(startDate)))
+        let seconds = Int(max(0, (pauseDate ?? date).timeIntervalSince(startDate)))
         return String(format: "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
     }
 
@@ -295,7 +296,7 @@ struct ExerciseLiveWorkoutSheet: View {
                     .fill(Color.defaultCards)
                     .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
                     .overlay {
-                        Image(systemName: "dumbbell")
+                        Image(systemName: "figure.strengthtraining.traditional")
                             .font(.standard(size: .standout3, weight: .light))
                             .foregroundStyle(Color.lightTextColor)
                     }
@@ -414,8 +415,10 @@ struct ExerciseLiveWorkoutSheet: View {
                     index: workingIndex(of: $set.wrappedValue, in: currentExercise),
                     isActive: $set.wrappedValue.id == activeSet?.id,
                     isResting: isResting,
+                    isPaused: isPaused,
                     focus: $focusedField,
-                    onTickActiveSet: startRest
+                    onTickActiveSet: startRest,
+                    columnWidths: columnWidths
                 )
                 .listRowInsets(EdgeInsets(top: .spacing0x, leading: .spacing3x, bottom: .spacing0x, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
@@ -453,6 +456,9 @@ struct ExerciseLiveWorkoutSheet: View {
         .environment(\.defaultMinListRowHeight, Constants.rowHeight)
         .frame(width: pageWidth > 0 ? pageWidth : nil, height: setsHeight)
         .animation(.brightSnappy, value: setsHeight)
+        .onPreferenceChange(ExerciseSetChipWidths.self) { widths in
+            columnWidths = widths
+        }
     }
 
     // A failed set carries a second line, so the list can't multiply one row
@@ -494,7 +500,7 @@ struct ExerciseLiveWorkoutSheet: View {
             .md,
             colorVariant: .defaultBlue,
             theme: .auto,
-            active: isResting,
+            active: isResting && !isPaused,
             borderRadius: Constants.statusBeamRadius
         )
         .brightMiniSheet(isPresented: $isPickingRPE) {
@@ -555,6 +561,20 @@ struct ExerciseLiveWorkoutSheet: View {
         } else {
             dismiss()
         }
+    }
+
+    // Only worth asking while sets are still outstanding; a finished run just
+    // finishes.
+    private func confirmFinish() {
+        if hasIncompleteSets {
+            isConfirmingFinish = true
+        } else {
+            finish()
+        }
+    }
+
+    private var hasIncompleteSets: Bool {
+        exercises.contains { $0.sets.contains { !$0.isDone } }
     }
 
     private func finish() {
@@ -620,12 +640,39 @@ struct ExerciseLiveWorkoutSheet: View {
         restEndDate = nil
     }
 
+    // MARK: - Editing the run
+
+    // The run follows the exercise it was on, not the slot it used to sit in, so
+    // the index is re-found rather than shuffled along with the new order.
+    private func applyEdits(_ edited: [ExerciseActiveExercise]) {
+        guard !edited.isEmpty else { return }
+        let playing = currentExercise.id
+        withAnimation(.brightSnappy) { exercises = edited }
+        currentIndex = exercises.firstIndex { $0.id == playing } ?? 0
+    }
+
     private func advance() {
         guard currentIndex + 1 < exercises.count else {
             finish()
             return
         }
         currentIndex += 1
+    }
+
+    private func goBack() {
+        guard currentIndex > 0 else { return }
+        currentIndex -= 1
+    }
+
+    // Resuming hands back the time the run stood still, so the clock and the
+    // disc both carry on from where they stopped.
+    private func togglePause() {
+        if let pauseDate {
+            startDate = startDate.addingTimeInterval(Date().timeIntervalSince(pauseDate))
+            self.pauseDate = nil
+        } else {
+            pauseDate = Date()
+        }
     }
 
     // MARK: - Derived state
@@ -713,7 +760,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private func elapsedString(at date: Date) -> String {
-        let elapsed = max(0, Int(date.timeIntervalSince(startDate)))
+        let elapsed = max(0, Int((pauseDate ?? date).timeIntervalSince(startDate)))
         return String(format: "%d:%02d", elapsed / 60, elapsed % 60)
     }
 
@@ -723,16 +770,16 @@ struct ExerciseLiveWorkoutSheet: View {
         // Set rows match the exercise cells everywhere else in the feature, so
         // the height lives in one place rather than being repeated as 68.
         static let rowHeight = ExerciseLibraryRow.Constants.minHeight
-        static let rowDuration: TimeInterval = 0.3
-        static let rowBounce: TimeInterval = 0.1
-        static let rowStaggerDelay: TimeInterval = 0.03
-        static let rowStartDelay: TimeInterval = 0.02
-        static let rowExitDuration: TimeInterval = 0.15
         static let keyboardGlyphSize: CGFloat = 30
         static let restSeconds: TimeInterval = 90
-        static let menuIconSize: CGFloat = 24
         static let pillHeight: CGFloat = 30
+        // Until the screen has been measured. Only the very first frame, and the
+        // menu starts closed.
+        static let fallbackMenuWidth: CGFloat = 280
+        // The menu is designed at 354 of a 402pt screen.
+        static let menuWidthRatio: CGFloat = 354.0 / 402.0
         static let elapsedTick: TimeInterval = 1
+        static let transportReveal: TimeInterval = 2
         static let thumbnailSize: CGFloat = 60
         // The status card's corners run 36 at the top and 44 at the bottom; the
         // beam takes one radius, so it splits them.
@@ -749,12 +796,30 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 }
 
+enum ExerciseSetColumn: Hashable {
+    case weight
+    case reps
+}
+
+// Every chip reports what its own value needs; the list keeps the largest per
+// column and hands it back, so "22.5 kg" can't be squeezed into a chip sized
+// for "20 kg".
+private struct ExerciseSetChipWidths: PreferenceKey {
+    static let defaultValue: [ExerciseSetColumn: CGFloat] = [:]
+
+    static func reduce(value: inout [ExerciseSetColumn: CGFloat], nextValue: () -> [ExerciseSetColumn: CGFloat]) {
+        value.merge(nextValue()) { max($0, $1) }
+    }
+}
+
 private struct ExerciseSetValueChip: View {
     @Binding var text: String
     let field: ExerciseSetField
+    let column: ExerciseSetColumn
     var unit: String?
     let keyboard: UIKeyboardType
     @FocusState.Binding var focus: ExerciseSetField?
+    var width: CGFloat?
 
     @State private var selection: TextSelection?
 
@@ -774,8 +839,11 @@ private struct ExerciseSetValueChip: View {
                     .fixedSize()
             }
         }
-        .frame(width: Constants.chipWidth, height: Constants.chipHeight)
+        .frame(width: max(width ?? 0, Constants.minimumChipWidth), height: Constants.chipHeight)
         .background(Color.defaultBackground, in: Capsule())
+        .background {
+            measuringLabel
+        }
         // The whole capsule takes the tap, not just where the digits happen to
         // land — a two-character number is a small target.
         .contentShape(Capsule())
@@ -786,8 +854,32 @@ private struct ExerciseSetValueChip: View {
         }
     }
 
+    // A copy of the chip's content at its natural size, measured rather than
+    // drawn — the visible content is inside a fixed frame, so it can't report
+    // what it actually wants.
+    private var measuringLabel: some View {
+        HStack(spacing: .spacing05x) {
+            BrightText(text.isEmpty ? "0" : text, size: .body2, weight: .regular)
+                .monospacedDigit()
+
+            if let unit {
+                BrightText(unit, size: .body2, weight: .regular)
+            }
+        }
+        .fixedSize()
+        .hidden()
+        .background {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: ExerciseSetChipWidths.self,
+                    value: [column: proxy.size.width + 2 * .spacing2x]
+                )
+            }
+        }
+    }
+
     private enum Constants {
-        static let chipWidth: CGFloat = 60
+        static let minimumChipWidth: CGFloat = 60
         static let chipHeight: CGFloat = 34
     }
 }
@@ -805,8 +897,12 @@ private struct ExerciseLiveSetRow: View {
     // The active row still marks what's up next during rest, but the beam is the
     // working signal, so it stands down while the sheet's rest ring is up.
     let isResting: Bool
+    // Nothing is being worked on while the run stands still.
+    let isPaused: Bool
     @FocusState.Binding var focus: ExerciseSetField?
     let onTickActiveSet: () -> Void
+    // The widest value in each column, so every chip in it matches.
+    var columnWidths: [ExerciseSetColumn: CGFloat] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -818,9 +914,11 @@ private struct ExerciseLiveSetRow: View {
                 ExerciseSetValueChip(
                     text: $set.weight,
                     field: .weight(set.id),
+                    column: .weight,
                     unit: "kg",
                     keyboard: .decimalPad,
-                    focus: $focus
+                    focus: $focus,
+                    width: columnWidths[.weight]
                 )
 
                 divider
@@ -828,8 +926,10 @@ private struct ExerciseLiveSetRow: View {
                 ExerciseSetValueChip(
                     text: $set.reps,
                     field: .reps(set.id),
+                    column: .reps,
                     keyboard: .numberPad,
-                    focus: $focus
+                    focus: $focus,
+                    width: columnWidths[.reps]
                 )
 
                 Spacer(minLength: .spacing2x)
@@ -865,7 +965,7 @@ private struct ExerciseLiveSetRow: View {
             .md,
             colorVariant: .orange,
             theme: .auto,
-            active: isActive && !isResting,
+            active: isActive && !isResting && !isPaused,
             borderRadius: CGFloat.cornerRadius24
         )
         // The pickers write straight through their bindings, so the row owns the
@@ -976,6 +1076,10 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
     var notes = ""
     var sets: [ExerciseActiveSet]
 
+    var workingSetCount: Int {
+        sets.filter(\.kind.countsAsSet).count
+    }
+
     nonisolated static func fromTemplate(_ items: [ExerciseTemplateItem]) -> [ExerciseActiveExercise] {
         items.map { item in
             ExerciseActiveExercise(
@@ -1003,16 +1107,9 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
     }
 }
 
-private extension View {
-    func staggered(at index: Int, in visibleRows: Set<Int>) -> some View {
-        let isVisible = visibleRows.contains(index)
-        return opacity(isVisible ? .opaque : .zero)
-            .offset(x: isVisible ? 0 : -40)
-    }
-}
-
 #Preview {
     NavigationStack {
         ExerciseLiveWorkoutSheet()
     }
+    .environment(ExerciseBuilder())
 }

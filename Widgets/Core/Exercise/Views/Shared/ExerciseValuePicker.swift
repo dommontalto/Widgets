@@ -123,18 +123,18 @@ struct ExerciseValuePicker: View {
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
         .contentMargins(.horizontal, railInset, for: .scrollContent)
-        // The neighbours dissolve toward the rail's edges instead of being cut
-        // off by them. The flat middle is exactly the centred item, so only the
-        // flanking values pick up the fade.
+        // The values dissolve at the rail's edges instead of being cut off by
+        // them. The fade is a fixed strip either side, so everything between
+        // the edges stays readable rather than only the centred value.
         .mask {
             HStack(spacing: .spacing0x) {
-                LinearGradient(stops: Constants.fadeInStops, startPoint: .leading, endPoint: .trailing)
-                    .frame(width: railInset)
+                LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
+                    .frame(width: Constants.edgeFade)
 
                 Color.black
 
-                LinearGradient(stops: Constants.fadeOutStops, startPoint: .leading, endPoint: .trailing)
-                    .frame(width: railInset)
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                    .frame(width: Constants.edgeFade)
             }
         }
         .onGeometryChange(for: CGFloat.self, of: \.size.width) { railWidth = $0 }
@@ -158,22 +158,12 @@ struct ExerciseValuePicker: View {
     // nonisolated: referenced from Sendable closures (scrollTransition,
     // onScrollGeometryChange), which can't touch the view's MainActor state.
     private nonisolated enum Constants {
-        static let itemWidth: CGFloat = 52
-        static let itemGap: CGFloat = .spacing2x
+        // Wide enough for two digits — the failed-rep rail runs past 9.
+        static let itemWidth: CGFloat = 70
+        static let itemGap: CGFloat = .spacing1x
         static let itemPitch = itemWidth + itemGap
         static let neighbourScale: CGFloat = 0.75
-        // Clear for the first stretch either side, so a neighbour is gone well
-        // before the rail's edge rather than dimming the whole way out.
-        static let fadeInStops: [Gradient.Stop] = [
-            .init(color: .clear, location: 0),
-            .init(color: .clear, location: 0.7),
-            .init(color: .black, location: 0.92),
-        ]
-        static let fadeOutStops: [Gradient.Stop] = [
-            .init(color: .black, location: 0.08),
-            .init(color: .clear, location: 0.3),
-            .init(color: .clear, location: 1),
-        ]
+        static let edgeFade: CGFloat = .spacing6x
         // The 1–9 RPE scale: 1 is a set you could keep going all day, 9 leaves
         // nothing behind.
         static let rpeScale = [

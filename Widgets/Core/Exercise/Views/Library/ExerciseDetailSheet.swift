@@ -67,12 +67,11 @@ struct ExerciseDetailSheet: View {
             }
         }
         .navigationDestination(isPresented: $showingFormViewer) {
-            ExerciseFormViewer(
-                cardColor: cardColor,
-                isFullScreen: true,
-                onClose: { showingFormViewer = false }
-            )
-            .toolbar(.hidden, for: .navigationBar)
+            ExerciseFormViewer(cardColor: cardColor, isFullScreen: true)
+                // The bar keeps its stock back button but loses its background,
+                // so the model still runs to the top of the screen.
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 

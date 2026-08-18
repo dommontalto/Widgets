@@ -13,6 +13,8 @@ nonisolated struct ExerciseSetLine: Identifiable {
     let kind: ExerciseSetKind
     let reps: String
     let weight: String
+    var rpe: Int?
+    var failedRep: Int?
     var prLabel: String?
 }
 
@@ -112,15 +114,7 @@ struct ExerciseSetHistoryCard: View {
 
             Spacer(minLength: .spacing2x)
 
-            if let prLabel = line.prLabel {
-                BrightText(prLabel, size: .body2, color: .lightTextColor)
-                    .lineLimit(1)
-
-                prBadge
-                    // Draws at full size but reports the text's height, so a PR
-                    // row stays level with the rows around it.
-                    .frame(height: Constants.prBadgeInlineHeight)
-            }
+            badges(line)
 
             column(line.reps, template: repsTemplate)
 
@@ -131,6 +125,33 @@ struct ExerciseSetHistoryCard: View {
             column(line.weight, template: weightTemplate)
         }
         .padding(.vertical, .spacing2x)
+    }
+
+    @ViewBuilder private func badges(_ line: ExerciseSetLine) -> some View {
+        let hasBadge = line.prLabel != nil || line.rpe != nil || line.failedRep != nil
+        if hasBadge {
+            FlowLayout(spacing: .spacing1x) {
+                if let prLabel = line.prLabel {
+                    HStack(spacing: .spacing1x) {
+                        BrightText(prLabel, size: .body2, color: .lightTextColor)
+                            .lineLimit(1)
+
+                        prBadge
+                            // Draws at full size but reports the text's height, so
+                            // a PR row stays level with the rows around it.
+                            .frame(height: Constants.prBadgeInlineHeight)
+                    }
+                }
+
+                if let rpe = line.rpe {
+                    BrightStatus(status: "RPE \(rpe)")
+                }
+
+                if let failedRep = line.failedRep {
+                    BrightStatus(status: "FAILED \(failedRep)")
+                }
+            }
+        }
     }
 
     private func column(_ value: String, template: String) -> some View {

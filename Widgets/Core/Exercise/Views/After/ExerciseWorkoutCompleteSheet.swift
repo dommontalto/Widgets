@@ -109,7 +109,7 @@ struct ExerciseWorkoutCompleteSheet: View {
 
     private var header: some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: workout.type == .cardio ? "figure.run" : "dumbbell")
+            Image(systemName: workout.type == .cardio ? "figure.run" : "figure.strengthtraining.traditional")
                 .resizable()
                 .scaledToFit()
                 .fontWeight(.light)

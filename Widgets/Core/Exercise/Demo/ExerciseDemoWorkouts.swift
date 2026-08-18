@@ -39,7 +39,7 @@ enum ExerciseDemoWorkouts {
 
     static let quickPush = ExerciseQuickWorkout(
         name: "Quick Push",
-        symbol: "dumbbell",
+        symbol: "figure.strengthtraining.traditional",
         accentColor: .defaultPurple,
         subtitle: "4 exercises",
         isCardio: false,
@@ -90,7 +90,7 @@ enum ExerciseDemoWorkouts {
 
     static let quickPull = ExerciseQuickWorkout(
         name: "Quick Pull",
-        symbol: "dumbbell",
+        symbol: "figure.strengthtraining.traditional",
         accentColor: .defaultPurple,
         subtitle: "3 exercises",
         isCardio: false,

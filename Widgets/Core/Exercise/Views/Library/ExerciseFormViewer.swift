@@ -17,10 +17,6 @@ struct ExerciseFormViewer: View {
     // Set on the card to show the open button; nil on the pushed page.
     var onOpen: (() -> Void)?
 
-    // Set on the pushed page, which hides the nav bar to reach the top of the
-    // screen and so carries its own way back.
-    var onClose: (() -> Void)?
-
     @State private var controller: AnimationPlaybackController?
 
     @State private var duration: TimeInterval = 1
@@ -35,12 +31,6 @@ struct ExerciseFormViewer: View {
 
     var body: some View {
         viewer
-            .overlay(alignment: .topLeading) {
-                if let onClose {
-                    BrightRoundButton(systemImage: "chevron.left", size: .medium, onTapCallback: onClose)
-                        .padding(.spacing4x)
-                }
-            }
             .overlay(alignment: .topTrailing) {
                 if let onOpen {
                     BrightRoundButton(
@@ -64,8 +54,8 @@ struct ExerciseFormViewer: View {
     @ViewBuilder
     private var viewer: some View {
         if isFullScreen {
-            // No clip: the model runs to every edge, including under the status
-            // bar the hidden nav bar leaves behind.
+            // No clip: the model runs to every edge, including up behind the
+            // nav bar, which the page strips its background off.
             stage.ignoresSafeArea()
         } else {
             stage.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
@@ -179,7 +169,10 @@ struct ExerciseFormViewer: View {
     private func fit(_ entity: Entity) {
         let scale = Constants.targetHeight / Constants.standingHeight
         entity.scale *= SIMD3<Float>(repeating: scale)
-        entity.position = [0, -Constants.targetHeight / 2 + Constants.figureLift, 0]
+        // The full-screen stage is much taller than the card, which leaves the
+        // figure riding high in it, so it sits lower there.
+        let lift = isFullScreen ? Constants.fullScreenFigureLift : Constants.figureLift
+        entity.position = [0, -Constants.targetHeight / 2 + lift, 0]
     }
 
     private enum Constants {
@@ -188,8 +181,9 @@ struct ExerciseFormViewer: View {
         static let cardHeight: CGFloat = 440
         static let standingHeight: Float = 1.5
         static let targetHeight: Float = 0.5
-        static let cameraDistance: Float = 0.9
+        static let cameraDistance: Float = 1.0
         static let figureLift: Float = 0.06
+        static let fullScreenFigureLift: Float = -0.04
     }
 }
 

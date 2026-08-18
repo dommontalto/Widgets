@@ -202,7 +202,7 @@ struct ExerciseWorkoutMiniSheet: View {
     }
 
     private var icon: String {
-        workout.type == .cardio ? "figure.run" : "dumbbell"
+        workout.type == .cardio ? "figure.run" : "figure.strengthtraining.traditional"
     }
 }
 

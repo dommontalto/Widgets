@@ -72,7 +72,7 @@ struct ExerciseSheet: View {
 
     private func placeholder(cardio: Bool) -> some View {
         BrightPlaceholderView(
-            systemImage: cardio ? "figure.run" : "dumbbell",
+            systemImage: cardio ? "figure.run" : "figure.strengthtraining.traditional",
             title: cardio ? "No cardio yet" : "No workouts yet",
             subtitle: cardio
                 ? "Save a run, ride or swim to start it from here."
@@ -149,7 +149,7 @@ struct ExerciseSheet: View {
                 builder.path.append(ExerciseWorkoutRoute.newCardio)
             }
 
-            Button("Create workout", systemImage: "dumbbell") {
+            Button("Create workout", systemImage: "figure.strengthtraining.traditional") {
                 builder.path.append(ExerciseWorkoutRoute.category(.gym))
             }
         } label: {

@@ -124,12 +124,12 @@ struct ExerciseConsistencyWidget: View {
         switch page {
         case .strength:
             HStack(spacing: .spacing3x) {
-                legendItem("Workout", color: .defaultPurple)
+                legendItem("Strength", color: .defaultPurple)
                 legendItem("Rest", color: Color.defaultPurple.opacity(.veryMinimalOpacity))
             }
         case .cardio:
             HStack(spacing: .spacing3x) {
-                legendItem("Workout", color: .defaultSkyBlue)
+                legendItem("Cardio", color: .defaultSkyBlue)
                 legendItem("Rest", color: Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
             }
         case .combined:

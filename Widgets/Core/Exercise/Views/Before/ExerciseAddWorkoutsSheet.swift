@@ -308,7 +308,7 @@ struct ExerciseAddWorkoutsSheet: View {
 
     private func templateSymbol(_ kind: ExercisePlannedWorkout.Kind) -> String {
         switch kind {
-        case .strength: "dumbbell"
+        case .strength: "figure.strengthtraining.traditional"
         case .run: "figure.run"
         case .cycle: "figure.outdoor.cycle"
         case .rest: "moon.zzz"

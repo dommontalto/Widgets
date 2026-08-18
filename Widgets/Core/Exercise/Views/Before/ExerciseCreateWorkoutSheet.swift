@@ -158,7 +158,7 @@ struct ExerciseCreateWorkoutSheet: View {
 
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: "dumbbell.fill")
+            Image(systemName: "figure.strengthtraining.traditional")
                 .font(.standard(size: .body2, weight: .medium))
                 .foregroundStyle(Color.textColor)
 
