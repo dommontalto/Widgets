@@ -18,8 +18,24 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         case allSetsComplete
     }
 
+    // What's reporting the rate, named and drawn while the pill shows its source.
+    enum Source: String {
+        case appleWatch = "Apple Watch"
+        case airPods = "AirPods"
+        case chestStrap = "Chest strap"
+
+        var symbol: String {
+            switch self {
+            case .appleWatch: "applewatch"
+            case .airPods: "airpods.pro"
+            case .chestStrap: "heart.circle"
+            }
+        }
+    }
+
     let status: Status
     var heartRate: String?
+    var heartRateSource: Source = .appleWatch
     var onRPE: () -> Void = {}
     var onFailedSet: () -> Void = {}
     var onExtendRest: (TimeInterval) -> Void = { _ in }
@@ -31,7 +47,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            HStack(spacing: .spacing2x) {
+            HStack(spacing: .spacing0x) {
                 if let heartRate {
                     heartRatePill(heartRate)
                 }
@@ -192,13 +208,15 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             withAnimation(.brightSnappy) { showsSource.toggle() }
         } label: {
             HStack(spacing: .spacing1x) {
-                // Beats at the rate it's reporting, so the pill reads as live.
-                Image(systemName: "heart.fill")
+                // Beats at the rate it's reporting, so the pill reads as live —
+                // and stands still as the watch while it names what's reporting.
+                Image(systemName: showsSource ? heartRateSource.symbol : "heart.fill")
                     .font(.standard(size: .subheading, weight: .regular))
-                    .foregroundStyle(Color.defaultRed)
-                    .exerciseHeartRatePulse(bpm: Double(rate))
+                    .foregroundStyle(showsSource ? Color.textColor : Color.defaultRed)
+                    .contentTransition(.symbolEffect(.replace))
+                    .exerciseHeartRatePulse(bpm: showsSource ? nil : Double(rate))
 
-                BrightText(showsSource ? "Apple Watch" : "\(rate) BPM", size: .body1, weight: .regular)
+                BrightText(showsSource ? heartRateSource.rawValue : "\(rate) BPM", size: .body1, weight: .regular)
                     .contentTransition(.numericText())
 
                 if !showsSource {

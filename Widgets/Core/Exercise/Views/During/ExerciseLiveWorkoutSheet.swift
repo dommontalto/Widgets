@@ -47,6 +47,9 @@ struct ExerciseLiveWorkoutSheet: View {
     // Set while the run is paused: the clock and the disc both read from it, and
     // resuming pushes `startDate` forward by however long it stood still.
     @State private var pauseDate: Date?
+    // The clock says PAUSED once the disc is taken hold of; while it's being
+    // turned it has to show the time being wound instead.
+    @State private var isScrubbing = false
     @FocusState private var focusedField: ExerciseSetField?
 
     init(
@@ -72,12 +75,16 @@ struct ExerciseLiveWorkoutSheet: View {
                 isExpanded: $isSideMenuExpanded,
                 startDate: startDate,
                 pauseDate: pauseDate,
-                blockName: currentBlockName,
+                // The chip on the record says what the run is doing, and during a
+                // rest that's the rest rather than the set waiting behind it.
+                blockName: isResting ? "Resting" : currentBlockName,
                 onBack: {
                     if currentIndex > 0 { showTransport("PREV") }
                     goBack()
                 },
                 onTogglePause: togglePause,
+                onScrub: scrub,
+                onScrubEnd: { isScrubbing = false },
                 onAdvance: {
                     if currentIndex + 1 < exercises.count { showTransport("NEXT") }
                     advance()
@@ -257,7 +264,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var pillColor: Color {
-        if transportLabel != nil { return .defaultPink }
+        if transportLabel != nil { return .defaultBlue }
         return pauseDate == nil ? .defaultGreen : .defaultOrange
     }
 
@@ -265,7 +272,7 @@ struct ExerciseLiveWorkoutSheet: View {
     // moment, and a paused run says so instead of showing a clock that's stopped.
     private func pillLabel(at date: Date) -> String {
         if let transportLabel { return transportLabel }
-        return pauseDate == nil ? elapsed(at: date) : "PAUSED"
+        return pauseDate == nil || isScrubbing ? elapsed(at: date) : "PAUSED"
     }
 
     private func showTransport(_ label: String) {
@@ -627,8 +634,24 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     // Cuts rest short so the next set becomes active straight away.
+    // Skips the rest while one's running; otherwise it's the set that's skipped,
+    // and since it was never done there's nothing to log — it drops out of the
+    // run and the next set takes over.
     private func skip() {
-        restEndDate = nil
+        if restEndDate != nil {
+            restEndDate = nil
+            return
+        }
+
+        guard let activeSet,
+              let index = currentExercise.sets.firstIndex(where: { $0.id == activeSet.id }) else {
+            advance()
+            return
+        }
+
+        withAnimation(.brightSnappy) {
+            exercises[currentIndex].sets.remove(at: index)
+        }
     }
 
     // MARK: - Editing the run
@@ -653,6 +676,18 @@ struct ExerciseLiveWorkoutSheet: View {
     private func goBack() {
         guard currentIndex > 0 else { return }
         currentIndex -= 1
+    }
+
+    // Winding the disc moves the start rather than the clock, since the elapsed
+    // time is the gap between the two — and it can't be wound back past zero.
+    private func scrub(by seconds: TimeInterval) {
+        isScrubbing = true
+
+        // Rounded, so the notches land the clock on whole seconds however far
+        // into one it was when the record was taken hold of.
+        let reference = pauseDate ?? Date()
+        let elapsed = (reference.timeIntervalSince(startDate) + seconds).rounded()
+        startDate = reference.addingTimeInterval(-max(elapsed, 0))
     }
 
     // Resuming hands back the time the run stood still, so the clock and the

@@ -20,12 +20,33 @@ struct ExerciseLiveWorkoutMenu: View {
     let blockName: String
     var onBack: () -> Void
     var onTogglePause: () -> Void
+    // Handed the seconds the finger just turned the record through, so the run's
+    // clock is what the disc actually moves.
+    var onScrub: (TimeInterval) -> Void
+    var onScrubEnd: () -> Void
     var onAdvance: () -> Void
     var onEdit: () -> Void
     var onCancel: () -> Void
     var onEnd: () -> Void
 
     @State private var visibleRows: Set<Int> = []
+    @State private var lastTouch: Angle?
+    @State private var grabs = 0
+    // What the run was doing before the finger landed, so letting go can put it
+    // back — and whether the finger did anything more than land.
+    @State private var wasRunning = false
+    @State private var grabDate: Date?
+    @State private var didTurn = false
+    // Clicks the record round like a click wheel: one tick per notch turned.
+    @State private var ticks = 0
+    @State private var untickedDegrees: Double = 0
+    // The finger's own contribution to where the record sits, kept so it stays
+    // where it was let go, and so the clock jumping a second per notch doesn't
+    // whip the disc round with it.
+    @State private var spinOffset: Angle = .zero
+    @State private var fingerTurn: Angle = .zero
+    // The clock's share of the angle, frozen at the moment it was taken hold of.
+    @State private var heldAngle: Angle?
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -108,14 +129,104 @@ struct ExerciseLiveWorkoutMenu: View {
                         .padding(.top, Constants.discMarkInset)
                 }
                 .overlay { discLabels }
-                .rotationEffect(spinAngle(at: context.date))
+                .rotationEffect(discAngle(at: context.date))
         }
         .frame(width: Constants.discSize, height: Constants.discSize)
+        .contentShape(Circle())
+        .gesture(spin)
+        .brightHaptic(.light, trigger: grabs)
+        .brightHaptic(.soft, trigger: ticks)
+    }
+
+    private var spin: some Gesture {
+        // No minimum distance, so resting a finger on the record stops it the
+        // way it would in the world.
+        DragGesture(minimumDistance: .zero)
+            .onChanged { value in
+                let touch = touchAngle(at: value.location)
+
+                if let lastTouch {
+                    let turn = shortestTurn(from: lastTouch, to: touch)
+
+                    if abs(turn.degrees) > Constants.turnThreshold { didTurn = true }
+
+                    // The record follows the finger; the clock only moves on
+                    // the notches, a second at a time, so every click the wheel
+                    // makes is a second on the timer.
+                    fingerTurn += turn
+                    untickedDegrees += turn.degrees
+
+                    // Subtracted rather than reset, so reversing unwinds towards
+                    // the notch behind instead of clicking straight away, and a
+                    // drag past several notches counts every one of them.
+                    while abs(untickedDegrees) >= Constants.tickDegrees {
+                        let direction: Double = untickedDegrees < 0 ? -1 : 1
+                        untickedDegrees -= Constants.tickDegrees * direction
+                        ticks += 1
+                        ExerciseDiscClick.play()
+                        onScrub(Constants.tickSeconds * direction)
+                    }
+                } else {
+                    // A hand on the record stops it dead, whatever the finger
+                    // goes on to do; what happens on the way off depends on that.
+                    wasRunning = pauseDate == nil
+                    grabDate = value.time
+                    didTurn = false
+                    untickedDegrees = 0
+                    fingerTurn = .zero
+                    heldAngle = spinAngle(at: .now)
+                    if wasRunning { onTogglePause() }
+
+                    grabs += 1
+                }
+
+                self.lastTouch = touch
+            }
+            .onEnded { value in
+                // A tap is the transport's play/pause, so it comes off the disc
+                // in the opposite state; anything longer is a hand held against
+                // a record, which leaves it however it was found.
+                let held = didTurn || value.time.timeIntervalSince(grabDate ?? value.time) > Constants.tapWindow
+                if held == wasRunning { onTogglePause() }
+
+                // Hands the held angle back to the offset, so letting go leaves
+                // the record exactly where the finger left it.
+                if let heldAngle {
+                    spinOffset += heldAngle + fingerTurn - spinAngle(at: .now)
+                }
+
+                lastTouch = nil
+                grabDate = nil
+                heldAngle = nil
+                fingerTurn = .zero
+                onScrubEnd()
+            }
+    }
+
+    private func discAngle(at date: Date) -> Angle {
+        (heldAngle ?? spinAngle(at: date)) + spinOffset + fingerTurn
     }
 
     private func spinAngle(at date: Date) -> Angle {
         let seconds = (pauseDate ?? date).timeIntervalSince(startDate)
         return .degrees(seconds / Constants.discSpinSeconds * 360)
+    }
+
+    private func touchAngle(at point: CGPoint) -> Angle {
+        let centre = Constants.discSize / 2
+        return .radians(atan2(point.y - centre, point.x - centre))
+    }
+
+    // Straight across the ±180° seam, so a drag past it doesn't whip the record
+    // back around the long way.
+    private func shortestTurn(from: Angle, to: Angle) -> Angle {
+        var degrees = (to - from).degrees.truncatingRemainder(dividingBy: 360)
+        if degrees > 180 {
+            degrees -= 360
+        } else if degrees < -180 {
+            degrees += 360
+        }
+        return .degrees(degrees)
     }
 
     private var discLabels: some View {
@@ -148,19 +259,33 @@ struct ExerciseLiveWorkoutMenu: View {
 
     private var transportControls: some View {
         HStack(spacing: .spacing2x) {
-            BrightRoundButton(systemImage: "backward.end.alt", size: .large) {
-                onBack()
-            }
+            transportButton("backward.end.alt", glyph: .subheading, action: onBack)
 
-            BrightRoundButton(systemImage: pauseDate == nil ? "pause" : "play", size: .large) {
-                onTogglePause()
-            }
+            transportButton(
+                pauseDate == nil ? "pause" : "play",
+                glyph: .standout28,
+                action: onTogglePause
+            )
             .contentTransition(.symbolEffect(.replace))
 
-            BrightRoundButton(systemImage: "forward.end.alt", size: .large) {
-                onAdvance()
-            }
+            transportButton("forward.end.alt", glyph: .subheading, action: onAdvance)
         }
+    }
+
+    private func transportButton(
+        _ symbol: String,
+        glyph: FontSizes,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.standard(size: glyph, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                .frame(width: Constants.transportSize, height: Constants.transportSize)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .modifier(GlassEffect(shape: .circle))
     }
 
     // MARK: - Playlist
@@ -303,6 +428,14 @@ struct ExerciseLiveWorkoutMenu: View {
         static let rowStaggerDelay: TimeInterval = 0.03
         static let rowStartDelay: TimeInterval = 0.02
         static let rowExitDuration: TimeInterval = 0.15
+        // Longer than this, or turned at all, and the touch counts as a hold.
+        static let tapWindow: TimeInterval = 0.25
+        static let turnThreshold: Double = 1
+        // The notch the record clicks over, in degrees — 24 to the turn.
+        static let tickDegrees: Double = 15
+        // What one notch is worth on the run's clock.
+        static let tickSeconds: TimeInterval = 1
+        static let transportSize: CGFloat = 44
         static let discSize: CGFloat = 240
         static let discHoleSize: CGFloat = 35
         static let discMarkWidth: CGFloat = 4
