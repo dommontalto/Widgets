@@ -7,15 +7,44 @@
 
 import SwiftUI
 
+// One of the icons a session wears — the icon of an exercise it holds.
+nonisolated struct ExerciseSessionGlyph: Identifiable {
+    let id: String
+    let color: Color
+
+    var symbol: String { id }
+}
+
 struct ExerciseQuickWorkout: Identifiable {
     let name: String
-    let symbol: String
-    let accentColor: Color
     let subtitle: String
-    let isCardio: Bool
     var items: [ExerciseTemplateItem] = []
 
     var id: String { name }
+
+    // A session runs as cardio only when there's nothing in it to log set by set.
+    var isCardio: Bool {
+        !items.isEmpty && items.allSatisfy { ExerciseDemoLibrary.isCardio($0.exerciseName) }
+    }
+
+    var symbol: String { glyphs.first?.symbol ?? ExerciseWorkoutCategory.gym.symbol }
+
+    var accentColor: Color { glyphs.first?.color ?? ExerciseWorkoutCategory.gym.accentColor }
+
+    // The card wears what's in the session: one icon per exercise in the order
+    // they were added, up to four, and never the same icon twice.
+    var glyphs: [ExerciseSessionGlyph] {
+        var glyphs: [ExerciseSessionGlyph] = []
+        for item in items {
+            let glyph = ExerciseDemoLibrary.glyph(for: item.exerciseName)
+            guard !glyphs.contains(where: { $0.id == glyph.id }) else { continue }
+            glyphs.append(glyph)
+            if glyphs.count == ExerciseQuickWorkout.maxGlyphs { break }
+        }
+        return glyphs
+    }
+
+    static let maxGlyphs = 4
 }
 
 enum ExerciseDemoWorkouts {
@@ -23,26 +52,31 @@ enum ExerciseDemoWorkouts {
 
     static let quickFiveK = ExerciseQuickWorkout(
         name: "Quick 5K",
-        symbol: "figure.run",
-        accentColor: .defaultSkyBlue,
         subtitle: "5 km \u{2022} Zone 2",
-        isCardio: true
+        items: [
+            ExerciseTemplateItem(
+                exerciseName: "Outdoor Run",
+                target: "5 km \u{2022} Zone 2",
+                plan: ExerciseCardioPlan(goal: .distance, secondary: .pace, distance: "5", pace: "5\u{2019}00")
+            ),
+        ]
     )
 
     static let quickTenK = ExerciseQuickWorkout(
         name: "Quick 10K",
-        symbol: "figure.run",
-        accentColor: .defaultSkyBlue,
         subtitle: "10 km \u{2022} Zone 3",
-        isCardio: true
+        items: [
+            ExerciseTemplateItem(
+                exerciseName: "Outdoor Run",
+                target: "10 km \u{2022} Zone 3",
+                plan: ExerciseCardioPlan(goal: .distance, secondary: .pace, distance: "10", pace: "5\u{2019}20")
+            ),
+        ]
     )
 
     static let quickPush = ExerciseQuickWorkout(
         name: "Quick Push",
-        symbol: "figure.strengthtraining.traditional",
-        accentColor: .defaultPurple,
         subtitle: "4 exercises",
-        isCardio: false,
         items: [
             ExerciseTemplateItem(
                 exerciseName: "Bench Press",
@@ -90,10 +124,7 @@ enum ExerciseDemoWorkouts {
 
     static let quickPull = ExerciseQuickWorkout(
         name: "Quick Pull",
-        symbol: "figure.strengthtraining.traditional",
-        accentColor: .defaultPurple,
         subtitle: "3 exercises",
-        isCardio: false,
         items: [
             ExerciseTemplateItem(
                 exerciseName: "Pull Up",

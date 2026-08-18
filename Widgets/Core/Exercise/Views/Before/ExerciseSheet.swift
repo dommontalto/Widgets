@@ -10,10 +10,9 @@ import SwiftUI
 enum ExerciseWorkoutRoute: Hashable {
     case category(ExerciseWorkoutCategory)
     case exercise(String)
-    case newWorkout
-    case newCardio
-    // Carries the saved workout's id — the draft itself lives on the builder.
-    case editWorkout(String)
+    case newSession
+    // Carries the saved session's id — the draft itself lives on the builder.
+    case editSession(String)
 }
 
 struct ExerciseSheet: View {
@@ -31,12 +30,8 @@ struct ExerciseSheet: View {
 
         return BrightPageSheetView(title: "Start Workout", horizontalPadding: .spacing0x, path: $builder.path) {
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing4x) {
-                    section("Workouts", cardio: false)
-
-                    section("Cardio", cardio: true)
-                }
-                .padding(.spacing3x)
+                sessions
+                    .padding(.spacing3x)
             }
             .safeAreaInset(edge: .bottom) {
                 addButton
@@ -53,61 +48,60 @@ struct ExerciseSheet: View {
         .exerciseWorkoutFlow($workoutStage)
     }
 
-    // MARK: - Saved workouts
+    // MARK: - Saved sessions
 
-    @ViewBuilder
-    private func section(_ title: String, cardio: Bool) -> some View {
+    private var sessions: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(title, size: .subheading)
+            BrightText("My Sessions", size: .subheading)
 
-            if builder.savedWorkouts(cardio: cardio).isEmpty {
-                placeholder(cardio: cardio)
+            if builder.saved.isEmpty {
+                placeholder
             } else {
                 LazyVGrid(columns: columns, spacing: .spacing2x) {
-                    workoutCards(cardio: cardio)
+                    sessionCards
                 }
             }
         }
     }
 
-    private func placeholder(cardio: Bool) -> some View {
+    private var placeholder: some View {
         BrightPlaceholderView(
-            systemImage: cardio ? "figure.run" : "figure.strengthtraining.traditional",
-            title: cardio ? "No cardio yet" : "No workouts yet",
-            subtitle: cardio
-                ? "Save a run, ride or swim to start it from here."
-                : "Build a workout to start it from here.",
-            imageColor: cardio ? .defaultSkyBlue : .defaultPurple,
-            buttonTitle: cardio ? "Create cardio" : "Create workout"
+            systemImage: ExerciseWorkoutCategory.gym.symbol,
+            title: "No sessions yet",
+            subtitle: "Add exercises, runs or sports and save them as a session.",
+            imageColor: ExerciseWorkoutCategory.gym.accentColor,
+            buttonTitle: "Create session"
         ) {
-            builder.path.append(
-                cardio ? ExerciseWorkoutRoute.newCardio : ExerciseWorkoutRoute.category(.gym)
-            )
+            newSession()
         }
     }
 
-    private func workoutCards(cardio: Bool) -> some View {
-        ForEach(builder.savedWorkouts(cardio: cardio)) { workout in
+    private var sessionCards: some View {
+        ForEach(builder.saved) { workout in
             Button {
                 workoutStage = workout.isCardio ? .cardio : .preWorkout(workout)
             } label: {
-                workoutCard(workout)
+                sessionCard(workout)
             }
             .buttonStyle(.plain)
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .contextMenu {
-                workoutMenu(for: workout)
+                sessionMenu(for: workout)
             }
         }
     }
 
-    private func workoutCard(_ workout: ExerciseQuickWorkout) -> some View {
+    private func sessionCard(_ workout: ExerciseQuickWorkout) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            Image(systemName: workout.symbol)
-                .font(.standard(size: .heading, weight: .light))
-                .foregroundStyle(workout.accentColor)
-                .frame(width: Constants.iconSize, height: Constants.iconSize, alignment: .leading)
-                .padding(.bottom, .spacing105x)
+            HStack(spacing: .spacing1x) {
+                ForEach(workout.glyphs) { glyph in
+                    Image(systemName: glyph.symbol)
+                        .font(.standard(size: .heading, weight: .light))
+                        .foregroundStyle(glyph.color)
+                }
+            }
+            .frame(height: Constants.iconSize, alignment: .leading)
+            .padding(.bottom, .spacing105x)
 
             BrightText(workout.name, size: .body2, color: .semiLightTextColor, weight: .regular)
                 .lineLimit(1)
@@ -122,14 +116,14 @@ struct ExerciseSheet: View {
     }
 
     @ViewBuilder
-    private func workoutMenu(for workout: ExerciseQuickWorkout) -> some View {
+    private func sessionMenu(for workout: ExerciseQuickWorkout) -> some View {
         Button("Duplicate", systemImage: "plus.square.on.square") {
             withAnimation(.brightSnappy) { builder.duplicate(workout) }
         }
 
         Button("Edit", systemImage: "pencil") {
             builder.loadDraft(from: workout)
-            builder.path.append(ExerciseWorkoutRoute.editWorkout(workout.id))
+            builder.path.append(ExerciseWorkoutRoute.editSession(workout.id))
         }
 
         Button("Delete", systemImage: "trash", role: .destructive) {
@@ -138,26 +132,19 @@ struct ExerciseSheet: View {
         .tint(.defaultRed)
     }
 
-    // MARK: - Library
+    // MARK: - Creating
 
     private var addButton: some View {
-        // The menu opens upward from the bottom-right button, so iOS lists the
-        // last item nearest the finger — cardio is declared first to put Create
-        // workout at the top.
-        Menu {
-            Button("Create cardio", systemImage: "figure.run") {
-                builder.path.append(ExerciseWorkoutRoute.newCardio)
-            }
+        BrightRoundButton(systemImage: "plus", size: .finalBossLarge, onTapCallback: newSession)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.spacing3x)
+    }
 
-            Button("Create workout", systemImage: "figure.strengthtraining.traditional") {
-                builder.path.append(ExerciseWorkoutRoute.category(.gym))
-            }
-        } label: {
-            BrightRoundButton(systemImage: "plus", size: .finalBossLarge)
-                .allowsHitTesting(false)
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.spacing3x)
+    // A session starts in the library: pick as many exercises, runs or sports as
+    // you want, and Add carries them into the create screen.
+    private func newSession() {
+        builder.reset()
+        builder.path.append(ExerciseWorkoutRoute.category(.gym))
     }
 
     // MARK: - Routing
@@ -169,12 +156,10 @@ struct ExerciseSheet: View {
             ExerciseCategorySheet(category: category)
         case let .exercise(name):
             exerciseDetail(named: name)
-        case .newWorkout:
-            ExerciseCreateWorkoutSheet { builder.path = NavigationPath() }
-        case .newCardio:
-            ExerciseCreateCardioSheet { builder.path = NavigationPath() }
-        case let .editWorkout(id):
-            editor(forWorkoutID: id)
+        case .newSession:
+            ExerciseCreateSessionSheet { builder.path = NavigationPath() }
+        case let .editSession(id):
+            editor(forSessionID: id)
         }
     }
 
@@ -188,13 +173,9 @@ struct ExerciseSheet: View {
     }
 
     @ViewBuilder
-    private func editor(forWorkoutID id: String) -> some View {
+    private func editor(forSessionID id: String) -> some View {
         if let workout = builder.saved.first(where: { $0.id == id }) {
-            if workout.isCardio {
-                ExerciseCreateCardioSheet(editing: workout) { builder.path = NavigationPath() }
-            } else {
-                ExerciseCreateWorkoutSheet(editing: workout) { builder.path = NavigationPath() }
-            }
+            ExerciseCreateSessionSheet(editing: workout) { builder.path = NavigationPath() }
         }
     }
 

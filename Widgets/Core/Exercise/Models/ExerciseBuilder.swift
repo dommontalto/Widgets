@@ -64,57 +64,6 @@ enum ExerciseSetKind: Hashable {
     }
 }
 
-enum ExerciseWorkoutIcon: String, CaseIterable, Identifiable {
-    case barbell
-    case crossTraining
-    case functional
-    case core
-    case mobility
-    case yoga
-
-    case run
-    case ride
-    case swim
-    case row
-    case hike
-    case jumpRope
-
-    var id: String { rawValue }
-
-    // Which picker the icon belongs to — and, for a saved workout, whether it
-    // routes to the live cardio screen instead of the set-by-set one.
-    static let strength: [ExerciseWorkoutIcon] = [.barbell, .crossTraining, .functional, .core, .mobility, .yoga]
-
-    static let cardio: [ExerciseWorkoutIcon] = [.run, .ride, .swim, .row, .hike, .jumpRope]
-
-    var isCardio: Bool { ExerciseWorkoutIcon.cardio.contains(self) }
-
-    var symbol: String {
-        switch self {
-        case .barbell: "figure.strengthtraining.traditional"
-        case .crossTraining: "figure.cross.training"
-        case .functional: "figure.strengthtraining.functional"
-        case .core: "figure.core.training"
-        case .mobility: "figure.cooldown"
-        case .yoga: "figure.yoga"
-        case .run: "figure.run"
-        case .ride: "figure.outdoor.cycle"
-        case .swim: "figure.pool.swim"
-        case .row: "figure.outdoor.rowing"
-        case .hike: "figure.hiking"
-        case .jumpRope: "figure.jumprope"
-        }
-    }
-
-    var accentColor: Color {
-        isCardio ? .defaultSkyBlue : .defaultPurple
-    }
-
-    static func matching(_ workout: ExerciseQuickWorkout) -> ExerciseWorkoutIcon? {
-        allCases.first { $0.symbol == workout.symbol }
-    }
-}
-
 struct ExerciseSetDraft: Identifiable, Hashable {
     let id = UUID()
     var kind: ExerciseSetKind
@@ -127,23 +76,31 @@ struct ExerciseSetDraft: Identifiable, Hashable {
 final class ExerciseBuilder {
     var added: [String] = []
     var sets: [String: [ExerciseSetDraft]] = [:]
+    // What each run or sport in the draft is chasing, keyed the way sets are.
+    var plans: [String: ExerciseCardioPlan] = [:]
     var saved: [ExerciseQuickWorkout] = ExerciseDemoWorkouts.all
     var path = NavigationPath()
 
     var count: Int { added.count }
 
-    func savedWorkouts(cardio: Bool) -> [ExerciseQuickWorkout] {
-        saved.filter { $0.isCardio == cardio }
-    }
-
     func isAdded(_ name: String) -> Bool {
         added.contains(name)
+    }
+
+    // Which half of the create screen an exercise gets: gym and bodyweight are
+    // logged set by set, cardio and sports run against a plan.
+    func isCardio(_ name: String) -> Bool {
+        ExerciseDemoLibrary.isCardio(name)
     }
 
     func add(_ name: String) {
         guard !isAdded(name) else { return }
         added.append(name)
-        sets[name] = ExerciseBuilder.defaultSets
+        if isCardio(name) {
+            plans[name] = ExerciseCardioPlan()
+        } else {
+            sets[name] = ExerciseBuilder.defaultSets
+        }
     }
 
     func toggle(_ name: String) {
@@ -157,16 +114,13 @@ final class ExerciseBuilder {
     func remove(_ name: String) {
         added.removeAll { $0 == name }
         sets[name] = nil
-    }
-
-    func moveUp(_ name: String) {
-        guard let index = added.firstIndex(of: name), index > 0 else { return }
-        added.swapAt(index, index - 1)
+        plans[name] = nil
     }
 
     func reset() {
         added.removeAll()
         sets.removeAll()
+        plans.removeAll()
     }
 
     func delete(_ workout: ExerciseQuickWorkout) {
@@ -176,10 +130,7 @@ final class ExerciseBuilder {
     func duplicate(_ workout: ExerciseQuickWorkout) {
         let copy = ExerciseQuickWorkout(
             name: uniqueName(from: workout.name),
-            symbol: workout.symbol,
-            accentColor: workout.accentColor,
             subtitle: workout.subtitle,
-            isCardio: workout.isCardio,
             items: workout.items
         )
         if let index = saved.firstIndex(where: { $0.id == workout.id }) {
@@ -189,13 +140,17 @@ final class ExerciseBuilder {
         }
     }
 
-    // Pulls a saved workout back into the draft so the create screen can edit it.
+    // Pulls a saved session back into the draft so the create screen can edit it.
     // Template sets carry no rest interval, so they take the default.
     func loadDraft(from workout: ExerciseQuickWorkout) {
         reset()
         for item in workout.items {
             guard !isAdded(item.exerciseName) else { continue }
             added.append(item.exerciseName)
+            guard !isCardio(item.exerciseName) else {
+                plans[item.exerciseName] = item.plan ?? ExerciseCardioPlan()
+                continue
+            }
             sets[item.exerciseName] = item.sets.isEmpty
                 ? ExerciseBuilder.defaultSets
                 : renumbered(item.sets.map { set in
@@ -209,24 +164,16 @@ final class ExerciseBuilder {
         }
     }
 
-    func update(
-        _ workout: ExerciseQuickWorkout,
-        named name: String,
-        icon: ExerciseWorkoutIcon,
-        subtitle cardioPlan: String? = nil
-    ) {
+    func update(_ workout: ExerciseQuickWorkout, named name: String) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty,
               let index = saved.firstIndex(where: { $0.id == workout.id })
         else { return }
-        // Cardio workouts have no exercises to edit, so an empty draft means the
-        // name and icon changed and the original plan stands.
+        // An empty draft means only the name changed, so the session keeps what
+        // it already held.
         saved[index] = ExerciseQuickWorkout(
             name: title,
-            symbol: icon.symbol,
-            accentColor: icon.accentColor,
-            subtitle: cardioPlan ?? (added.isEmpty ? workout.subtitle : subtitle),
-            isCardio: icon.isCardio,
+            subtitle: added.isEmpty ? workout.subtitle : subtitle,
             items: added.isEmpty ? workout.items : templateItems
         )
         reset()
@@ -253,31 +200,22 @@ final class ExerciseBuilder {
         return candidate
     }
 
-    // Cardio carries its plan in the subtitle, e.g. "5 km • 4 intervals"; a gym
-    // workout counts its exercises instead.
-    func save(named name: String, icon: ExerciseWorkoutIcon = .barbell, subtitle cardioPlan: String? = nil) {
+    func save(named name: String) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        // A cardio workout is the run itself, so it saves with no exercises.
-        guard !title.isEmpty, icon.isCardio || !added.isEmpty else { return }
+        guard !title.isEmpty, !added.isEmpty else { return }
         saved.append(
-            ExerciseQuickWorkout(
-                name: title,
-                symbol: icon.symbol,
-                accentColor: icon.accentColor,
-                subtitle: icon.isCardio
-                    ? (cardioPlan ?? ExerciseBuilder.cardioSubtitle)
-                    : subtitle,
-                isCardio: icon.isCardio,
-                items: templateItems
-            )
+            ExerciseQuickWorkout(name: title, subtitle: subtitle, items: templateItems)
         )
         reset()
     }
 
-    private static let cardioSubtitle = "Cardio"
-
-    private var subtitle: String {
-        "\(added.count) exercise\(added.count == 1 ? "" : "s")"
+    // A lone run reads back as its plan, e.g. "5 km • 4 intervals"; anything more
+    // counts what's in it instead.
+    var subtitle: String {
+        if added.count == 1, let plan = plans[added[0]] {
+            return plan.subtitle
+        }
+        return "\(added.count) exercise\(added.count == 1 ? "" : "s")"
     }
 
     private var templateItems: [ExerciseTemplateItem] {
@@ -291,9 +229,17 @@ final class ExerciseBuilder {
                         reps: draft.reps.filter(\.isNumber),
                         kind: draft.kind
                     )
-                }
+                },
+                plan: plans[exercise]
             )
         }
+    }
+
+    func planBinding(for exercise: String) -> Binding<ExerciseCardioPlan> {
+        Binding(
+            get: { [weak self] in self?.plans[exercise] ?? ExerciseCardioPlan() },
+            set: { [weak self] plan in self?.plans[exercise] = plan }
+        )
     }
 
     // Plain-text export of the workout, for sharing out of the sets editor.
@@ -307,6 +253,7 @@ final class ExerciseBuilder {
     }
 
     private func target(for exercise: String) -> String {
+        if let plan = plans[exercise] { return plan.subtitle }
         let working = (sets[exercise] ?? []).filter {
             if case .working = $0.kind { return true }
             return false

@@ -1068,6 +1068,8 @@ struct ExerciseTemplateItem: Identifiable, Sendable {
     let target: String
     // The planned sets. Empty falls back to a blank warm-up plus three working sets.
     var sets: [ExerciseTemplateSet] = []
+    // What a run or a sport is chasing. Nil for anything logged set by set.
+    var plan: ExerciseCardioPlan?
 }
 
 struct ExerciseTemplateSet: Sendable {

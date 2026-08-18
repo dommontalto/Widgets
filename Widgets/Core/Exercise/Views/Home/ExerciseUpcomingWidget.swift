@@ -106,14 +106,8 @@ struct ExerciseUpcomingWidget: View {
 
     private var quickWorkoutMenu: some View {
         Menu {
-            Section("Workouts") {
-                ForEach(builder.savedWorkouts(cardio: false)) { workout in
-                    quickWorkoutButton(workout)
-                }
-            }
-
-            Section("Cardio") {
-                ForEach(builder.savedWorkouts(cardio: true)) { workout in
+            Section("My Sessions") {
+                ForEach(builder.saved) { workout in
                     quickWorkoutButton(workout)
                 }
             }

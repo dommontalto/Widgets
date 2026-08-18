@@ -26,7 +26,7 @@ struct ExercisePreWorkoutSheet: View {
     var body: some View {
         page
             .navigationDestination(isPresented: $isEditing) {
-                ExerciseCreateWorkoutSheet(editing: workout) { isEditing = false }
+                ExerciseCreateSessionSheet(editing: workout) { isEditing = false }
             }
             .navigationDestination(item: $openedExerciseName) { name in
                 if let exercise = ExerciseDemoLibrary.exercise(named: name) {

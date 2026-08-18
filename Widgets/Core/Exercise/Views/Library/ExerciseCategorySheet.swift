@@ -49,7 +49,7 @@ struct ExerciseCategorySheet: View {
                     // nothing to add or count.
                     if onSelect == nil, builder.count > 0 {
                         Button("Add") {
-                            builder.path.append(ExerciseWorkoutRoute.newWorkout)
+                            builder.path.append(ExerciseWorkoutRoute.newSession)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)

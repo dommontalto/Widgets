@@ -1,5 +1,5 @@
 //
-//  ExerciseCreateWorkoutSheet.swift
+//  ExerciseCreateSessionSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -11,8 +11,11 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
-struct ExerciseCreateWorkoutSheet: View {
-    // The saved workout being edited, or nil when building a new one.
+// One screen for whatever the session holds. The picker under the name walks
+// through the exercises added to it, and each one brings its own editor: sets
+// for a lift, a cardio plan for a run or a sport.
+struct ExerciseCreateSessionSheet: View {
+    // The saved session being edited, or nil when building a new one.
     let editing: ExerciseQuickWorkout?
 
     let onSave: () -> Void
@@ -23,19 +26,16 @@ struct ExerciseCreateWorkoutSheet: View {
 
     @State private var name: String
 
-    @State private var symbol: ExerciseWorkoutIcon
+    @State private var selected: String?
 
     @State private var swapTarget: ExerciseSwapTarget?
 
     @State private var isAddingExercise = false
 
-    @State private var addedExercise: String?
-
     @State private var nameNudge = 0
 
-    // The draft as it looked on arrival, so Save can tell edits from a no-op.
+    // The session as it looked on arrival, so Save can tell edits from a no-op.
     @State private var baselineDraft: String?
-
 
     // Mirrors the set row's own scaling so the headers stay over their columns
     // and the list's height matches the rows it holds.
@@ -49,11 +49,6 @@ struct ExerciseCreateWorkoutSheet: View {
         self.editing = editing
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? "")
-        if let editing, let icon = ExerciseWorkoutIcon.matching(editing) {
-            _symbol = State(initialValue: icon)
-        } else {
-            _symbol = State(initialValue: ExerciseWorkoutIcon.strength[0])
-        }
     }
 
     var body: some View {
@@ -74,66 +69,92 @@ struct ExerciseCreateWorkoutSheet: View {
                 }
             },
             content: {
-                ScrollViewReader { scroller in
-                    ScrollView(showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: .spacing3x) {
-                            nameField
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: .spacing3x) {
+                        nameField
+                            .padding(.horizontal, .spacing3x)
 
-                            ExerciseIconPicker(
-                                icons: ExerciseWorkoutIcon.strength,
-                                selection: $symbol
-                            )
+                        ExerciseSessionPicker(exercises: builder.added, selection: $selected)
 
-                            ForEach(builder.added, id: \.self) { exercise in
-                                exerciseCard(exercise)
-                            }
-                        }
-                        .padding(.spacing3x)
+                        editor
+                            .padding(.horizontal, .spacing3x)
                     }
-                    .safeAreaInset(edge: .bottom) {
-                        addExerciseButton
-                    }
-                    .onChange(of: addedExercise) { _, exercise in
-                        guard let exercise else { return }
-                        withAnimation(.brightEaseInOut) { scroller.scrollTo(exercise, anchor: .top) }
-                        addedExercise = nil
-                    }
+                    .padding(.vertical, .spacing3x)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    addExerciseButton
                 }
             }
         )
         .sheet(item: $swapTarget) { target in
             NavigationStack {
-                ExerciseCategorySheet(category: .gym, showCloseButton: true) { replacement in
+                ExerciseCategorySheet(
+                    category: ExerciseDemoLibrary.workoutCategory(of: target.id),
+                    showCloseButton: true
+                ) { replacement in
                     builder.replace(target.id, with: replacement.name)
+                    selected = replacement.name
                 }
             }
         }
         .sheet(isPresented: $isAddingExercise) {
             NavigationStack {
                 ExerciseCategorySheet(category: .gym, showCloseButton: true) { exercise in
-                    builder.add(exercise.name)
-                    addedExercise = exercise.name
+                    withAnimation(.brightSnappy) { builder.add(exercise.name) }
+                    selected = exercise.name
                 }
             }
         }
         .onAppear {
             // The builder is already loaded by the time we arrive, so the first
-            // signature is the untouched workout.
+            // signature is the untouched session.
             if baselineDraft == nil { baselineDraft = draftSignature }
+            if selected == nil { selected = builder.added.first }
         }
     }
 
-    // MARK: - Content
+    // MARK: - Header
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            TextField("Workout name", text: $name)
+            TextField("Session name", text: $name)
                 .focused($isTyping)
                 .font(.standard(size: .standout28, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .brightWiggle(trigger: nameNudge)
 
-            BrightText("\(builder.count) exercise\(builder.count == 1 ? "" : "s")", size: .body1, color: .semiLightTextColor)
+            BrightText(builder.subtitle, size: .body1, color: .semiLightTextColor)
+        }
+    }
+
+    // MARK: - Editor
+
+    @ViewBuilder
+    private var editor: some View {
+        if let selected, builder.isAdded(selected) {
+            if builder.isCardio(selected) {
+                cardioCard(selected)
+            } else {
+                exerciseCard(selected)
+            }
+        } else {
+            BrightPlaceholderView(
+                systemImage: ExerciseWorkoutCategory.gym.symbol,
+                title: "Nothing added yet",
+                subtitle: "Add exercises, runs or sports and they'll line up above.",
+                imageColor: ExerciseWorkoutCategory.gym.accentColor,
+                buttonTitle: "Add exercise"
+            ) {
+                isAddingExercise = true
+            }
+        }
+    }
+
+    private func cardioCard(_ exercise: String) -> some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            cardHeader(exercise)
+
+            ExerciseCardioPlanEditor(plan: builder.planBinding(for: exercise), isTyping: $isTyping)
         }
     }
 
@@ -158,7 +179,7 @@ struct ExerciseCreateWorkoutSheet: View {
 
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: "figure.strengthtraining.traditional")
+            Image(systemName: ExerciseDemoLibrary.glyph(for: exercise).symbol)
                 .font(.standard(size: .body2, weight: .medium))
                 .foregroundStyle(Color.textColor)
 
@@ -167,14 +188,11 @@ struct ExerciseCreateWorkoutSheet: View {
             Spacer(minLength: .spacing2x)
 
             Menu {
-                Button("Move up", systemImage: "arrow.up") {
-                    builder.moveUp(exercise)
-                }
                 Button("Swap out exercise", systemImage: "rectangle.2.swap") {
                     swapTarget = ExerciseSwapTarget(id: exercise)
                 }
                 Button("Remove exercise", systemImage: "trash", role: .destructive) {
-                    builder.remove(exercise)
+                    remove(exercise)
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -261,15 +279,24 @@ struct ExerciseCreateWorkoutSheet: View {
 
     // MARK: - Actions
 
+    // The picker moves on to whatever sat next to the exercise that left, so the
+    // screen below it never goes blank while the session still holds something.
+    private func remove(_ exercise: String) {
+        let index = builder.added.firstIndex(of: exercise) ?? 0
+        withAnimation(.brightSnappy) { builder.remove(exercise) }
+        guard selected == exercise else { return }
+        selected = builder.added.indices.contains(index) ? builder.added[index] : builder.added.last
+    }
+
     private func save() {
         guard !isNameEmpty else {
             nameNudge += 1
             return
         }
         if let editing {
-            builder.update(editing, named: name, icon: symbol)
+            builder.update(editing, named: name)
         } else {
-            builder.save(named: name, icon: symbol)
+            builder.save(named: name)
         }
         onSave()
     }
@@ -280,29 +307,28 @@ struct ExerciseCreateWorkoutSheet: View {
         name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    // A new workout is created; an existing one is saved back.
+    // A new session is created; an existing one is saved back.
     private var saveTitle: String {
         editing == nil ? "Create" : "Save"
     }
 
     private var title: String {
-        editing == nil ? "Create Workout" : "Edit Workout"
+        editing == nil ? "Create Session" : "Edit Session"
     }
 
-    // Editing only offers Save once something actually differs; a new workout
-    // just needs a name.
+    // Editing only offers Save once something actually differs; a new session
+    // needs a name and something in it.
     private var canSave: Bool {
-        guard !isNameEmpty else { return false }
+        guard !isNameEmpty, builder.count > 0 else { return false }
         guard let editing else { return true }
         guard let baselineDraft else { return false }
-        return name != editing.name
-            || symbol.symbol != editing.symbol
-            || draftSignature != baselineDraft
+        return name != editing.name || draftSignature != baselineDraft
     }
 
     private var draftSignature: String {
         builder.added
             .map { exercise in
+                if let plan = builder.plans[exercise] { return "\(exercise)>\(plan.signature)" }
                 let sets = (builder.sets[exercise] ?? [])
                     .map { "\($0.kind)|\($0.weight)|\($0.reps)|\($0.rest)" }
                     .joined(separator: ";")
@@ -328,7 +354,7 @@ struct ExerciseCreateWorkoutSheet: View {
 
 #Preview {
     NavigationStack {
-        ExerciseCreateWorkoutSheet {}
+        ExerciseCreateSessionSheet {}
             .environment(previewBuilder)
     }
 }
@@ -337,5 +363,6 @@ struct ExerciseCreateWorkoutSheet: View {
     let builder = ExerciseBuilder()
     builder.add("Bench Press")
     builder.add("Shoulder Press")
+    builder.add("Outdoor Run")
     return builder
 }()

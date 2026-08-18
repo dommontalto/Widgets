@@ -101,6 +101,12 @@ nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
     var countUnit: String {
         self == .sports ? "sports" : "exercises"
     }
+
+    // Gym and bodyweight are logged set by set; cardio and sports run against a
+    // plan instead.
+    var isCardio: Bool {
+        self == .cardio || self == .sports
+    }
 }
 
 nonisolated struct ExerciseProgressionPoint: Identifiable {
@@ -118,6 +124,9 @@ nonisolated struct ExerciseHistoryEntry: Identifiable {
 
 nonisolated struct ExerciseDefinition: Identifiable {
     let name: String
+    // What the exercise wears wherever it's shown as an icon — its library
+    // category for a lift, its own sport or discipline for everything else.
+    let symbol: String
     let equipment: ExerciseEquipment
     let primaryMuscle: ExerciseMuscle
     let secondaryMuscles: [ExerciseMuscle]

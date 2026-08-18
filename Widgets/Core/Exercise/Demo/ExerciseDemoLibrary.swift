@@ -15,6 +15,29 @@ nonisolated enum ExerciseDemoLibrary {
             ?? all.first { name.hasPrefix($0.name) || $0.name.hasPrefix(name) }
     }
 
+    // Which tab of the library an exercise came from — and so whether it's logged
+    // set by set or run against a cardio plan.
+    static func workoutCategory(of name: String) -> ExerciseWorkoutCategory {
+        ExerciseWorkoutCategory.standard.first { category in
+            exercises(in: category).contains { $0.name == name }
+        } ?? .gym
+    }
+
+    static func isCardio(_ name: String) -> Bool {
+        workoutCategory(of: name).isCardio
+    }
+
+    // The icon an exercise wears in the create screen's picker and on a session's
+    // card. Two tints only: purple for anything logged set by set, blue for
+    // anything run against a plan.
+    static func glyph(for name: String) -> ExerciseSessionGlyph {
+        let category = workoutCategory(of: name)
+        return ExerciseSessionGlyph(
+            id: exercise(named: name)?.symbol ?? category.symbol,
+            color: category.isCardio ? .defaultSkyBlue : .defaultPurple
+        )
+    }
+
     static func exercises(in category: ExerciseWorkoutCategory) -> [ExerciseDefinition] {
         switch category {
         case .gym: strength.filter { $0.equipment != .bodyweight }
@@ -151,6 +174,7 @@ nonisolated enum ExerciseDemoLibrary {
         let oneRepMax = base * 1.12
         return ExerciseDefinition(
             name: name,
+            symbol: category.symbol,
             equipment: equipment,
             primaryMuscle: primary,
             secondaryMuscles: secondary,
@@ -181,7 +205,7 @@ nonisolated enum ExerciseDemoLibrary {
 
     private static func cardioEntry(
         _ name: String,
-        symbolName _: String,
+        symbolName: String,
         best: String,
         longest: String,
         base: Double,
@@ -189,6 +213,7 @@ nonisolated enum ExerciseDemoLibrary {
     ) -> ExerciseDefinition {
         ExerciseDefinition(
             name: name,
+            symbol: symbolName,
             equipment: .bodyweight,
             primaryMuscle: .fullBody,
             secondaryMuscles: [.quads, .calves],
