@@ -36,7 +36,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
                     heartRatePill(heartRate)
                 }
 
-                Spacer(minLength: .spacing2x)
+                Spacer(minLength: .spacing0x)
 
                 if let upNext {
                     upNextLabel(upNext)

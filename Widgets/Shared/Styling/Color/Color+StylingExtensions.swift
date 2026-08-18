@@ -110,7 +110,7 @@ nonisolated extension Color {
     
     // Cycle Tracking
     
-    static let defaultCapsule = Color(light: .black.opacity(.finalBossLowOpacity), dark: .white.opacity(.veryMinimalOpacity))
+    static let defaultCapsule = Color(light: .black.opacity(.finalBossLowOpacity), dark: .sheetModalCardGrey)
     
     static let cycleSymptomsOnlyTop = Color(hex: "#F2E1FF")
     static let cycleSymptomsOnlyBottom = Color(hex: "#3DAEFF")

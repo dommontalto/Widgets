@@ -33,7 +33,7 @@ struct ExerciseLiveWorkoutMenu: View {
                 sectionLabel(
                     isPaused ? "Currently paused" : "Currently playing",
                     symbol: isPaused ? "pause" : "play",
-                    color: isPaused ? .defaultOrange : .defaultBlue
+                    color: isPaused ? .defaultOrange : .defaultGreen
                 )
                     .padding(.horizontal, .spacing3x)
                     .staggered(at: 0, in: visibleRows)
@@ -227,7 +227,7 @@ struct ExerciseLiveWorkoutMenu: View {
                 if index == currentIndex {
                     Image(systemName: isPaused ? "pause" : "play")
                         .font(.standard(size: .standout4, weight: .regular))
-                        .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultBlue)
+                        .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
                         .contentTransition(.symbolEffect(.replace))
                         .padding(.trailing, .spacing1x)
                 }

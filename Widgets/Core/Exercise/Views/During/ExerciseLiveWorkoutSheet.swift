@@ -47,7 +47,6 @@ struct ExerciseLiveWorkoutSheet: View {
     // Set while the run is paused: the clock and the disc both read from it, and
     // resuming pushes `startDate` forward by however long it stood still.
     @State private var pauseDate: Date?
-    @State private var menuWidth = Constants.fallbackMenuWidth
     @FocusState private var focusedField: ExerciseSetField?
 
     init(
@@ -66,7 +65,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     var body: some View {
-        BrightSideMenu(sideBarWidth: menuWidth, isExpanded: $isSideMenuExpanded) { _ in
+        ExerciseSlideMenu(sideBarRatio: Constants.menuWidthRatio, isExpanded: $isSideMenuExpanded) {
             ExerciseLiveWorkoutMenu(
                 exercises: $exercises,
                 currentIndex: $currentIndex,
@@ -87,16 +86,8 @@ struct ExerciseLiveWorkoutSheet: View {
                 onCancel: { isConfirmingDiscard = true },
                 onEnd: confirmFinish
             )
-        } content: { _ in
+        } content: {
             page
-        }
-        // The player menu leaves only a sliver of the run showing, so its width
-        // is taken off the screen rather than the component's default 280.
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.width
-        } action: { width in
-            guard width > 0 else { return }
-            menuWidth = width * Constants.menuWidthRatio
         }
     }
 
@@ -775,7 +766,6 @@ struct ExerciseLiveWorkoutSheet: View {
         static let pillHeight: CGFloat = 30
         // Until the screen has been measured. Only the very first frame, and the
         // menu starts closed.
-        static let fallbackMenuWidth: CGFloat = 280
         // The menu is designed at 354 of a 402pt screen.
         static let menuWidthRatio: CGFloat = 354.0 / 402.0
         static let elapsedTick: TimeInterval = 1
