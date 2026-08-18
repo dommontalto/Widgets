@@ -90,7 +90,8 @@ struct ExerciseCreateSessionSheet: View {
             NavigationStack {
                 ExerciseCategorySheet(
                     category: ExerciseDemoLibrary.workoutCategory(of: target.id),
-                    showCloseButton: true
+                    showCloseButton: true,
+                    included: Set(builder.added)
                 ) { replacement in
                     builder.replace(target.id, with: replacement.name)
                     selected = replacement.name
@@ -99,7 +100,11 @@ struct ExerciseCreateSessionSheet: View {
         }
         .sheet(isPresented: $isAddingExercise) {
             NavigationStack {
-                ExerciseCategorySheet(category: .gym, showCloseButton: true) { exercise in
+                ExerciseCategorySheet(
+                    category: .gym,
+                    showCloseButton: true,
+                    included: Set(builder.added)
+                ) { exercise in
                     withAnimation(.brightSnappy) { builder.add(exercise.name) }
                     selected = exercise.name
                 }

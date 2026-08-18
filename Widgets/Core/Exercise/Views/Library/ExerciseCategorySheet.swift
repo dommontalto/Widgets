@@ -13,6 +13,10 @@ struct ExerciseCategorySheet: View {
     // Presented as a sheet there's no back button, so it needs its own close.
     var showCloseButton = false
 
+    // What the caller is already holding, so picking for a session that's open
+    // shows what's in it as ticked rather than offering to add it again.
+    var included: Set<String> = []
+
     // Set to pick one exercise and hand it back — swapping, or adding to a draft
     // that's already open. Left nil, the plus adds straight to the draft.
     var onSelect: ((ExerciseDefinition) -> Void)?
@@ -86,7 +90,7 @@ struct ExerciseCategorySheet: View {
 
     @ViewBuilder private func row(for exercise: ExerciseDefinition) -> some View {
         if let onSelect {
-            ExerciseLibraryRow(exercise: exercise) {
+            ExerciseLibraryRow(exercise: exercise, isAdded: included.contains(exercise.name)) {
                 onSelect(exercise)
                 dismiss()
             }

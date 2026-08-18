@@ -18,9 +18,7 @@ nonisolated enum ExerciseDemoLibrary {
     // Which tab of the library an exercise came from — and so whether it's logged
     // set by set or run against a cardio plan.
     static func workoutCategory(of name: String) -> ExerciseWorkoutCategory {
-        ExerciseWorkoutCategory.standard.first { category in
-            exercises(in: category).contains { $0.name == name }
-        } ?? .gym
+        exercise(named: name)?.workoutCategory ?? .gym
     }
 
     static func isCardio(_ name: String) -> Bool {
@@ -33,18 +31,13 @@ nonisolated enum ExerciseDemoLibrary {
     static func glyph(for name: String) -> ExerciseSessionGlyph {
         let category = workoutCategory(of: name)
         return ExerciseSessionGlyph(
-            id: exercise(named: name)?.symbol ?? category.symbol,
+            id: category.symbol,
             color: category.isCardio ? .defaultSkyBlue : .defaultPurple
         )
     }
 
     static func exercises(in category: ExerciseWorkoutCategory) -> [ExerciseDefinition] {
-        switch category {
-        case .gym: strength.filter { $0.equipment != .bodyweight }
-        case .bodyweight: strength.filter { $0.equipment == .bodyweight }
-        case .cardio: cardio
-        case .sports: sports
-        }
+        all.filter { $0.workoutCategory == category }
     }
 
     static let strength: [ExerciseDefinition] = [
@@ -139,25 +132,25 @@ nonisolated enum ExerciseDemoLibrary {
         run("Tempo Run", best: "4\u{2019}22\u{201D} /km", longest: "8.0 km", base: 272),
         run("Interval Run", best: "3\u{2019}58\u{201D} /km", longest: "6.0 km", base: 248),
         run("Treadmill Run", best: "5\u{2019}05\u{201D} /km", longest: "10.0 km", base: 315),
-        cardioEntry("Cycle", symbolName: "figure.outdoor.cycle", best: "28.4 km/h avg", longest: "46 km", base: 210, metricLabel: "Avg speed"),
-        cardioEntry("Row", symbolName: "figure.rower", best: "1\u{2019}52\u{201D} /500m", longest: "8,000 m", base: 118, metricLabel: "Split"),
-        cardioEntry("Swim", symbolName: "figure.pool.swim", best: "1\u{2019}58\u{201D} /100m", longest: "2,000 m", base: 124, metricLabel: "Pace"),
-        cardioEntry("Hike", symbolName: "figure.hiking", best: "620 m gain", longest: "16 km", base: 400, metricLabel: "Elevation"),
-        cardioEntry("Walk", symbolName: "figure.walk", best: "8\u{2019}40\u{201D} /km", longest: "11 km", base: 540, metricLabel: "Pace"),
+        cardioEntry("Cycle", .cardio, best: "28.4 km/h avg", longest: "46 km", base: 210, metricLabel: "Avg speed"),
+        cardioEntry("Row", .cardio, best: "1\u{2019}52\u{201D} /500m", longest: "8,000 m", base: 118, metricLabel: "Split"),
+        cardioEntry("Swim", .cardio, best: "1\u{2019}58\u{201D} /100m", longest: "2,000 m", base: 124, metricLabel: "Pace"),
+        cardioEntry("Hike", .cardio, best: "620 m gain", longest: "16 km", base: 400, metricLabel: "Elevation"),
+        cardioEntry("Walk", .cardio, best: "8\u{2019}40\u{201D} /km", longest: "11 km", base: 540, metricLabel: "Pace"),
     ]
 
     static let sports: [ExerciseDefinition] = [
-        cardioEntry("Basketball", symbolName: "figure.basketball", best: "48 min", longest: "72 min", base: 300, metricLabel: "Time"),
-        cardioEntry("Bouldering", symbolName: "figure.climbing", best: "V6 send", longest: "95 min", base: 260, metricLabel: "Grade"),
-        cardioEntry("Football", symbolName: "figure.soccer", best: "9.8 km covered", longest: "90 min", base: 340, metricLabel: "Distance"),
-        cardioEntry("Lead Climbing", symbolName: "figure.climbing", best: "6c redpoint", longest: "140 min", base: 300, metricLabel: "Grade"),
-        cardioEntry("Rock Climbing", symbolName: "figure.climbing", best: "18 routes", longest: "120 min", base: 280, metricLabel: "Routes"),
-        cardioEntry("Volleyball", symbolName: "figure.volleyball", best: "52 min", longest: "68 min", base: 280, metricLabel: "Time"),
-        cardioEntry("Squash", symbolName: "figure.racquetball", best: "42 min", longest: "65 min", base: 240, metricLabel: "Time"),
-        cardioEntry("Surfing", symbolName: "figure.surfing", best: "24 waves", longest: "110 min", base: 320, metricLabel: "Waves"),
-        cardioEntry("Tennis", symbolName: "figure.tennis", best: "3 sets", longest: "105 min", base: 290, metricLabel: "Time"),
-        cardioEntry("Touch Rugby", symbolName: "figure.rugby", best: "7.4 km covered", longest: "80 min", base: 310, metricLabel: "Distance"),
-        cardioEntry("Yoga", symbolName: "figure.yoga", best: "62 min", longest: "80 min", base: 200, metricLabel: "Time"),
+        cardioEntry("Basketball", .sports, best: "48 min", longest: "72 min", base: 300, metricLabel: "Time"),
+        cardioEntry("Bouldering", .sports, best: "V6 send", longest: "95 min", base: 260, metricLabel: "Grade"),
+        cardioEntry("Football", .sports, best: "9.8 km covered", longest: "90 min", base: 340, metricLabel: "Distance"),
+        cardioEntry("Lead Climbing", .sports, best: "6c redpoint", longest: "140 min", base: 300, metricLabel: "Grade"),
+        cardioEntry("Rock Climbing", .sports, best: "18 routes", longest: "120 min", base: 280, metricLabel: "Routes"),
+        cardioEntry("Volleyball", .sports, best: "52 min", longest: "68 min", base: 280, metricLabel: "Time"),
+        cardioEntry("Squash", .sports, best: "42 min", longest: "65 min", base: 240, metricLabel: "Time"),
+        cardioEntry("Surfing", .sports, best: "24 waves", longest: "110 min", base: 320, metricLabel: "Waves"),
+        cardioEntry("Tennis", .sports, best: "3 sets", longest: "105 min", base: 290, metricLabel: "Time"),
+        cardioEntry("Touch Rugby", .sports, best: "7.4 km covered", longest: "80 min", base: 310, metricLabel: "Distance"),
+        cardioEntry("Yoga", .sports, best: "62 min", longest: "80 min", base: 200, metricLabel: "Time"),
     ]
 
     private static func lift(
@@ -174,7 +167,7 @@ nonisolated enum ExerciseDemoLibrary {
         let oneRepMax = base * 1.12
         return ExerciseDefinition(
             name: name,
-            symbol: category.symbol,
+            workoutCategory: equipment == .bodyweight ? .bodyweight : .gym,
             equipment: equipment,
             primaryMuscle: primary,
             secondaryMuscles: secondary,
@@ -200,12 +193,12 @@ nonisolated enum ExerciseDemoLibrary {
     }
 
     private static func run(_ name: String, best: String, longest: String, base: Double) -> ExerciseDefinition {
-        cardioEntry(name, symbolName: "figure.run", best: best, longest: longest, base: base, metricLabel: "Pace")
+        cardioEntry(name, .cardio, best: best, longest: longest, base: base, metricLabel: "Pace")
     }
 
     private static func cardioEntry(
         _ name: String,
-        symbolName: String,
+        _ workoutCategory: ExerciseWorkoutCategory,
         best: String,
         longest: String,
         base: Double,
@@ -213,7 +206,7 @@ nonisolated enum ExerciseDemoLibrary {
     ) -> ExerciseDefinition {
         ExerciseDefinition(
             name: name,
-            symbol: symbolName,
+            workoutCategory: workoutCategory,
             equipment: .bodyweight,
             primaryMuscle: .fullBody,
             secondaryMuscles: [.quads, .calves],

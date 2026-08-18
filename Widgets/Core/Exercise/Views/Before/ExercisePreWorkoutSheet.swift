@@ -198,7 +198,7 @@ struct ExercisePreWorkoutSheet: View {
     @ViewBuilder
     private func thumbnail(for item: ExerciseTemplateItem) -> some View {
         if let exercise = ExerciseDemoLibrary.exercise(named: item.exerciseName) {
-            Image(systemName: exercise.category.symbol)
+            Image(systemName: exercise.symbol)
                 .font(.standard(size: .standout4, weight: .light))
                 .foregroundStyle(Color.lightTextColor)
                 .frame(width: Constants.thumbnailWidth)

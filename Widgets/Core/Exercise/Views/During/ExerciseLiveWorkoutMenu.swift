@@ -30,23 +30,6 @@ struct ExerciseLiveWorkoutMenu: View {
     var onEnd: () -> Void
 
     @State private var visibleRows: Set<Int> = []
-    @State private var lastTouch: Angle?
-    @State private var grabs = 0
-    // What the run was doing before the finger landed, so letting go can put it
-    // back — and whether the finger did anything more than land.
-    @State private var wasRunning = false
-    @State private var grabDate: Date?
-    @State private var didTurn = false
-    // Clicks the record round like a click wheel: one tick per notch turned.
-    @State private var ticks = 0
-    @State private var untickedDegrees: Double = 0
-    // The finger's own contribution to where the record sits, kept so it stays
-    // where it was let go, and so the clock jumping a second per notch doesn't
-    // whip the disc round with it.
-    @State private var spinOffset: Angle = .zero
-    @State private var fingerTurn: Angle = .zero
-    // The clock's share of the angle, frozen at the moment it was taken hold of.
-    @State private var heldAngle: Angle?
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -59,7 +42,17 @@ struct ExerciseLiveWorkoutMenu: View {
                     .padding(.horizontal, .spacing3x)
                     .staggered(at: 0, in: visibleRows)
 
-                turntable
+                ExerciseDisc(
+                    startDate: startDate,
+                    pauseDate: pauseDate,
+                    isExpanded: isExpanded,
+                    blockName: blockName,
+                    exerciseName: currentExercise.name,
+                    setCount: currentExercise.workingSetCount,
+                    onTogglePause: onTogglePause,
+                    onScrub: onScrub,
+                    onScrubEnd: onScrubEnd
+                )
                     .padding(.top, .spacing5x)
                     .frame(maxWidth: .infinity)
                     .staggered(at: 1, in: visibleRows)
@@ -113,149 +106,7 @@ struct ExerciseLiveWorkoutMenu: View {
         }
     }
 
-    // MARK: - Turntable
-
-    private var turntable: some View {
-        // Frozen while paused, and while the menu is closed there's nothing to
-        // animate — the angle is derived from the clock, so it picks straight up
-        // where it left off on the way back in.
-        TimelineView(.animation(paused: pauseDate != nil || !isExpanded)) { context in
-            Circle()
-                .fill(Color.defaultCapsule)
-                .overlay(alignment: .top) {
-                    Capsule()
-                        .fill(Color.textColor.opacity(.veryMinimalOpacity))
-                        .frame(width: Constants.discMarkWidth, height: Constants.discMarkHeight)
-                        .padding(.top, Constants.discMarkInset)
-                }
-                .overlay { discLabels }
-                .rotationEffect(discAngle(at: context.date))
-        }
-        .frame(width: Constants.discSize, height: Constants.discSize)
-        .contentShape(Circle())
-        .gesture(spin)
-        .brightHaptic(.light, trigger: grabs)
-        .brightHaptic(.soft, trigger: ticks)
-    }
-
-    private var spin: some Gesture {
-        // No minimum distance, so resting a finger on the record stops it the
-        // way it would in the world.
-        DragGesture(minimumDistance: .zero)
-            .onChanged { value in
-                let touch = touchAngle(at: value.location)
-
-                if let lastTouch {
-                    let turn = shortestTurn(from: lastTouch, to: touch)
-
-                    if abs(turn.degrees) > Constants.turnThreshold { didTurn = true }
-
-                    // The record follows the finger; the clock only moves on
-                    // the notches, a second at a time, so every click the wheel
-                    // makes is a second on the timer.
-                    fingerTurn += turn
-                    untickedDegrees += turn.degrees
-
-                    // Subtracted rather than reset, so reversing unwinds towards
-                    // the notch behind instead of clicking straight away, and a
-                    // drag past several notches counts every one of them.
-                    while abs(untickedDegrees) >= Constants.tickDegrees {
-                        let direction: Double = untickedDegrees < 0 ? -1 : 1
-                        untickedDegrees -= Constants.tickDegrees * direction
-                        ticks += 1
-                        ExerciseDiscClick.play()
-                        onScrub(Constants.tickSeconds * direction)
-                    }
-                } else {
-                    // A hand on the record stops it dead, whatever the finger
-                    // goes on to do; what happens on the way off depends on that.
-                    wasRunning = pauseDate == nil
-                    grabDate = value.time
-                    didTurn = false
-                    untickedDegrees = 0
-                    fingerTurn = .zero
-                    heldAngle = spinAngle(at: .now)
-                    if wasRunning { onTogglePause() }
-
-                    grabs += 1
-                }
-
-                self.lastTouch = touch
-            }
-            .onEnded { value in
-                // A tap is the transport's play/pause, so it comes off the disc
-                // in the opposite state; anything longer is a hand held against
-                // a record, which leaves it however it was found.
-                let held = didTurn || value.time.timeIntervalSince(grabDate ?? value.time) > Constants.tapWindow
-                if held == wasRunning { onTogglePause() }
-
-                // Hands the held angle back to the offset, so letting go leaves
-                // the record exactly where the finger left it.
-                if let heldAngle {
-                    spinOffset += heldAngle + fingerTurn - spinAngle(at: .now)
-                }
-
-                lastTouch = nil
-                grabDate = nil
-                heldAngle = nil
-                fingerTurn = .zero
-                onScrubEnd()
-            }
-    }
-
-    private func discAngle(at date: Date) -> Angle {
-        (heldAngle ?? spinAngle(at: date)) + spinOffset + fingerTurn
-    }
-
-    private func spinAngle(at date: Date) -> Angle {
-        let seconds = (pauseDate ?? date).timeIntervalSince(startDate)
-        return .degrees(seconds / Constants.discSpinSeconds * 360)
-    }
-
-    private func touchAngle(at point: CGPoint) -> Angle {
-        let centre = Constants.discSize / 2
-        return .radians(atan2(point.y - centre, point.x - centre))
-    }
-
-    // Straight across the ±180° seam, so a drag past it doesn't whip the record
-    // back around the long way.
-    private func shortestTurn(from: Angle, to: Angle) -> Angle {
-        var degrees = (to - from).degrees.truncatingRemainder(dividingBy: 360)
-        if degrees > 180 {
-            degrees -= 360
-        } else if degrees < -180 {
-            degrees += 360
-        }
-        return .degrees(degrees)
-    }
-
-    private var discLabels: some View {
-        ZStack {
-            BrightText(blockName.uppercased(), size: .body1)
-                .padding(.horizontal, .spacing1x)
-                .frame(height: Constants.discChipHeight)
-                .overlay {
-                    RoundedRectangle(cornerRadius: .cornerRadius8, style: .continuous)
-                        .stroke(
-                            Color.textColor.opacity(.veryLowOpacity),
-                            lineWidth: Constants.discChipStroke
-                        )
-                }
-                .offset(x: -Constants.discLabelOffset)
-
-            BrightText("\(currentExercise.workingSetCount) sets", size: .body2)
-                .offset(x: Constants.discLabelOffset)
-
-            Circle()
-                .fill(Color.defaultCards)
-                .frame(width: Constants.discHoleSize, height: Constants.discHoleSize)
-
-            BrightText(currentExercise.name, size: .body2)
-                .lineLimit(1)
-                .offset(y: Constants.discNameOffset)
-        }
-        .frame(width: Constants.discSize, height: Constants.discSize)
-    }
+    // MARK: - Transport
 
     private var transportControls: some View {
         HStack(spacing: .spacing2x) {
@@ -368,7 +219,7 @@ struct ExerciseLiveWorkoutMenu: View {
     @ViewBuilder
     private func thumbnail(for exercise: ExerciseActiveExercise) -> some View {
         if let definition = ExerciseDemoLibrary.exercise(named: exercise.name) {
-            Image(systemName: definition.category.symbol)
+            Image(systemName: definition.symbol)
                 .font(.standard(size: .standout4, weight: .light))
                 .foregroundStyle(Color.lightTextColor)
                 .frame(width: ExerciseLibraryRow.Constants.thumbnailWidth)
@@ -428,26 +279,7 @@ struct ExerciseLiveWorkoutMenu: View {
         static let rowStaggerDelay: TimeInterval = 0.03
         static let rowStartDelay: TimeInterval = 0.02
         static let rowExitDuration: TimeInterval = 0.15
-        // Longer than this, or turned at all, and the touch counts as a hold.
-        static let tapWindow: TimeInterval = 0.25
-        static let turnThreshold: Double = 1
-        // The notch the record clicks over, in degrees — 24 to the turn.
-        static let tickDegrees: Double = 15
-        // What one notch is worth on the run's clock.
-        static let tickSeconds: TimeInterval = 1
         static let transportSize: CGFloat = 44
-        static let discSize: CGFloat = 240
-        static let discHoleSize: CGFloat = 35
-        static let discMarkWidth: CGFloat = 4
-        static let discMarkHeight: CGFloat = 76
-        static let discMarkInset: CGFloat = 15
-        // Halfway between the hole's edge and the rim.
-        static let discLabelOffset = (discSize + discHoleSize) / 4
-        static let discNameOffset: CGFloat = 55
-        static let discChipHeight: CGFloat = 27
-        static let discChipStroke: CGFloat = 0.5
-        // One turn of the record, in seconds.
-        static let discSpinSeconds: TimeInterval = 6
         static let playlistRowHeight = ExerciseLibraryRow.Constants.minHeight
     }
 }

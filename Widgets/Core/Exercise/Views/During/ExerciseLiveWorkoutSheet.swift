@@ -1102,6 +1102,8 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
     var name: String
     var notes = ""
     var sets: [ExerciseActiveSet]
+    // Exercises sharing an ID are supersetted, and always sit together in order.
+    var supersetID: UUID?
 
     var workingSetCount: Int {
         sets.filter(\.kind.countsAsSet).count

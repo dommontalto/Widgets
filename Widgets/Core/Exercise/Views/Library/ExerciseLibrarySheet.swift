@@ -116,7 +116,7 @@ struct ExerciseLibrarySheet: View {
             }
         } label: {
             HStack(spacing: .spacing2x) {
-                Image(systemName: exercise.category.symbol)
+                Image(systemName: exercise.symbol)
                     .font(.standard(size: .subheading2, weight: .light))
                     .foregroundStyle(Color.lightTextColor)
                     .frame(width: Constants.iconWidth)

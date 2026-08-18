@@ -53,16 +53,6 @@ nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
 
     var displayName: String { rawValue.capitalized }
 
-    var symbol: String {
-        switch self {
-        case .push: "figure.cross.training"
-        case .pull: "figure.strengthtraining.traditional"
-        case .legs: "figure.step.training"
-        case .core: "figure.core.training"
-        case .cardio: "figure.run"
-        }
-    }
-
     var accentColor: Color {
         self == .cardio ? .defaultSkyBlue : .defaultPurple
     }
@@ -124,9 +114,7 @@ nonisolated struct ExerciseHistoryEntry: Identifiable {
 
 nonisolated struct ExerciseDefinition: Identifiable {
     let name: String
-    // What the exercise wears wherever it's shown as an icon — its library
-    // category for a lift, its own sport or discipline for everything else.
-    let symbol: String
+    let workoutCategory: ExerciseWorkoutCategory
     let equipment: ExerciseEquipment
     let primaryMuscle: ExerciseMuscle
     let secondaryMuscles: [ExerciseMuscle]
@@ -138,6 +126,9 @@ nonisolated struct ExerciseDefinition: Identifiable {
     let progressionMetric: String
 
     var id: String { name }
+
+    // The only icons an exercise ever wears are its library tab's four.
+    var symbol: String { workoutCategory.symbol }
 
     var equipmentLabel: String { equipment.displayName }
 }

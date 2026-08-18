@@ -50,7 +50,7 @@ struct ExerciseRecordsWidget: View {
         .sheet(item: openedExerciseBinding) { exercise in
             BrightPageSheetView(title: exercise.name) {
                 BrightPlaceholderView(
-                    systemImage: exercise.category.symbol,
+                    systemImage: exercise.symbol,
                     title: exercise.name,
                     subtitle: exercise.equipmentLabel
                 )
