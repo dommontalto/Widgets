@@ -74,9 +74,11 @@ struct ExerciseWorkoutFlow: View {
             ExerciseLiveCardioSheet(onStop: close, onClose: close)
 
         case let .complete(workout):
-            ExerciseWorkoutCompleteSheet(
-                workout: workout,
-                backgroundColor: .defaultBackground,
+            ExerciseCompleteSheet(
+                session: ExerciseDemoComplete.session(
+                    workout.type == .cardio ? .cardio : .strength,
+                    titled: workout.name
+                ),
                 chrome: .pushed,
                 onClose: close
             )

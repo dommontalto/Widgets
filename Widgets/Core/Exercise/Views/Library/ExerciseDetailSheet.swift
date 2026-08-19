@@ -244,23 +244,16 @@ struct ExerciseDetailSheet: View {
     // MARK: - Data
 
     private var dataPage: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(spacing: .spacing105x) {
-                Image(systemName: "backward.end.alt")
-                    .font(.system(size: Constants.statIconSize, weight: .medium))
-                    .foregroundStyle(Color.textColor)
-                BrightText("Workout history", size: .body1, weight: .regular)
+        VStack(alignment: .leading, spacing: .spacing4x) {
+            ForEach(ExerciseDemoComplete.exerciseHistory) { progression in
+                ExerciseCompleteProgressionWidget(progression: progression)
             }
-            .padding(.leading, .spacing2x)
-
-            ExerciseSetHistoryList(groups: ExerciseDemoData.detailHistory, cardColor: cardColor)
         }
         .padding(.spacing3x)
     }
 
     private class Constants {
         static let chartHeight: CGFloat = 130
-        static let statIconSize: CGFloat = 18
         static let progressionArrowSize: CGFloat = 28
     }
 }

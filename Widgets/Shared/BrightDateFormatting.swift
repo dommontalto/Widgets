@@ -13,7 +13,23 @@ extension String {
     }
 }
 
+extension Locale {
+    static let bright = Locale(identifier: "en_NZ")
+}
+
+extension FormatStyle where Self == Date.FormatStyle {
+    static var brightTime: Self { Date.FormatStyle(locale: .bright).hour(.defaultDigits(amPM: .abbreviated)).minute() }
+}
+
 extension Date {
+    var isoString: String {
+        ISO8601DateFormatter().string(from: self)
+    }
+
+    static func brightTimeRange(from: Date, to: Date) -> String {
+        "\(from.formatted(.brightTime)) – \(max(from, to).formatted(.brightTime))"
+    }
+
     func stringFromDate(strFormatter: String) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = strFormatter

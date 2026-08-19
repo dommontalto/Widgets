@@ -1,0 +1,283 @@
+//
+//  ExerciseCompleteSheet.swift
+//  Widgets
+//
+//  Created by Dom Montalto on 19/8/2026.
+//
+
+import SwiftUI
+
+enum ExerciseCompleteTab: Int, CaseIterable {
+    case summary
+    case heart
+    case performance
+
+    var title: String {
+        switch self {
+        case .summary: "Summary"
+        case .heart: "Heart"
+        case .performance: "Performance"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .summary: "ellipsis.calendar"
+        case .heart: "heart.fill"
+        case .performance: "chart.xyaxis.line"
+        }
+    }
+}
+
+struct ExerciseCompleteSheet: View {
+    let session: ExerciseCompleteSession
+
+    var chrome: ExercisePageChrome = .sheet
+
+    // Ends the whole run. Only the flow can do that from a pushed leg, where
+    // `dismiss` would pop back instead.
+    var onClose: (() -> Void)?
+
+    @State private var selectedIndex = ExerciseCompleteTab.summary.rawValue
+    @State private var selectedGraphSecond: Double?
+    @State private var showingMap = false
+    @State private var openedExerciseName: String?
+
+    private var workout: HeartWorkoutSummaryResponseData { session.workout }
+
+    var body: some View {
+        page
+    }
+
+    // MARK: - Chrome
+
+    @ViewBuilder
+    private func container<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        switch chrome {
+        case .sheet:
+            BrightPageSheetView(horizontalPadding: .spacing0x) {
+                content()
+            }
+        case .pushed:
+            BrightPageView(
+                horizontalPadding: .spacing0x,
+                toolbar: {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            onClose?()
+                        } label: {
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
+                    }
+                },
+                content: { content() }
+            )
+        }
+    }
+
+    private var page: some View {
+        container {
+            BrightSwipePageView(
+                pages: ExerciseCompleteTab.allCases.map {
+                    SwipePage(title: $0.title, systemImage: $0.systemImage)
+                },
+                fakeLargeTitle: workout.title ?? "",
+                titleSize: .standout4,
+                titleWeight: .regular,
+                titleSubtitle: AnyView(subtitle),
+                pillFollowMaxShift: Constants.pillFollowMaxShift,
+                selectedIndex: $selectedIndex
+            ) { index in
+                tabContent(for: ExerciseCompleteTab(rawValue: index) ?? .summary)
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.top, .spacing2x)
+                    .padding(.bottom, .spacing3x)
+            }
+            // Declared on the content rather than on the container: the sheet
+            // makes its own NavigationStack, and a destination hung outside it
+            // never fires.
+            .navigationDestination(isPresented: $showingMap) {
+                ExerciseCompleteMapWidget(
+                    routeLatitudes: workout.routeLatitudes,
+                    routeLongitudes: workout.routeLongitudes,
+                    routeZoneIndexes: workout.routeZoneIndexes,
+                    isFullScreen: true
+                )
+                // The bar keeps its stock back button but loses its background,
+                // so the map still runs to the top of the screen.
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .navigationBarTitleDisplayMode(.inline)
+            }
+            .navigationDestination(item: $openedExerciseName) { name in
+                if let exercise = ExerciseDemoLibrary.exercise(named: name) {
+                    // Pushed inside the sheet, so it keeps the sheet's card
+                    // colour rather than a screen's.
+                    ExerciseDetailSheet(exercise: exercise)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .background(Color.defaultSheetBackground.ignoresSafeArea())
+                }
+            }
+        }
+    }
+
+    private var subtitle: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            if let startTime = workout.startTime, let endTime = workout.endTime {
+                BrightText(
+                    Date.brightTimeRange(
+                        from: startTime.isoStringToDate(),
+                        to: endTime.isoStringToDate()
+                    ),
+                    size: .body1
+                )
+            }
+
+            if let source = workout.source {
+                HStack(spacing: .spacing1x) {
+                    Image(systemName: sourceIcon(for: source))
+                        .font(.system(size: Constants.sourceIconSize))
+                        .foregroundStyle(Color.textColor)
+                        .frame(width: Constants.sourceIconBox, height: Constants.sourceIconBox)
+
+                    BrightText(source, size: .body1)
+                }
+            }
+        }
+    }
+
+    private func sourceIcon(for source: String) -> String {
+        if source.localizedCaseInsensitiveContains("iPhone") { return "iphone" }
+        if source.localizedCaseInsensitiveContains("Garmin") { return "figure.run.circle" }
+        if source.localizedCaseInsensitiveContains("manually") { return "hand.tap" }
+        return "applewatch"
+    }
+
+    // MARK: - Tabs
+
+    @ViewBuilder
+    private func tabContent(for tab: ExerciseCompleteTab) -> some View {
+        switch tab {
+        case .summary: summaryTab
+        case .heart: heartTab
+        case .performance: performanceTab
+        }
+    }
+
+    private var summaryTab: some View {
+        VStack(alignment: .leading, spacing: .spacing4x) {
+            if workout.routeLatitudes != nil, workout.routeLongitudes != nil {
+                ExerciseCompleteMapWidget(
+                    routeLatitudes: workout.routeLatitudes,
+                    routeLongitudes: workout.routeLongitudes,
+                    routeZoneIndexes: workout.routeZoneIndexes,
+                    onOpen: { showingMap = true }
+                )
+            }
+
+            if let intervals = session.intervals {
+                ExerciseCompleteIntervalStripView(strip: intervals)
+            }
+
+            ExerciseCompleteMetricGrid(metrics: session.metrics)
+
+            if let strain = session.strain {
+                ExerciseWidgetSection(
+                    icon: .symbol("arrow.left.and.right"),
+                    title: "Session Strain"
+                ) {
+                    ExerciseCompleteStrainWidget(strain: strain)
+                }
+            }
+
+            if let exertion = session.exertion {
+                ExerciseWidgetSection(icon: .symbol("scope"), title: "Exertion breakdown") {
+                    ExerciseCompleteExertionWidget(exertion: exertion) { name in
+                        openedExerciseName = name
+                    }
+                }
+            }
+
+            if !session.records.isEmpty {
+                ExerciseWidgetSection(icon: .symbol("trophy.fill"), title: "Personal Records") {
+                    ExercisePersonalRecordsWidget(records: session.records) { name in
+                        openedExerciseName = name
+                    }
+                }
+            }
+        }
+    }
+
+    private var heartTab: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            ExerciseCompleteHeartRateWidget(
+                hrAvg: workout.hrAvg ?? 0,
+                hrPeak: workout.hrPeak,
+                startDate: workout.startTime ?? "",
+                endDate: workout.endTime ?? "",
+                data: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
+            )
+
+            ExerciseCompletePostWorkoutWidget(
+                data: workout.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
+            )
+
+            if session.kind.showsZoneBreakdown {
+                ExerciseCompleteBreakdownWidget(
+                    data: workout.breakdown ?? HeartWorkoutSummaryBreakdownData()
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var performanceTab: some View {
+        if session.kind == .strength {
+            VStack(alignment: .leading, spacing: .spacing4x) {
+                ForEach(session.progressions) { progression in
+                    ExerciseCompleteProgressionWidget(progression: progression) { name in
+                        openedExerciseName = name
+                    }
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: .spacing4x) {
+                ExerciseCompletePerformanceGraphWidget(
+                    hrAvg: workout.hrAvg ?? 0,
+                    duration: workout.duration ?? TimeDuration(),
+                    avgPace: workout.avgPaceSecondsPerKm ?? 0,
+                    altitudeGain: workout.altitudeGain ?? Amount(unit: "M", value: 0),
+                    data: ExerciseCompleteCombinedGraphData(
+                        heartData: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
+                        altitudeData: workout.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
+                        paceData: workout.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
+                        cadenceData: workout.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+                    ),
+                    selectedSecond: $selectedGraphSecond
+                )
+
+                if let splits = workout.splits, !splits.isEmpty {
+                    ExerciseCompleteSplitWidget(data: splits)
+                }
+
+                if let intervals = workout.intervals, !intervals.isEmpty {
+                    ExerciseCompleteIntervalWidget(data: intervals)
+                }
+            }
+        }
+    }
+
+    private enum Constants {
+        static let pillFollowMaxShift: CGFloat = .spacing12x + .spacing4x
+        static let sourceIconSize: CGFloat = 20
+        static let sourceIconBox: CGFloat = 24
+    }
+}
+
+#Preview("Strength") {
+    ExerciseCompleteSheet(session: ExerciseDemoComplete.strength)
+}
+
+#Preview("Cardio") {
+    ExerciseCompleteSheet(session: ExerciseDemoComplete.cardio)
+}

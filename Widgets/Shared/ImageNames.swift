@@ -47,6 +47,8 @@ nonisolated class ImageNames {
 
     static let exerciseWeeklyPlanV5 = "Exercise/exercise_weekly_plan_v5"
     static let exerciseBodymapV5    = "Exercise/exercise_bodymap_v5"
+    static let exerciseCalendarV5     = "Exercise/exercise_calendar_v5"
+    static let exerciseTrainingLoadV5 = "Exercise/exercise_training_load_v5"
     static let exerciseRecoveryV5   = "Exercise/exercise_recovery_v5"
     static let exerciseStressV5     = "Exercise/exercise_stress_v5"
     static let exerciseStrainV5     = "Exercise/exercise_strain_v5"

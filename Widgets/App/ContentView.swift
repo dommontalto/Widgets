@@ -45,13 +45,23 @@ struct ContentView: View {
                     .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseUpcomingWidget")
-                    ExerciseUpcomingWidget { workout in
-                        start(workout)
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Upcoming") {
+                        ExerciseUpcomingWidget { workout in
+                            start(workout)
+                        }
                     }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExercisePersonalRecordsWidget")
-                    ExercisePersonalRecordsWidget()
+                    ExerciseWidgetSection(
+                        icon: .symbol("star.square.on.square.fill"),
+                        title: "Personal Records"
+                    ) {
+                        ExercisePersonalRecordsWidget(
+                            records: ExerciseDemoComplete.cardio.records,
+                            cardColor: .defaultCards
+                        )
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseScoresWidget")
@@ -59,27 +69,39 @@ struct ContentView: View {
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseConsistencyWidget")
-                    ExerciseConsistencyWidget()
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Consistency") {
+                        ExerciseConsistencyWidget()
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseTrainingLoadWidget")
-                    ExerciseTrainingLoadWidget()
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
+                        ExerciseTrainingLoadWidget()
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseHistoryWidget")
-                    ExerciseHistoryWidget()
+                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Workout history") {
+                        ExerciseHistoryWidget()
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseWeeklyPlanWidget")
-                    ExerciseWeeklyPlanWidget()
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Weekly plan") {
+                        ExerciseWeeklyPlanWidget()
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseProgramPhaseWidget")
-                    ExerciseProgramPhaseWidget()
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
+                        ExerciseProgramPhaseWidget()
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseBodymapWidget")
-                    ExerciseBodymapWidget()
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Bodymap") {
+                        ExerciseBodymapWidget()
+                    }
                         .padding(.bottom, .spacing3x)
                 }
             }

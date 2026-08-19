@@ -2,113 +2,109 @@
 //  ExercisePersonalRecordsWidget.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 24/7/2026.
+//  Created by Dom Montalto on 19/8/2026.
 //
 
 import SwiftUI
 
 struct ExercisePersonalRecordsWidget: View {
-    private struct BadgeStyle {
-        let imageName: String
-        let icon: String
-        let iconColor: Color
-        let iconSize: FontSizes
-    }
+    let records: [ExerciseCompleteRecord]
 
-    private struct CardioRecord: Identifiable {
-        let id = UUID()
-        let badge: BadgeStyle
-        let label: String
-        let date: String
-        let value: String
-    }
+    // The sheet's cards sit on the sheet background; on Home they take the
+    // screen's own card colour.
+    var cardColor: Color = .defaultSheetModalCards
 
-    private let records = [
-        CardioRecord(
-            badge: BadgeStyle(
-                imageName: ImageNames.exerciseRecordHexagonV5,
-                icon: "hare.fill",
-                iconColor: .defaultWhite,
-                iconSize: .subheading
-            ),
-            label: "Fastest 1K",
-            date: "2 Jun, 2026",
-            value: "4\u{2019}22"
-        ),
-        CardioRecord(
-            badge: BadgeStyle(
-                imageName: ImageNames.exerciseRecordHexagonGoldV5,
-                icon: "flag.and.flag.filled.crossed",
-                iconColor: .defaultBlack,
-                iconSize: .heading
-            ),
-            label: "Finisher",
-            date: "2 Jun, 2026",
-            value: "40.2 KM"
-        ),
-    ]
+    // Set to let a record open the exercise it was set on.
+    var onSelectExercise: ((String) -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText("Cardio records", size: .body1)
-                BrightText("This week", size: .body2, color: .lightTextColor)
-            }
-
-            VStack(spacing: .spacing2x) {
-                ForEach(records) { record in
-                    recordRow(record)
+        VStack(spacing: .spacing0x) {
+            ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
+                if index != 0 {
+                    BrightDivider()
                 }
+
+                row(record)
             }
         }
-        .padding(.spacing3x)
+        .padding(.horizontal, .spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
+        .modifier(CardModifier(color: cardColor, cornerRadius: .cornerRadius24))
     }
 
-    private func recordRow(_ record: CardioRecord) -> some View {
-        HStack(spacing: .spacing2x) {
-            badge(record.badge)
+    @ViewBuilder
+    private func row(_ record: ExerciseCompleteRecord) -> some View {
+        if let onSelectExercise, let exercise = record.exercise {
+            Button { onSelectExercise(exercise) } label: { rowContent(record) }
+                .buttonStyle(.plain)
+        } else {
+            rowContent(record)
+        }
+    }
 
-            VStack(alignment: .leading, spacing: .spacing1x) {
-                BrightText(record.label, size: .body1, weight: .regular)
-                BrightText(record.date, size: .body2, color: .lightTextColor)
-                    .monospacedDigit()
+    private func rowContent(_ record: ExerciseCompleteRecord) -> some View {
+        HStack(spacing: .spacing2x) {
+            badge(record)
+
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                BrightText(record.title, size: .body1, color: .semiLightTextColor)
+
+                if !record.detail.isEmpty {
+                    BrightText(record.detail, size: .body1, color: .lightTextColor)
+                }
             }
 
             Spacer(minLength: .spacing2x)
 
-            BrightText(record.value, size: .standout3, weight: .regular)
+            BrightText(record.value, size: .standout4, weight: .regular)
                 .monospacedDigit()
         }
-        .padding(.horizontal, .spacing2x)
-        .frame(height: Constants.rowHeight)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(cornerRadius: .cornerRadius20))
+        .padding(.vertical, .spacing2x)
+        .contentShape(Rectangle())
     }
 
-    private func badge(_ style: BadgeStyle) -> some View {
+    // The glyph rides the badge in overlay so it picks up the hexagon's own
+    // shading rather than sitting flat on top of it.
+    private func badge(_ record: ExerciseCompleteRecord) -> some View {
         ZStack {
-            Image(style.imageName)
+            Image(record.badge)
                 .resizable()
                 .scaledToFit()
 
-            Image(systemName: style.icon)
-                .font(.standard(size: style.iconSize, weight: .regular))
-                .foregroundStyle(style.iconColor)
+            switch record.glyph {
+            case let .symbol(name):
+                Image(systemName: name)
+                    .font(.standard(size: .subheading2, weight: .regular))
+                    .foregroundStyle(Color.defaultWhite)
+                    .blendMode(.overlay)
+            case let .captioned(caption, symbol):
+                VStack(spacing: .spacing0x) {
+                    BrightText(caption, size: .body1, color: .defaultWhite, weight: .regular)
+                    Image(systemName: symbol)
+                        .font(.standard(size: .body6, weight: .regular))
+                        .foregroundStyle(Color.defaultWhite)
+                }
                 .blendMode(.overlay)
+            }
         }
-        .frame(width: Constants.badgeSize, height: Constants.badgeHeight)
+        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
     }
 
-    private class Constants {
-        static let rowHeight: CGFloat = 74
-        static let badgeSize: CGFloat = 50
-        static let badgeHeight: CGFloat = 55
+    private enum Constants {
+        static let badgeSize: CGFloat = 36
     }
 }
 
 #Preview {
-    ExercisePersonalRecordsWidget()
-        .padding(.spacing4x)
+    VStack(spacing: .spacing4x) {
+        ExerciseWidgetSection(icon: .symbol("trophy.fill"), title: "Personal Records") {
+            ExercisePersonalRecordsWidget(records: ExerciseDemoComplete.strength.records)
+        }
+        ExerciseWidgetSection(icon: .symbol("trophy.fill"), title: "Personal Records") {
+            ExercisePersonalRecordsWidget(records: ExerciseDemoComplete.cardio.records)
+        }
+    }
+    .padding(.spacing3x)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .background(Color.defaultSheetBackground.ignoresSafeArea())
 }

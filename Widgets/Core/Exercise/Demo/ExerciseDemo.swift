@@ -317,41 +317,6 @@ enum ExerciseDemoData {
         description: nil
     )
 
-    static let detailHistory: [ExerciseSetGroup] = [
-        ExerciseSetGroup(title: "Mon, 18 Jul, 2026", lines: [
-            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG", rpe: 8),
-            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "60 KG", prLabel: "Weight PR"),
-            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG", failedRep: 4, prLabel: "Rep PR"),
-        ]),
-        ExerciseSetGroup(title: "Thu, 14 Jul, 2026", lines: [
-            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "60 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "4 reps", weight: "80 KG"),
-            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "60 KG"),
-            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "80 KG"),
-        ]),
-        ExerciseSetGroup(title: "Mon, 11 Jul, 2026", lines: [
-            ExerciseSetLine(kind: .warmUp, reps: "8 reps", weight: "50 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "6 reps", weight: "75 KG", prLabel: "Rep PR"),
-            ExerciseSetLine(kind: .working(2), reps: "6 reps", weight: "75 KG"),
-            ExerciseSetLine(kind: .working(3), reps: "5 reps", weight: "75 KG"),
-        ]),
-        ExerciseSetGroup(title: "Thu, 7 Jul, 2026", lines: [
-            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "50 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "5 reps", weight: "75 KG"),
-            ExerciseSetLine(kind: .working(2), reps: "5 reps", weight: "72.5 KG"),
-            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "72.5 KG"),
-        ]),
-        ExerciseSetGroup(title: "Mon, 4 Jul, 2026", lines: [
-            ExerciseSetLine(kind: .warmUp, reps: "6 reps", weight: "50 KG"),
-            ExerciseSetLine(kind: .working(1), reps: "5 reps", weight: "70 KG"),
-            ExerciseSetLine(kind: .working(2), reps: "4 reps", weight: "70 KG"),
-            ExerciseSetLine(kind: .working(3), reps: "4 reps", weight: "70 KG"),
-        ]),
-    ]
-
-    // MARK: - Live workout
-
     static let activeExercises: [ExerciseActiveExercise] = [
         ExerciseActiveExercise(name: "Bench Press (Barbell)", sets: [
             ExerciseActiveSet(weight: "40", reps: "12", previous: "40 \u{00D7} 12", kind: .warmUp, isDone: true),

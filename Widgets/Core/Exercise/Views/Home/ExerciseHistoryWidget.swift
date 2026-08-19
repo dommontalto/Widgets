@@ -34,20 +34,26 @@ struct ExerciseHistoryWidget: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
         .sheet(item: $selectedWorkout) { workout in
-            ExerciseWorkoutCompleteSheet(workout: workout)
+            ExerciseCompleteSheet(
+                session: ExerciseDemoComplete.session(
+                    workout.type == .cardio ? .cardio : .strength,
+                    titled: workout.name
+                )
+            )
         }
     }
 
     private func workoutRow(_ workout: ExerciseWorkout) -> some View {
         let color = color(for: workout.type)
         return Button {
-            guard workout.type != .cardio else { return }
             selectedWorkout = workout
         } label: {
             HStack(spacing: .spacing105x) {
-                Image(systemName: workout.type == .cardio ? "figure.run" : "figure.strengthtraining.traditional")
-                    .font(.standard(size: .subheading2, weight: .light))
-                    .foregroundStyle(color)
+                // The same square the consistency heatmap draws, so a log entry
+                // and its cell on the grid read as the same thing.
+                RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+                    .fill(color)
+                    .frame(width: Constants.swatchSize, height: Constants.swatchSize)
                     .frame(width: Constants.iconWidth)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
@@ -77,6 +83,7 @@ struct ExerciseHistoryWidget: View {
 
     private enum Constants {
         static let iconWidth: CGFloat = 28
+        static let swatchSize: CGFloat = 16
     }
 }
 
