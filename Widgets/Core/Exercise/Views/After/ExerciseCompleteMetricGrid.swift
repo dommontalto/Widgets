@@ -45,6 +45,7 @@ struct ExerciseCompleteMetricGrid: View {
 
             BrightText(metric.value, size: .standout1, weight: .regular)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

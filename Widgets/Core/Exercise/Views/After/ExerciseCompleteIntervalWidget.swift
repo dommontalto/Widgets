@@ -93,20 +93,18 @@ struct ExerciseCompleteIntervalWidget: View {
 
     private var columnHeaders: some View {
         HStack(spacing: .spacing0x) {
-            columnHeader("Interval")
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Color.clear
+                .frame(width: Constants.dotColumnWidth, height: 0)
 
+            columnHeader("Interval")
             columnHeader("Time")
-                .frame(width: Constants.metricColumnWidth, alignment: .trailing)
 
             if showsDistance {
                 columnHeader("Distance")
-                    .frame(width: Constants.metricColumnWidth, alignment: .trailing)
             }
 
             if showsHeartRate {
                 columnHeader("Avg HR")
-                    .frame(width: Constants.metricColumnWidth, alignment: .trailing)
             }
         }
     }
@@ -114,41 +112,39 @@ struct ExerciseCompleteIntervalWidget: View {
     private func columnHeader(_ title: String) -> some View {
         BrightText(title, size: .body1, color: .textColor.opacity(.veryLowOpacity))
             .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func intervalRow(_ row: IntervalRow) -> some View {
         HStack(spacing: .spacing0x) {
-            HStack(spacing: .spacing105x) {
-                Circle()
-                    .fill(color(for: row.kind))
-                    .frame(width: Constants.dotSize, height: Constants.dotSize)
+            Circle()
+                .fill(color(for: row.kind))
+                .frame(width: Constants.dotSize, height: Constants.dotSize)
+                .frame(width: Constants.dotColumnWidth, alignment: .leading)
 
-                BrightText(row.name, size: .body1, color: .semiLightTextColor)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            metric(row.time)
+            value(row.name)
+            value(row.time)
 
             if showsDistance {
-                metric(row.distance)
+                value(row.distance)
             }
 
             if showsHeartRate {
-                metric(row.heartRate)
+                value(row.heartRate)
             }
         }
         .contentShape(Rectangle())
     }
 
-    private func metric(_ value: String?) -> some View {
+    private func value(_ text: String?) -> some View {
         BrightText(
-            value ?? "-",
+            text ?? "-",
             size: .body1,
-            color: value == nil ? .textColor.opacity(.veryLowOpacity) : .semiLightTextColor
+            color: text == nil ? .textColor.opacity(.veryLowOpacity) : .textColor
         )
+        .monospacedDigit()
         .lineLimit(1)
-        .frame(width: Constants.metricColumnWidth, alignment: .trailing)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func displayName(
@@ -217,7 +213,7 @@ struct ExerciseCompleteIntervalWidget: View {
 
     private enum Constants {
         static let collapsedRowCount = 5
-        static let metricColumnWidth: CGFloat = .spacing11x
+        static let dotColumnWidth: CGFloat = 22
         static let dotSize: CGFloat = .spacing1x
     }
 }

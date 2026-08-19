@@ -75,10 +75,7 @@ struct ExerciseWorkoutFlow: View {
 
         case let .complete(workout):
             ExerciseCompleteSheet(
-                session: ExerciseDemoComplete.session(
-                    workout.type == .cardio ? .cardio : .strength,
-                    titled: workout.name
-                ),
+                sessions: ExerciseDemoComplete.sessions(for: workout),
                 chrome: .pushed,
                 onClose: close
             )

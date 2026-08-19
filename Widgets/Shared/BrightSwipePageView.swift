@@ -247,15 +247,19 @@ struct BrightSwipePageView<Content: View>: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: .spacing2x) {
                         if !fakeLargeTitle.isEmpty {
-                            VStack(alignment: .leading, spacing: .spacing1x) {
-                                HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
+                            HStack(alignment: .center, spacing: .spacing1x) {
+                                VStack(alignment: .leading, spacing: .spacing1x) {
                                     BrightText(fakeLargeTitle, size: titleSize, weight: titleWeight)
-                                    if let titleAccessory {
-                                        titleAccessory
+                                    if let titleSubtitle {
+                                        titleSubtitle
                                     }
                                 }
-                                if let titleSubtitle {
-                                    titleSubtitle
+
+                                // Beside the title and its subtitle rather than
+                                // inside the title's line, so it rides the middle
+                                // of the block instead of pushing it down.
+                                if let titleAccessory {
+                                    titleAccessory
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -362,15 +366,16 @@ struct BrightSwipePageView<Content: View>: View {
             // doesn't slide on page switches) yet tracks the active page's
             // vertical scroll one-to-one, so it scrolls fully out of sight.
             if !fakeLargeTitle.isEmpty {
-                VStack(alignment: .leading, spacing: .spacing1x) {
-                    HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
+                HStack(alignment: .center, spacing: .spacing1x) {
+                    VStack(alignment: .leading, spacing: .spacing1x) {
                         BrightText(fakeLargeTitle, size: titleSize, weight: titleWeight)
-                        if let titleAccessory {
-                            titleAccessory
+                        if let titleSubtitle {
+                            titleSubtitle
                         }
                     }
-                    if let titleSubtitle {
-                        titleSubtitle
+
+                    if let titleAccessory {
+                        titleAccessory
                     }
                 }
                 .padding(.leading, .spacing3x)

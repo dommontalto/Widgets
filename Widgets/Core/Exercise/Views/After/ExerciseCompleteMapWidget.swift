@@ -15,6 +15,21 @@ struct ExerciseCompleteMapWidget: View {
     let routeLongitudes: [Double]?
     let routeZoneIndexes: [Int]?
 
+    // Only the page draws the breakdown, so the card takes none of this.
+    var duration: TimeDuration?
+    var hrAvg: Double?
+    var altitudeGainMetres: Double?
+    var avgPaceSecondsPerKm: Int?
+    var heartGraph: HeartWorkoutSummaryHeartGraphData?
+    var altitudeGraph: HeartWorkoutSummaryAltitudeGraphData?
+    var paceGraph: HeartWorkoutSummaryPaceGraphData?
+    var cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
+
+    // The stretch of the route to pick out, as fractions of its length. Nil
+    // lights the whole thing in its zone colours.
+    var highlight: ClosedRange<Double>?
+    var highlightTint: Color = .defaultSkyBlue
+
     // The pushed page fills the screen and takes gestures.
     var isFullScreen = false
 
@@ -22,9 +37,15 @@ struct ExerciseCompleteMapWidget: View {
     var onOpen: (() -> Void)?
 
     @State private var cameraPosition: MapCameraPosition
+    @State private var selectedSecond: Double? = 0
+    @State private var selectedMetric: ExerciseCompleteGraphMetric = .heartRate
+    @State private var chaseHeading: Double?
+    @State private var lastFraction: Double = 0
+    @State private var isFollowing = false
 
     // Smoothing the route is expensive enough that it must not re-run on every
     // body evaluation, so it happens once at init.
+    private let precomputedRoutePoints: [RoutePoint]
     private let precomputedRouteSegments: [RouteSegment]
     private let precomputedStartCoordinate: CLLocationCoordinate2D?
     private let precomputedEndCoordinate: CLLocationCoordinate2D?
@@ -33,12 +54,32 @@ struct ExerciseCompleteMapWidget: View {
         routeLatitudes: [Double]?,
         routeLongitudes: [Double]?,
         routeZoneIndexes: [Int]?,
+        highlight: ClosedRange<Double>? = nil,
+        highlightTint: Color = .defaultSkyBlue,
+        duration: TimeDuration? = nil,
+        hrAvg: Double? = nil,
+        altitudeGainMetres: Double? = nil,
+        avgPaceSecondsPerKm: Int? = nil,
+        heartGraph: HeartWorkoutSummaryHeartGraphData? = nil,
+        altitudeGraph: HeartWorkoutSummaryAltitudeGraphData? = nil,
+        paceGraph: HeartWorkoutSummaryPaceGraphData? = nil,
+        cadenceGraph: HeartWorkoutSummaryCadenceGraphData? = nil,
         isFullScreen: Bool = false,
         onOpen: (() -> Void)? = nil
     ) {
         self.routeLatitudes = routeLatitudes
         self.routeLongitudes = routeLongitudes
         self.routeZoneIndexes = routeZoneIndexes
+        self.duration = duration
+        self.hrAvg = hrAvg
+        self.altitudeGainMetres = altitudeGainMetres
+        self.avgPaceSecondsPerKm = avgPaceSecondsPerKm
+        self.heartGraph = heartGraph
+        self.altitudeGraph = altitudeGraph
+        self.paceGraph = paceGraph
+        self.cadenceGraph = cadenceGraph
+        self.highlight = highlight
+        self.highlightTint = highlightTint
         self.isFullScreen = isFullScreen
         self.onOpen = onOpen
 
@@ -46,6 +87,7 @@ struct ExerciseCompleteMapWidget: View {
         let points = Self.routePoints(coordinates: coordinates, zoneIndexes: routeZoneIndexes)
         let smoothed = Self.smooth(Self.thin(Self.trimmed(points)))
 
+        precomputedRoutePoints = smoothed
         precomputedStartCoordinate = smoothed.first?.coordinate
         precomputedEndCoordinate = smoothed.last?.coordinate
         precomputedRouteSegments = Self.buildRouteSegments(from: smoothed)
@@ -58,7 +100,13 @@ struct ExerciseCompleteMapWidget: View {
 
     var body: some View {
         if isFullScreen {
-            map.ignoresSafeArea()
+            map
+                .ignoresSafeArea()
+                .overlay(alignment: .bottom) {
+                    breakdown
+                        .padding(.horizontal, .spacing2x)
+                        .padding(.bottom, .spacing5x)
+                }
         } else {
             map
                 .frame(height: Constants.mapHeight)
@@ -80,10 +128,20 @@ struct ExerciseCompleteMapWidget: View {
 
     private var map: some View {
         Map(position: $cameraPosition, interactionModes: isFullScreen ? .all : []) {
-            ForEach(precomputedRouteSegments.indices, id: \.self) { index in
-                let segment = precomputedRouteSegments[index]
-                MapPolyline(segment.polyline)
-                    .stroke(segment.style, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            // Picking out a section drops the zone colours: the run reads as one
+            // faint line so the stretch being read stands away from it.
+            if let highlighted {
+                MapPolyline(fullRoute)
+                    .stroke(Color.textColor.opacity(.minimalOpacity), style: Constants.routeStroke)
+
+                MapPolyline(highlighted)
+                    .stroke(highlightTint, style: Constants.routeStroke)
+            } else {
+                ForEach(precomputedRouteSegments.indices, id: \.self) { index in
+                    let segment = precomputedRouteSegments[index]
+                    MapPolyline(segment.polyline)
+                        .stroke(segment.style, style: Constants.routeStroke)
+                }
             }
 
             if let end = precomputedEndCoordinate {
@@ -97,11 +155,74 @@ struct ExerciseCompleteMapWidget: View {
                     routeFlag("flag.fill")
                 }
             }
+
+            if isFullScreen, let selected = selectedCoordinate {
+                Annotation("", coordinate: selected) {
+                    routeMarker(color: selectedMetric.color)
+                        .shadow(color: .black.opacity(.mediumOpacity), radius: 4, y: 2)
+                        // Map annotations don't pick up the ambient transaction,
+                        // so the tint change needs its own animation.
+                        .animation(.brightEaseInOut, value: selectedMetric)
+                }
+            }
         }
         // No compass or scale — the card can't be moved, and the page reads
         // cleaner without them.
         .mapControls {}
         .mapStyle(.standard(elevation: isFullScreen ? .realistic : .flat))
+        .onChange(of: selectedSecond) { _, _ in updateCamera() }
+    }
+
+    private var fullRoute: MKGeodesicPolyline {
+        var coordinates = precomputedRoutePoints.map(\.coordinate)
+        return MKGeodesicPolyline(coordinates: &coordinates, count: coordinates.count)
+    }
+
+    private var highlighted: MKGeodesicPolyline? {
+        guard let highlight, precomputedRoutePoints.count >= 2 else { return nil }
+
+        let last = precomputedRoutePoints.count - 1
+        let lower = max(0, min(last, Int((Double(last) * highlight.lowerBound).rounded())))
+        let upper = max(0, min(last, Int((Double(last) * highlight.upperBound).rounded())))
+        guard upper > lower else { return nil }
+
+        var coordinates = precomputedRoutePoints[lower ... upper].map(\.coordinate)
+        return MKGeodesicPolyline(coordinates: &coordinates, count: coordinates.count)
+    }
+
+    private var breakdown: some View {
+        ExerciseCompletePerformanceGraphWidget(
+            hrAvg: hrAvg ?? 0,
+            duration: duration ?? TimeDuration(),
+            avgPace: avgPaceSecondsPerKm ?? 0,
+            altitudeGain: Amount(unit: "M", value: altitudeGainMetres),
+            data: ExerciseCompleteCombinedGraphData(
+                heartData: heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
+                altitudeData: altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
+                paceData: paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
+                cadenceData: cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+            ),
+            selectedSecond: stickySelection,
+            selectedMetric: $selectedMetric
+        )
+    }
+
+    // The chart clears its selection the moment you lift off. The marker should
+    // hold its place rather than vanishing, so nil writes are dropped.
+    private var stickySelection: Binding<Double?> {
+        Binding(
+            get: { selectedSecond },
+            set: { newValue in
+                if let newValue { selectedSecond = newValue }
+            }
+        )
+    }
+
+    private func routeMarker(color: Color) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: Constants.markerDotSize, height: Constants.markerDotSize)
+            .overlay(Circle().stroke(Color.white, lineWidth: 2))
     }
 
     private func routeFlag(_ systemImage: String) -> some View {
@@ -113,8 +234,23 @@ struct ExerciseCompleteMapWidget: View {
     }
 
     private enum Constants {
+        // MARK: Follow camera
+
+        static let followDistance: CLLocationDistance = 500
+        static let followPitch: CGFloat = 65
+        static let lookAheadFraction: Double = 0.02
+        // How far behind the marker the camera sits, as a fraction of the route.
+        // Raise it to push the marker further up the screen.
+        static let cameraTrailFraction: Double = 0.01
+        static let headingResponsiveness: Double = 0.3
+        static let jumpThreshold: Double = 0.1
+        // Used for the fly-in and for discontinuous jumps.
+        static let flyToDuration: TimeInterval = 0.5
+
+        static let routeStroke = StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
         static let mapHeight: CGFloat = 145
         static let markerSize: CGFloat = 18
+        static let markerDotSize: CGFloat = 22
         // Increase to load the map faster at the cost of route fidelity.
         static let minimumDistanceMetres: Double = 25
         // Breathing room around the route on the overview shot. 1.0 is a tight
@@ -398,4 +534,107 @@ extension ExerciseCompleteMapWidget {
         routeZoneIndexes: workout.routeZoneIndexes,
         isFullScreen: true
     )
+}
+
+// MARK: - Follow camera
+
+extension ExerciseCompleteMapWidget {
+    private var selectedFraction: Double? {
+        let total = max((duration ?? TimeDuration()).totalSeconds, 1)
+        return selectedSecond.map { max(0, min(1, $0 / total)) }
+    }
+
+    private var selectedCoordinate: CLLocationCoordinate2D? {
+        selectedFraction.flatMap { coordinate(atFraction: $0) }
+    }
+
+    private func coordinate(atFraction fraction: Double) -> CLLocationCoordinate2D? {
+        guard precomputedRoutePoints.count >= 2 else { return nil }
+
+        let position = fraction * Double(precomputedRoutePoints.count - 1)
+        let lowerIndex = max(0, min(precomputedRoutePoints.count - 1, Int(floor(position))))
+        let upperIndex = max(0, min(precomputedRoutePoints.count - 1, Int(ceil(position))))
+        let t = position - Double(lowerIndex)
+
+        let a = precomputedRoutePoints[lowerIndex].coordinate
+        let b = precomputedRoutePoints[upperIndex].coordinate
+
+        return CLLocationCoordinate2D(
+            latitude: a.latitude + (b.latitude - a.latitude) * t,
+            longitude: a.longitude + (b.longitude - a.longitude) * t
+        )
+    }
+
+    private func updateCamera() {
+        guard isFullScreen,
+              let fraction = selectedFraction,
+              let current = coordinate(atFraction: fraction)
+        else {
+            return
+        }
+
+        let ahead = coordinate(atFraction: min(1, fraction + Constants.lookAheadFraction)) ?? current
+        let targetHeading = bearing(from: current, to: ahead)
+
+        // Centre the camera behind the marker rather than on it, so the marker
+        // rides above the middle of the screen and the route ahead stays visible.
+        let trailing = coordinate(atFraction: max(0, fraction - Constants.cameraTrailFraction)) ?? current
+
+        let isJump = isFollowing && abs(fraction - lastFraction) > Constants.jumpThreshold
+        lastFraction = fraction
+
+        // Ease the heading towards the target so scrubbing doesn't whip the camera.
+        let heading: Double
+        if let chaseHeading, !isJump {
+            heading = chaseHeading
+                + shortestAngleDelta(from: chaseHeading, to: targetHeading) * Constants.headingResponsiveness
+        } else {
+            heading = targetHeading
+        }
+        chaseHeading = heading
+
+        let camera = MapCamera(
+            centerCoordinate: trailing,
+            distance: Constants.followDistance,
+            heading: heading,
+            pitch: Constants.followPitch
+        )
+
+        // Animate the one-off transitions only. Scrubbing fires continuously, and
+        // wrapping every update in `withAnimation` restarts the ease each time, so
+        // the camera decelerates towards a target it keeps re-deciding — which
+        // reads as a slow crawl. Tracking updates are set directly so the camera
+        // stays pinned to the finger.
+        guard isFollowing else {
+            isFollowing = true
+            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
+                cameraPosition = .camera(camera)
+            }
+            return
+        }
+
+        if isJump {
+            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
+                cameraPosition = .camera(camera)
+            }
+        } else {
+            cameraPosition = .camera(camera)
+        }
+    }
+
+    private func bearing(from a: CLLocationCoordinate2D, to b: CLLocationCoordinate2D) -> Double {
+        let lat1 = a.latitude * .pi / 180
+        let lat2 = b.latitude * .pi / 180
+        let dLon = (b.longitude - a.longitude) * .pi / 180
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+        return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    private func shortestAngleDelta(from a: Double, to b: Double) -> Double {
+        var delta = b - a
+        while delta > 180 { delta -= 360 }
+        while delta < -180 { delta += 360 }
+        return delta
+    }
 }

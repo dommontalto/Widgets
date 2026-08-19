@@ -35,10 +35,7 @@ struct ExerciseHistoryWidget: View {
         .modifier(CardModifier())
         .sheet(item: $selectedWorkout) { workout in
             ExerciseCompleteSheet(
-                session: ExerciseDemoComplete.session(
-                    workout.type == .cardio ? .cardio : .strength,
-                    titled: workout.name
-                )
+                sessions: ExerciseDemoComplete.sessions(for: workout)
             )
         }
     }
@@ -77,8 +74,13 @@ struct ExerciseHistoryWidget: View {
         .buttonStyle(.plain)
     }
 
+    // The same three the consistency heatmap uses.
     private func color(for type: ExerciseDayType) -> Color {
-        type == .cardio ? .defaultSkyBlue : .defaultPurple
+        switch type {
+        case .cardio: .defaultSkyBlue
+        case .both: .defaultGreen
+        case .strength, .rest: .defaultPurple
+        }
     }
 
     private enum Constants {

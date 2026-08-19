@@ -54,6 +54,9 @@ struct ExerciseWorkout: Identifiable, Hashable {
     let summary: String
     let detail: ExerciseWorkoutDetail
     var hasRoute = false
+    // The parts a mixed workout holds, in the order they were logged. Left
+    // empty, the workout is the single part its type implies.
+    var parts: [ExerciseWorkoutCategory] = []
 
     static func == (lhs: ExerciseWorkout, rhs: ExerciseWorkout) -> Bool {
         lhs.id == rhs.id
@@ -240,6 +243,8 @@ enum ExerciseDemoData {
     static let workoutHistory = [
         ExerciseWorkout(name: "Push day", timestamp: "6:00 PM, 23 Jul", type: .strength, summary: "58:24 • 12,480 kg • 21 sets", detail: strengthDetail),
         ExerciseWorkout(name: "5K run", timestamp: "6:40 AM, 22 Jul", type: .cardio, summary: "5.02 km • 4’58” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseWorkout(name: "Push & run", timestamp: "5:30 PM, 21 Jul", type: .both, summary: "1:12:05 • 9,240 kg • 4.1 km", detail: strengthDetail),
+        ExerciseWorkout(name: "Gym, run & footy", timestamp: "4:15 PM, 20 Jul", type: .both, summary: "2:04:18 • 7,900 kg • 3.2 km", detail: strengthDetail, parts: [.gym, .cardio, .sports]),
         ExerciseWorkout(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
         ExerciseWorkout(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
         ExerciseWorkout(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),

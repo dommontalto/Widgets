@@ -30,7 +30,9 @@ enum ExerciseCompleteTab: Int, CaseIterable {
 }
 
 struct ExerciseCompleteSheet: View {
-    let session: ExerciseCompleteSession
+    // A workout that holds both lifting and cardio arrives as one session per
+    // part, and the picker above the title walks between them.
+    let sessions: [ExerciseCompleteSession]
 
     var chrome: ExercisePageChrome = .sheet
 
@@ -42,8 +44,44 @@ struct ExerciseCompleteSheet: View {
     @State private var selectedGraphSecond: Double?
     @State private var showingMap = false
     @State private var openedExerciseName: String?
+    @State private var selectedPart = 0
+    // Nil until a step is tapped, so the strip opens where the demo put it.
+    @State private var selectedInterval: Int?
+
+    private var session: ExerciseCompleteSession {
+        sessions[min(selectedPart, sessions.count - 1)]
+    }
 
     private var workout: HeartWorkoutSummaryResponseData { session.workout }
+
+    private var intervalIndex: Binding<Int> {
+        Binding(
+            get: { selectedInterval ?? session.intervals?.selectedIndex ?? 0 },
+            set: { selectedInterval = $0 }
+        )
+    }
+
+    private var currentStep: ExerciseCompleteIntervalStep? {
+        guard let steps = session.intervals?.steps else { return nil }
+        let index = intervalIndex.wrappedValue
+        return steps.indices.contains(index) ? steps[index] : nil
+    }
+
+    // The finish carries no numbers of its own, so it falls back to the run's.
+    private var summaryMetrics: [ExerciseCompleteMetric] {
+        currentStep?.metrics ?? session.metrics
+    }
+
+    private var partIcons: [BrightRoundPickerIcon] {
+        sessions.indices.map { BrightRoundPickerIcon(id: "\($0)", symbol: sessions[$0].symbol) }
+    }
+
+    private var partSelection: Binding<BrightRoundPickerIcon> {
+        Binding(
+            get: { partIcons[min(selectedPart, partIcons.count - 1)] },
+            set: { selectedPart = Int($0.id) ?? 0 }
+        )
+    }
 
     var body: some View {
         page
@@ -83,6 +121,7 @@ struct ExerciseCompleteSheet: View {
                     SwipePage(title: $0.title, systemImage: $0.systemImage)
                 },
                 fakeLargeTitle: workout.title ?? "",
+                titleAccessory: sessions.count > 1 ? AnyView(partPicker) : nil,
                 titleSize: .standout4,
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
@@ -102,6 +141,14 @@ struct ExerciseCompleteSheet: View {
                     routeLatitudes: workout.routeLatitudes,
                     routeLongitudes: workout.routeLongitudes,
                     routeZoneIndexes: workout.routeZoneIndexes,
+                    duration: workout.duration,
+                    hrAvg: workout.hrAvg,
+                    altitudeGainMetres: workout.altitudeGain?.value,
+                    avgPaceSecondsPerKm: workout.avgPaceSecondsPerKm,
+                    heartGraph: workout.heartGraph,
+                    altitudeGraph: workout.altitudeGraph,
+                    paceGraph: workout.paceGraph,
+                    cadenceGraph: workout.cadenceGraph,
                     isFullScreen: true
                 )
                 // The bar keeps its stock back button but loses its background,
@@ -119,6 +166,18 @@ struct ExerciseCompleteSheet: View {
                 }
             }
         }
+    }
+
+    // Floated to the margin, level with the middle of the title block.
+    private var partPicker: some View {
+        HStack(spacing: .spacing0x) {
+            Spacer(minLength: .spacing2x)
+
+            BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
+                .fixedSize()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.trailing, .spacing3x)
     }
 
     private var subtitle: some View {
@@ -140,10 +199,18 @@ struct ExerciseCompleteSheet: View {
                         .foregroundStyle(Color.textColor)
                         .frame(width: Constants.sourceIconBox, height: Constants.sourceIconBox)
 
-                    BrightText(source, size: .body1)
+                    BrightText(sourceName(source), size: .body1)
                 }
             }
         }
+    }
+
+    // The payload spells it out as "Logged with Apple Watch"; the glyph beside
+    // it already says that much, so only the device is worth reading.
+    private func sourceName(_ source: String) -> String {
+        let prefix = "Logged with "
+        guard source.lowercased().hasPrefix(prefix.lowercased()) else { return source }
+        return String(source.dropFirst(prefix.count))
     }
 
     private func sourceIcon(for source: String) -> String {
@@ -171,15 +238,17 @@ struct ExerciseCompleteSheet: View {
                     routeLatitudes: workout.routeLatitudes,
                     routeLongitudes: workout.routeLongitudes,
                     routeZoneIndexes: workout.routeZoneIndexes,
+                    highlight: currentStep?.route,
+                    highlightTint: currentStep?.tint ?? .defaultSkyBlue,
                     onOpen: { showingMap = true }
                 )
             }
 
             if let intervals = session.intervals {
-                ExerciseCompleteIntervalStripView(strip: intervals)
+                ExerciseCompleteIntervalStripView(strip: intervals, selectedIndex: intervalIndex)
             }
 
-            ExerciseCompleteMetricGrid(metrics: session.metrics)
+            ExerciseCompleteMetricGrid(metrics: summaryMetrics)
 
             if let strain = session.strain {
                 ExerciseWidgetSection(
@@ -206,6 +275,7 @@ struct ExerciseCompleteSheet: View {
                 }
             }
         }
+        .animation(.brightSnappy, value: selectedInterval)
     }
 
     private var heartTab: some View {
@@ -275,9 +345,13 @@ struct ExerciseCompleteSheet: View {
 }
 
 #Preview("Strength") {
-    ExerciseCompleteSheet(session: ExerciseDemoComplete.strength)
+    ExerciseCompleteSheet(sessions: [ExerciseDemoComplete.strength])
 }
 
 #Preview("Cardio") {
-    ExerciseCompleteSheet(session: ExerciseDemoComplete.cardio)
+    ExerciseCompleteSheet(sessions: [ExerciseDemoComplete.cardio])
+}
+
+#Preview("Both") {
+    ExerciseCompleteSheet(sessions: [ExerciseDemoComplete.strength, ExerciseDemoComplete.cardio])
 }

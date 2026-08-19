@@ -18,6 +18,15 @@ struct ExerciseCompleteSession {
     var records: [ExerciseCompleteRecord] = []
     var progressions: [ExerciseCompleteProgression] = []
     var intervals: ExerciseCompleteIntervalStrip?
+    // What the part picker draws for this session. Cardio and sports carry
+    // their own category; strength leaves it nil.
+    var category: ExerciseWorkoutCategory?
+
+    // Strength always shows the gym glyph, bodyweight included, so a mixed
+    // workout's picker reads as "the lifting part" rather than naming the kit.
+    var symbol: String {
+        category?.symbol ?? ExerciseWorkoutCategory.gym.symbol
+    }
 }
 
 enum ExerciseCompleteKind {
@@ -152,4 +161,10 @@ struct ExerciseCompleteIntervalStep: Identifiable {
     let id = UUID()
     let symbol: String
     let title: String
+    // Left nil on the finish, which stands for the run as a whole: it reads the
+    // session's own metrics and lights the entire route.
+    var metrics: [ExerciseCompleteMetric]?
+    // The stretch of the route this step covers, as fractions of its length.
+    var route: ClosedRange<Double>?
+    var tint: Color = .defaultSkyBlue
 }

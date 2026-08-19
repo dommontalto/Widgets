@@ -8,25 +8,27 @@
 import SwiftUI
 
 // The run's intervals as a row of glyphs. Whichever the glass sits on names
-// itself underneath, and that name heads the metrics below.
+// itself underneath, and the summary reads that step's numbers.
 struct ExerciseCompleteIntervalStripView: View {
     let strip: ExerciseCompleteIntervalStrip
 
-    @State private var selection: BrightRoundPickerIcon
-
-    init(strip: ExerciseCompleteIntervalStrip) {
-        self.strip = strip
-        let icons = Self.icons(for: strip)
-        let index = icons.indices.contains(strip.selectedIndex) ? strip.selectedIndex : 0
-        _selection = State(initialValue: icons.indices.contains(index) ? icons[index] : Self.placeholder)
-    }
+    @Binding var selectedIndex: Int
 
     private var icons: [BrightRoundPickerIcon] {
-        Self.icons(for: strip)
+        strip.steps.indices.map {
+            BrightRoundPickerIcon(id: "\($0)", symbol: strip.steps[$0].symbol)
+        }
+    }
+
+    private var selection: Binding<BrightRoundPickerIcon> {
+        Binding(
+            get: { icons[min(max(selectedIndex, 0), icons.count - 1)] },
+            set: { selectedIndex = Int($0.id) ?? 0 }
+        )
     }
 
     private var selected: ExerciseCompleteIntervalStep? {
-        strip.steps.first { $0.id.uuidString == selection.id } ?? strip.steps.first
+        strip.steps.indices.contains(selectedIndex) ? strip.steps[selectedIndex] : strip.steps.first
     }
 
     var body: some View {
@@ -34,7 +36,7 @@ struct ExerciseCompleteIntervalStripView: View {
             HStack(spacing: .spacing2x) {
                 BrightText("Interval:", size: .body1, weight: .regular)
 
-                BrightRoundPicker(icons: icons, selection: $selection)
+                BrightRoundPicker(icons: icons, selection: selection)
             }
 
             if let selected {
@@ -44,18 +46,16 @@ struct ExerciseCompleteIntervalStripView: View {
             }
         }
     }
-
-    private static func icons(for strip: ExerciseCompleteIntervalStrip) -> [BrightRoundPickerIcon] {
-        strip.steps.map { BrightRoundPickerIcon(id: $0.id.uuidString, symbol: $0.symbol) }
-    }
-
-    // Only reached by a strip with no steps, which never renders a picker.
-    private static let placeholder = BrightRoundPickerIcon(id: "", symbol: "flag.pattern.checkered")
 }
 
 #Preview {
-    ExerciseCompleteIntervalStripView(strip: ExerciseDemoComplete.cardio.intervals!)
-        .padding(.spacing3x)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultSheetBackground.ignoresSafeArea())
+    @Previewable @State var selectedIndex = 5
+
+    ExerciseCompleteIntervalStripView(
+        strip: ExerciseDemoComplete.cardio.intervals!,
+        selectedIndex: $selectedIndex
+    )
+    .padding(.spacing3x)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .background(Color.defaultSheetBackground.ignoresSafeArea())
 }

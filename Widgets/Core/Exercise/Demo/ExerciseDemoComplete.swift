@@ -10,10 +10,40 @@ import SwiftUI
 enum ExerciseDemoComplete {
     // Every logged session opens the same demo data for its kind, wearing the
     // name of the row that was tapped.
-    static func session(_ kind: ExerciseCompleteKind, titled title: String) -> ExerciseCompleteSession {
-        var session = kind == .cardio ? cardio : strength
-        session.workout.title = title
-        return session
+    // One part per icon in the sheet's picker: every gym and bodyweight exercise
+    // sits under a single section, while each cardio and each sport gets its
+    // own — two runs are two sections, not one.
+    static func sessions(for workout: ExerciseWorkout) -> [ExerciseCompleteSession] {
+        let parts = workout.parts.isEmpty ? defaultParts(for: workout.type) : workout.parts
+        return parts.map { session(for: $0, titled: workout.name) }
+    }
+
+    private static func defaultParts(for type: ExerciseDayType) -> [ExerciseWorkoutCategory] {
+        switch type {
+        case .cardio: [.cardio]
+        case .both: [.gym, .cardio]
+        case .strength, .rest: [.gym]
+        }
+    }
+
+    private static func session(
+        for category: ExerciseWorkoutCategory,
+        titled title: String
+    ) -> ExerciseCompleteSession {
+        switch category {
+        case .cardio: session(cardio, titled: title)
+        case .sports: session(sports, titled: title)
+        case .gym, .bodyweight: session(strength, titled: title)
+        }
+    }
+
+    private static func session(
+        _ session: ExerciseCompleteSession,
+        titled title: String
+    ) -> ExerciseCompleteSession {
+        var copy = session
+        copy.workout.title = title
+        return copy
     }
 
     static let cardio = ExerciseCompleteSession(
@@ -22,7 +52,8 @@ enum ExerciseDemoComplete {
         metrics: cardioMetrics,
         strain: strain,
         records: cardioRecords,
-        intervals: intervalStrip
+        intervals: intervalStrip,
+        category: .cardio
     )
 
     static let strength = ExerciseCompleteSession(
@@ -35,7 +66,33 @@ enum ExerciseDemoComplete {
         progressions: progressions
     )
 
+    static let sports = ExerciseCompleteSession(
+        kind: .cardio,
+        workout: sportsWorkout,
+        metrics: sportsMetrics,
+        strain: strain,
+        records: cardioRecords,
+        category: .sports
+    )
+
     // MARK: Workouts
+
+    // A match is timed and tracked but not run to a route, so it carries no map
+    // and no splits.
+    private static let sportsWorkout: HeartWorkoutSummaryResponseData = {
+        var workout = cardioWorkout
+        workout.title = "Football"
+        workout.duration = TimeDuration(hour: 1, minute: 5, second: 0)
+        workout.distance = nil
+        workout.altitudeGain = nil
+        workout.avgPaceSecondsPerKm = nil
+        workout.splits = nil
+        workout.intervals = nil
+        workout.routeLatitudes = nil
+        workout.routeLongitudes = nil
+        workout.routeZoneIndexes = nil
+        return workout
+    }()
 
     private static let strengthWorkout: HeartWorkoutSummaryResponseData = {
         var workout = cardioWorkout
@@ -360,7 +417,17 @@ extension ExerciseDemoComplete {
             value: "5.5 KM"
         ),
         .init(icon: .system("timer", tint: .defaultPurple), title: "Pace", value: "5\u{2019}23"),
-        .init(icon: .asset(ImageNames.heartPulseRedV5), title: "AVG HR", value: "154 BPM"),
+    ]
+
+    fileprivate static let sportsMetrics: [ExerciseCompleteMetric] = [
+        .init(icon: .asset(ImageNames.durationV5), title: "Duration", value: "01:05:00"),
+        .init(icon: .asset(ImageNames.energyBurntV5), title: "Energy used", value: "612 Cal"),
+        .init(icon: .asset(ImageNames.heartPulseRedV5), title: "AVG HR", value: "146 BPM"),
+        .init(
+            icon: .system("figure.rugby", tint: .defaultOrange),
+            title: "Sport",
+            value: "Football"
+        ),
     ]
 
     fileprivate static let strengthMetrics: [ExerciseCompleteMetric] = [
@@ -382,16 +449,64 @@ extension ExerciseDemoComplete {
 
     fileprivate static let intervalStrip = ExerciseCompleteIntervalStrip(
         steps: [
-            .init(symbol: "figure.cooldown", title: "Warmup"),
-            .init(symbol: "figure.run", title: "Run"),
-            .init(symbol: "figure.walk", title: "Walk"),
-            .init(symbol: "figure.run", title: "Run"),
-            .init(symbol: "snowflake", title: "Cooldown"),
+            .init(
+                symbol: "figure.cooldown",
+                title: "Warmup",
+                metrics: intervalMetrics(duration: "00:05:12", energy: "48 Cal", distance: "0.8 KM", pace: "6\u{2019}30"),
+                route: 0 ... 0.18,
+                tint: .defaultOrange
+            ),
+            .init(
+                symbol: "figure.run",
+                title: "Run",
+                metrics: intervalMetrics(duration: "00:08:40", energy: "104 Cal", distance: "1.7 KM", pace: "5\u{2019}06"),
+                route: 0.18 ... 0.42,
+                tint: .defaultRed
+            ),
+            .init(
+                symbol: "figure.walk",
+                title: "Walk",
+                metrics: intervalMetrics(duration: "00:03:25", energy: "22 Cal", distance: "0.3 KM", pace: "11\u{2019}23"),
+                route: 0.42 ... 0.52,
+                tint: .defaultSkyBlue
+            ),
+            .init(
+                symbol: "figure.run",
+                title: "Run",
+                metrics: intervalMetrics(duration: "00:10:14", energy: "128 Cal", distance: "2.1 KM", pace: "4\u{2019}52"),
+                route: 0.52 ... 0.85,
+                tint: .defaultRed
+            ),
+            .init(
+                symbol: "snowflake",
+                title: "Cooldown",
+                metrics: intervalMetrics(duration: "00:05:12", energy: "27 Cal", distance: "0.6 KM", pace: "8\u{2019}40"),
+                route: 0.85 ... 1,
+                tint: .defaultBlue
+            ),
             .init(symbol: "flag.pattern.checkered", title: "Finish"),
         ],
         // The run is over, so it opens on the finish.
         selectedIndex: 5
     )
+
+    private static func intervalMetrics(
+        duration: String,
+        energy: String,
+        distance: String,
+        pace: String
+    ) -> [ExerciseCompleteMetric] {
+        [
+            .init(icon: .asset(ImageNames.durationV5), title: "Duration", value: duration),
+            .init(icon: .asset(ImageNames.energyBurntV5), title: "Energy used", value: energy),
+            .init(
+                icon: .system("lines.measurement.horizontal.aligned.bottom", tint: .defaultGreen),
+                title: "Distance",
+                value: distance
+            ),
+            .init(icon: .system("timer", tint: .defaultPurple), title: "Pace", value: pace),
+        ]
+    }
 }
 
 // MARK: - Exertion
