@@ -93,9 +93,15 @@ struct ExerciseCompleteSheet: View {
     private func container<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         switch chrome {
         case .sheet:
-            BrightPageSheetView(horizontalPadding: .spacing0x) {
-                content()
-            }
+            BrightPageSheetView(
+                horizontalPadding: .spacing0x,
+                trailing: {
+                    if sessions.count > 1 {
+                        ToolbarItem(placement: .topBarTrailing) { partPicker }
+                    }
+                },
+                content: { content() }
+            )
         case .pushed:
             BrightPageView(
                 horizontalPadding: .spacing0x,
@@ -107,6 +113,10 @@ struct ExerciseCompleteSheet: View {
                             Label("Close", systemImage: "xmark")
                                 .labelStyle(.iconOnly)
                         }
+                    }
+
+                    if sessions.count > 1 {
+                        ToolbarItem(placement: .topBarTrailing) { partPicker }
                     }
                 },
                 content: { content() }
@@ -121,7 +131,6 @@ struct ExerciseCompleteSheet: View {
                     SwipePage(title: $0.title, systemImage: $0.systemImage)
                 },
                 fakeLargeTitle: workout.title ?? "",
-                titleAccessory: sessions.count > 1 ? AnyView(partPicker) : nil,
                 titleSize: .standout4,
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
@@ -168,16 +177,11 @@ struct ExerciseCompleteSheet: View {
         }
     }
 
-    // Floated to the margin, level with the middle of the title block.
+    // Sits in the bar opposite the close button, so it stays put as the page
+    // scrolls.
     private var partPicker: some View {
-        HStack(spacing: .spacing0x) {
-            Spacer(minLength: .spacing2x)
-
-            BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
-                .fixedSize()
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.trailing, .spacing3x)
+        BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
+            .fixedSize()
     }
 
     private var subtitle: some View {
@@ -199,18 +203,10 @@ struct ExerciseCompleteSheet: View {
                         .foregroundStyle(Color.textColor)
                         .frame(width: Constants.sourceIconBox, height: Constants.sourceIconBox)
 
-                    BrightText(sourceName(source), size: .body1)
+                    BrightText(source, size: .body1)
                 }
             }
         }
-    }
-
-    // The payload spells it out as "Logged with Apple Watch"; the glyph beside
-    // it already says that much, so only the device is worth reading.
-    private func sourceName(_ source: String) -> String {
-        let prefix = "Logged with "
-        guard source.lowercased().hasPrefix(prefix.lowercased()) else { return source }
-        return String(source.dropFirst(prefix.count))
     }
 
     private func sourceIcon(for source: String) -> String {

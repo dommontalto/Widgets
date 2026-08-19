@@ -219,11 +219,17 @@ struct ExerciseLiveWorkoutSheet: View {
             Text("You still have some exercises to complete. Are you sure you want to finish your workout?")
         }
         .sheet(isPresented: $isEditingWorkout) {
-            ExerciseReorderSheet(exercises: exercises, onSave: applyEdits)
+            ExerciseSupersetSheet(exercises: exercises, onSave: applyEdits)
         }
         .animation(.brightEaseInOut, value: restEndDate)
         .animation(.brightEaseInOut, value: currentIndex)
         .animation(.brightEaseInOut, value: completedSets)
+        // Ticking the last set ends the run: there's no finished state to sit
+        // in, so it hands straight over to the summary.
+        .onChange(of: completedSets) { _, _ in
+            guard completedSets > 0, !hasIncompleteSets else { return }
+            finish()
+        }
         .navigationDestination(item: $openedExerciseName) { name in
             if let exercise = ExerciseDemoLibrary.exercise(named: name) {
                 ExerciseDetailSheet(exercise: exercise, cardColor: .defaultCards)
@@ -514,7 +520,7 @@ struct ExerciseLiveWorkoutSheet: View {
     // The set the pickers write to: the one being worked on, or the last one
     // logged once the exercise is done.
     private var ratedIndex: Int? {
-        currentExercise.sets.firstIndex { !$0.isDone } ?? currentExercise.sets.indices.last
+        currentExercise.sets.firstIndex(where: \.isPending) ?? currentExercise.sets.indices.last
     }
 
     private func ratedSet(_ field: WritableKeyPath<ExerciseActiveSet, Int?>) -> Binding<Int?> {
@@ -543,7 +549,7 @@ struct ExerciseLiveWorkoutSheet: View {
         } else if activeSet == nil {
             isLastExercise ? .allSetsComplete : .nextExercise(name: exercises[currentIndex + 1].name)
         } else {
-            .working(label: currentBlockName)
+            .working(set: currentBlockName, target: activeTarget)
         }
     }
 
@@ -572,7 +578,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var hasIncompleteSets: Bool {
-        exercises.contains { $0.sets.contains { !$0.isDone } }
+        exercises.contains { $0.sets.contains(where: \.isPending) }
     }
 
     private func finish() {
@@ -633,10 +639,8 @@ struct ExerciseLiveWorkoutSheet: View {
         exercises[currentIndex].sets[index].failedRep = nil
     }
 
-    // Cuts rest short so the next set becomes active straight away.
-    // Skips the rest while one's running; otherwise it's the set that's skipped,
-    // and since it was never done there's nothing to log — it drops out of the
-    // run and the next set takes over.
+    // Skips the rest while one's running; otherwise it's the set that's passed
+    // over — it stays in the run unlogged and the next set takes over.
     private func skip() {
         if restEndDate != nil {
             restEndDate = nil
@@ -650,7 +654,7 @@ struct ExerciseLiveWorkoutSheet: View {
         }
 
         withAnimation(.brightSnappy) {
-            exercises[currentIndex].sets.remove(at: index)
+            exercises[currentIndex].sets[index].isSkipped = true
         }
     }
 
@@ -708,7 +712,21 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var activeSet: ExerciseActiveSet? {
-        currentExercise.sets.first { !$0.isDone }
+        currentExercise.sets.first(where: \.isPending)
+    }
+
+    // What the active set is for: the weight and reps it's set to, the way the
+    // row states them.
+    private var activeTarget: String {
+        guard let activeSet else { return "\u{2014}" }
+        let weight = activeSet.weight.trimmingCharacters(in: .whitespaces)
+        let reps = activeSet.reps.trimmingCharacters(in: .whitespaces)
+        switch (weight.isEmpty, reps.isEmpty) {
+        case (false, false): return "\(weight)x\(reps)"
+        case (false, true): return "\(weight) kg"
+        case (true, false): return "\(reps) reps"
+        default: return "\u{2014}"
+        }
     }
 
     private var currentBlockName: String {
@@ -967,6 +985,7 @@ private struct ExerciseLiveSetRow: View {
 
                 Button {
                     set.isDone.toggle()
+                    if set.isDone { set.isSkipped = false }
                     // Ticking the working set by hand is the same event as
                     // tapping Next, so it starts rest too.
                     if isActive, set.isDone { onTickActiveSet() }
@@ -1090,8 +1109,14 @@ struct ExerciseActiveSet: Identifiable, Sendable {
     var kind: ExerciseSetKind = .working(0)
     var isRecord = false
     var isDone = false
+    // Passed over without being logged; it stays in the run but the active set
+    // moves on past it.
+    var isSkipped = false
 
     var isWarmup: Bool { kind == .warmUp }
+
+    // Still waiting to be worked: neither logged nor skipped.
+    var isPending: Bool { !isDone && !isSkipped }
 
     // Carries a rating or a failed rep, so the row has something to clear.
     var isTagged: Bool { rpe != nil || failedRep != nil }

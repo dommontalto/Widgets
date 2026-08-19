@@ -145,7 +145,7 @@ struct ExerciseLiveWorkoutMenu: View {
         HStack(spacing: .spacing105x) {
             sectionLabel("Playlist", symbol: "text.append", color: .defaultPink)
 
-            BrightPillButton("Edit") {
+            BrightRoundButton(systemImage: "link") {
                 onEdit()
             }
         }

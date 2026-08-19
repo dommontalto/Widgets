@@ -57,6 +57,8 @@ struct ExerciseWorkout: Identifiable, Hashable {
     // The parts a mixed workout holds, in the order they were logged. Left
     // empty, the workout is the single part its type implies.
     var parts: [ExerciseWorkoutCategory] = []
+    // Imported rather than run in the app, so the log marks it as read-only.
+    var isFromAppleHealth = false
 
     static func == (lhs: ExerciseWorkout, rhs: ExerciseWorkout) -> Bool {
         lhs.id == rhs.id
@@ -136,7 +138,7 @@ enum ExerciseDemoData {
         currentPace: "3\u{2019}23 / KM",
         distance: "5.24 KM",
         heartRate: "136",
-        heartRateZone: "ZONE 2",
+        heartRateZone: "Z2",
         averagePace: "5\u{2019}21",
         splitPace: "5\u{2019}19",
         splitDelta: "-2",
@@ -246,7 +248,9 @@ enum ExerciseDemoData {
         ExerciseWorkout(name: "Push & run", timestamp: "5:30 PM, 21 Jul", type: .both, summary: "1:12:05 • 9,240 kg • 4.1 km", detail: strengthDetail),
         ExerciseWorkout(name: "Gym, run & footy", timestamp: "4:15 PM, 20 Jul", type: .both, summary: "2:04:18 • 7,900 kg • 3.2 km", detail: strengthDetail, parts: [.gym, .cardio, .sports]),
         ExerciseWorkout(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
+        ExerciseWorkout(name: "Functional strength", timestamp: "12:20 PM, 20 Jul", type: .strength, summary: "34:02 • 4,120 kg • 12 sets", detail: strengthDetail, isFromAppleHealth: true),
         ExerciseWorkout(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseWorkout(name: "Outdoor walk", timestamp: "1:10 PM, 19 Jul", type: .cardio, summary: "3.40 km • 11’02” /km", detail: cardioDetail, isFromAppleHealth: true),
         ExerciseWorkout(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),
         ExerciseWorkout(name: "Recovery run", timestamp: "6:30 AM, 17 Jul", type: .cardio, summary: "4.00 km • 5’42” /km", detail: cardioDetail, hasRoute: true),
         ExerciseWorkout(name: "Push day", timestamp: "6:05 PM, 15 Jul", type: .strength, summary: "55:40 • 12,120 kg • 20 sets", detail: strengthDetail),

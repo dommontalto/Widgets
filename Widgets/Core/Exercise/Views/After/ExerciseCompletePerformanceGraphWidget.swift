@@ -119,8 +119,8 @@ struct ExerciseCompletePerformanceGraphWidget: View {
         .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
-    // On the Performance tab every metric is stacked on the page itself, each
-    // reading out in its own colour beside its trace.
+    // On the Performance tab every metric is stacked, each reading out in its
+    // own colour beside its trace.
     private var stack: some View {
         SharedGraphComponent(
             selectedSecond: $selectedSecond,
@@ -129,6 +129,8 @@ struct ExerciseCompletePerformanceGraphWidget: View {
             graphHeight: graphHeight,
             readout: readout(for:)
         )
+        .padding(.spacing3x)
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     private var selectedTexts: some View {

@@ -133,11 +133,20 @@ struct ExerciseLiveCardioSheet: View {
             paceColumn(
                 "SPLIT",
                 value: workout.splitPace,
-                color: .defaultGreen,
+                color: splitColor,
                 delta: workout.splitDelta
             )
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // A split slower than the average reads red, a faster one green. Level, or
+    // with no split logged yet, it stays plain text.
+    private var splitColor: Color {
+        let delta = workout.splitDelta
+        if delta.hasPrefix("+") { return .defaultRed }
+        if delta.hasPrefix("\u{2212}") || delta.hasPrefix("-") { return .defaultGreen }
+        return .textColor
     }
 
     private func paceColumn(

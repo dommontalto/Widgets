@@ -1,5 +1,5 @@
 //
-//  ExerciseReorderSheet.swift
+//  ExerciseSupersetSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 17/8/2026.
@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-// Re-orders the exercises of a run, supersets them, and adds new ones from the
-// library. The order is held locally so backing out leaves the run as it was —
-// only Save hands the new order back.
-struct ExerciseReorderSheet: View {
+// Groups the exercises of a run into supersets, re-orders them, and adds new
+// ones from the library. The order is held locally so backing out leaves the run
+// as it was — only Save hands the new order back.
+struct ExerciseSupersetSheet: View {
     private enum Constants {
         // Each superset takes the next colour along, so two groups sitting
         // beside each other never read as one.
@@ -55,7 +55,7 @@ struct ExerciseReorderSheet: View {
 
     var body: some View {
         BrightPageSheetView(
-            title: "Re-order exercises",
+            title: "Supersets",
             horizontalPadding: .spacing0x,
             trailing: {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -402,6 +402,6 @@ struct ExerciseReorderSheet: View {
 }
 
 #Preview {
-    ExerciseReorderSheet(exercises: ExerciseDemoData.activeExercises) { _ in }
+    ExerciseSupersetSheet(exercises: ExerciseDemoData.activeExercises) { _ in }
         .environment(ExerciseBuilder())
 }

@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ExerciseLiveWorkoutStatusWidget: View {
     enum Status {
-        // Mid-set: the tick logs `label`.
-        case working(label: String)
+        // Mid-set: `set` names the set, `target` is the weight and reps it's for.
+        case working(set: String, target: String)
         // Every set here is logged, so the button opens the next exercise.
         case nextExercise(name: String)
         // Between sets, counting down to `until`.
@@ -80,9 +80,19 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: Constants.cardHeight)
+        .background(Color.exerciseLiveBar, in: Constants.shape)
         // The Lighthouse input card's glass and geometry — softer at the top,
         // tighter where it meets the screen edge.
-        .modifier(GlassEffect(shape: .unevenRoundedRect(top: 36, bottom: 44), interactive: false))
+        .modifier(GlassEffect(
+            shape: .unevenRoundedRect(top: Constants.topCorner, bottom: Constants.bottomCorner),
+            interactive: false
+        ))
+        // Lifts the card off whatever scrolls under it.
+        .shadow(
+            color: .black.opacity(Double.veryMinimalOpacity),
+            radius: Constants.shadowRadius,
+            y: Constants.shadowDrop
+        )
     }
 
     // MARK: - Controls
@@ -146,7 +156,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
             switch self {
             case .rpe: .defaultPink
             case .failedSet: .defaultRed
-            case .skip: .defaultBlue
+            case .skip: .exerciseLiveAccent
             case .complete, .start: .defaultGreen
             case .extendRest: nil
             }
@@ -264,7 +274,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
             BrightText(
                 value.text,
-                size: .standout1,
+                size: .giant,
                 color: value.color,
                 scaleTextSize: Constants.valueScale
             )
@@ -277,15 +287,15 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
     private func value(at date: Date) -> (text: String, color: Color) {
         switch status {
-        case let .working(label):
-            return (label, .textColor)
+        case let .working(_, target):
+            return (target, .textColor)
 
         case let .nextExercise(name):
             return (name, .textColor)
 
         case let .resting(_, until):
             let remaining = max(0, until.timeIntervalSince(date))
-            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .textColor)
+            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .exerciseLiveAccent)
 
         case .allSetsComplete:
             return ("Finish", .textColor)
@@ -294,7 +304,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
 
     private func countdown(_ remaining: TimeInterval) -> String {
         let seconds = Int(remaining.rounded(.up))
-        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
+        return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
     // MARK: - Per-status presentation
@@ -303,7 +313,7 @@ struct ExerciseLiveWorkoutStatusWidget: View {
     // above it.
     private var caption: String? {
         switch status {
-        case .working: "In progress"
+        case let .working(set, _): set
         case .resting: "Rest"
         case .nextExercise, .allSetsComplete: nil
         }
@@ -329,6 +339,19 @@ struct ExerciseLiveWorkoutStatusWidget: View {
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15
         static let longExtension: TimeInterval = 30
+        static let topCorner: CGFloat = 36
+        static let bottomCorner: CGFloat = 44
+        static let shadowRadius: CGFloat = 20
+        static let shadowDrop: CGFloat = 6
+
+        static var shape: UnevenRoundedRectangle {
+            UnevenRoundedRectangle(cornerRadii: .init(
+                topLeading: topCorner,
+                bottomLeading: bottomCorner,
+                bottomTrailing: bottomCorner,
+                topTrailing: topCorner
+            ))
+        }
         // How small the half of a swapping slot that isn't showing sits.
     }
 }
@@ -349,7 +372,7 @@ private extension VerticalAlignment {
     VStack(spacing: .spacing3x) {
         ExerciseLiveWorkoutStatusWidget(status: .nextExercise(name: "Warmup"), heartRate: "121")
 
-        ExerciseLiveWorkoutStatusWidget(status: .working(label: "Set 1"), heartRate: "121")
+        ExerciseLiveWorkoutStatusWidget(status: .working(set: "Set 3", target: "80x4"), heartRate: "121")
 
         ExerciseLiveWorkoutStatusWidget(
             status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(263)),
@@ -375,7 +398,7 @@ private extension VerticalAlignment {
         ExerciseLiveWorkoutStatusWidget(
             status: isResting
                 ? .resting(upNext: "Set 2", until: Date().addingTimeInterval(263))
-                : .working(label: "Set 1"),
+                : .working(set: "Set 3", target: "80x4"),
             heartRate: "121",
             onSkip: { isResting = false },
             onComplete: { isResting = true }

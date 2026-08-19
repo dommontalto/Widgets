@@ -32,6 +32,8 @@ struct ExerciseCreateSessionSheet: View {
 
     @State private var isAddingExercise = false
 
+    @State private var isEditingSupersets = false
+
     @State private var nameNudge = 0
 
     // The session as it looked on arrival, so Save can tell edits from a no-op.
@@ -96,6 +98,11 @@ struct ExerciseCreateSessionSheet: View {
                     builder.replace(target.id, with: replacement.name)
                     selected = replacement.name
                 }
+            }
+        }
+        .sheet(isPresented: $isEditingSupersets) {
+            ExerciseSupersetSheet(exercises: builder.draftExercises) { edited in
+                withAnimation(.brightSnappy) { builder.applySupersets(edited) }
             }
         }
         .sheet(isPresented: $isAddingExercise) {
@@ -221,9 +228,8 @@ struct ExerciseCreateSessionSheet: View {
 
             Spacer(minLength: .spacing2x)
 
-            ShareLink(item: builder.exportText(for: exercise)) {
-                BrightRoundButton(systemImage: "link")
-                    .allowsHitTesting(false)
+            BrightRoundButton(systemImage: "link") {
+                isEditingSupersets = true
             }
 
             BrightRoundButton(systemImage: "plus") {

@@ -18,6 +18,8 @@ struct ExerciseHistoryWidget: View {
                 BrightText("Past 14 days", size: .body2, color: .lightTextColor)
             }
 
+            key
+
             VStack(spacing: .spacing0x) {
                 ForEach(workouts) { workout in
                     workoutRow(workout)
@@ -40,8 +42,29 @@ struct ExerciseHistoryWidget: View {
         }
     }
 
+    // Reads the same as the consistency heatmap's, with imported workouts
+    // standing in for its rest days.
+    private var key: some View {
+        FlowLayout(spacing: .spacing2x) {
+            keyItem("Strength", color: .defaultPurple)
+            keyItem("Cardio", color: .defaultSkyBlue)
+            keyItem("Both", color: .defaultGreen)
+            keyItem("Apple Health", color: .defaultRed)
+        }
+    }
+
+    private func keyItem(_ title: String, color: Color) -> some View {
+        HStack(spacing: .spacing1x) {
+            RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+                .fill(color)
+                .frame(width: Constants.keySwatchSize, height: Constants.keySwatchSize)
+
+            BrightText(title, size: .body3, color: .lightTextColor)
+        }
+    }
+
     private func workoutRow(_ workout: ExerciseWorkout) -> some View {
-        let color = color(for: workout.type)
+        let color = color(for: workout)
         return Button {
             selectedWorkout = workout
         } label: {
@@ -74,9 +97,12 @@ struct ExerciseHistoryWidget: View {
         .buttonStyle(.plain)
     }
 
-    // The same three the consistency heatmap uses.
-    private func color(for type: ExerciseDayType) -> Color {
-        switch type {
+    // The same three the consistency heatmap uses, and red for anything that
+    // came in from Apple Health rather than being run here.
+    private func color(for workout: ExerciseWorkout) -> Color {
+        guard !workout.isFromAppleHealth else { return .defaultRed }
+
+        return switch workout.type {
         case .cardio: .defaultSkyBlue
         case .both: .defaultGreen
         case .strength, .rest: .defaultPurple
@@ -86,6 +112,7 @@ struct ExerciseHistoryWidget: View {
     private enum Constants {
         static let iconWidth: CGFloat = 28
         static let swatchSize: CGFloat = 16
+        static let keySwatchSize: CGFloat = 12
     }
 }
 

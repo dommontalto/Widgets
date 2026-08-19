@@ -140,6 +140,11 @@ nonisolated extension Color {
     // Lighthouse
     
     static let defaultLighthouseBlue = Color(hex: "#CFEBFF")
+    
+    // Exercise
+    
+    static let exerciseLiveBar = Color(light: .white, dark: Color(hex: "#34343A").opacity(.veryLowOpacity))
+    static let exerciseLiveAccent = Color(light: .defaultSkyBlue, dark: .defaultCyan)
 }
 
 // MARK: - Support

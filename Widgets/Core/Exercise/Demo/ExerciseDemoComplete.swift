@@ -408,6 +408,10 @@ enum ExerciseDemoComplete {
 // MARK: - Summary
 
 extension ExerciseDemoComplete {
+    // The six a run can report. Against the backend this is built from whatever
+    // the payload actually carries: a metric with nothing to say — nil or zero —
+    // is left out of the list rather than shown empty, so its icon, label and
+    // unit go with it and the grid closes up around the gap.
     fileprivate static let cardioMetrics: [ExerciseCompleteMetric] = [
         .init(icon: .asset(ImageNames.durationV5), title: "Duration", value: "00:32:43"),
         .init(icon: .asset(ImageNames.energyBurntV5), title: "Energy used", value: "329 Cal"),
@@ -417,6 +421,8 @@ extension ExerciseDemoComplete {
             value: "5.5 KM"
         ),
         .init(icon: .system("timer", tint: .defaultPurple), title: "Pace", value: "5\u{2019}23"),
+        .init(icon: .asset(ImageNames.heartPulseRedV5), title: "AVG HR", value: "154 BPM"),
+        .init(icon: .asset(ImageNames.altitudeGainV5), title: "Altitude gain", value: "96 M"),
     ]
 
     fileprivate static let sportsMetrics: [ExerciseCompleteMetric] = [

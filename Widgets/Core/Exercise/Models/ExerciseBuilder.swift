@@ -75,6 +75,10 @@ struct ExerciseSetDraft: Identifiable, Hashable {
 @MainActor @Observable
 final class ExerciseBuilder {
     var added: [String] = []
+
+    // Which exercises are supersetted together, keyed by name. Exercises sharing
+    // an ID run as one block.
+    var supersets: [String: UUID] = [:]
     var sets: [String: [ExerciseSetDraft]] = [:]
     // What each run or sport in the draft is chasing, keyed the way sets are.
     var plans: [String: ExerciseCardioPlan] = [:]
@@ -218,6 +222,24 @@ final class ExerciseBuilder {
         return "\(added.count) exercise\(added.count == 1 ? "" : "s")"
     }
 
+    // The draft as the superset sheet reads it.
+    var draftExercises: [ExerciseActiveExercise] {
+        ExerciseActiveExercise.fromTemplate(templateItems).map { exercise in
+            var copy = exercise
+            copy.supersetID = supersets[exercise.name]
+            return copy
+        }
+    }
+
+    // Takes the sheet's result back: the order it left them in, and which of
+    // them it grouped.
+    func applySupersets(_ exercises: [ExerciseActiveExercise]) {
+        added = exercises.map(\.name)
+        supersets = exercises.reduce(into: [:]) { map, exercise in
+            if let group = exercise.supersetID { map[exercise.name] = group }
+        }
+    }
+
     private var templateItems: [ExerciseTemplateItem] {
         added.map { exercise in
             ExerciseTemplateItem(
@@ -240,16 +262,6 @@ final class ExerciseBuilder {
             get: { [weak self] in self?.plans[exercise] ?? ExerciseCardioPlan() },
             set: { [weak self] plan in self?.plans[exercise] = plan }
         )
-    }
-
-    // Plain-text export of the workout, for sharing out of the sets editor.
-    func exportText(for exercise: String) -> String {
-        let drafts = sets[exercise] ?? []
-        let rows = drafts.map { draft in
-            let label = draft.kind.label ?? (draft.kind == .warmUp ? "Warm up" : "Cool down")
-            return "\(label)\t\(draft.weight)\t\(draft.reps) reps\trest \(draft.rest)"
-        }
-        return ([exercise, "Set\tWeight\tReps\tRest"] + rows).joined(separator: "\n")
     }
 
     private func target(for exercise: String) -> String {
