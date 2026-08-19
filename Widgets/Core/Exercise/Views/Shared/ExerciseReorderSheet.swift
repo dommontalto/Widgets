@@ -76,7 +76,7 @@ struct ExerciseReorderSheet: View {
         )
         .sheet(isPresented: $isAddingExercise) {
             NavigationStack {
-                ExerciseCategorySheet(
+                ExerciseLibrarySheet(
                     category: .gym,
                     showCloseButton: true,
                     included: Set(order.map(\.name))

@@ -88,7 +88,7 @@ struct ExerciseCreateSessionSheet: View {
         )
         .sheet(item: $swapTarget) { target in
             NavigationStack {
-                ExerciseCategorySheet(
+                ExerciseLibrarySheet(
                     category: ExerciseDemoLibrary.workoutCategory(of: target.id),
                     showCloseButton: true,
                     included: Set(builder.added)
@@ -100,7 +100,7 @@ struct ExerciseCreateSessionSheet: View {
         }
         .sheet(isPresented: $isAddingExercise) {
             NavigationStack {
-                ExerciseCategorySheet(
+                ExerciseLibrarySheet(
                     category: .gym,
                     showCloseButton: true,
                     included: Set(builder.added)

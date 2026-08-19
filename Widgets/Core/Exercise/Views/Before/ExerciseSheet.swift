@@ -153,7 +153,7 @@ struct ExerciseSheet: View {
     private func destination(for route: ExerciseWorkoutRoute) -> some View {
         switch route {
         case let .category(category):
-            ExerciseCategorySheet(category: category)
+            ExerciseLibrarySheet(category: category)
         case let .exercise(name):
             exerciseDetail(named: name)
         case .newSession:

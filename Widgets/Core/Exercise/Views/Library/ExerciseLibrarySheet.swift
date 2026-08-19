@@ -2,168 +2,141 @@
 //  ExerciseLibrarySheet.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 24/7/2026.
+//  Created by Dom Montalto on 29/7/2026.
 //
 
 import SwiftUI
 
 struct ExerciseLibrarySheet: View {
+    let category: ExerciseWorkoutCategory
+
+    // Presented as a sheet there's no back button, so it needs its own close.
+    var showCloseButton = false
+
+    // What the caller is already holding, so picking for a session that's open
+    // shows what's in it as ticked rather than offering to add it again.
+    var included: Set<String> = []
+
+    // Set to pick one exercise and hand it back — swapping, or adding to a draft
+    // that's already open. Left nil, the plus adds straight to the draft.
     var onSelect: ((ExerciseDefinition) -> Void)?
 
+    @Environment(ExerciseBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
-
-    @State private var selectedEquipment: ExerciseEquipment?
-
-    @State private var selectedMuscle: ExerciseMuscle?
-
-    @State private var openedExercise: ExerciseDefinition?
+    @State private var selectedCategory: ExerciseWorkoutCategory?
 
     var body: some View {
-        BrightPageSheetView(
-            title: onSelect == nil ? "Exercises" : "Add exercise",
-            horizontalPadding: .spacing0x
-        ) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .spacing3x) {
-                    BrightSearchBar("Search exercises", text: $searchText)
-                        .padding(.horizontal, .spacing3x)
+        BrightPageView(
+            scrollableTitle: false,
+            horizontalPadding: .spacing0x,
+            backgroundColor: .defaultSheetBackground,
+            toolbar: {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: title, file: #file)
+                }
 
-                    filters
-
-                    BrightText("\(filtered.count) exercises", size: .body3, color: .lightTextColor)
-                        .monospacedDigit()
-                        .padding(.horizontal, .spacing3x)
-
-                    ForEach(groupedMuscles, id: \.self) { muscle in
-                        section(for: muscle)
-                            .padding(.horizontal, .spacing3x)
+                if showCloseButton {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
                     }
                 }
-                .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing4x)
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    // Picking one exercise for a draft that's already open has
+                    // nothing to add or count.
+                    if onSelect == nil, builder.count > 0 {
+                        Button("Add") {
+                            builder.path.append(ExerciseWorkoutRoute.newSession)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.defaultSkyBlue)
+                        .transition(.opacity.combined(with: .scale))
+                    }
+                }
+            },
+            content: {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: .spacing3x) {
+                        BrightSearchBar("Search \(activeCategory.displayName)", text: $searchText)
+
+                        categoryTags
+
+                        VStack(spacing: .spacing2x) {
+                            ForEach(filtered) { exercise in
+                                row(for: exercise)
+                            }
+                        }
+                    }
+                    .padding(.spacing3x)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if onSelect == nil, builder.count > 0 {
+                        ExerciseAddedPill()
+                            .padding(.spacing3x)
+                    }
+                }
             }
-        }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                ExerciseInlineTitle(title: onSelect == nil ? "Exercises" : "Add exercise", file: #file)
-            }
-        }
-        .sheet(item: $openedExercise) { exercise in
-            BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
-                ExerciseDetailSheet(exercise: exercise)
-            }
-        }
+        )
         .animation(.brightEaseInOut, value: filtered.count)
+        .animation(.brightSnappy, value: builder.count)
     }
 
-    // MARK: - Content
+    @ViewBuilder private func row(for exercise: ExerciseDefinition) -> some View {
+        if let onSelect {
+            ExerciseLibraryRow(exercise: exercise, isAdded: included.contains(exercise.name)) {
+                onSelect(exercise)
+                dismiss()
+            }
+        } else {
+            ExerciseLibraryRow(exercise: exercise, isAdded: builder.isAdded(exercise.name)) {
+                withAnimation(.brightBouncy) { builder.toggle(exercise.name) }
+            }
+        }
+    }
 
-    private var filters: some View {
+    // The categories the sheet no longer lists, so they're switchable from here.
+    private var categoryTags: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: .spacing1x) {
-                ForEach(ExerciseMuscle.allCases) { muscle in
-                    BrightTag(title: muscle.displayName, isSelected: selectedMuscle == muscle) {
-                        withAnimation(.brightSnappy) {
-                            selectedMuscle = selectedMuscle == muscle ? nil : muscle
-                        }
-                    }
-                }
-                ForEach(ExerciseEquipment.allCases) { equipment in
-                    BrightTag(title: equipment.displayName, isSelected: selectedEquipment == equipment) {
-                        withAnimation(.brightSnappy) {
-                            selectedEquipment = selectedEquipment == equipment ? nil : equipment
-                        }
+                ForEach(ExerciseWorkoutCategory.standard) { category in
+                    BrightTag(
+                        title: category.displayName,
+                        systemImage: category.symbol,
+                        isSelected: category == activeCategory
+                    ) {
+                        withAnimation(.brightSnappy) { selectedCategory = category }
                     }
                 }
             }
-            .padding(.horizontal, .spacing3x)
         }
         .scrollClipDisabled()
     }
 
-    private func section(for muscle: ExerciseMuscle) -> some View {
-        let exercises = filtered.filter { $0.primaryMuscle == muscle }
-        return VStack(alignment: .leading, spacing: .spacing105x) {
-            BrightText(muscle.displayName, size: .body1)
-                .padding(.leading, .spacing1x)
-
-            VStack(spacing: .spacing0x) {
-                ForEach(exercises) { exercise in
-                    row(exercise)
-
-                    if exercise.id != exercises.last?.id {
-                        Rectangle()
-                            .fill(Color.textColor.opacity(.ultraLowOpacity))
-                            .frame(height: 1)
-                    }
-                }
-            }
-            .padding(.horizontal, .spacing3x)
-            .padding(.vertical, .spacing1x)
-            .modifier(CardModifier(color: .defaultSheetModalCards))
-        }
+    private var activeCategory: ExerciseWorkoutCategory {
+        selectedCategory ?? category
     }
 
-    private func row(_ exercise: ExerciseDefinition) -> some View {
-        Button {
-            if let onSelect {
-                onSelect(exercise)
-                dismiss()
-            } else {
-                openedExercise = exercise
-            }
-        } label: {
-            HStack(spacing: .spacing2x) {
-                Image(systemName: exercise.symbol)
-                    .font(.standard(size: .subheading2, weight: .light))
-                    .foregroundStyle(Color.lightTextColor)
-                    .frame(width: Constants.iconWidth)
-
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(exercise.name, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    BrightText(exercise.equipmentLabel, size: .body3, color: .lightTextColor)
-                }
-
-                Spacer(minLength: .spacing2x)
-
-                Image(systemName: onSelect == nil ? "chevron.right" : "plus")
-                    .font(.standard(size: .body5, weight: .regular))
-                    .foregroundStyle(Color.lightTextColor)
-            }
-            .padding(.vertical, .spacing105x)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+    private var title: String {
+        "\(activeCategory.displayName) Exercises"
     }
-
-    // MARK: - Derived state
 
     private var filtered: [ExerciseDefinition] {
-        ExerciseDemoLibrary.all.filter { exercise in
-            (searchText.isEmpty || exercise.name.localizedCaseInsensitiveContains(searchText))
-                && (selectedEquipment == nil || exercise.equipment == selectedEquipment)
-                && (selectedMuscle == nil || exercise.primaryMuscle == selectedMuscle
-                    || exercise.secondaryMuscles.contains(selectedMuscle!))
-        }
-    }
-
-    private var groupedMuscles: [ExerciseMuscle] {
-        ExerciseMuscle.allCases.filter { muscle in
-            filtered.contains { $0.primaryMuscle == muscle }
-        }
-    }
-
-    private enum Constants {
-        static let iconWidth: CGFloat = 28
+        ExerciseDemoLibrary.exercises(in: activeCategory)
+            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+            .sorted { $0.name < $1.name }
     }
 }
 
 #Preview {
-    ExerciseLibrarySheet()
-}
-
-#Preview("Picker") {
-    ExerciseLibrarySheet { _ in }
+    NavigationStack {
+        ExerciseLibrarySheet(category: .gym)
+            .environment(ExerciseBuilder())
+    }
 }
