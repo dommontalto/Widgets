@@ -245,15 +245,20 @@ enum ExerciseDemoData {
     // A run the flow has just finished, for it to hand to the summary. Named
     // parts so the summary's picker shows a lifting leg alongside the run when
     // the session held both.
-    static func loggedCardio(name: String, afterStrength: Bool) -> ExerciseWorkout {
-        ExerciseWorkout(
-            name: name,
+    // Lifting counts as one part however many exercises it held; every run and
+    // sport is its own.
+    static func logged(_ workout: ExerciseQuickWorkout) -> ExerciseWorkout {
+        let parts = (workout.hasStrength ? [ExerciseWorkoutCategory.gym] : [])
+            + workout.cardioItems.map { ExerciseDemoLibrary.workoutCategory(of: $0.exerciseName) }
+
+        return ExerciseWorkout(
+            name: workout.name,
             timestamp: "Just now",
-            type: afterStrength ? .both : .cardio,
+            type: workout.hasStrength ? .both : .cardio,
             summary: "5.02 km \u{2022} 4\u{2019}58\u{201D} /km",
             detail: cardioDetail,
             hasRoute: true,
-            parts: afterStrength ? [.gym, .cardio] : [.cardio]
+            parts: parts
         )
     }
 

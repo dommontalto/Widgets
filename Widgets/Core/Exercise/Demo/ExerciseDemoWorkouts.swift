@@ -22,18 +22,29 @@ struct ExerciseQuickWorkout: Identifiable {
 
     var id: String { name }
 
+    // Only what's logged set by set. A run or a sport isn't, so it never reaches
+    // the live workout's list.
+    var strengthItems: [ExerciseTemplateItem] {
+        items.filter { !ExerciseDemoLibrary.isCardio($0.exerciseName) }
+    }
+
+    // One leg each: every run and every sport gets its own setup screen and its
+    // own live screen, in the order they were added. Two runs in a session means
+    // two legs, not one — they're never merged.
+    // Backend: keep each leg's own plan on the item, since the setup screen reads
+    // its targets and intervals from there rather than from the session.
+    var cardioItems: [ExerciseTemplateItem] {
+        items.filter { ExerciseDemoLibrary.isCardio($0.exerciseName) }
+    }
+
     // A session runs as cardio only when there's nothing in it to log set by set.
     var isCardio: Bool {
-        !items.isEmpty && items.allSatisfy { ExerciseDemoLibrary.isCardio($0.exerciseName) }
+        !items.isEmpty && strengthItems.isEmpty
     }
 
-    var hasCardio: Bool {
-        items.contains { ExerciseDemoLibrary.isCardio($0.exerciseName) }
-    }
+    var hasCardio: Bool { !cardioItems.isEmpty }
 
-    var hasStrength: Bool {
-        items.contains { !ExerciseDemoLibrary.isCardio($0.exerciseName) }
-    }
+    var hasStrength: Bool { !strengthItems.isEmpty }
 
     var symbol: String { glyphs.first?.symbol ?? ExerciseWorkoutCategory.gym.symbol }
 
@@ -62,7 +73,7 @@ enum ExerciseDemoWorkouts {
     // up once that's logged.
     static let pushAndRun = ExerciseQuickWorkout(
         name: "Push & run",
-        subtitle: "3 exercises \u{2022} 4 km",
+        subtitle: "2 exercises \u{2022} 4 km",
         items: [
             ExerciseTemplateItem(
                 exerciseName: "Bench Press",

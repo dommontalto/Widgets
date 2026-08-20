@@ -12,6 +12,9 @@ import SwiftUI
 struct ExercisePreCardioSheet: View {
     let workout: ExerciseQuickWorkout
 
+    // Which of the session's runs or sports this sets up.
+    var leg = 0
+
     var chrome: ExercisePageChrome = .sheet
 
     // Ends the whole run. Only the flow can do that from a pushed leg, where
@@ -29,8 +32,24 @@ struct ExercisePreCardioSheet: View {
     @State private var isPickingDevices = false
     @State private var source = ExerciseSessionSource.phoneAndWatch
 
+    private var item: ExerciseTemplateItem? {
+        let legs = workout.cardioItems
+        return legs.indices.contains(leg) ? legs[leg] : legs.first
+    }
+
     private var plan: ExerciseCardioPlan {
-        workout.items.compactMap(\.plan).first ?? ExerciseCardioPlan()
+        item?.plan ?? ExerciseCardioPlan()
+    }
+
+    // The session's own name when the run is all it is, and the run's name when
+    // it's one leg among others.
+    private var title: String {
+        guard workout.hasStrength || workout.cardioItems.count > 1 else { return workout.name }
+        return item?.exerciseName ?? workout.name
+    }
+
+    private var symbol: String {
+        item.map { ExerciseDemoLibrary.glyph(for: $0.exerciseName).symbol } ?? workout.symbol
     }
 
     var body: some View {
@@ -117,12 +136,12 @@ struct ExercisePreCardioSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            Image(systemName: workout.symbol)
+            Image(systemName: symbol)
                 .font(.standard(size: .huge2, weight: .light))
                 .foregroundStyle(Color.textColor)
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(workout.name, size: .standout4, scaleTextSize: 0.7)
+                BrightText(title, size: .standout4, scaleTextSize: 0.7)
                     .lineLimit(1)
 
                 BrightText(startLabel, size: .body1, color: .semiLightTextColor)

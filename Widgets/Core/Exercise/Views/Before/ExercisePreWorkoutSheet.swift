@@ -115,7 +115,7 @@ struct ExercisePreWorkoutSheet: View {
                 symbol: "text.line.magnify",
                 color: .lightTextColor,
                 label: "Exercises:",
-                value: "\(workout.items.count)"
+                value: "\(workout.strengthItems.count)"
             )
 
             BrightVerticalDivider(height: Constants.statDividerHeight)
@@ -159,7 +159,7 @@ struct ExercisePreWorkoutSheet: View {
 
     private var exerciseRows: some View {
         VStack(spacing: .spacing2x) {
-            ForEach(workout.items) { item in
+            ForEach(workout.strengthItems) { item in
                 Button {
                     openedExerciseName = item.exerciseName
                 } label: {
@@ -244,7 +244,7 @@ struct ExercisePreWorkoutSheet: View {
     // MARK: - Derived state
 
     private var totalSets: Int {
-        workout.items.reduce(0) { $0 + setCount(for: $1) }
+        workout.strengthItems.reduce(0) { $0 + setCount(for: $1) }
     }
 
     private func setCount(for item: ExerciseTemplateItem) -> Int {

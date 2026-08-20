@@ -30,7 +30,7 @@ struct ContentView: View {
     }
 
     private func start(_ workout: ExerciseQuickWorkout) {
-        workoutStage = workout.isCardio ? .preCardio(workout) : .preWorkout(workout)
+        workoutStage = workout.isCardio ? .preCardio(workout, leg: 0) : .preWorkout(workout)
     }
 
     private var content: some View {

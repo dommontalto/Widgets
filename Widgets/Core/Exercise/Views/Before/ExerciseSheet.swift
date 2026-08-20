@@ -79,7 +79,7 @@ struct ExerciseSheet: View {
     private var sessionCards: some View {
         ForEach(builder.saved) { workout in
             Button {
-                workoutStage = workout.isCardio ? .preCardio(workout) : .preWorkout(workout)
+                workoutStage = workout.isCardio ? .preCardio(workout, leg: 0) : .preWorkout(workout)
             } label: {
                 sessionCard(workout)
             }
