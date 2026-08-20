@@ -29,8 +29,6 @@ struct ExerciseLiveWorkoutMenu: View {
     var onCancel: () -> Void
     var onEnd: () -> Void
 
-    @State private var visibleRows: Set<Int> = []
-
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing0x) {
@@ -40,7 +38,6 @@ struct ExerciseLiveWorkoutMenu: View {
                     color: isPaused ? .defaultOrange : .defaultGreen
                 )
                     .padding(.horizontal, .spacing3x)
-                    .staggered(at: 0, in: visibleRows)
 
                 ExerciseDisc(
                     startDate: startDate,
@@ -55,18 +52,15 @@ struct ExerciseLiveWorkoutMenu: View {
                 )
                     .padding(.top, .spacing5x)
                     .frame(maxWidth: .infinity)
-                    .staggered(at: 1, in: visibleRows)
 
                 transportControls
                     .padding(.top, .spacing4x)
                     .frame(maxWidth: .infinity)
-                    .staggered(at: 2, in: visibleRows)
 
                 playlistHeader
                     .padding(.horizontal, .spacing3x)
                     .padding(.top, .spacing6x)
                     .padding(.bottom, .spacing3x)
-                    .staggered(at: 3, in: visibleRows)
 
                 playlist
 
@@ -80,9 +74,6 @@ struct ExerciseLiveWorkoutMenu: View {
         }
         .safeAreaPadding(.vertical)
         .animation(.brightSnappy, value: pauseDate)
-        .onChange(of: isExpanded) { _, isExpanded in
-            animateRows(in: isExpanded)
-        }
     }
 
     private var isPaused: Bool {
@@ -166,7 +157,6 @@ struct ExerciseLiveWorkoutMenu: View {
                     ))
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
-                    .staggered(at: index + 4, in: visibleRows)
             }
         }
         .listStyle(.plain)
@@ -245,7 +235,6 @@ struct ExerciseLiveWorkoutMenu: View {
             onLeadingTap: { close(then: onCancel) },
             onTrailingTap: { close(then: onEnd) }
         )
-        .staggered(at: exercises.count + 4, in: visibleRows)
     }
 
     private func close(then action: @escaping () -> Void) {
@@ -253,41 +242,8 @@ struct ExerciseLiveWorkoutMenu: View {
         action()
     }
 
-    // Rows fall in one after another as the menu opens, and drop together on the
-    // way out — matching the app's main side menu.
-    private func animateRows(in expanded: Bool) {
-        guard expanded else {
-            withAnimation(.easeOut(duration: Constants.rowExitDuration)) { visibleRows.removeAll() }
-            return
-        }
-
-        visibleRows = []
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Constants.rowStartDelay))
-            for row in 0...(exercises.count + 4) {
-                withAnimation(.bouncy(duration: Constants.rowDuration, extraBounce: Constants.rowBounce)) {
-                    _ = visibleRows.insert(row)
-                }
-                try? await Task.sleep(for: .seconds(Constants.rowStaggerDelay))
-            }
-        }
-    }
-
     private enum Constants {
-        static let rowDuration: TimeInterval = 0.3
-        static let rowBounce: TimeInterval = 0.1
-        static let rowStaggerDelay: TimeInterval = 0.03
-        static let rowStartDelay: TimeInterval = 0.02
-        static let rowExitDuration: TimeInterval = 0.15
         static let transportSize: CGFloat = 44
         static let playlistRowHeight = ExerciseLibraryRow.Constants.minHeight
-    }
-}
-
-private extension View {
-    func staggered(at index: Int, in visibleRows: Set<Int>) -> some View {
-        let isVisible = visibleRows.contains(index)
-        return opacity(isVisible ? .opaque : .zero)
-            .offset(x: isVisible ? 0 : -40)
     }
 }

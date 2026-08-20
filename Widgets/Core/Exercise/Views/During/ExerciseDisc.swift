@@ -46,6 +46,12 @@ struct ExerciseDisc: View {
                 }
                 .overlay { discLabels }
                 .rotationEffect(discAngle(at: context.date))
+                // The timeline stops while the record is off screen, so coming
+                // back the angle has a gap to make up. Nothing here wants an
+                // animated rotation — every frame is drawn from the date — so
+                // refusing the ambient one is what stops it spinning to catch
+                // up.
+                .transaction { $0.animation = nil }
         }
         .frame(width: Constants.discSize, height: Constants.discSize)
         .contentShape(Circle())

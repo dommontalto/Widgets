@@ -21,7 +21,7 @@ struct ExerciseCompleteHeartRateWidget: View {
                 reading(
                     title: "AVG HR",
                     value: hrAvg,
-                    icon: .asset(ImageNames.heartPulseRedV5)
+                    icon: .asset(ImageNames.heartPulseBlueV5)
                 )
 
                 BrightVerticalDivider(height: Constants.readingRule)

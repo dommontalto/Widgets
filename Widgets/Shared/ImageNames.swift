@@ -58,6 +58,7 @@ nonisolated class ImageNames {
     // MARK: - Heart
 
     static let heartPulseRedV5 = "Heart/heart_pulse_red_v5"
+    static let heartPulseBlueV5 = "Heart/heart_pulse_blue_v5"
     static let heartRedDownV5  = "Heart/heart_red_down_v5"
     static let cardioFitnessV5 = "Heart/cardio_fitness_v5"
     static let durationV5      = "Heart/duration_v5"

@@ -93,15 +93,9 @@ struct ExerciseCompleteSheet: View {
     private func container<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         switch chrome {
         case .sheet:
-            BrightPageSheetView(
-                horizontalPadding: .spacing0x,
-                trailing: {
-                    if sessions.count > 1 {
-                        ToolbarItem(placement: .topBarTrailing) { partPicker }
-                    }
-                },
-                content: { content() }
-            )
+            BrightPageSheetView(horizontalPadding: .spacing0x) {
+                content()
+            }
         case .pushed:
             BrightPageView(
                 horizontalPadding: .spacing0x,
@@ -113,10 +107,6 @@ struct ExerciseCompleteSheet: View {
                             Label("Close", systemImage: "xmark")
                                 .labelStyle(.iconOnly)
                         }
-                    }
-
-                    if sessions.count > 1 {
-                        ToolbarItem(placement: .topBarTrailing) { partPicker }
                     }
                 },
                 content: { content() }
@@ -135,11 +125,14 @@ struct ExerciseCompleteSheet: View {
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,
+                // The picker holds the bar's right-hand side, so the title has
+                // nowhere to collapse to.
+                collapsesTitleToToolbar: sessions.count == 1,
                 selectedIndex: $selectedIndex
             ) { index in
                 tabContent(for: ExerciseCompleteTab(rawValue: index) ?? .summary)
                     .padding(.horizontal, .spacing3x)
-                    .padding(.top, .spacing2x)
+                    .padding(.top, .spacing2x + .spacing05x)
                     .padding(.bottom, .spacing3x)
             }
             // Declared on the content rather than on the container: the sheet
@@ -175,10 +168,19 @@ struct ExerciseCompleteSheet: View {
                 }
             }
         }
+        // On the container rather than the pager: the pager's bounds start below
+        // the bar, and anything hung above them stops taking taps.
+        .overlay(alignment: .topTrailing) {
+            if sessions.count > 1 {
+                partPicker
+                    .padding(.trailing, .spacing3x)
+                    .padding(.top, .spacing2x + .spacing05x)
+            }
+        }
     }
 
-    // Sits in the bar opposite the close button, so it stays put as the page
-    // scrolls.
+    // Held at the top right of the sheet, level with the close button, without
+    // being a bar item itself.
     private var partPicker: some View {
         BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
             .fixedSize()

@@ -163,15 +163,6 @@ enum ExerciseIntervalPhase: String, CaseIterable, Identifiable {
         }
     }
 
-    var color: Color {
-        switch self {
-        case .warmup: .defaultOrange
-        case .run: .defaultGreen
-        case .walk: .defaultBlue
-        case .cooldown: .defaultCyan
-        }
-    }
-
 }
 
 struct ExerciseCardioInterval: Identifiable {

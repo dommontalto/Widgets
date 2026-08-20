@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// Prototype. The Bright app builds this card on a shell that's generic over its
+// content, so a cardio session can use it too — port the design across, not
+// this file's structure.
 struct ExerciseLiveWorkoutStatusWidget: View {
     enum Status {
         // Mid-set: `set` names the set, `target` is the weight and reps it's for.

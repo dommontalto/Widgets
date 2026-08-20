@@ -16,24 +16,35 @@ struct ExerciseSessionPicker: View {
     @Binding var selection: String?
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: .spacing1x) {
-                ForEach(exercises, id: \.self) { exercise in
-                    BrightTag(
-                        title: exercise,
-                        systemImage: ExerciseDemoLibrary.glyph(for: exercise).symbol,
-                        isSelected: exercise == selection
-                    ) {
-                        selection = exercise
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: .spacing1x) {
+                    ForEach(exercises, id: \.self) { exercise in
+                        BrightTag(
+                            title: exercise,
+                            systemImage: ExerciseDemoLibrary.glyph(for: exercise).symbol,
+                            isSelected: exercise == selection
+                        ) {
+                            selection = exercise
+                        }
+                        .id(exercise)
                     }
                 }
+                .padding(.horizontal, .spacing3x)
             }
-            .padding(.horizontal, .spacing3x)
+            .scrollClipDisabled()
+            .brightHaptic(.light, trigger: selection)
+            .animation(.brightSnappy, value: selection)
+            .animation(.brightSnappy, value: exercises)
+            // A freshly added exercise is lit as it lands, and the row it lands
+            // on may already be scrolled past the edge, so the tags follow it.
+            .onChange(of: selection) { _, selected in
+                guard let selected else { return }
+                withAnimation(.brightSnappy) {
+                    proxy.scrollTo(selected, anchor: .center)
+                }
+            }
         }
-        .scrollClipDisabled()
-        .brightHaptic(.light, trigger: selection)
-        .animation(.brightSnappy, value: selection)
-        .animation(.brightSnappy, value: exercises)
     }
 }
 

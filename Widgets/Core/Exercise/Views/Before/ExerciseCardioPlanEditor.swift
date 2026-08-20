@@ -190,7 +190,7 @@ struct ExerciseCardioPlanEditor: View {
 
                 Spacer(minLength: .spacing2x)
 
-                BrightTick(isTicked: option == plan.zone, tickTint: option.color)
+                BrightTick(isTicked: option == plan.zone)
             }
             .frame(height: Constants.zoneRowHeight)
             .contentShape(.rect)
@@ -439,7 +439,7 @@ struct ExerciseIntervalRow: View {
     private var badge: some View {
         Image(systemName: phase.symbol)
             .font(.standard(size: .body1, weight: .light))
-            .foregroundStyle(phase.color)
+            .foregroundStyle(Color.textColor)
             .frame(width: badgeSize, height: badgeSize)
             .modifier(GlassEffect(shape: .circle))
     }

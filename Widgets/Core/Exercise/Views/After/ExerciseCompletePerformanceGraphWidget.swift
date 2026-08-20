@@ -425,10 +425,42 @@ extension ExerciseCompletePerformanceGraphWidget {
                 }
             }
             .chartXScale(domain: 0 ... max(duration.totalSeconds, 1))
-            .chartYScale(domain: Double(yTicks?.first ?? 80) ... Double(yTicks?.last ?? 150))
+            .chartYScale(domain: yDomain)
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartXSelection(value: chartSelectionBinding)
+            .background { fill }
+        }
+
+        // A gradient across the whole row masked by the area under the line, so it
+        // is anchored to the dividers rather than to the line's own peak — a
+        // gradient handed straight to the AreaMark would restart at every high point.
+        private var fill: some View {
+            LinearGradient(
+                colors: [color.opacity(.veryMinimalOpacity), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .mask {
+                Chart {
+                    ForEach(values.indices, id: \.self) { index in
+                        AreaMark(
+                            x: .value("Second", xSecond(for: index)),
+                            y: .value(title, values[index])
+                        )
+                        .interpolationMethod(.cardinal(tension: 1.1))
+                        .foregroundStyle(.black)
+                    }
+                }
+                .chartXScale(domain: 0 ... max(duration.totalSeconds, 1))
+                .chartYScale(domain: yDomain)
+                .chartXAxis(.hidden)
+                .chartYAxis(.hidden)
+            }
+        }
+
+        private var yDomain: ClosedRange<Double> {
+            Double(yTicks?.first ?? 80) ... Double(yTicks?.last ?? 150)
         }
 
         private var chartSelectionBinding: Binding<Double?> {

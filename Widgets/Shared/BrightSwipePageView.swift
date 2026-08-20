@@ -202,6 +202,16 @@ struct BrightSwipePageView<Content: View>: View {
     // MARK: Pager
 
     private var pager: some View {
+        ScrollViewReader { proxy in
+            scrollView
+                // `scrollPosition` is seeded with the selected page, so assigning
+                // it again can't move anything. Jumping through the proxy does,
+                // and leaves the binding — and the haptic riding it — alone.
+                .onAppear { proxy.scrollTo(selectedIndex) }
+        }
+    }
+
+    private var scrollView: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
                 ForEach(pages.indices, id: \.self) { i in
@@ -223,7 +233,6 @@ struct BrightSwipePageView<Content: View>: View {
         .onScrollGeometryChange(for: CGFloat.self) { $0.containerSize.width } action: { _, new in
             state.containerWidth = new
         }
-        .onAppear { scrollPosition = selectedIndex }
         .onChange(of: scrollPosition) { _, newValue in
             if let newValue, newValue != selectedIndex {
                 // Animate so anything bound to selectedIndex (e.g. conditional

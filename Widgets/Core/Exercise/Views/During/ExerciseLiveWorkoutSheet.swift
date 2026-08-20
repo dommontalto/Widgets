@@ -27,7 +27,9 @@ struct ExerciseLiveWorkoutSheet: View {
     @State private var currentIndex = 0
     @State private var openedExerciseName: String?
     @State private var restEndDate: Date?
-    @State private var isSideMenuExpanded = false
+    // Which of the two panes is showing. The menu is one swipe to the left of
+    // the run, the same as every other paged screen.
+    @State private var pane = Constants.runPane
     @State private var isPickingRPE = false
     @State private var isPickingFailedRep = false
     // The set rows sit in a `List`, which re-derives its width when the rest
@@ -68,34 +70,59 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     var body: some View {
-        ExerciseSlideMenu(sideBarRatio: Constants.menuWidthRatio, isExpanded: $isSideMenuExpanded) {
-            ExerciseLiveWorkoutMenu(
-                exercises: $exercises,
-                currentIndex: $currentIndex,
-                isExpanded: $isSideMenuExpanded,
-                startDate: startDate,
-                pauseDate: pauseDate,
-                // The chip on the record says what the run is doing, and during a
-                // rest that's the rest rather than the set waiting behind it.
-                blockName: isResting ? "Resting" : currentBlockName,
-                onBack: {
-                    if currentIndex > 0 { showTransport("PREV") }
-                    goBack()
-                },
-                onTogglePause: togglePause,
-                onScrub: scrub,
-                onScrubEnd: { isScrubbing = false },
-                onAdvance: {
-                    if currentIndex + 1 < exercises.count { showTransport("NEXT") }
-                    advance()
-                },
-                onEdit: { isEditingWorkout = true },
-                onCancel: { isConfirmingDiscard = true },
-                onEnd: confirmFinish
-            )
-        } content: {
-            page
+        BrightSwipePageView(
+            pages: [SwipePage(title: ""), SwipePage(title: "")],
+            showInlineTabs: false,
+            // Left alone the pager claims the bar's principal item for its own
+            // collapsing title, which would take the run's clock with it.
+            collapsesTitleToToolbar: false,
+            // Set on the pager so both panes sit on the same ground and the
+            // swipe between them doesn't change colour underneath.
+            backgroundColor: .defaultBackground,
+            selectedIndex: $pane
+        ) { index in
+            if index == Constants.menuPane {
+                menu
+            } else {
+                page
+            }
         }
+    }
+
+    // Open while the menu is the pane on show, so the menu closes itself by
+    // swiping the run back over.
+    private var isMenuOpen: Binding<Bool> {
+        Binding(
+            get: { pane == Constants.menuPane },
+            set: { pane = $0 ? Constants.menuPane : Constants.runPane }
+        )
+    }
+
+    private var menu: some View {
+        ExerciseLiveWorkoutMenu(
+            exercises: $exercises,
+            currentIndex: $currentIndex,
+            isExpanded: isMenuOpen,
+            startDate: startDate,
+            pauseDate: pauseDate,
+            // The chip on the record says what the run is doing, and during a
+            // rest that's the rest rather than the set waiting behind it.
+            blockName: isResting ? "Resting" : currentBlockName,
+            onBack: {
+                if currentIndex > 0 { showTransport("PREV") }
+                goBack()
+            },
+            onTogglePause: togglePause,
+            onScrub: scrub,
+            onScrubEnd: { isScrubbing = false },
+            onAdvance: {
+                if currentIndex + 1 < exercises.count { showTransport("NEXT") }
+                advance()
+            },
+            onEdit: { isEditingWorkout = true },
+            onCancel: { isConfirmingDiscard = true },
+            onEnd: confirmFinish
+        )
     }
 
     private var isResting: Bool {
@@ -114,7 +141,7 @@ struct ExerciseLiveWorkoutSheet: View {
             toolbar: {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        withAnimation(.brightSnappy) { isSideMenuExpanded.toggle() }
+                        withAnimation(.brightSnappy) { isMenuOpen.wrappedValue.toggle() }
                     } label: {
                         Image(systemName: "sidebar.left")
                     }
@@ -820,7 +847,8 @@ struct ExerciseLiveWorkoutSheet: View {
         // Until the screen has been measured. Only the very first frame, and the
         // menu starts closed.
         // The menu is designed at 354 of a 402pt screen.
-        static let menuWidthRatio: CGFloat = 354.0 / 402.0
+        static let menuPane = 0
+        static let runPane = 1
         static let elapsedTick: TimeInterval = 1
         static let transportReveal: TimeInterval = 2
         static let thumbnailSize: CGFloat = 60
