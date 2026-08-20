@@ -37,7 +37,7 @@ struct ExerciseQuickWorkout: Identifiable {
 
     var symbol: String { glyphs.first?.symbol ?? ExerciseWorkoutCategory.gym.symbol }
 
-    var accentColor: Color { glyphs.first?.color ?? ExerciseWorkoutCategory.gym.accentColor }
+    var accentColor: Color { glyphs.first?.color ?? .defaultPurple }
 
     // The card wears what's in the session: one icon per exercise in the order
     // they were added, up to four, and never the same icon twice.

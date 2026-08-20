@@ -79,15 +79,6 @@ nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
         }
     }
 
-    var accentColor: Color {
-        switch self {
-        case .gym: .defaultPurple
-        case .bodyweight: .defaultGreen
-        case .cardio: .defaultSkyBlue
-        case .sports: .defaultOrange
-        }
-    }
-
     var countUnit: String {
         self == .sports ? "sports" : "exercises"
     }
