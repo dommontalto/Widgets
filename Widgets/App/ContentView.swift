@@ -30,7 +30,7 @@ struct ContentView: View {
     }
 
     private func start(_ workout: ExerciseQuickWorkout) {
-        workoutStage = workout.isCardio ? .cardio : .preWorkout(workout)
+        workoutStage = workout.isCardio ? .preCardio(workout) : .preWorkout(workout)
     }
 
     private var content: some View {
@@ -49,6 +49,12 @@ struct ContentView: View {
                         ExerciseUpcomingWidget { workout in
                             start(workout)
                         }
+                    }
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseHistoryWidget")
+                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Workout history") {
+                        ExerciseHistoryWidget()
                     }
                         .padding(.bottom, .spacing3x)
 
@@ -77,12 +83,6 @@ struct ContentView: View {
                     widgetLabel("ExerciseTrainingLoadWidget")
                     ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
                         ExerciseTrainingLoadWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseHistoryWidget")
-                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Workout history") {
-                        ExerciseHistoryWidget()
                     }
                         .padding(.bottom, .spacing3x)
 

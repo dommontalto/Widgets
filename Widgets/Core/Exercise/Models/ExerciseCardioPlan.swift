@@ -35,7 +35,7 @@ enum ExerciseCardioGoal: String, CaseIterable, Identifiable {
         case .duration: "stopwatch"
         case .zone: "bolt.heart.fill"
         case .calorie: "flame.fill"
-        case .freerun: "figure.run"
+        case .freerun: "hare.fill"
         }
     }
 

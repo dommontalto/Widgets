@@ -105,6 +105,15 @@ struct ExerciseCompleteSheet: View {
         case .sheet:
             BrightPageSheetView(horizontalPadding: .spacing0x) {
                 content()
+                    // The sheet wraps its own bar, so an overlay here lands in
+                    // the bar's row.
+                    .overlay(alignment: .topTrailing) {
+                        if visibleParts.count > 1 {
+                            partPicker
+                                .padding(.trailing, .spacing3x)
+                                .padding(.top, .spacing2x + .spacing05x)
+                        }
+                    }
             }
         case .pushed:
             BrightPageView(
@@ -117,6 +126,14 @@ struct ExerciseCompleteSheet: View {
                             Label("Close", systemImage: "xmark")
                                 .labelStyle(.iconOnly)
                         }
+                    }
+
+                    // Pushed, the content starts below the bar, so an overlay
+                    // can only sit under it — and lifting one above its own
+                    // bounds stops it taking taps. The bar itself is the only
+                    // place left that's level with the close button.
+                    if visibleParts.count > 1 {
+                        ToolbarItem(placement: .topBarTrailing) { partPicker }
                     }
                 },
                 content: { content() }
@@ -135,8 +152,8 @@ struct ExerciseCompleteSheet: View {
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,
-                // The picker holds the bar's right-hand side, so the title has
-                // nowhere to collapse to.
+                // The picker holds the trailing end of the bar, so the title
+                // stays put rather than collapsing into it.
                 collapsesTitleToToolbar: sessions.count == 1,
                 selectedIndex: $selectedIndex
             ) { index in
@@ -178,19 +195,8 @@ struct ExerciseCompleteSheet: View {
                 }
             }
         }
-        // On the container rather than the pager: the pager's bounds start below
-        // the bar, and anything hung above them stops taking taps.
-        .overlay(alignment: .topTrailing) {
-            if partIcons.count > 1 {
-                partPicker
-                    .padding(.trailing, .spacing3x)
-                    .padding(.top, .spacing2x + .spacing05x)
-            }
-        }
     }
 
-    // Held at the top right of the sheet, level with the close button, without
-    // being a bar item itself.
     private var partPicker: some View {
         BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
             .fixedSize()

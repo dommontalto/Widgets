@@ -27,6 +27,10 @@ struct ExerciseCompleteSession {
     var symbol: String {
         category?.symbol ?? ExerciseWorkoutCategory.gym.symbol
     }
+
+    var partTitle: String {
+        (category ?? .gym).displayName
+    }
 }
 
 enum ExerciseCompleteKind {

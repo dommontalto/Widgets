@@ -27,6 +27,14 @@ struct ExerciseQuickWorkout: Identifiable {
         !items.isEmpty && items.allSatisfy { ExerciseDemoLibrary.isCardio($0.exerciseName) }
     }
 
+    var hasCardio: Bool {
+        items.contains { ExerciseDemoLibrary.isCardio($0.exerciseName) }
+    }
+
+    var hasStrength: Bool {
+        items.contains { !ExerciseDemoLibrary.isCardio($0.exerciseName) }
+    }
+
     var symbol: String { glyphs.first?.symbol ?? ExerciseWorkoutCategory.gym.symbol }
 
     var accentColor: Color { glyphs.first?.color ?? ExerciseWorkoutCategory.gym.accentColor }
@@ -48,7 +56,47 @@ struct ExerciseQuickWorkout: Identifiable {
 }
 
 enum ExerciseDemoWorkouts {
-    static let all: [ExerciseQuickWorkout] = [quickFiveK, quickTenK, quickPush, quickPull]
+    static let all: [ExerciseQuickWorkout] = [pushAndRun, quickFiveK, quickTenK, quickPush, quickPull]
+
+    // Holds both kinds, so the run takes the lifting leg first and sets the run
+    // up once that's logged.
+    static let pushAndRun = ExerciseQuickWorkout(
+        name: "Push & run",
+        subtitle: "3 exercises \u{2022} 4 km",
+        items: [
+            ExerciseTemplateItem(
+                exerciseName: "Bench Press",
+                target: "3 \u{00D7} 8",
+                sets: [
+                    ExerciseTemplateSet(weight: "40", reps: "12", kind: .warmUp),
+                    ExerciseTemplateSet(weight: "60", reps: "8", kind: .working(1)),
+                    ExerciseTemplateSet(weight: "70", reps: "8", kind: .working(2)),
+                    ExerciseTemplateSet(weight: "70", reps: "8", kind: .working(3)),
+                ]
+            ),
+            ExerciseTemplateItem(
+                exerciseName: "Shoulder Press",
+                target: "3 \u{00D7} 10",
+                sets: [
+                    ExerciseTemplateSet(weight: "20", reps: "12", kind: .warmUp),
+                    ExerciseTemplateSet(weight: "26", reps: "10", kind: .working(1)),
+                    ExerciseTemplateSet(weight: "26", reps: "10", kind: .working(2)),
+                    ExerciseTemplateSet(weight: "26", reps: "10", kind: .working(3)),
+                ]
+            ),
+            ExerciseTemplateItem(
+                exerciseName: "Outdoor Run",
+                target: "4 km \u{2022} 5\u{2019}30",
+                plan: ExerciseCardioPlan(
+                    goal: .distance,
+                    secondary: .pace,
+                    distance: "4",
+                    pace: "5\u{2019}30",
+                    isIntervalsOn: true
+                )
+            ),
+        ]
+    )
 
     static let quickFiveK = ExerciseQuickWorkout(
         name: "Quick 5K",

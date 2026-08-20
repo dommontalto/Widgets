@@ -189,15 +189,11 @@ struct ExerciseCreateSessionSheet: View {
         .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
+    // The lit tag above already names the exercise and wears its glyph, so the
+    // card carries only what you can do to it.
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: ExerciseDemoLibrary.glyph(for: exercise).symbol)
-                .font(.standard(size: .body2, weight: .medium))
-                .foregroundStyle(Color.textColor)
-
-            BrightText(exercise, size: .body2, color: .semiLightTextColor, weight: .regular)
-
-            Spacer(minLength: .spacing2x)
+            Spacer(minLength: .spacing0x)
 
             Menu {
                 Button("Swap out exercise", systemImage: "rectangle.2.swap") {
