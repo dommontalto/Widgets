@@ -73,12 +73,22 @@ struct ExerciseCompleteSheet: View {
     }
 
     private var partIcons: [BrightRoundPickerIcon] {
-        sessions.indices.map { BrightRoundPickerIcon(id: "\($0)", symbol: sessions[$0].symbol) }
+        visibleParts.map { BrightRoundPickerIcon(id: "\($0)", symbol: sessions[$0].symbol) }
+    }
+
+    // The pushed map can only show a part that has a route, so a lifting part
+    // drops out of the picker for as long as the map is open.
+    private var visibleParts: [Int] {
+        guard showingMap else { return Array(sessions.indices) }
+        return sessions.indices.filter { sessions[$0].workout.hasRoute }
     }
 
     private var partSelection: Binding<BrightRoundPickerIcon> {
         Binding(
-            get: { partIcons[min(selectedPart, partIcons.count - 1)] },
+            get: {
+                partIcons.first { $0.id == "\(selectedPart)" }
+                    ?? partIcons[min(selectedPart, partIcons.count - 1)]
+            },
             set: { selectedPart = Int($0.id) ?? 0 }
         )
     }
@@ -171,7 +181,7 @@ struct ExerciseCompleteSheet: View {
         // On the container rather than the pager: the pager's bounds start below
         // the bar, and anything hung above them stops taking taps.
         .overlay(alignment: .topTrailing) {
-            if sessions.count > 1 {
+            if partIcons.count > 1 {
                 partPicker
                     .padding(.trailing, .spacing3x)
                     .padding(.top, .spacing2x + .spacing05x)
@@ -231,7 +241,7 @@ struct ExerciseCompleteSheet: View {
 
     private var summaryTab: some View {
         VStack(alignment: .leading, spacing: .spacing4x) {
-            if workout.routeLatitudes != nil, workout.routeLongitudes != nil {
+            if workout.hasRoute {
                 ExerciseCompleteMapWidget(
                     routeLatitudes: workout.routeLatitudes,
                     routeLongitudes: workout.routeLongitudes,

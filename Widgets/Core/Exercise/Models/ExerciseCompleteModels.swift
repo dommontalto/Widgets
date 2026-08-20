@@ -83,6 +83,10 @@ struct HeartWorkoutSummaryResponseData {
     var routeLatitudes: [Double]?
     var routeLongitudes: [Double]?
     var routeZoneIndexes: [Int]?
+
+    var hasRoute: Bool {
+        !(routeLatitudes ?? []).isEmpty && !(routeLongitudes ?? []).isEmpty
+    }
 }
 
 // MARK: - Post workout heart graph

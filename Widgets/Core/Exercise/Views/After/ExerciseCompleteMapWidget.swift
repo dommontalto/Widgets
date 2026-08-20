@@ -38,7 +38,6 @@ struct ExerciseCompleteMapWidget: View {
 
     @State private var cameraPosition: MapCameraPosition
     @State private var selectedSecond: Double? = 0
-    @State private var selectedMetric: ExerciseCompleteGraphMetric = .heartRate
     @State private var chaseHeading: Double?
     @State private var lastFraction: Double = 0
     @State private var isFollowing = false
@@ -105,7 +104,6 @@ struct ExerciseCompleteMapWidget: View {
                 .overlay(alignment: .bottom) {
                     breakdown
                         .padding(.horizontal, .spacing2x)
-                        .padding(.bottom, .spacing5x)
                 }
         } else {
             map
@@ -158,11 +156,8 @@ struct ExerciseCompleteMapWidget: View {
 
             if isFullScreen, let selected = selectedCoordinate {
                 Annotation("", coordinate: selected) {
-                    routeMarker(color: selectedMetric.color)
+                    routeMarker(color: highlightTint)
                         .shadow(color: .black.opacity(.mediumOpacity), radius: 4, y: 2)
-                        // Map annotations don't pick up the ambient transaction,
-                        // so the tint change needs its own animation.
-                        .animation(.brightEaseInOut, value: selectedMetric)
                 }
             }
         }
@@ -203,7 +198,7 @@ struct ExerciseCompleteMapWidget: View {
                 cadenceData: cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
             ),
             selectedSecond: stickySelection,
-            selectedMetric: $selectedMetric
+            usesGlass: true
         )
     }
 

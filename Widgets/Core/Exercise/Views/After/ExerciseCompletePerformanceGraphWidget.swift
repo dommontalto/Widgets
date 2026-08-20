@@ -31,19 +31,7 @@ enum ExerciseCompleteGraphMetric: CaseIterable {
     }
 }
 
-private struct MetricFramesKey: PreferenceKey {
-    static let defaultValue: [ExerciseCompleteGraphMetric: CGRect] = [:]
-
-    static func reduce(
-        value: inout [ExerciseCompleteGraphMetric: CGRect],
-        nextValue: () -> [ExerciseCompleteGraphMetric: CGRect]
-    ) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
-    }
-}
-
-// One metric's line, readout and styling. Both the readout row and the graph
-// stack render from this, so they can't drift apart.
+// One metric's line, readout and styling.
 private struct MetricSpec: Identifiable {
     let metric: ExerciseCompleteGraphMetric
     let title: String
@@ -67,127 +55,36 @@ struct ExerciseCompletePerformanceGraphWidget: View {
     // Owned by the caller so the map sheet can drive its camera from the same
     // scrub position.
     @Binding var selectedSecond: Double?
-    // When supplied, only that metric's line is drawn and the readouts become
-    // the switcher for it. Left `nil` the card stacks every metric at once.
-    var selectedMetric: Binding<ExerciseCompleteGraphMetric>?
     var graphHeight: CGFloat = Constants.graphHeight
+    // Floating over the map the card takes glass instead of a card fill, so the
+    // route still reads through it.
+    var usesGlass = false
 
-    @State private var metricFrames: [ExerciseCompleteGraphMetric: CGRect] = [:]
-
-    private var isSwitchable: Bool {
-        selectedMetric != nil
-    }
-
-    private var visibleMetrics: [MetricSpec] {
-        guard let selectedMetric else { return metrics }
-        let match = metrics.filter { $0.metric == selectedMetric.wrappedValue }
-        return match.isEmpty ? Array(metrics.prefix(1)) : match
-    }
-
+    @ViewBuilder
     var body: some View {
-        if isSwitchable {
-            switcher
+        if usesGlass {
+            stack
+                .padding(.spacing3x)
+                .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius24, interactive: false))
         } else {
             stack
+                .padding(.spacing3x)
+                .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
         }
     }
 
-    // Over the map only one metric is drawn at a time and the readouts double as
-    // the switcher for it, so that mode keeps its own card.
-    private var switcher: some View {
-        VStack(alignment: .leading, spacing: .spacing0x) {
-            BrightText("Breakdown", size: .body1, weight: .regular)
-
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(selectedSecond?.hmsString ?? "0:00:00", size: .body1)
-                    .padding(.bottom, .spacing1x)
-
-                selectedTexts
-            }
-            .padding(.vertical, .spacing2x)
-
-            BrightDivider()
-
-            SharedGraphComponent(
-                selectedSecond: $selectedSecond,
-                duration: duration,
-                metrics: visibleMetrics,
-                graphHeight: graphHeight
-            )
-        }
-        .padding(.spacing3x)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
-    }
-
-    // On the Performance tab every metric is stacked, each reading out in its
-    // own colour beside its trace.
     private var stack: some View {
-        SharedGraphComponent(
+        GraphStack(
             selectedSecond: $selectedSecond,
             duration: duration,
             metrics: metrics,
             graphHeight: graphHeight,
             readout: readout(for:)
         )
-        .padding(.spacing3x)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
-    }
-
-    private var selectedTexts: some View {
-        HStack(spacing: isSwitchable ? .spacing1x : .spacing3x) {
-            ForEach(metrics) { spec in
-                SelectedComponentText(
-                    numberText: readout(for: spec),
-                    numberTextColor: spec.color,
-                    unitString: spec.unit,
-                    isSelected: isSwitchable && selectedMetric?.wrappedValue == spec.metric,
-                    isSwitchable: isSwitchable,
-                    onTap: isSwitchable ? { select(spec.metric) } : nil
-                )
-                .background {
-                    GeometryReader { geo in
-                        Color.clear.preference(
-                            key: MetricFramesKey.self,
-                            value: [spec.metric: geo.frame(in: .named(Constants.readoutSpace))]
-                        )
-                    }
-                }
-            }
-        }
-        .coordinateSpace(name: Constants.readoutSpace)
-        .onPreferenceChange(MetricFramesKey.self) { metricFrames = $0 }
-        // Simultaneous so the buttons still handle plain taps; this adds sliding
-        // your finger along the row to drag the pill between readouts.
-        .simultaneousGesture(dragGesture, including: isSwitchable ? .all : .subviews)
-        .brightHaptic(.light, trigger: selectedMetric?.wrappedValue)
-    }
-
-    private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { value in
-                // Nearest centre rather than a strict hit test, so the pill still
-                // follows while the finger is in the gaps between readouts.
-                let nearest = metricFrames.min {
-                    abs($0.value.midX - value.location.x) < abs($1.value.midX - value.location.x)
-                }
-                guard let metric = nearest?.key else { return }
-                select(metric)
-            }
-    }
-
-    private func select(_ metric: ExerciseCompleteGraphMetric) {
-        guard selectedMetric?.wrappedValue != metric else { return }
-
-        // Ease, not spring: a spring overshoots, and on a colour that reads as the
-        // line flashing between the old and new tint before it settles.
-        withAnimation(.brightEaseInOut) {
-            selectedMetric?.wrappedValue = metric
-        }
     }
 
     enum Constants {
         static let graphHeight: CGFloat = 70
-        static let readoutSpace = "metricReadouts"
     }
 }
 
@@ -291,29 +188,20 @@ extension ExerciseCompletePerformanceGraphWidget {
 // MARK: - Stacked graphs
 
 extension ExerciseCompletePerformanceGraphWidget {
-    fileprivate struct SharedGraphComponent: View {
+    fileprivate struct GraphStack: View {
         @Binding var selectedSecond: Double?
         let duration: TimeDuration
         let metrics: [MetricSpec]
         let graphHeight: CGFloat
-        // Supplied by the stacked mode, where each row shows its own value.
-        var readout: ((MetricSpec) -> String)?
+        let readout: (MetricSpec) -> String
 
         var body: some View {
             VStack(alignment: .leading, spacing: .spacing0x) {
                 BrightDivider()
 
                 VStack(spacing: .spacing0x) {
-                    if let single = metrics.first, metrics.count == 1 {
-                        // Deliberately not in the ForEach: keyed by metric, each
-                        // one would be a different view, so switching would swap
-                        // rather than interpolate. One stable row lets Charts
-                        // animate the line's points and colour between metrics.
-                        row(single, isLast: true)
-                    } else {
-                        ForEach(Array(metrics.enumerated()), id: \.element.id) { index, spec in
-                            row(spec, isLast: index == metrics.count - 1)
-                        }
+                    ForEach(Array(metrics.enumerated()), id: \.element.id) { index, spec in
+                        row(spec, isLast: index == metrics.count - 1)
                     }
                 }
 
@@ -340,7 +228,7 @@ extension ExerciseCompletePerformanceGraphWidget {
                 values: spec.values,
                 yTicks: spec.yTicks,
                 graphHeight: graphHeight,
-                readout: readout.map { ($0(spec), spec.unit) }
+                readout: (readout(spec), spec.unit)
             )
 
             if !isLast {
@@ -358,8 +246,7 @@ extension ExerciseCompletePerformanceGraphWidget {
         let values: [Double]
         let yTicks: [Int]?
         let graphHeight: CGFloat
-        // Value and unit for the stacked mode's label column.
-        var readout: (value: String, unit: String)?
+        let readout: (value: String, unit: String)
 
         var body: some View {
             HStack(spacing: .spacing0x) {
@@ -377,25 +264,16 @@ extension ExerciseCompletePerformanceGraphWidget {
             .frame(height: graphHeight)
         }
 
-        @ViewBuilder
         private var label: some View {
-            if let readout {
-                VStack(alignment: .leading, spacing: .spacing1x) {
-                    BrightText(title, size: .body1)
+            VStack(alignment: .leading, spacing: .spacing1x) {
+                BrightText(title, size: .body4)
 
-                    HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
-                        BrightText(readout.value, size: .standout4, color: color)
-                            .monospacedDigit()
+                HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
+                    BrightText(readout.value, size: .standout4, color: color)
+                        .monospacedDigit()
 
-                        BrightText(readout.unit, size: .body1, color: .semiLightTextColor)
-                    }
+                    BrightText(readout.unit, size: .body1, color: .semiLightTextColor)
                 }
-            } else {
-                BrightText(title, size: .body1)
-                    .contentTransition(.numericText())
-                    .animation(.brightEaseInOut, value: title)
-                    .padding(.top, .spacing2x)
-                    .frame(height: graphHeight, alignment: .topLeading)
             }
         }
 
@@ -486,62 +364,6 @@ extension ExerciseCompletePerformanceGraphWidget {
 
         enum Constants {
             static let labelWidth: CGFloat = 92
-        }
-    }
-
-    struct SelectedComponentText: View {
-        let numberText: String
-        let numberTextColor: Color
-        let unitString: String
-        var isSelected = false
-        // Only the switcher gets capsule chrome; the stacked card is plain text.
-        var isSwitchable = false
-        var onTap: (() -> Void)?
-
-        var body: some View {
-            if let onTap {
-                Button(action: onTap) { readout }
-                    .buttonStyle(.plain)
-            } else {
-                readout
-            }
-        }
-
-        private var readout: some View {
-            HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
-                BrightText(
-                    numberText,
-                    size: .heading,
-                    color: isSelected ? .black : numberTextColor
-                )
-                .frame(maxHeight: Constants.lineHeight)
-
-                BrightText(
-                    unitString,
-                    size: .body1,
-                    color: isSelected ? .black.opacity(.lowOpacity) : .lightTextColor
-                )
-            }
-            .padding(.horizontal, isSwitchable ? .spacing1x : .spacing0x)
-            .frame(height: Constants.cellHeight)
-            .background {
-                if isSwitchable {
-                    Capsule()
-                        .fill(isSelected ? numberTextColor : .clear)
-                        .overlay {
-                            Capsule().strokeBorder(
-                                isSelected ? .clear : numberTextColor.opacity(.semiLowOpacity),
-                                lineWidth: 0.5
-                            )
-                        }
-                }
-            }
-            .contentShape(.rect)
-        }
-
-        private enum Constants {
-            static let lineHeight: CGFloat = 24
-            static let cellHeight: CGFloat = 30
         }
     }
 }
