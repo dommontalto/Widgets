@@ -154,7 +154,7 @@ struct ExerciseCreateSessionSheet: View {
                 systemImage: ExerciseWorkoutCategory.gym.symbol,
                 title: "Nothing added yet",
                 subtitle: "Add exercises, runs or sports and they'll line up above.",
-                imageColor: .defaultPurple,
+                imageColor: ExerciseWorkoutCategory.gym.tint,
                 buttonTitle: "Add exercise"
             ) {
                 isAddingExercise = true

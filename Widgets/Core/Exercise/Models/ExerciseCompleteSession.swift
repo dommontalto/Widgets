@@ -32,14 +32,8 @@ struct ExerciseCompleteSession {
         (category ?? .gym).displayName
     }
 
-    // Two colours rather than the library's four: the picker only distinguishes
-    // the lifting part from a part that was moved for, so bodyweight sits with
-    // gym and sports with cardio.
     var partTint: Color {
-        switch category {
-        case .cardio, .sports: .defaultSkyBlue
-        case .gym, .bodyweight, nil: .defaultPurple
-        }
+        (category ?? .gym).tint
     }
 }
 

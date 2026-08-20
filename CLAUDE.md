@@ -2,6 +2,8 @@
 
 **Never create a branch. Commit straight to `main`.**
 
+**Never commit or push unless explicitly told to, and only one commit at a time.**
+
 iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always use the tokens below — never use raw hex values, magic numbers, or system fonts.
 
 **Never build (xcodebuild or otherwise) unless explicitly asked.**

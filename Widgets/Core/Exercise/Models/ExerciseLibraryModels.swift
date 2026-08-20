@@ -53,9 +53,12 @@ nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
 
     var displayName: String { rawValue.capitalized }
 
-    var accentColor: Color {
-        self == .cardio ? .defaultSkyBlue : .defaultPurple
+    // Push, pull, legs and core are all lifting; only the cardio tab isn't.
+    var workoutCategory: ExerciseWorkoutCategory {
+        self == .cardio ? .cardio : .gym
     }
+
+    var accentColor: Color { workoutCategory.tint }
 }
 
 nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
@@ -87,6 +90,14 @@ nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
     // plan instead.
     var isCardio: Bool {
         self == .cardio || self == .sports
+    }
+
+    // The one place the exercise feature's two colours are decided.
+    var tint: Color {
+        switch self {
+        case .cardio, .sports: .defaultSkyBlue
+        case .gym, .bodyweight: .defaultPurple
+        }
     }
 }
 

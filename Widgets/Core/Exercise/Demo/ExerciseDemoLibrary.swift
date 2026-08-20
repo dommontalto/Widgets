@@ -26,14 +26,10 @@ nonisolated enum ExerciseDemoLibrary {
     }
 
     // The icon an exercise wears in the create screen's picker and on a session's
-    // card. Two tints only: purple for anything logged set by set, blue for
-    // anything run against a plan.
+    // card.
     static func glyph(for name: String) -> ExerciseSessionGlyph {
         let category = workoutCategory(of: name)
-        return ExerciseSessionGlyph(
-            id: category.symbol,
-            color: category.isCardio ? .defaultSkyBlue : .defaultPurple
-        )
+        return ExerciseSessionGlyph(id: category.symbol, color: category.tint)
     }
 
     static func exercises(in category: ExerciseWorkoutCategory) -> [ExerciseDefinition] {

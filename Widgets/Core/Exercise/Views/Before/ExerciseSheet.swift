@@ -69,7 +69,7 @@ struct ExerciseSheet: View {
             systemImage: ExerciseWorkoutCategory.gym.symbol,
             title: "No sessions yet",
             subtitle: "Add exercises, runs or sports and save them as a session.",
-            imageColor: .defaultPurple,
+            imageColor: ExerciseWorkoutCategory.gym.tint,
             buttonTitle: "Create session"
         ) {
             newSession()
