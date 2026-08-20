@@ -72,25 +72,11 @@ struct ExerciseCompleteSheet: View {
         currentStep?.metrics ?? session.metrics
     }
 
-    private var partIcons: [BrightRoundPickerIcon] {
-        visibleParts.map { BrightRoundPickerIcon(id: "\($0)", symbol: sessions[$0].symbol) }
-    }
-
     // The pushed map can only show a part that has a route, so a lifting part
     // drops out of the picker for as long as the map is open.
     private var visibleParts: [Int] {
         guard showingMap else { return Array(sessions.indices) }
         return sessions.indices.filter { sessions[$0].workout.hasRoute }
-    }
-
-    private var partSelection: Binding<BrightRoundPickerIcon> {
-        Binding(
-            get: {
-                partIcons.first { $0.id == "\(selectedPart)" }
-                    ?? partIcons[min(selectedPart, partIcons.count - 1)]
-            },
-            set: { selectedPart = Int($0.id) ?? 0 }
-        )
     }
 
     var body: some View {
@@ -103,18 +89,15 @@ struct ExerciseCompleteSheet: View {
     private func container<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         switch chrome {
         case .sheet:
-            BrightPageSheetView(horizontalPadding: .spacing0x) {
-                content()
-                    // The sheet wraps its own bar, so an overlay here lands in
-                    // the bar's row.
-                    .overlay(alignment: .topTrailing) {
-                        if visibleParts.count > 1 {
-                            partPicker
-                                .padding(.trailing, .spacing3x)
-                                .padding(.top, .spacing2x + .spacing05x)
-                        }
+            BrightPageSheetView(
+                horizontalPadding: .spacing0x,
+                trailing: {
+                    if visibleParts.count > 1 {
+                        ToolbarItem(placement: .topBarTrailing) { partPicker }
                     }
-            }
+                },
+                content: { content() }
+            )
         case .pushed:
             BrightPageView(
                 horizontalPadding: .spacing0x,
@@ -128,10 +111,6 @@ struct ExerciseCompleteSheet: View {
                         }
                     }
 
-                    // Pushed, the content starts below the bar, so an overlay
-                    // can only sit under it — and lifting one above its own
-                    // bounds stops it taking taps. The bar itself is the only
-                    // place left that's level with the close button.
                     if visibleParts.count > 1 {
                         ToolbarItem(placement: .topBarTrailing) { partPicker }
                     }
@@ -152,9 +131,6 @@ struct ExerciseCompleteSheet: View {
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,
-                // The picker holds the trailing end of the bar, so the title
-                // stays put rather than collapsing into it.
-                collapsesTitleToToolbar: sessions.count == 1,
                 selectedIndex: $selectedIndex
             ) { index in
                 tabContent(for: ExerciseCompleteTab(rawValue: index) ?? .summary)
@@ -197,9 +173,18 @@ struct ExerciseCompleteSheet: View {
         }
     }
 
+    // Names the parts of a mixed workout. Segmented rather than a plain pair of
+    // buttons, so the bar shows which part the numbers below belong to.
     private var partPicker: some View {
-        BrightRoundPicker(icons: partIcons, selection: partSelection, size: .large)
-            .fixedSize()
+        Picker("Part", selection: $selectedPart) {
+            ForEach(visibleParts, id: \.self) { index in
+                Label(sessions[index].partTitle, systemImage: sessions[index].symbol)
+                    .tag(index)
+            }
+        }
+        .pickerStyle(.segmented)
+        .fixedSize()
+        .brightHaptic(.light, trigger: selectedPart)
     }
 
     private var subtitle: some View {
