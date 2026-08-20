@@ -91,11 +91,7 @@ struct ExerciseCompleteSheet: View {
         case .sheet:
             BrightPageSheetView(
                 horizontalPadding: .spacing0x,
-                trailing: {
-                    if visibleParts.count > 1 {
-                        ToolbarItem(placement: .topBarTrailing) { partPicker }
-                    }
-                },
+                trailing: { partPicker },
                 content: { content() }
             )
         case .pushed:
@@ -111,9 +107,7 @@ struct ExerciseCompleteSheet: View {
                         }
                     }
 
-                    if visibleParts.count > 1 {
-                        ToolbarItem(placement: .topBarTrailing) { partPicker }
-                    }
+                    partPicker
                 },
                 content: { content() }
             )
@@ -173,18 +167,27 @@ struct ExerciseCompleteSheet: View {
         }
     }
 
-    // Names the parts of a mixed workout. Segmented rather than a plain pair of
-    // buttons, so the bar shows which part the numbers below belong to.
-    private var partPicker: some View {
-        Picker("Part", selection: $selectedPart) {
-            ForEach(visibleParts, id: \.self) { index in
-                Label(sessions[index].partTitle, systemImage: sessions[index].symbol)
-                    .tag(index)
+    // Names the parts of a mixed workout. One button per part rather than a
+    // segmented picker, which brings its own background and reads as a control
+    // stacked on the bar. Grouped, so the bar glasses them together as one.
+    @ToolbarContentBuilder
+    private var partPicker: some ToolbarContent {
+        if visibleParts.count > 1 {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                ForEach(visibleParts, id: \.self) { index in
+                    Button {
+                        guard index != selectedPart else { return }
+                        selectedPart = index
+                        BrightHaptic.light.play()
+                    } label: {
+                        Label(sessions[index].partTitle, systemImage: sessions[index].symbol)
+                            .labelStyle(.iconOnly)
+                            .symbolVariant(index == selectedPart ? .fill : .none)
+                    }
+                    .tint(index == selectedPart ? Color.textColor : .lightTextColor)
+                }
             }
         }
-        .pickerStyle(.segmented)
-        .fixedSize()
-        .brightHaptic(.light, trigger: selectedPart)
     }
 
     private var subtitle: some View {
