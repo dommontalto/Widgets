@@ -167,25 +167,21 @@ struct ExerciseCompleteSheet: View {
         }
     }
 
-    // Names the parts of a mixed workout. One button per part rather than a
-    // segmented picker, which brings its own background and reads as a control
-    // stacked on the bar. Grouped, so the bar glasses them together as one.
+    // Names the parts of a mixed workout. Palette style lays the parts out as a
+    // row of glyphs and marks the selected one itself, so the bar carries no
+    // background of its own on top of the glass.
     @ToolbarContentBuilder
     private var partPicker: some ToolbarContent {
         if visibleParts.count > 1 {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                ForEach(visibleParts, id: \.self) { index in
-                    Button {
-                        guard index != selectedPart else { return }
-                        selectedPart = index
-                        BrightHaptic.light.play()
-                    } label: {
+            ToolbarItem(placement: .topBarTrailing) {
+                Picker("Part", selection: $selectedPart) {
+                    ForEach(visibleParts, id: \.self) { index in
                         Label(sessions[index].partTitle, systemImage: sessions[index].symbol)
-                            .labelStyle(.iconOnly)
-                            .symbolVariant(index == selectedPart ? .fill : .none)
+                            .tag(index)
                     }
-                    .tint(index == selectedPart ? Color.textColor : .lightTextColor)
                 }
+                .pickerStyle(.palette)
+                .brightHaptic(.light, trigger: selectedPart)
             }
         }
     }
