@@ -8,10 +8,9 @@
 import SwiftUI
 
 // A finished session as the complete sheet reads it. Strength and cardio share
-// the sheet and differ only in which of these are filled.
+// the sheet, and every widget hides when its data is absent — no kind switch.
 struct ExerciseCompleteSession {
-    var kind: ExerciseCompleteKind
-    var workout: HeartWorkoutSummaryResponseData
+    var summary: HeartWorkoutSummaryResponseData
     var metrics: [ExerciseCompleteMetric] = []
     var strain: ExerciseCompleteStrain?
     var exertion: ExerciseCompleteExertion?
@@ -20,12 +19,12 @@ struct ExerciseCompleteSession {
     var intervals: ExerciseCompleteIntervalStrip?
     // What the part picker draws for this session. Cardio and sports carry
     // their own category; strength leaves it nil.
-    var category: ExerciseWorkoutCategory?
+    var category: ExerciseCategory?
 
     // Strength always shows the gym glyph, bodyweight included, so a mixed
-    // workout's picker reads as "the lifting part" rather than naming the kit.
+    // session's picker reads as "the lifting part" rather than naming the kit.
     var symbol: String {
-        category?.symbol ?? ExerciseWorkoutCategory.gym.symbol
+        category?.symbol ?? ExerciseCategory.gym.symbol
     }
 
     var partTitle: String {
@@ -35,14 +34,15 @@ struct ExerciseCompleteSession {
     var partTint: Color {
         (category ?? .gym).tint
     }
-}
 
-enum ExerciseCompleteKind {
-    case strength
-    case cardio
-
-    // The zone breakdown and the route only mean something for cardio.
-    var showsZoneBreakdown: Bool { self == .cardio }
+    // The combined graph draws whichever traces exist; none at all means the
+    // widget has nothing to say.
+    var hasPerformanceGraph: Bool {
+        summary.heartGraph?.data?.isEmpty == false
+            || summary.altitudeGraph?.data?.isEmpty == false
+            || summary.paceGraph?.data?.isEmpty == false
+            || summary.cadenceGraph?.data?.isEmpty == false
+    }
 }
 
 // MARK: - Summary metrics

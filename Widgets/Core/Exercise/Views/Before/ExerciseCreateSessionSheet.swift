@@ -16,7 +16,7 @@ private struct ExerciseSwapTarget: Identifiable {
 // for a lift, a cardio plan for a run or a sport.
 struct ExerciseCreateSessionSheet: View {
     // The saved session being edited, or nil when building a new one.
-    let editing: ExerciseQuickWorkout?
+    let editing: ExerciseQuickSession?
 
     let onSave: () -> Void
 
@@ -47,7 +47,7 @@ struct ExerciseCreateSessionSheet: View {
 
     @ScaledMetric(relativeTo: .body) private var fieldGap = ExerciseSetRow.Constants.fieldGap
 
-    init(editing: ExerciseQuickWorkout? = nil, onSave: @escaping () -> Void) {
+    init(editing: ExerciseQuickSession? = nil, onSave: @escaping () -> Void) {
         self.editing = editing
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? "")
@@ -91,7 +91,7 @@ struct ExerciseCreateSessionSheet: View {
         .sheet(item: $swapTarget) { target in
             NavigationStack {
                 ExerciseLibrarySheet(
-                    category: ExerciseDemoLibrary.workoutCategory(of: target.id),
+                    category: ExerciseDemoLibrary.type(of: target.id),
                     showCloseButton: true,
                     included: Set(builder.added)
                 ) { replacement in
@@ -151,10 +151,10 @@ struct ExerciseCreateSessionSheet: View {
             }
         } else {
             BrightPlaceholderView(
-                systemImage: ExerciseWorkoutCategory.gym.symbol,
+                systemImage: ExerciseCategory.gym.symbol,
                 title: "Nothing added yet",
                 subtitle: "Add exercises, runs or sports and they'll line up above.",
-                imageColor: ExerciseWorkoutCategory.gym.tint,
+                imageColor: ExerciseCategory.gym.tint,
                 buttonTitle: "Add exercise"
             ) {
                 isAddingExercise = true

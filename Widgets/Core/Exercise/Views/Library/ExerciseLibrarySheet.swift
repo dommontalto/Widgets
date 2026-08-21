@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseLibrarySheet: View {
-    let category: ExerciseWorkoutCategory
+    let category: ExerciseCategory
 
     // Presented as a sheet there's no back button, so it needs its own close.
     var showCloseButton = false
@@ -25,7 +25,7 @@ struct ExerciseLibrarySheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
-    @State private var selectedCategory: ExerciseWorkoutCategory?
+    @State private var selectedCategory: ExerciseCategory?
 
     var body: some View {
         BrightPageView(
@@ -53,7 +53,7 @@ struct ExerciseLibrarySheet: View {
                     // nothing to add or count.
                     if onSelect == nil, builder.count > 0 {
                         Button("Add") {
-                            builder.path.append(ExerciseWorkoutRoute.newSession)
+                            builder.path.append(ExerciseSessionRoute.newSession)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)
@@ -105,7 +105,7 @@ struct ExerciseLibrarySheet: View {
     private var categoryTags: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: .spacing1x) {
-                ForEach(ExerciseWorkoutCategory.standard) { category in
+                ForEach(ExerciseCategory.standard) { category in
                     BrightTag(
                         title: category.displayName,
                         systemImage: category.symbol,
@@ -119,7 +119,7 @@ struct ExerciseLibrarySheet: View {
         .scrollClipDisabled()
     }
 
-    private var activeCategory: ExerciseWorkoutCategory {
+    private var activeCategory: ExerciseCategory {
         selectedCategory ?? category
     }
 

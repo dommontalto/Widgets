@@ -1,5 +1,5 @@
 //
-//  ExerciseLiveWorkoutStatusWidget.swift
+//  ExerciseLiveStrengthStatusWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 4/8/2026.
@@ -10,7 +10,7 @@ import SwiftUI
 // Prototype. The Bright app builds this card on a shell that's generic over its
 // content, so a cardio session can use it too — port the design across, not
 // this file's structure.
-struct ExerciseLiveWorkoutStatusWidget: View {
+struct ExerciseLiveStrengthStatusWidget: View {
     enum Status {
         // Mid-set: `set` names the set, `target` is the weight and reps it's for.
         case working(set: String, target: String)
@@ -373,21 +373,21 @@ private extension VerticalAlignment {
 
 #Preview {
     VStack(spacing: .spacing3x) {
-        ExerciseLiveWorkoutStatusWidget(status: .nextExercise(name: "Warmup"), heartRate: "121")
+        ExerciseLiveStrengthStatusWidget(status: .nextExercise(name: "Warmup"), heartRate: "121")
 
-        ExerciseLiveWorkoutStatusWidget(status: .working(set: "Set 3", target: "80x4"), heartRate: "121")
+        ExerciseLiveStrengthStatusWidget(status: .working(set: "Set 3", target: "80x4"), heartRate: "121")
 
-        ExerciseLiveWorkoutStatusWidget(
+        ExerciseLiveStrengthStatusWidget(
             status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(263)),
             heartRate: "121"
         )
 
-        ExerciseLiveWorkoutStatusWidget(
+        ExerciseLiveStrengthStatusWidget(
             status: .resting(upNext: "Set 2", until: Date().addingTimeInterval(5)),
             heartRate: "121"
         )
 
-        ExerciseLiveWorkoutStatusWidget(status: .allSetsComplete, heartRate: "121")
+        ExerciseLiveStrengthStatusWidget(status: .allSetsComplete, heartRate: "121")
     }
     .padding(.spacing3x)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -398,7 +398,7 @@ private extension VerticalAlignment {
     @Previewable @State var isResting = false
 
     VStack(spacing: .spacing3x) {
-        ExerciseLiveWorkoutStatusWidget(
+        ExerciseLiveStrengthStatusWidget(
             status: isResting
                 ? .resting(upNext: "Set 2", until: Date().addingTimeInterval(263))
                 : .working(set: "Set 3", target: "80x4"),

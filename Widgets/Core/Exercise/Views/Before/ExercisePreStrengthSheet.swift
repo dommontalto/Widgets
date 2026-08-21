@@ -1,5 +1,5 @@
 //
-//  ExercisePreWorkoutSheet.swift
+//  ExercisePreStrengthSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 3/8/2026.
@@ -7,15 +7,17 @@
 
 import SwiftUI
 
-struct ExercisePreWorkoutSheet: View {
-    let workout: ExerciseQuickWorkout
+struct ExercisePreStrengthSheet: View {
+    let session: ExerciseQuickSession
+    // Which of the session's strength blocks this sets up.
+    var leg = 0
     var chrome: ExercisePageChrome = .sheet
     // Ends the whole run. Only the flow can do that from a pushed leg, where
     // `dismiss` would pop back instead.
     var onClose: (() -> Void)?
-    // Hands the workout to the presenter, which pushes the live screen inside
+    // Hands the session to the presenter, which pushes the live screen inside
     // the same presentation.
-    var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
+    var onStart: (ExerciseQuickSession) -> Void = { _ in }
 
     @Environment(ExerciseBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
@@ -23,10 +25,16 @@ struct ExercisePreWorkoutSheet: View {
     @State private var openedExerciseName: String?
     @State private var isEditing = false
 
+    // The contiguous stretch of lifts this leg runs; the whole list when the
+    // leg is out of range.
+    private var blockItems: [ExerciseTemplateItem] {
+        session.legs[safe: leg].map(session.items(in:)) ?? session.strengthItems
+    }
+
     var body: some View {
         page
             .navigationDestination(isPresented: $isEditing) {
-                ExerciseCreateSessionSheet(editing: workout) { isEditing = false }
+                ExerciseCreateSessionSheet(editing: session) { isEditing = false }
             }
             .navigationDestination(item: $openedExerciseName) { name in
                 if let exercise = ExerciseDemoLibrary.exercise(named: name) {
@@ -40,7 +48,11 @@ struct ExercisePreWorkoutSheet: View {
     @ViewBuilder private var page: some View {
         switch chrome {
         case .sheet:
-            BrightPageSheetView(horizontalPadding: .spacing0x, backgroundColor: .defaultBackground) {
+            BrightPageSheetView(
+                horizontalPadding: .spacing0x,
+                backgroundColor: .defaultBackground,
+                trailing: { ToolbarItem(placement: .topBarTrailing) { sourceMenu } }
+            ) {
                 content
                     .toolbar {
                         ToolbarItem(placement: .principal) {
@@ -66,10 +78,34 @@ struct ExercisePreWorkoutSheet: View {
                     ToolbarItem(placement: .principal) {
                         ExerciseInlineTitle(file: #file)
                     }
+
+                    ToolbarItem(placement: .topBarTrailing) { sourceMenu }
                 },
                 content: { content }
             )
         }
+    }
+
+    // Where the session records, decided once at this first gate. The watch
+    // option is part 3, with the watch app — shown but not pickable.
+    private var sourceMenu: some View {
+        Menu {
+            Picker("Start session on", selection: Bindable(builder).source) {
+                Label(ExerciseSessionSource.phone.title, systemImage: "iphone")
+                    .tag(ExerciseSessionSource.phone)
+            }
+
+            Button {
+            } label: {
+                Label(ExerciseSessionSource.phoneAndWatch.title, systemImage: "applewatch")
+            }
+            .disabled(true)
+        } label: {
+            // The Menu owns the tap, so the glyphs are label only.
+            ExerciseDeviceGlyphs(symbols: builder.source.symbols)
+                .allowsHitTesting(false)
+        }
+        .brightHaptic(.light, trigger: builder.source)
     }
 
     private var content: some View {
@@ -100,11 +136,11 @@ struct ExercisePreWorkoutSheet: View {
 
     private var header: some View {
         HStack(spacing: .spacing2x) {
-            Image(systemName: workout.symbol)
+            Image(systemName: session.symbol)
                 .font(.standard(size: .huge2, weight: .light))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(workout.name, size: .standout4, scaleTextSize: 0.7)
+            BrightText(session.name, size: .standout4, scaleTextSize: 0.7)
                 .lineLimit(1)
         }
     }
@@ -115,7 +151,7 @@ struct ExercisePreWorkoutSheet: View {
                 symbol: "text.line.magnify",
                 color: .lightTextColor,
                 label: "Exercises:",
-                value: "\(workout.strengthItems.count)"
+                value: "\(blockItems.count)"
             )
 
             BrightVerticalDivider(height: Constants.statDividerHeight)
@@ -159,7 +195,7 @@ struct ExercisePreWorkoutSheet: View {
 
     private var exerciseRows: some View {
         VStack(spacing: .spacing2x) {
-            ForEach(workout.strengthItems) { item in
+            ForEach(blockItems) { item in
                 Button {
                     openedExerciseName = item.exerciseName
                 } label: {
@@ -214,16 +250,16 @@ struct ExercisePreWorkoutSheet: View {
         HStack(spacing: .spacing2x) {
             Menu {
                 Button("Duplicate", systemImage: "plus.square.on.square") {
-                    withAnimation(.brightSnappy) { builder.duplicate(workout) }
+                    withAnimation(.brightSnappy) { builder.duplicate(session) }
                 }
 
                 Button("Edit", systemImage: "pencil") {
-                    builder.loadDraft(from: workout)
+                    builder.loadDraft(from: session)
                     isEditing = true
                 }
 
                 Button("Delete", systemImage: "trash", role: .destructive) {
-                    builder.delete(workout)
+                    builder.delete(session)
                     close()
                 }
                 .tint(.defaultRed)
@@ -235,7 +271,7 @@ struct ExercisePreWorkoutSheet: View {
             Spacer(minLength: .spacing2x)
 
             BrightRoundButton(systemImage: "play.fill", size: .finalBossLarge, color: .defaultGreen) {
-                onStart(workout)
+                onStart(session)
             }
         }
         .padding(.spacing4x)
@@ -244,7 +280,7 @@ struct ExercisePreWorkoutSheet: View {
     // MARK: - Derived state
 
     private var totalSets: Int {
-        workout.strengthItems.reduce(0) { $0 + setCount(for: $1) }
+        blockItems.reduce(0) { $0 + setCount(for: $1) }
     }
 
     private func setCount(for item: ExerciseTemplateItem) -> Int {
@@ -271,11 +307,30 @@ struct ExercisePreWorkoutSheet: View {
     }
 }
 
+// A device reads as one glyph, a pairing as both with a plus between them.
+struct ExerciseDeviceGlyphs: View {
+    let symbols: [String]
+
+    var body: some View {
+        HStack(spacing: .spacing05x) {
+            ForEach(Array(symbols.enumerated()), id: \.offset) { index, symbol in
+                if index != 0 {
+                    Image(systemName: "plus")
+                        .imageScale(.small)
+                }
+
+                Image(systemName: symbol)
+            }
+        }
+        .foregroundStyle(Color.textColor)
+    }
+}
+
 #Preview {
     Color.defaultBackground
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
-            ExercisePreWorkoutSheet(workout: ExerciseDemoWorkouts.quickPush)
+            ExercisePreStrengthSheet(session: ExerciseDemoSessions.quickPush)
                 .environment(ExerciseBuilder())
         }
 }

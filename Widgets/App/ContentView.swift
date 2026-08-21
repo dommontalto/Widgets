@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showingWorkout = false
-    @State private var showingAddWorkouts = false
+    @State private var showingSession = false
+    @State private var showingAddSessions = false
     @State private var showingExerciseDetail = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
     @State private var builder = ExerciseBuilder()
-    @State private var workoutStage: ExerciseWorkoutStage?
+    @State private var sessionStage: ExerciseSessionStage?
 
     var body: some View {
         NavigationStack {
@@ -25,12 +25,12 @@ struct ContentView: View {
         .environment(builder)
     }
 
-    private var workouts: [ExerciseQuickWorkout] {
+    private var sessions: [ExerciseQuickSession] {
         builder.saved
     }
 
-    private func start(_ workout: ExerciseQuickWorkout) {
-        workoutStage = workout.isCardio ? .preCardio(workout, leg: 0) : .preWorkout(workout)
+    private func start(_ session: ExerciseQuickSession) {
+        sessionStage = .setup(for: session, leg: 0)
     }
 
     private var content: some View {
@@ -38,7 +38,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
                     VStack(alignment: .leading, spacing: .spacing2x) {
-                        addWorkoutsButton
+                        addSessionsButton
                         viewExerciseButton
                     }
                     .padding(.top, .spacing2x)
@@ -46,14 +46,14 @@ struct ContentView: View {
 
                     widgetLabel("ExerciseUpcomingWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Upcoming") {
-                        ExerciseUpcomingWidget { workout in
-                            start(workout)
+                        ExerciseUpcomingWidget { session in
+                            start(session)
                         }
                     }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseHistoryWidget")
-                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Workout history") {
+                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Session history") {
                         ExerciseHistoryWidget()
                     }
                         .padding(.bottom, .spacing3x)
@@ -120,26 +120,26 @@ struct ContentView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Section("Saved Workouts") {
-                        ForEach(workouts) { workout in
-                            Button(workout.name, systemImage: workout.symbol) {
-                                start(workout)
+                    Section("My Sessions") {
+                        ForEach(sessions) { session in
+                            Button(session.name, systemImage: session.symbol) {
+                                start(session)
                             }
                         }
                     }
                 } label: {
-                    Label("Start workout", systemImage: "play.fill")
+                    Label("Start session", systemImage: "play.fill")
                         .labelStyle(.iconOnly)
                 } primaryAction: {
-                    showingWorkout = true
+                    showingSession = true
                 }
             }
         }
-        .sheet(isPresented: $showingWorkout) {
+        .sheet(isPresented: $showingSession) {
             ExerciseSheet()
         }
-        .sheet(isPresented: $showingAddWorkouts) {
-            ExerciseAddWorkoutsSheet()
+        .sheet(isPresented: $showingAddSessions) {
+            ExerciseAddSessionsSheet()
         }
         .sheet(isPresented: $showingExerciseDetail) {
             if let exercise = ExerciseDemoLibrary.exercise(named: "Squat") {
@@ -151,7 +151,7 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
         }
-        .exerciseWorkoutFlow($workoutStage)
+        .exerciseSessionFlow($sessionStage)
     }
 
     private var beamScreen: some View {
@@ -210,7 +210,7 @@ struct ContentView: View {
         beamTarget == .card ? $cardBeam : $screenBeam
     }
 
-    // Matches the live workout sheet's set row — same width inset, corner and
+    // Matches the live session sheet's set row — same width inset, corner and
     // beam — with nothing in it.
     private var beamCard: some View {
         Color.clear
@@ -231,11 +231,11 @@ struct ContentView: View {
             .padding(.horizontal, .spacing3x)
     }
 
-    private var addWorkoutsButton: some View {
+    private var addSessionsButton: some View {
         Button {
-            showingAddWorkouts = true
+            showingAddSessions = true
         } label: {
-            BrightText("ExerciseAddWorkoutsSheet", size: .body2, weight: .regular)
+            BrightText("ExerciseAddSessionsSheet", size: .body2, weight: .regular)
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing105x)
                 .overlay {

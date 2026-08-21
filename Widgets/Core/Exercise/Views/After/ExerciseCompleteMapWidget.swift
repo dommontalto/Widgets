@@ -507,12 +507,12 @@ extension ExerciseCompleteMapWidget {
 }
 
 #Preview("Card") {
-    let workout = ExerciseDemoComplete.cardio.workout
+    let session = ExerciseDemoComplete.cardio.summary
 
     return ExerciseCompleteMapWidget(
-        routeLatitudes: workout.routeLatitudes,
-        routeLongitudes: workout.routeLongitudes,
-        routeZoneIndexes: workout.routeZoneIndexes,
+        routeLatitudes: session.routeLatitudes,
+        routeLongitudes: session.routeLongitudes,
+        routeZoneIndexes: session.routeZoneIndexes,
         onOpen: {}
     )
     .padding(.spacing3x)
@@ -521,12 +521,12 @@ extension ExerciseCompleteMapWidget {
 }
 
 #Preview("Page") {
-    let workout = ExerciseDemoComplete.cardio.workout
+    let session = ExerciseDemoComplete.cardio.summary
 
     return ExerciseCompleteMapWidget(
-        routeLatitudes: workout.routeLatitudes,
-        routeLongitudes: workout.routeLongitudes,
-        routeZoneIndexes: workout.routeZoneIndexes,
+        routeLatitudes: session.routeLatitudes,
+        routeLongitudes: session.routeLongitudes,
+        routeZoneIndexes: session.routeZoneIndexes,
         isFullScreen: true
     )
 }

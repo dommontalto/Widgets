@@ -156,7 +156,7 @@ struct ExerciseCompleteHeartRateWidget: View {
         (data.data ?? []).map { Double($0.value ?? 0) }
     }
 
-    // The line the trace actually touches, which sits below the workout's peak
+    // The line the trace actually touches, which sits below the session's peak
     // reading whenever that came from a moment the graph doesn't sample.
     private var peakSample: Double? {
         samples.max() ?? hrPeak
@@ -185,14 +185,14 @@ struct ExerciseCompleteHeartRateWidget: View {
 }
 
 #Preview {
-    let workout = ExerciseDemoComplete.cardio.workout
+    let session = ExerciseDemoComplete.cardio.summary
 
     return ExerciseCompleteHeartRateWidget(
-        hrAvg: workout.hrAvg ?? 0,
-        hrPeak: workout.hrPeak,
-        startDate: workout.startTime ?? "",
-        endDate: workout.endTime ?? "",
-        data: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
+        hrAvg: session.hrAvg ?? 0,
+        hrPeak: session.hrPeak,
+        startDate: session.startTime ?? "",
+        endDate: session.endTime ?? "",
+        data: session.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
     )
     .padding(.spacing3x)
     .frame(maxHeight: .infinity, alignment: .top)

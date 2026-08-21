@@ -219,7 +219,7 @@ struct ExerciseCompleteIntervalWidget: View {
 }
 
 #Preview {
-    ExerciseCompleteIntervalWidget(data: ExerciseDemoComplete.cardio.workout.intervals ?? [])
+    ExerciseCompleteIntervalWidget(data: ExerciseDemoComplete.cardio.summary.intervals ?? [])
         .padding(.spacing3x)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color.defaultSheetBackground.ignoresSafeArea())

@@ -15,7 +15,7 @@ enum BrightButtonSizes: CGFloat {
     case medium = 36
     // Forced by iOS to use for toolbars
     case large = 44
-    // Round button size 48pt — the primary control on live/workout screens.
+    // Round button size 48pt — the primary control on live/session screens.
     case extraLarge = 48
     // Round button size 62pt — the largest, for a screen's single hero control.
     case finalBossLarge = 62

@@ -116,7 +116,7 @@ struct ExerciseProgressionMiniSheet: View {
 
     private var insightText: String {
         let arrow = weightChange > 0 ? "\u{2191}" : "\u{2193}"
-        return "Based of your workout, we've increased your working weight by \(arrow) \(abs(weightChange).formatted()) kg from your previous RPE this session"
+        return "Based of your session, we've increased your working weight by \(arrow) \(abs(weightChange).formatted()) kg from your previous RPE this session"
     }
 
     private enum Constants {

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseLiveCardioSheet: View {
-    var workout: ExerciseLiveWorkout = ExerciseDemoData.liveWorkout
+    var session: ExerciseLiveCardioStats = ExerciseDemoData.liveCardioStats
     var isInterval = true
     var onStop: () -> Void = {}
     // Ends the whole run. Only the flow can do that from a pushed leg, where
@@ -27,11 +27,11 @@ struct ExerciseLiveCardioSheet: View {
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            metric("CURRENT PACE", value: workout.currentPace, color: .defaultCyan)
+            metric("CURRENT PACE", value: session.currentPace, color: .defaultCyan)
 
             BrightDivider()
 
-            metric("DISTANCE", value: workout.distance, color: .defaultYellow)
+            metric("DISTANCE", value: session.distance, color: .defaultYellow)
 
             BrightDivider()
 
@@ -97,9 +97,9 @@ struct ExerciseLiveCardioSheet: View {
             Image(systemName: "heart.fill")
                 .font(.standard(size: .huge, weight: .light))
                 .foregroundStyle(Color.defaultRed)
-                .exerciseHeartRatePulse(bpm: Double(workout.heartRate))
+                .exerciseHeartRatePulse(bpm: Double(session.heartRate))
 
-            BrightText(workout.heartRate, size: .enormous, color: .defaultRed)
+            BrightText(session.heartRate, size: .enormous, color: .defaultRed)
                 .monospacedDigit()
                 .fixedSize()
 
@@ -112,7 +112,7 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var zoneChip: some View {
-        BrightText(workout.heartRateZone, size: .standout28, color: .defaultYellow)
+        BrightText(session.heartRateZone, size: .standout28, color: .defaultYellow)
             .padding(.horizontal, .spacing105x)
             .padding(.vertical, .spacing2x)
             .overlay {
@@ -126,15 +126,15 @@ struct ExerciseLiveCardioSheet: View {
 
     private var paceRow: some View {
         HStack(spacing: .spacing0x) {
-            paceColumn("AVG PACE", value: workout.averagePace, color: .textColor)
+            paceColumn("AVG PACE", value: session.averagePace, color: .textColor)
 
             BrightVerticalDivider()
 
             paceColumn(
                 "SPLIT",
-                value: workout.splitPace,
+                value: session.splitPace,
                 color: splitColor,
-                delta: workout.splitDelta
+                delta: session.splitDelta
             )
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -143,7 +143,7 @@ struct ExerciseLiveCardioSheet: View {
     // A split slower than the average reads red, a faster one green. Level, or
     // with no split logged yet, it stays plain text.
     private var splitColor: Color {
-        let delta = workout.splitDelta
+        let delta = session.splitDelta
         if delta.hasPrefix("+") { return .defaultRed }
         if delta.hasPrefix("\u{2212}") || delta.hasPrefix("-") { return .defaultGreen }
         return .textColor
@@ -187,23 +187,23 @@ struct ExerciseLiveCardioSheet: View {
 
     private var intervalPill: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(workout.intervalName, size: .heading, color: workout.intervalColor)
+            BrightText(session.intervalName, size: .heading, color: session.intervalColor)
 
             Spacer(minLength: .spacing2x)
 
-            BrightText(workout.intervalRemaining, size: .heading, color: workout.intervalColor)
+            BrightText(session.intervalRemaining, size: .heading, color: session.intervalColor)
                 .monospacedDigit()
         }
         .padding(.horizontal, .spacing2x)
         .frame(height: .spacing9x)
         .background(
-            workout.intervalColor.opacity(.ultraLowOpacity),
+            session.intervalColor.opacity(.ultraLowOpacity),
             in: RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
         )
         .overlay {
             RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
                 .strokeBorder(
-                    workout.intervalColor.opacity(.lowOpacity),
+                    session.intervalColor.opacity(.lowOpacity),
                     lineWidth: Constants.hairline
                 )
         }
@@ -211,7 +211,7 @@ struct ExerciseLiveCardioSheet: View {
 
     private var segmentBars: some View {
         HStack(spacing: .spacing1x) {
-            ForEach(workout.segments) { segment in
+            ForEach(session.segments) { segment in
                 Capsule()
                     .fill(segment.kind.color.opacity(.veryLowOpacity))
                     .frame(width: Constants.segmentWidth, height: Constants.segmentHeight)

@@ -72,9 +72,37 @@ struct ExerciseSetDraft: Identifiable, Hashable {
     var rest: String
 }
 
+// Where a session records, decided once at its first setup screen. The watch
+// option is part 3, with the watch app.
+enum ExerciseSessionSource: String, CaseIterable, Identifiable {
+    case phone
+    case phoneAndWatch
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .phone: "iPhone"
+        case .phoneAndWatch: "iPhone + Watch"
+        }
+    }
+
+    var symbols: [String] {
+        switch self {
+        case .phone: ["iphone"]
+        case .phoneAndWatch: ["iphone", "applewatch"]
+        }
+    }
+}
+
 @MainActor @Observable
 final class ExerciseBuilder {
     var added: [String] = []
+
+    // Where the session records, chosen once and shown on every leg's setup
+    // screen. Each leg reads it as it starts, so a mid-session change applies
+    // from the next leg.
+    var source: ExerciseSessionSource = .phone
 
     // Which exercises are supersetted together, keyed by name. Exercises sharing
     // an ID run as one block.
@@ -82,7 +110,7 @@ final class ExerciseBuilder {
     var sets: [String: [ExerciseSetDraft]] = [:]
     // What each run or sport in the draft is chasing, keyed the way sets are.
     var plans: [String: ExerciseCardioPlan] = [:]
-    var saved: [ExerciseQuickWorkout] = ExerciseDemoWorkouts.all
+    var saved: [ExerciseQuickSession] = ExerciseDemoSessions.all
     var path = NavigationPath()
 
     var count: Int { added.count }
@@ -127,17 +155,17 @@ final class ExerciseBuilder {
         plans.removeAll()
     }
 
-    func delete(_ workout: ExerciseQuickWorkout) {
-        saved.removeAll { $0.id == workout.id }
+    func delete(_ session: ExerciseQuickSession) {
+        saved.removeAll { $0.id == session.id }
     }
 
-    func duplicate(_ workout: ExerciseQuickWorkout) {
-        let copy = ExerciseQuickWorkout(
-            name: uniqueName(from: workout.name),
-            subtitle: workout.subtitle,
-            items: workout.items
+    func duplicate(_ session: ExerciseQuickSession) {
+        let copy = ExerciseQuickSession(
+            name: uniqueName(from: session.name),
+            subtitle: session.subtitle,
+            items: session.items
         )
-        if let index = saved.firstIndex(where: { $0.id == workout.id }) {
+        if let index = saved.firstIndex(where: { $0.id == session.id }) {
             saved.insert(copy, at: index + 1)
         } else {
             saved.append(copy)
@@ -146,9 +174,9 @@ final class ExerciseBuilder {
 
     // Pulls a saved session back into the draft so the create screen can edit it.
     // Template sets carry no rest interval, so they take the default.
-    func loadDraft(from workout: ExerciseQuickWorkout) {
+    func loadDraft(from session: ExerciseQuickSession) {
         reset()
-        for item in workout.items {
+        for item in session.items {
             guard !isAdded(item.exerciseName) else { continue }
             added.append(item.exerciseName)
             guard !isCardio(item.exerciseName) else {
@@ -168,28 +196,28 @@ final class ExerciseBuilder {
         }
     }
 
-    func update(_ workout: ExerciseQuickWorkout, named name: String) {
+    func update(_ session: ExerciseQuickSession, named name: String) {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty,
-              let index = saved.firstIndex(where: { $0.id == workout.id })
+              let index = saved.firstIndex(where: { $0.id == session.id })
         else { return }
         // An empty draft means only the name changed, so the session keeps what
         // it already held.
-        saved[index] = ExerciseQuickWorkout(
+        saved[index] = ExerciseQuickSession(
             name: title,
-            subtitle: added.isEmpty ? workout.subtitle : subtitle,
-            items: added.isEmpty ? workout.items : templateItems
+            subtitle: added.isEmpty ? session.subtitle : subtitle,
+            items: added.isEmpty ? session.items : templateItems
         )
         reset()
     }
 
-    // Folds a finished run back into the workout it started from, so the sets
+    // Folds a finished run back into the session it started from, so the sets
     // and exercises added along the way are there next time.
-    func updateItems(of workoutID: String, to items: [ExerciseTemplateItem]) {
-        guard let index = saved.firstIndex(where: { $0.id == workoutID }) else { return }
-        var workout = saved[index]
-        workout.items = items
-        saved[index] = workout
+    func updateItems(of sessionID: String, to items: [ExerciseTemplateItem]) {
+        guard let index = saved.firstIndex(where: { $0.id == sessionID }) else { return }
+        var session = saved[index]
+        session.items = items
+        saved[index] = session
     }
 
     private func uniqueName(from name: String) -> String {
@@ -208,7 +236,7 @@ final class ExerciseBuilder {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty, !added.isEmpty else { return }
         saved.append(
-            ExerciseQuickWorkout(name: title, subtitle: subtitle, items: templateItems)
+            ExerciseQuickSession(name: title, subtitle: subtitle, items: templateItems)
         )
         reset()
     }

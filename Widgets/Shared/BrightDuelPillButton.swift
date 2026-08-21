@@ -8,8 +8,8 @@
 import SwiftUI
 
 // Two pills that answer the same question — a get-out beside the action that
-// finishes it. The leading pill hugs its label; the trailing one takes the rest
-// of the width, so the affirmative choice reads as the bigger target.
+// finishes it. The trailing pill runs twice the leading's width, so the
+// affirmative choice reads as the bigger target.
 struct BrightDuelPillButton: View {
     let leadingTitle: String
     let trailingTitle: String
@@ -46,6 +46,8 @@ struct BrightDuelPillButton: View {
         self.onTrailingTap = onTrailingTap
     }
 
+    @State private var width: CGFloat = 0
+
     var body: some View {
         HStack(spacing: .spacing2x) {
             // The get-out only tints its capsule and writes in its own colour;
@@ -55,9 +57,11 @@ struct BrightDuelPillButton: View {
                 systemImage: leadingSystemImage,
                 fill: leadingColor?.opacity(.minimalOpacity),
                 textColor: leadingColor ?? .textColor,
-                fillsWidth: false,
                 action: onLeadingTap
             )
+            // One share of three; the trailing pill's maxWidth takes the other
+            // two. Unmeasured on the very first frame, it briefly hugs instead.
+            .frame(width: width > 0 ? (width - .spacing2x) / 3 : nil)
 
             pill(
                 trailingTitle,
@@ -66,9 +70,14 @@ struct BrightDuelPillButton: View {
                 // Fixed black rather than the adaptive text colour: it writes over
                 // a filled pill, which keeps its colour in both schemes.
                 textColor: .defaultBlack.opacity(.mediumOpacity),
-                fillsWidth: true,
                 action: onTrailingTap
             )
+            .frame(maxWidth: .infinity)
+        }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { new in
+            width = new
         }
     }
 
@@ -77,7 +86,6 @@ struct BrightDuelPillButton: View {
         systemImage: String?,
         fill: Color?,
         textColor: Color,
-        fillsWidth: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -91,7 +99,7 @@ struct BrightDuelPillButton: View {
                 BrightText(title, size: size ?? Constants.fontSize, color: textColor)
             }
             .padding(.horizontal, .spacing2x)
-            .frame(maxWidth: fillsWidth ? .infinity : nil)
+            .frame(maxWidth: .infinity)
             .frame(height: buttonSize.rawValue)
             .contentShape(Capsule())
         }

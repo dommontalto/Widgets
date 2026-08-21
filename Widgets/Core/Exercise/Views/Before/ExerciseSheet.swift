@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-enum ExerciseWorkoutRoute: Hashable {
-    case category(ExerciseWorkoutCategory)
+enum ExerciseSessionRoute: Hashable {
+    case category(ExerciseCategory)
     case exercise(String)
     case newSession
     // Carries the saved session's id — the draft itself lives on the builder.
@@ -18,7 +18,7 @@ enum ExerciseWorkoutRoute: Hashable {
 struct ExerciseSheet: View {
     @Environment(ExerciseBuilder.self) private var builder
 
-    @State private var workoutStage: ExerciseWorkoutStage?
+    @State private var sessionStage: ExerciseSessionStage?
 
     private let columns = [
         GridItem(.flexible(), spacing: .spacing2x),
@@ -28,7 +28,7 @@ struct ExerciseSheet: View {
     var body: some View {
         @Bindable var builder = builder
 
-        return BrightPageSheetView(title: "Start Workout", horizontalPadding: .spacing0x, path: $builder.path) {
+        return BrightPageSheetView(title: "Start Session", horizontalPadding: .spacing0x, path: $builder.path) {
             ScrollView(showsIndicators: false) {
                 sessions
                     .padding(.spacing3x)
@@ -36,16 +36,16 @@ struct ExerciseSheet: View {
             .safeAreaInset(edge: .bottom) {
                 addButton
             }
-            .navigationDestination(for: ExerciseWorkoutRoute.self) { route in
+            .navigationDestination(for: ExerciseSessionRoute.self) { route in
                 destination(for: route)
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Start Workout", file: #file)
+                    ExerciseInlineTitle(title: "Start Session", file: #file)
                 }
             }
         }
-        .exerciseWorkoutFlow($workoutStage)
+        .exerciseSessionFlow($sessionStage)
     }
 
     // MARK: - Saved sessions
@@ -66,35 +66,32 @@ struct ExerciseSheet: View {
 
     private var placeholder: some View {
         BrightPlaceholderView(
-            systemImage: ExerciseWorkoutCategory.gym.symbol,
+            systemImage: ExerciseCategory.gym.symbol,
             title: "No sessions yet",
-            subtitle: "Add exercises, runs or sports and save them as a session.",
-            imageColor: ExerciseWorkoutCategory.gym.tint,
-            buttonTitle: "Create session"
-        ) {
-            newSession()
-        }
+            subtitle: "Add exercises, runs or sports and save them as a session."
+        )
+        .padding(.top, .spacing12x)
     }
 
     private var sessionCards: some View {
-        ForEach(builder.saved) { workout in
+        ForEach(builder.saved) { session in
             Button {
-                workoutStage = workout.isCardio ? .preCardio(workout, leg: 0) : .preWorkout(workout)
+                sessionStage = .setup(for: session, leg: 0)
             } label: {
-                sessionCard(workout)
+                sessionCard(session)
             }
             .buttonStyle(.plain)
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .contextMenu {
-                sessionMenu(for: workout)
+                sessionMenu(for: session)
             }
         }
     }
 
-    private func sessionCard(_ workout: ExerciseQuickWorkout) -> some View {
+    private func sessionCard(_ session: ExerciseQuickSession) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
-                ForEach(workout.glyphs) { glyph in
+                ForEach(session.glyphs) { glyph in
                     Image(systemName: glyph.symbol)
                         .font(.standard(size: .heading, weight: .light))
                         .foregroundStyle(glyph.color)
@@ -103,10 +100,10 @@ struct ExerciseSheet: View {
             .frame(height: Constants.iconSize, alignment: .leading)
             .padding(.bottom, .spacing105x)
 
-            BrightText(workout.name, size: .body2, color: .semiLightTextColor, weight: .regular)
+            BrightText(session.name, size: .body2, color: .semiLightTextColor, weight: .regular)
                 .lineLimit(1)
 
-            BrightText(workout.subtitle, size: .body2, color: .lightTextColor)
+            BrightText(session.subtitle, size: .body2, color: .lightTextColor)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,18 +113,18 @@ struct ExerciseSheet: View {
     }
 
     @ViewBuilder
-    private func sessionMenu(for workout: ExerciseQuickWorkout) -> some View {
+    private func sessionMenu(for session: ExerciseQuickSession) -> some View {
         Button("Duplicate", systemImage: "plus.square.on.square") {
-            withAnimation(.brightSnappy) { builder.duplicate(workout) }
+            withAnimation(.brightSnappy) { builder.duplicate(session) }
         }
 
         Button("Edit", systemImage: "pencil") {
-            builder.loadDraft(from: workout)
-            builder.path.append(ExerciseWorkoutRoute.editSession(workout.id))
+            builder.loadDraft(from: session)
+            builder.path.append(ExerciseSessionRoute.editSession(session.id))
         }
 
         Button("Delete", systemImage: "trash", role: .destructive) {
-            withAnimation(.brightSnappy) { builder.delete(workout) }
+            withAnimation(.brightSnappy) { builder.delete(session) }
         }
         .tint(.defaultRed)
     }
@@ -144,13 +141,13 @@ struct ExerciseSheet: View {
     // you want, and Add carries them into the create screen.
     private func newSession() {
         builder.reset()
-        builder.path.append(ExerciseWorkoutRoute.category(.gym))
+        builder.path.append(ExerciseSessionRoute.category(.gym))
     }
 
     // MARK: - Routing
 
     @ViewBuilder
-    private func destination(for route: ExerciseWorkoutRoute) -> some View {
+    private func destination(for route: ExerciseSessionRoute) -> some View {
         switch route {
         case let .category(category):
             ExerciseLibrarySheet(category: category)
@@ -174,8 +171,8 @@ struct ExerciseSheet: View {
 
     @ViewBuilder
     private func editor(forSessionID id: String) -> some View {
-        if let workout = builder.saved.first(where: { $0.id == id }) {
-            ExerciseCreateSessionSheet(editing: workout) { builder.path = NavigationPath() }
+        if let session = builder.saved.first(where: { $0.id == id }) {
+            ExerciseCreateSessionSheet(editing: session) { builder.path = NavigationPath() }
         }
     }
 

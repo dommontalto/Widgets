@@ -1,5 +1,5 @@
 //
-//  ExerciseDemoWorkouts.swift
+//  ExerciseDemoSessions.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 29/7/2026.
@@ -15,7 +15,23 @@ nonisolated struct ExerciseSessionGlyph: Identifiable {
     var symbol: String { id }
 }
 
-struct ExerciseQuickWorkout: Identifiable {
+nonisolated enum ExerciseSessionLeg: Hashable {
+    case strength(Range<Int>)
+    case cardio(Int)
+
+    var isCardio: Bool {
+        if case .cardio = self { return true }
+        return false
+    }
+}
+
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
+}
+
+struct ExerciseQuickSession: Identifiable {
     let name: String
     let subtitle: String
     var items: [ExerciseTemplateItem] = []
@@ -23,7 +39,7 @@ struct ExerciseQuickWorkout: Identifiable {
     var id: String { name }
 
     // Only what's logged set by set. A run or a sport isn't, so it never reaches
-    // the live workout's list.
+    // the live session's list.
     var strengthItems: [ExerciseTemplateItem] {
         items.filter { !ExerciseDemoLibrary.isCardio($0.exerciseName) }
     }
@@ -37,6 +53,37 @@ struct ExerciseQuickWorkout: Identifiable {
         items.filter { ExerciseDemoLibrary.isCardio($0.exerciseName) }
     }
 
+    // The session as it runs: the order the user arranged is sacred, so a run
+    // or a sport splits the lifting around it. Contiguous set-by-set exercises
+    // form one strength leg; every cardio item is its own. Each leg posts its
+    // own log.
+    var legs: [ExerciseSessionLeg] {
+        var legs: [ExerciseSessionLeg] = []
+        var blockStart: Int?
+        for (index, item) in items.enumerated() {
+            if ExerciseDemoLibrary.isCardio(item.exerciseName) {
+                if let start = blockStart {
+                    legs.append(.strength(start ..< index))
+                    blockStart = nil
+                }
+                legs.append(.cardio(index))
+            } else if blockStart == nil {
+                blockStart = index
+            }
+        }
+        if let start = blockStart {
+            legs.append(.strength(start ..< items.count))
+        }
+        return legs
+    }
+
+    func items(in leg: ExerciseSessionLeg) -> [ExerciseTemplateItem] {
+        switch leg {
+        case let .strength(range): Array(items[range])
+        case let .cardio(index): [items[index]]
+        }
+    }
+
     // A session runs as cardio only when there's nothing in it to log set by set.
     var isCardio: Bool {
         !items.isEmpty && strengthItems.isEmpty
@@ -46,9 +93,9 @@ struct ExerciseQuickWorkout: Identifiable {
 
     var hasStrength: Bool { !strengthItems.isEmpty }
 
-    var symbol: String { glyphs.first?.symbol ?? ExerciseWorkoutCategory.gym.symbol }
+    var symbol: String { glyphs.first?.symbol ?? ExerciseCategory.gym.symbol }
 
-    var accentColor: Color { glyphs.first?.color ?? ExerciseWorkoutCategory.gym.tint }
+    var accentColor: Color { glyphs.first?.color ?? ExerciseCategory.gym.tint }
 
     // The card wears what's in the session: one icon per exercise in the order
     // they were added, up to four, and never the same icon twice.
@@ -58,7 +105,7 @@ struct ExerciseQuickWorkout: Identifiable {
             let glyph = ExerciseDemoLibrary.glyph(for: item.exerciseName)
             guard !glyphs.contains(where: { $0.id == glyph.id }) else { continue }
             glyphs.append(glyph)
-            if glyphs.count == ExerciseQuickWorkout.maxGlyphs { break }
+            if glyphs.count == ExerciseQuickSession.maxGlyphs { break }
         }
         return glyphs
     }
@@ -66,12 +113,12 @@ struct ExerciseQuickWorkout: Identifiable {
     static let maxGlyphs = 4
 }
 
-enum ExerciseDemoWorkouts {
-    static let all: [ExerciseQuickWorkout] = [pushAndRun, quickFiveK, quickTenK, quickPush, quickPull]
+enum ExerciseDemoSessions {
+    static let all: [ExerciseQuickSession] = [pushAndRun, quickFiveK, quickTenK, quickPush, quickPull]
 
     // Holds both kinds, so the run takes the lifting leg first and sets the run
     // up once that's logged.
-    static let pushAndRun = ExerciseQuickWorkout(
+    static let pushAndRun = ExerciseQuickSession(
         name: "Push & run",
         subtitle: "2 exercises \u{2022} 4 km",
         items: [
@@ -109,7 +156,7 @@ enum ExerciseDemoWorkouts {
         ]
     )
 
-    static let quickFiveK = ExerciseQuickWorkout(
+    static let quickFiveK = ExerciseQuickSession(
         name: "Quick 5K",
         subtitle: "5 km \u{2022} Zone 2",
         items: [
@@ -121,7 +168,7 @@ enum ExerciseDemoWorkouts {
         ]
     )
 
-    static let quickTenK = ExerciseQuickWorkout(
+    static let quickTenK = ExerciseQuickSession(
         name: "Quick 10K",
         subtitle: "10 km \u{2022} Zone 3",
         items: [
@@ -133,7 +180,7 @@ enum ExerciseDemoWorkouts {
         ]
     )
 
-    static let quickPush = ExerciseQuickWorkout(
+    static let quickPush = ExerciseQuickSession(
         name: "Quick Push",
         subtitle: "4 exercises",
         items: [
@@ -181,7 +228,7 @@ enum ExerciseDemoWorkouts {
         ]
     )
 
-    static let quickPull = ExerciseQuickWorkout(
+    static let quickPull = ExerciseQuickSession(
         name: "Quick Pull",
         subtitle: "3 exercises",
         items: [

@@ -56,9 +56,9 @@ struct HeartWorkoutSummaryResponseData {
     var energyOut: Amount?
     var startTime: String?
     var endTime: String?
-    // Where the workout came from, e.g. "Logged with Apple Watch".
+    // Where the session came from, e.g. "Logged with Apple Watch".
     var source: String?
-    // Conditions during the workout, e.g. "14°".
+    // Conditions during the session, e.g. "14°".
     var temperature: String?
 
     var heartGraph: HeartWorkoutSummaryHeartGraphData?
@@ -89,7 +89,7 @@ struct HeartWorkoutSummaryResponseData {
     }
 }
 
-// MARK: - Post workout heart graph
+// MARK: - Post session heart graph
 
 struct HeartWorkoutSummaryPostWorkoutHeartGraphData {
     var bpmDrop: Int?

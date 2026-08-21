@@ -1,5 +1,5 @@
 //
-//  ExerciseLiveWorkoutMenu.swift
+//  ExerciseLiveStrengthMenu.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 17/8/2026.
@@ -9,7 +9,7 @@ import SwiftUI
 
 // The live run's player menu: the spinning record, the transport controls and
 // the playlist of exercises still to come.
-struct ExerciseLiveWorkoutMenu: View {
+struct ExerciseLiveStrengthMenu: View {
     @Binding var exercises: [ExerciseActiveExercise]
     @Binding var currentIndex: Int
     @Binding var isExpanded: Bool
@@ -227,7 +227,7 @@ struct ExerciseLiveWorkoutMenu: View {
     private var endRows: some View {
         BrightDuelPillButton(
             "Cancel",
-            "End workout",
+            "End session",
             leadingSystemImage: "xmark",
             trailingSystemImage: "flag.pattern.checkered",
             leadingColor: .defaultRed,

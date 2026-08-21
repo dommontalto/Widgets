@@ -12,6 +12,30 @@ enum ExerciseCompleteTab: Int, CaseIterable {
     case heart
     case performance
 
+    // A tab that has nothing to draw for this part drops out of the pager
+    // rather than opening onto an empty page.
+    static func visible(for session: ExerciseCompleteSession) -> [ExerciseCompleteTab] {
+        allCases.filter { $0.hasContent(for: session) }
+    }
+
+    private func hasContent(for session: ExerciseCompleteSession) -> Bool {
+        let summary = session.summary
+        switch self {
+        case .summary:
+            return true
+        case .heart:
+            return summary.hrAvg != nil
+                || summary.heartGraph?.data?.isEmpty == false
+                || summary.postWorkoutHeartGraph?.data?.isEmpty == false
+                || summary.breakdown?.zones?.isEmpty == false
+        case .performance:
+            return session.hasPerformanceGraph
+                || summary.splits?.isEmpty == false
+                || summary.intervals?.isEmpty == false
+                || !session.progressions.isEmpty
+        }
+    }
+
     var title: String {
         switch self {
         case .summary: "Summary"
@@ -30,7 +54,7 @@ enum ExerciseCompleteTab: Int, CaseIterable {
 }
 
 struct ExerciseCompleteSheet: View {
-    // A workout that holds both lifting and cardio arrives as one session per
+    // A session that holds both lifting and cardio arrives as one session per
     // part, and the picker above the title walks between them.
     let sessions: [ExerciseCompleteSession]
 
@@ -52,7 +76,11 @@ struct ExerciseCompleteSheet: View {
         sessions[min(selectedPart, sessions.count - 1)]
     }
 
-    private var workout: HeartWorkoutSummaryResponseData { session.workout }
+    private var summary: HeartWorkoutSummaryResponseData { session.summary }
+
+    private var visibleTabs: [ExerciseCompleteTab] {
+        ExerciseCompleteTab.visible(for: session)
+    }
 
     private var intervalIndex: Binding<Int> {
         Binding(
@@ -76,7 +104,7 @@ struct ExerciseCompleteSheet: View {
     // drops out of the picker for as long as the map is open.
     private var visibleParts: [Int] {
         guard showingMap else { return Array(sessions.indices) }
-        return sessions.indices.filter { sessions[$0].workout.hasRoute }
+        return sessions.indices.filter { sessions[$0].summary.hasRoute }
     }
 
     var body: some View {
@@ -117,37 +145,43 @@ struct ExerciseCompleteSheet: View {
     private var page: some View {
         container {
             BrightSwipePageView(
-                pages: ExerciseCompleteTab.allCases.map {
+                pages: visibleTabs.map {
                     SwipePage(title: $0.title, systemImage: $0.systemImage)
                 },
-                fakeLargeTitle: workout.title ?? "",
+                fakeLargeTitle: summary.title ?? "",
                 titleSize: .standout4,
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,
                 selectedIndex: $selectedIndex
             ) { index in
-                tabContent(for: ExerciseCompleteTab(rawValue: index) ?? .summary)
+                tabContent(for: visibleTabs.indices.contains(index) ? visibleTabs[index] : .summary)
                     .padding(.horizontal, .spacing3x)
                     .padding(.top, .spacing2x + .spacing05x)
                     .padding(.bottom, .spacing3x)
+            }
+            // Another part may carry fewer tabs, so the page the picker lands on
+            // has to exist.
+            .id(selectedPart)
+            .onChange(of: selectedPart) { _, _ in
+                selectedIndex = min(selectedIndex, max(0, visibleTabs.count - 1))
             }
             // Declared on the content rather than on the container: the sheet
             // makes its own NavigationStack, and a destination hung outside it
             // never fires.
             .navigationDestination(isPresented: $showingMap) {
                 ExerciseCompleteMapWidget(
-                    routeLatitudes: workout.routeLatitudes,
-                    routeLongitudes: workout.routeLongitudes,
-                    routeZoneIndexes: workout.routeZoneIndexes,
-                    duration: workout.duration,
-                    hrAvg: workout.hrAvg,
-                    altitudeGainMetres: workout.altitudeGain?.value,
-                    avgPaceSecondsPerKm: workout.avgPaceSecondsPerKm,
-                    heartGraph: workout.heartGraph,
-                    altitudeGraph: workout.altitudeGraph,
-                    paceGraph: workout.paceGraph,
-                    cadenceGraph: workout.cadenceGraph,
+                    routeLatitudes: summary.routeLatitudes,
+                    routeLongitudes: summary.routeLongitudes,
+                    routeZoneIndexes: summary.routeZoneIndexes,
+                    duration: summary.duration,
+                    hrAvg: summary.hrAvg,
+                    altitudeGainMetres: summary.altitudeGain?.value,
+                    avgPaceSecondsPerKm: summary.avgPaceSecondsPerKm,
+                    heartGraph: summary.heartGraph,
+                    altitudeGraph: summary.altitudeGraph,
+                    paceGraph: summary.paceGraph,
+                    cadenceGraph: summary.cadenceGraph,
                     isFullScreen: true
                 )
                 // The bar keeps its stock back button but loses its background,
@@ -167,7 +201,7 @@ struct ExerciseCompleteSheet: View {
         }
     }
 
-    // Names the parts of a mixed workout. One button per part rather than a
+    // Names the parts of a mixed session. One button per part rather than a
     // segmented picker, which brings its own background and reads as a control
     // stacked on the bar. Grouped, so the bar glasses them together as one, and
     // the part being read is the one carrying its own colour.
@@ -193,7 +227,7 @@ struct ExerciseCompleteSheet: View {
 
     private var subtitle: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            if let startTime = workout.startTime, let endTime = workout.endTime {
+            if let startTime = summary.startTime, let endTime = summary.endTime {
                 BrightText(
                     Date.brightTimeRange(
                         from: startTime.isoStringToDate(),
@@ -203,7 +237,7 @@ struct ExerciseCompleteSheet: View {
                 )
             }
 
-            if let source = workout.source {
+            if let source = summary.source {
                 HStack(spacing: .spacing1x) {
                     Image(systemName: sourceIcon(for: source))
                         .font(.system(size: Constants.sourceIconSize))
@@ -236,11 +270,11 @@ struct ExerciseCompleteSheet: View {
 
     private var summaryTab: some View {
         VStack(alignment: .leading, spacing: .spacing4x) {
-            if workout.hasRoute {
+            if summary.hasRoute {
                 ExerciseCompleteMapWidget(
-                    routeLatitudes: workout.routeLatitudes,
-                    routeLongitudes: workout.routeLongitudes,
-                    routeZoneIndexes: workout.routeZoneIndexes,
+                    routeLatitudes: summary.routeLatitudes,
+                    routeLongitudes: summary.routeLongitudes,
+                    routeZoneIndexes: summary.routeZoneIndexes,
                     highlight: currentStep?.route,
                     highlightTint: currentStep?.tint ?? .defaultSkyBlue,
                     onOpen: { showingMap = true }
@@ -283,58 +317,60 @@ struct ExerciseCompleteSheet: View {
 
     private var heartTab: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            ExerciseCompleteHeartRateWidget(
-                hrAvg: workout.hrAvg ?? 0,
-                hrPeak: workout.hrPeak,
-                startDate: workout.startTime ?? "",
-                endDate: workout.endTime ?? "",
-                data: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
-            )
-
-            ExerciseCompletePostWorkoutWidget(
-                data: workout.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
-            )
-
-            if session.kind.showsZoneBreakdown {
-                ExerciseCompleteBreakdownWidget(
-                    data: workout.breakdown ?? HeartWorkoutSummaryBreakdownData()
+            if summary.hrAvg != nil || summary.heartGraph?.data?.isEmpty == false {
+                ExerciseCompleteHeartRateWidget(
+                    hrAvg: summary.hrAvg ?? 0,
+                    hrPeak: summary.hrPeak,
+                    startDate: summary.startTime ?? "",
+                    endDate: summary.endTime ?? "",
+                    data: summary.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
                 )
+            }
+
+            if summary.postWorkoutHeartGraph?.data?.isEmpty == false {
+                ExerciseCompleteRecoveryWidget(
+                    data: summary.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
+                )
+            }
+
+            if let breakdown = summary.breakdown, breakdown.zones?.isEmpty == false {
+                ExerciseCompleteBreakdownWidget(data: breakdown)
             }
         }
     }
 
-    @ViewBuilder
+    // No strength/cardio fork: whatever the part's data carries is stacked in
+    // order — live traces first, then the tables, and the set cards last, since
+    // they can run on forever.
     private var performanceTab: some View {
-        if session.kind == .strength {
-            VStack(alignment: .leading, spacing: .spacing4x) {
-                ForEach(session.progressions) { progression in
-                    ExerciseCompleteProgressionWidget(progression: progression) { name in
-                        openedExerciseName = name
-                    }
-                }
-            }
-        } else {
-            VStack(alignment: .leading, spacing: .spacing4x) {
+        VStack(alignment: .leading, spacing: .spacing4x) {
+            if session.hasPerformanceGraph {
                 ExerciseCompletePerformanceGraphWidget(
-                    hrAvg: workout.hrAvg ?? 0,
-                    duration: workout.duration ?? TimeDuration(),
-                    avgPace: workout.avgPaceSecondsPerKm ?? 0,
-                    altitudeGain: workout.altitudeGain ?? Amount(unit: "M", value: 0),
+                    hrAvg: summary.hrAvg ?? 0,
+                    duration: summary.duration ?? TimeDuration(),
+                    avgPace: summary.avgPaceSecondsPerKm ?? 0,
+                    altitudeGain: summary.altitudeGain ?? Amount(unit: "M", value: 0),
                     data: ExerciseCompleteCombinedGraphData(
-                        heartData: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
-                        altitudeData: workout.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
-                        paceData: workout.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
-                        cadenceData: workout.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+                        heartData: summary.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
+                        altitudeData: summary.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
+                        paceData: summary.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
+                        cadenceData: summary.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
                     ),
                     selectedSecond: $selectedGraphSecond
                 )
+            }
 
-                if let splits = workout.splits, !splits.isEmpty {
-                    ExerciseCompleteSplitWidget(data: splits)
-                }
+            if let splits = summary.splits, !splits.isEmpty {
+                ExerciseCompleteSplitWidget(data: splits)
+            }
 
-                if let intervals = workout.intervals, !intervals.isEmpty {
-                    ExerciseCompleteIntervalWidget(data: intervals)
+            if let intervals = summary.intervals, !intervals.isEmpty {
+                ExerciseCompleteIntervalWidget(data: intervals)
+            }
+
+            ForEach(session.progressions) { progression in
+                ExerciseCompleteProgressionWidget(progression: progression) { name in
+                    openedExerciseName = name
                 }
             }
         }

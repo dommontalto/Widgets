@@ -28,7 +28,7 @@ struct ExerciseWeeklyPlanWidget: View {
             RoundedRectangle(cornerRadius: 1, style: .continuous)
                 .fill(Color.defaultGreen)
                 .frame(width: 2, height: 35)
-            BrightText("No workouts this week", size: .body1, color: .defaultGreen)
+            BrightText("No sessions this week", size: .body1, color: .defaultGreen)
         }
         .padding(.horizontal, .spacing105x)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -49,7 +49,7 @@ struct ExerciseWeeklyPlanWidget: View {
                 BrightPillButton("Start", buttonSize: .large, isClear: true, onTapCallback: onStart)
 
                 BrightText(
-                    "Start a program or plan your workouts in advance.",
+                    "Start a program or plan your sessions in advance.",
                     size: .heading,
                     color: .defaultWhite,
                     weight: .regular

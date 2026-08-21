@@ -14,7 +14,7 @@ struct ExerciseLibraryRow: View {
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            NavigationLink(value: ExerciseWorkoutRoute.exercise(exercise.name)) {
+            NavigationLink(value: ExerciseSessionRoute.exercise(exercise.name)) {
                 HStack(spacing: .spacing2x) {
                     thumbnail
 

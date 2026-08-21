@@ -132,7 +132,7 @@ struct ExerciseCompleteExertionWidget: View {
     // tile behind it.
     private func thumbnail(for exercise: String) -> some View {
         let symbol = ExerciseDemoLibrary.exercise(named: exercise)?.symbol
-            ?? ExerciseDemoLibrary.workoutCategory(of: exercise).symbol
+            ?? ExerciseDemoLibrary.type(of: exercise).symbol
 
         return Image(systemName: symbol)
             .font(.standard(size: .standout4, weight: .light))

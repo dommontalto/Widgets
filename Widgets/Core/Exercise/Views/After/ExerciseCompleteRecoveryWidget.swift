@@ -1,5 +1,5 @@
 //
-//  ExerciseCompletePostWorkoutWidget.swift
+//  ExerciseCompleteRecoveryWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 19/8/2026.
@@ -8,13 +8,13 @@
 import Charts
 import SwiftUI
 
-struct ExerciseCompletePostWorkoutWidget: View {
+struct ExerciseCompleteRecoveryWidget: View {
     let data: HeartWorkoutSummaryPostWorkoutHeartGraphData
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             BrightText(
-                "Post-Workout Heart Rate Drop",
+                "Post-Session Heart Rate Drop",
                 size: .body1,
                 color: .textColor
             )
@@ -268,7 +268,7 @@ struct ExerciseCompletePostWorkoutWidget: View {
 }
 
 #Preview {
-    ExerciseCompletePostWorkoutWidget(
+    ExerciseCompleteRecoveryWidget(
         data: HeartWorkoutSummaryPostWorkoutHeartGraphData()
     )
 }

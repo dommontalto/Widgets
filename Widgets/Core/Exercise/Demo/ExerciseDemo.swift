@@ -46,21 +46,21 @@ struct ExerciseMuscleGroup {
     let status: String
 }
 
-struct ExerciseWorkout: Identifiable, Hashable {
+struct ExerciseLoggedSession: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let timestamp: String
     let type: ExerciseDayType
     let summary: String
-    let detail: ExerciseWorkoutDetail
+    let detail: ExerciseStrengthDetail
     var hasRoute = false
-    // The parts a mixed workout holds, in the order they were logged. Left
-    // empty, the workout is the single part its type implies.
-    var parts: [ExerciseWorkoutCategory] = []
+    // The parts a mixed session holds, in the order they were logged. Left
+    // empty, the session is the single part its type implies.
+    var parts: [ExerciseCategory] = []
     // Imported rather than run in the app, so the log marks it as read-only.
     var isFromAppleHealth = false
 
-    static func == (lhs: ExerciseWorkout, rhs: ExerciseWorkout) -> Bool {
+    static func == (lhs: ExerciseLoggedSession, rhs: ExerciseLoggedSession) -> Bool {
         lhs.id == rhs.id
     }
 
@@ -69,18 +69,18 @@ struct ExerciseWorkout: Identifiable, Hashable {
     }
 }
 
-struct ExerciseWorkoutGoal {
+struct ExerciseSessionGoal {
     let icon: String
     var iconColor: Color = .textColor
     let label: String
     let value: String
 }
 
-struct ExerciseUpcomingWorkout {
+struct ExerciseUpcomingSession {
     let name: String
     let time: String
     let type: ExerciseDayType
-    let goals: [ExerciseWorkoutGoal]
+    let goals: [ExerciseSessionGoal]
     let note: String
 }
 
@@ -116,7 +116,7 @@ struct ExerciseIntervalSegment: Identifiable {
     let kind: Kind
 }
 
-struct ExerciseLiveWorkout {
+struct ExerciseLiveCardioStats {
     let currentPace: String
     let distance: String
     let heartRate: String
@@ -134,7 +134,7 @@ struct ExerciseLiveWorkout {
 }
 
 enum ExerciseDemoData {
-    static let liveWorkout = ExerciseLiveWorkout(
+    static let liveCardioStats = ExerciseLiveCardioStats(
         currentPace: "3\u{2019}23 / KM",
         distance: "5.24 KM",
         heartRate: "136",
@@ -165,7 +165,7 @@ enum ExerciseDemoData {
         microDaysPerWeek: 7,
         microCompletedDays: 9,
         note: "We\u{2019}re ramping up your training intensity this week.",
-        bullets: ["+ 1km to your run.", "Increasing weights in gym workouts."]
+        bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
     )
 
     static let scores = ExerciseScores(recovery: 92, stress: 34, strain: 84)
@@ -179,7 +179,7 @@ enum ExerciseDemoData {
         ExerciseMuscleGroup(name: "Legs", sets: 10, status: "Optimal"),
     ]
 
-    static let strengthDetail = ExerciseWorkoutDetail(
+    static let strengthDetail = ExerciseStrengthDetail(
         tiles: [
             ExerciseStatTile(label: "Personal Best", value: "100", unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
             ExerciseStatTile(label: "EST. 1RM", value: "112", unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
@@ -222,7 +222,7 @@ enum ExerciseDemoData {
         note: "Push volume is up 8% on your last mesocycle. Bench press hit a new 5-rep max."
     )
 
-    static let cardioDetail = ExerciseWorkoutDetail(
+    static let cardioDetail = ExerciseStrengthDetail(
         tiles: [
             ExerciseStatTile(label: "Distance", value: "5.02", unit: "km", symbol: "figure.run", color: .defaultSkyBlue),
             ExerciseStatTile(label: "AVG pace", value: "4\u{2019}58\u{201D}", unit: "/km", symbol: "dial.high.fill", color: .defaultRed),
@@ -247,14 +247,14 @@ enum ExerciseDemoData {
     // the session held both.
     // Lifting counts as one part however many exercises it held; every run and
     // sport is its own.
-    static func logged(_ workout: ExerciseQuickWorkout) -> ExerciseWorkout {
-        let parts = (workout.hasStrength ? [ExerciseWorkoutCategory.gym] : [])
-            + workout.cardioItems.map { ExerciseDemoLibrary.workoutCategory(of: $0.exerciseName) }
+    static func logged(_ session: ExerciseQuickSession) -> ExerciseLoggedSession {
+        let parts = (session.hasStrength ? [ExerciseCategory.gym] : [])
+            + session.cardioItems.map { ExerciseDemoLibrary.type(of: $0.exerciseName) }
 
-        return ExerciseWorkout(
-            name: workout.name,
+        return ExerciseLoggedSession(
+            name: session.name,
             timestamp: "Just now",
-            type: workout.hasStrength ? .both : .cardio,
+            type: session.hasStrength ? .both : .cardio,
             summary: "5.02 km \u{2022} 4\u{2019}58\u{201D} /km",
             detail: cardioDetail,
             hasRoute: true,
@@ -262,26 +262,26 @@ enum ExerciseDemoData {
         )
     }
 
-    static let workoutHistory = [
-        ExerciseWorkout(name: "Push day", timestamp: "6:00 PM, 23 Jul", type: .strength, summary: "58:24 • 12,480 kg • 21 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "5K run", timestamp: "6:40 AM, 22 Jul", type: .cardio, summary: "5.02 km • 4’58” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Push & run", timestamp: "5:30 PM, 21 Jul", type: .both, summary: "1:12:05 • 9,240 kg • 4.1 km", detail: strengthDetail),
-        ExerciseWorkout(name: "Gym, run & footy", timestamp: "4:15 PM, 20 Jul", type: .both, summary: "2:04:18 • 7,900 kg • 3.2 km", detail: strengthDetail, parts: [.gym, .cardio, .sports]),
-        ExerciseWorkout(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Functional strength", timestamp: "12:20 PM, 20 Jul", type: .strength, summary: "34:02 • 4,120 kg • 12 sets", detail: strengthDetail, isFromAppleHealth: true),
-        ExerciseWorkout(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Outdoor walk", timestamp: "1:10 PM, 19 Jul", type: .cardio, summary: "3.40 km • 11’02” /km", detail: cardioDetail, isFromAppleHealth: true),
-        ExerciseWorkout(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Recovery run", timestamp: "6:30 AM, 17 Jul", type: .cardio, summary: "4.00 km • 5’42” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Push day", timestamp: "6:05 PM, 15 Jul", type: .strength, summary: "55:40 • 12,120 kg • 20 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Interval run", timestamp: "6:35 AM, 14 Jul", type: .cardio, summary: "6 × 400m • 3’58” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Pull day", timestamp: "6:15 PM, 12 Jul", type: .strength, summary: "50:22 • 10,940 kg • 18 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Long run", timestamp: "7:10 AM, 11 Jul", type: .cardio, summary: "12.4 km • 5’18” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Leg day", timestamp: "5:50 PM, 9 Jul", type: .strength, summary: "63:05 • 15,110 kg • 23 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Recovery run", timestamp: "6:25 AM, 8 Jul", type: .cardio, summary: "4.20 km • 5’38” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Full body", timestamp: "6:00 PM, 5 Jul", type: .strength, summary: "48:15 • 9,860 kg • 16 sets", detail: strengthDetail),
-        ExerciseWorkout(name: "Tempo run", timestamp: "7:00 AM, 3 Jul", type: .cardio, summary: "8.00 km • 4’35” /km", detail: cardioDetail, hasRoute: true),
-        ExerciseWorkout(name: "Push day", timestamp: "6:10 PM, 1 Jul", type: .strength, summary: "57:48 • 12,300 kg • 21 sets", detail: strengthDetail),
+    static let sessionHistory = [
+        ExerciseLoggedSession(name: "Push day", timestamp: "6:00 PM, 23 Jul", type: .strength, summary: "58:24 • 12,480 kg • 21 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "5K run", timestamp: "6:40 AM, 22 Jul", type: .cardio, summary: "5.02 km • 4’58” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Push & run", timestamp: "5:30 PM, 21 Jul", type: .both, summary: "1:12:05 • 9,240 kg • 4.1 km", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Gym, run & footy", timestamp: "4:15 PM, 20 Jul", type: .both, summary: "2:04:18 • 7,900 kg • 3.2 km", detail: strengthDetail, parts: [.gym, .cardio, .sports]),
+        ExerciseLoggedSession(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Functional strength", timestamp: "12:20 PM, 20 Jul", type: .strength, summary: "34:02 • 4,120 kg • 12 sets", detail: strengthDetail, isFromAppleHealth: true),
+        ExerciseLoggedSession(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Outdoor walk", timestamp: "1:10 PM, 19 Jul", type: .cardio, summary: "3.40 km • 11’02” /km", detail: cardioDetail, isFromAppleHealth: true),
+        ExerciseLoggedSession(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Recovery run", timestamp: "6:30 AM, 17 Jul", type: .cardio, summary: "4.00 km • 5’42” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Push day", timestamp: "6:05 PM, 15 Jul", type: .strength, summary: "55:40 • 12,120 kg • 20 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Interval run", timestamp: "6:35 AM, 14 Jul", type: .cardio, summary: "6 × 400m • 3’58” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Pull day", timestamp: "6:15 PM, 12 Jul", type: .strength, summary: "50:22 • 10,940 kg • 18 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Long run", timestamp: "7:10 AM, 11 Jul", type: .cardio, summary: "12.4 km • 5’18” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Leg day", timestamp: "5:50 PM, 9 Jul", type: .strength, summary: "63:05 • 15,110 kg • 23 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Recovery run", timestamp: "6:25 AM, 8 Jul", type: .cardio, summary: "4.20 km • 5’38” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Full body", timestamp: "6:00 PM, 5 Jul", type: .strength, summary: "48:15 • 9,860 kg • 16 sets", detail: strengthDetail),
+        ExerciseLoggedSession(name: "Tempo run", timestamp: "7:00 AM, 3 Jul", type: .cardio, summary: "8.00 km • 4’35” /km", detail: cardioDetail, hasRoute: true),
+        ExerciseLoggedSession(name: "Push day", timestamp: "6:10 PM, 1 Jul", type: .strength, summary: "57:48 • 12,300 kg • 21 sets", detail: strengthDetail),
     ]
 
     static let trainingLoad = ExerciseTrainingLoad(
@@ -322,7 +322,7 @@ enum ExerciseDemoData {
     static let detailStats: [ExerciseStatTile] = [
         ExerciseStatTile(label: "Personal Best", value: "120", unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
         ExerciseStatTile(label: "EST. 1RM", value: "120", unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
-        ExerciseStatTile(label: "Total Workouts", value: "54", unit: "Workouts", symbol: "text.line.3.summary", color: .defaultGreen),
+        ExerciseStatTile(label: "Total Sessions", value: "54", unit: "Sessions", symbol: "text.line.3.summary", color: .defaultGreen),
         ExerciseStatTile(label: "AVG weekly sets", value: "12", unit: "sets", symbol: "chart.line.flattrend.xyaxis", color: .defaultSkyBlue),
     ]
 

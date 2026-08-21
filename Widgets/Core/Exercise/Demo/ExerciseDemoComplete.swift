@@ -13,12 +13,12 @@ enum ExerciseDemoComplete {
     // One part per icon in the sheet's picker: every gym and bodyweight exercise
     // sits under a single section, while each cardio and each sport gets its
     // own — two runs are two sections, not one.
-    static func sessions(for workout: ExerciseWorkout) -> [ExerciseCompleteSession] {
-        let parts = workout.parts.isEmpty ? defaultParts(for: workout.type) : workout.parts
-        return parts.map { session(for: $0, titled: workout.name) }
+    static func sessions(for session: ExerciseLoggedSession) -> [ExerciseCompleteSession] {
+        let parts = session.parts.isEmpty ? defaultParts(for: session.type) : session.parts
+        return parts.map { Self.session(for: $0, titled: session.name) }
     }
 
-    private static func defaultParts(for type: ExerciseDayType) -> [ExerciseWorkoutCategory] {
+    private static func defaultParts(for type: ExerciseDayType) -> [ExerciseCategory] {
         switch type {
         case .cardio: [.cardio]
         case .both: [.gym, .cardio]
@@ -27,7 +27,7 @@ enum ExerciseDemoComplete {
     }
 
     private static func session(
-        for category: ExerciseWorkoutCategory,
+        for category: ExerciseCategory,
         titled title: String
     ) -> ExerciseCompleteSession {
         switch category {
@@ -42,13 +42,12 @@ enum ExerciseDemoComplete {
         titled title: String
     ) -> ExerciseCompleteSession {
         var copy = session
-        copy.workout.title = title
+        copy.summary.title = title
         return copy
     }
 
     static let cardio = ExerciseCompleteSession(
-        kind: .cardio,
-        workout: cardioWorkout,
+        summary: cardioSummary,
         metrics: cardioMetrics,
         strain: strain,
         records: cardioRecords,
@@ -57,8 +56,7 @@ enum ExerciseDemoComplete {
     )
 
     static let strength = ExerciseCompleteSession(
-        kind: .strength,
-        workout: strengthWorkout,
+        summary: strengthSummary,
         metrics: strengthMetrics,
         strain: strain,
         exertion: exertion,
@@ -67,51 +65,50 @@ enum ExerciseDemoComplete {
     )
 
     static let sports = ExerciseCompleteSession(
-        kind: .cardio,
-        workout: sportsWorkout,
+        summary: sportsSummary,
         metrics: sportsMetrics,
         strain: strain,
         records: cardioRecords,
         category: .sports
     )
 
-    // MARK: Workouts
+    // MARK: Summaries
 
     // A match is timed and tracked but not run to a route, so it carries no map
     // and no splits.
-    private static let sportsWorkout: HeartWorkoutSummaryResponseData = {
-        var workout = cardioWorkout
-        workout.title = "Football"
-        workout.duration = TimeDuration(hour: 1, minute: 5, second: 0)
-        workout.distance = nil
-        workout.altitudeGain = nil
-        workout.avgPaceSecondsPerKm = nil
-        workout.splits = nil
-        workout.intervals = nil
-        workout.routeLatitudes = nil
-        workout.routeLongitudes = nil
-        workout.routeZoneIndexes = nil
-        return workout
+    private static let sportsSummary: HeartWorkoutSummaryResponseData = {
+        var session = cardioSummary
+        session.title = "Football"
+        session.duration = TimeDuration(hour: 1, minute: 5, second: 0)
+        session.distance = nil
+        session.altitudeGain = nil
+        session.avgPaceSecondsPerKm = nil
+        session.splits = nil
+        session.intervals = nil
+        session.routeLatitudes = nil
+        session.routeLongitudes = nil
+        session.routeZoneIndexes = nil
+        return session
     }()
 
-    private static let strengthWorkout: HeartWorkoutSummaryResponseData = {
-        var workout = cardioWorkout
-        workout.title = "Quick Push"
-        workout.duration = TimeDuration(hour: 0, minute: 45, second: 43)
-        workout.source = "Logged with iPhone"
+    private static let strengthSummary: HeartWorkoutSummaryResponseData = {
+        var session = cardioSummary
+        session.title = "Quick Push"
+        session.duration = TimeDuration(hour: 0, minute: 45, second: 43)
+        session.source = "Logged with iPhone"
         // A gym session has no route, splits or intervals to show.
-        workout.distance = nil
-        workout.altitudeGain = nil
-        workout.avgPaceSecondsPerKm = nil
-        workout.splits = nil
-        workout.intervals = nil
-        workout.routeLatitudes = nil
-        workout.routeLongitudes = nil
-        workout.routeZoneIndexes = nil
-        return workout
+        session.distance = nil
+        session.altitudeGain = nil
+        session.avgPaceSecondsPerKm = nil
+        session.splits = nil
+        session.intervals = nil
+        session.routeLatitudes = nil
+        session.routeLongitudes = nil
+        session.routeZoneIndexes = nil
+        return session
     }()
 
-    private static let cardioWorkout = HeartWorkoutSummaryResponseData(
+    private static let cardioSummary = HeartWorkoutSummaryResponseData(
         title: "Outdoor Run",
         duration: TimeDuration(hour: 0, minute: 45, second: 54),
         energyOut: Amount(unit: "kcal", value: 512),
@@ -126,7 +123,7 @@ enum ExerciseDemoComplete {
         hrAvg: 98,
         hrPeak: 154,
         zoneAvg: 3,
-        postWorkoutHeartGraph: postWorkout,
+        postWorkoutHeartGraph: recoveryDrop,
         breakdown: breakdown,
         distance: Amount(unit: "M", value: 8_640),
         altitudeGain: Amount(unit: "M", value: 96),
@@ -242,9 +239,9 @@ enum ExerciseDemoComplete {
         }
     }
 
-    // MARK: Post-workout drop
+    // MARK: Post-session drop
 
-    private static let postWorkout = HeartWorkoutSummaryPostWorkoutHeartGraphData(
+    private static let recoveryDrop = HeartWorkoutSummaryPostWorkoutHeartGraphData(
         bpmDrop: 42,
         xDates: [
             "2026-07-25T06:57:00Z",

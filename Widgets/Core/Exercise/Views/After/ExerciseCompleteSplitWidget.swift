@@ -155,7 +155,7 @@ struct ExerciseCompleteSplitWidget: View {
 }
 
 #Preview {
-    ExerciseCompleteSplitWidget(data: ExerciseDemoComplete.cardio.workout.splits ?? [])
+    ExerciseCompleteSplitWidget(data: ExerciseDemoComplete.cardio.summary.splits ?? [])
         .padding(.spacing3x)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color.defaultSheetBackground.ignoresSafeArea())

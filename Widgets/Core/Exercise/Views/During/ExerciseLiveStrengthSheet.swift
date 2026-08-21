@@ -1,5 +1,5 @@
 //
-//  ExerciseLiveWorkoutSheet.swift
+//  ExerciseLiveStrengthSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 24/7/2026.
@@ -7,18 +7,18 @@
 
 import SwiftUI
 
-struct ExerciseLiveWorkoutSheet: View {
-    var workoutName = "Gym workout"
+struct ExerciseLiveStrengthSheet: View {
+    var sessionName = "Gym session"
     var templateItems: [ExerciseTemplateItem]? = nil
     // Ends the whole run. Only the flow can do that from a pushed leg, where
-    // `dismiss` would pop back to the pre-workout screen instead.
+    // `dismiss` would pop back to the pre-session screen instead.
     var onClose: (() -> Void)?
     // Handed the run's exercises when the user wants them folded back into the
-    // workout they started from.
-    var onUpdateWorkout: ([ExerciseTemplateItem]) -> Void = { _ in }
-    // Handed the logged workout, so the presenter owns what comes next — it
+    // session they started from.
+    var onUpdateSession: ([ExerciseTemplateItem]) -> Void = { _ in }
+    // Handed the logged session, so the presenter owns what comes next — it
     // swaps this screen for the summary inside the same presentation.
-    var onFinish: (ExerciseWorkout) -> Void = { _ in }
+    var onFinish: (ExerciseLoggedSession) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -37,11 +37,11 @@ struct ExerciseLiveWorkoutSheet: View {
     // once and pinned, so the rows can't be squeezed mid-animation.
     @State private var pageWidth: CGFloat = 0
     @State private var columnWidths: [ExerciseSetColumn: CGFloat] = [:]
-    @State private var isConfirmingWorkoutUpdate = false
+    @State private var isConfirmingSessionUpdate = false
     @State private var isConfirmingDiscard = false
     @State private var isConfirmingFinish = false
     @State private var isShowingProgression = false
-    @State private var isEditingWorkout = false
+    @State private var isEditingSession = false
     // Names the skip that was just tapped, in place of the clock, until its
     // window runs out.
     @State private var transportLabel: String?
@@ -55,16 +55,16 @@ struct ExerciseLiveWorkoutSheet: View {
     @FocusState private var focusedField: ExerciseSetField?
 
     init(
-        workoutName: String = "Gym workout",
+        sessionName: String = "Gym session",
         templateItems: [ExerciseTemplateItem]? = nil,
         onClose: (() -> Void)? = nil,
-        onUpdateWorkout: @escaping ([ExerciseTemplateItem]) -> Void = { _ in },
-        onFinish: @escaping (ExerciseWorkout) -> Void = { _ in }
+        onUpdateSession: @escaping ([ExerciseTemplateItem]) -> Void = { _ in },
+        onFinish: @escaping (ExerciseLoggedSession) -> Void = { _ in }
     ) {
-        self.workoutName = workoutName
+        self.sessionName = sessionName
         self.templateItems = templateItems
         self.onClose = onClose
-        self.onUpdateWorkout = onUpdateWorkout
+        self.onUpdateSession = onUpdateSession
         self.onFinish = onFinish
         _exercises = State(initialValue: templateItems.map(ExerciseActiveExercise.fromTemplate) ?? ExerciseDemoData.activeExercises)
     }
@@ -99,7 +99,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     private var menu: some View {
-        ExerciseLiveWorkoutMenu(
+        ExerciseLiveStrengthMenu(
             exercises: $exercises,
             currentIndex: $currentIndex,
             isExpanded: isMenuOpen,
@@ -119,7 +119,7 @@ struct ExerciseLiveWorkoutSheet: View {
                 if currentIndex + 1 < exercises.count { showTransport("NEXT") }
                 advance()
             },
-            onEdit: { isEditingWorkout = true },
+            onEdit: { isEditingSession = true },
             onCancel: { isConfirmingDiscard = true },
             onEnd: confirmFinish
         )
@@ -212,20 +212,20 @@ struct ExerciseLiveWorkoutSheet: View {
             guard !Task.isCancelled else { return }
             withAnimation(.brightEaseInOut) { self.restEndDate = nil }
         }
-        .alert("Workout Changed", isPresented: $isConfirmingWorkoutUpdate) {
+        .alert("Session Changed", isPresented: $isConfirmingSessionUpdate) {
             Button {
-                onUpdateWorkout(runTemplateItems)
-                onFinish(finishedWorkout)
+                onUpdateSession(runTemplateItems)
+                onFinish(finishedSession)
             } label: {
-                Text("Update Workout")
+                Text("Update Session")
                     .foregroundStyle(Color.defaultSkyBlue)
             }
 
-            Button("Keep Original Workout", role: .cancel) {
-                onFinish(finishedWorkout)
+            Button("Keep Original Session", role: .cancel) {
+                onFinish(finishedSession)
             }
         } message: {
-            Text("This run added sets or exercises the workout doesn't have.")
+            Text("This run added sets or exercises the session doesn't have.")
         }
         .alert("Discard?", isPresented: $isConfirmingDiscard) {
             Button("Cancel", role: .cancel) {}
@@ -234,7 +234,7 @@ struct ExerciseLiveWorkoutSheet: View {
                 close()
             }
         } message: {
-            Text("Your workout data will not be saved if you discard this workout.")
+            Text("Your session data will not be saved if you discard this session.")
         }
         .alert("Finish", isPresented: $isConfirmingFinish) {
             Button("Cancel", role: .cancel) {}
@@ -243,9 +243,9 @@ struct ExerciseLiveWorkoutSheet: View {
                 finish()
             }
         } message: {
-            Text("You still have some exercises to complete. Are you sure you want to finish your workout?")
+            Text("You still have some exercises to complete. Are you sure you want to finish your session?")
         }
-        .sheet(isPresented: $isEditingWorkout) {
+        .sheet(isPresented: $isEditingSession) {
             ExerciseSupersetSheet(exercises: exercises, onSave: applyEdits)
         }
         .animation(.brightEaseInOut, value: restEndDate)
@@ -358,7 +358,7 @@ struct ExerciseLiveWorkoutSheet: View {
     }
 
     // The previous run's sets, so the sheet can show what this one is building
-    // on. Demo data until the workout history is wired up.
+    // on. Demo data until the session history is wired up.
     private var lastSessionSets: [ExerciseProgressionSet] {
         currentExercise.sets
             .filter(\.kind.countsAsSet)
@@ -517,7 +517,7 @@ struct ExerciseLiveWorkoutSheet: View {
     // MARK: - Status
 
     private var statusWidget: some View {
-        ExerciseLiveWorkoutStatusWidget(
+        ExerciseLiveStrengthStatusWidget(
             status: status,
             heartRate: Constants.demoHeartRate,
             onRPE: { isPickingRPE = true },
@@ -570,7 +570,7 @@ struct ExerciseLiveWorkoutSheet: View {
         return Int(currentExercise.sets[ratedIndex].reps) ?? 0
     }
 
-    private var status: ExerciseLiveWorkoutStatusWidget.Status {
+    private var status: ExerciseLiveStrengthStatusWidget.Status {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
         } else if activeSet == nil {
@@ -610,13 +610,13 @@ struct ExerciseLiveWorkoutSheet: View {
 
     private func finish() {
         guard divergesFromTemplate else {
-            onFinish(finishedWorkout)
+            onFinish(finishedSession)
             return
         }
-        isConfirmingWorkoutUpdate = true
+        isConfirmingSessionUpdate = true
     }
 
-    // True once the run has more (or fewer) exercises or sets than the workout
+    // True once the run has more (or fewer) exercises or sets than the session
     // it started from — a typed weight isn't a change to the plan.
     private var divergesFromTemplate: Bool {
         guard let templateItems else { return false }
@@ -762,7 +762,7 @@ struct ExerciseLiveWorkoutSheet: View {
         return "Set \(workingIndex(of: activeSet, in: currentExercise))"
     }
 
-    private var finishedWorkout: ExerciseWorkout {
+    private var finishedSession: ExerciseLoggedSession {
         let logged = exercises.compactMap { exercise -> ExerciseLoggedExercise? in
             let done = exercise.sets.filter(\.isDone)
             guard !done.isEmpty else { return nil }
@@ -775,12 +775,12 @@ struct ExerciseLiveWorkoutSheet: View {
         }
         let duration = elapsedString(at: Date())
 
-        return ExerciseWorkout(
-            name: workoutName,
+        return ExerciseLoggedSession(
+            name: sessionName,
             timestamp: Date().formatted(date: .abbreviated, time: .shortened),
             type: .strength,
             summary: "\(duration) • \(volumeString) kg • \(completedSets) sets",
-            detail: ExerciseWorkoutDetail(
+            detail: ExerciseStrengthDetail(
                 tiles: [
                     ExerciseStatTile(label: "Personal Best", value: personalBest, unit: "KG", symbol: "trophy.fill", color: .defaultYellow),
                     ExerciseStatTile(label: "EST. 1RM", value: estimatedOneRepMax, unit: "KG", symbol: "dial.high.fill", color: .defaultRed),
@@ -791,7 +791,7 @@ struct ExerciseLiveWorkoutSheet: View {
                 ],
                 exercises: logged,
                 splits: [],
-                note: "Nice work — that's another workout logged."
+                note: "Nice work — that's another session logged."
             )
         )
     }
@@ -858,7 +858,7 @@ struct ExerciseLiveWorkoutSheet: View {
         // status card's softer top rather than splitting the difference with
         // the tighter bottom, which sits at the screen edge.
         static let statusBeamRadius: Double = 36
-        // Stands in for HealthKit until the workout is wired to real samples.
+        // Stands in for HealthKit until the session is wired to real samples.
         static let demoHeartRate = "132"
         static let demoLastSession = "Fri, 7 Aug"
         static let demoWeightChange = 2.5
@@ -1023,7 +1023,7 @@ private struct ExerciseLiveSetRow: View {
                 }
                 .buttonStyle(.plain)
             }
-            .frame(height: ExerciseLiveWorkoutSheet.Constants.rowHeight)
+            .frame(height: ExerciseLiveStrengthSheet.Constants.rowHeight)
 
             if let failedRep = set.failedRep {
                 failedLine(failedRep)
@@ -1049,7 +1049,7 @@ private struct ExerciseLiveSetRow: View {
     // The list sizes itself off the rows, so the failed line's cost is declared
     // here rather than measured.
     static func height(for set: ExerciseActiveSet) -> CGFloat {
-        let base = ExerciseLiveWorkoutSheet.Constants.rowHeight
+        let base = ExerciseLiveStrengthSheet.Constants.rowHeight
         return set.failedRep == nil ? base : base + Constants.failedLineHeight + .spacing2x
     }
 
@@ -1191,7 +1191,7 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
 
 #Preview {
     NavigationStack {
-        ExerciseLiveWorkoutSheet()
+        ExerciseLiveStrengthSheet()
     }
     .environment(ExerciseBuilder())
 }

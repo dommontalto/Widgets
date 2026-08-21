@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct ExerciseHistoryWidget: View {
-    @State private var workouts = ExerciseDemoData.workoutHistory
-    @State private var selectedWorkout: ExerciseWorkout?
+    @State private var sessions = ExerciseDemoData.sessionHistory
+    @State private var selectedSession: ExerciseLoggedSession?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -21,10 +21,10 @@ struct ExerciseHistoryWidget: View {
             key
 
             VStack(spacing: .spacing0x) {
-                ForEach(workouts) { workout in
-                    workoutRow(workout)
+                ForEach(sessions) { session in
+                    sessionRow(session)
 
-                    if workout.id != workouts.last?.id {
+                    if session.id != sessions.last?.id {
                         Rectangle()
                             .fill(Color.textColor.opacity(.ultraLowOpacity))
                             .frame(height: 1)
@@ -35,14 +35,14 @@ struct ExerciseHistoryWidget: View {
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
-        .sheet(item: $selectedWorkout) { workout in
+        .sheet(item: $selectedSession) { session in
             ExerciseCompleteSheet(
-                sessions: ExerciseDemoComplete.sessions(for: workout)
+                sessions: ExerciseDemoComplete.sessions(for: session)
             )
         }
     }
 
-    // Reads the same as the consistency heatmap's, with imported workouts
+    // Reads the same as the consistency heatmap's, with imported sessions
     // standing in for its rest days.
     private var key: some View {
         FlowLayout(spacing: .spacing2x) {
@@ -63,10 +63,10 @@ struct ExerciseHistoryWidget: View {
         }
     }
 
-    private func workoutRow(_ workout: ExerciseWorkout) -> some View {
-        let color = color(for: workout)
+    private func sessionRow(_ session: ExerciseLoggedSession) -> some View {
+        let color = color(for: session)
         return Button {
-            selectedWorkout = workout
+            selectedSession = session
         } label: {
             HStack(spacing: .spacing105x) {
                 // The same square the consistency heatmap draws, so a log entry
@@ -77,15 +77,15 @@ struct ExerciseHistoryWidget: View {
                     .frame(width: Constants.iconWidth)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(workout.name, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    BrightText(workout.summary, size: .body3, color: .lightTextColor)
+                    BrightText(session.name, size: .body2, color: .semiLightTextColor, weight: .regular)
+                    BrightText(session.summary, size: .body3, color: .lightTextColor)
                         .monospacedDigit()
                 }
 
                 Spacer(minLength: .spacing2x)
 
                 VStack(alignment: .trailing, spacing: .spacing05x) {
-                    BrightText(workout.timestamp, size: .body3, color: .lightTextColor)
+                    BrightText(session.timestamp, size: .body3, color: .lightTextColor)
                     Image(systemName: "chevron.right")
                         .font(.standard(size: .body5, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)
@@ -99,10 +99,10 @@ struct ExerciseHistoryWidget: View {
 
     // The same three the consistency heatmap uses, and red for anything that
     // came in from Apple Health rather than being run here.
-    private func color(for workout: ExerciseWorkout) -> Color {
-        guard !workout.isFromAppleHealth else { return .defaultRed }
+    private func color(for session: ExerciseLoggedSession) -> Color {
+        guard !session.isFromAppleHealth else { return .defaultRed }
 
-        return switch workout.type {
+        return switch session.type {
         case .cardio: .defaultSkyBlue
         case .both: .defaultGreen
         case .strength, .rest: .defaultPurple

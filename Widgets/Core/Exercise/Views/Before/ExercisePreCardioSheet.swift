@@ -10,9 +10,9 @@ import SwiftUI
 // What a run is about to do, read back off the plan it was built with. The
 // strength equivalent lists exercises and sets; a run has targets and legs.
 struct ExercisePreCardioSheet: View {
-    let workout: ExerciseQuickWorkout
+    let session: ExerciseQuickSession
 
-    // Which of the session's runs or sports this sets up.
+    // Which of the session's legs this sets up — always a cardio one here.
     var leg = 0
 
     var chrome: ExercisePageChrome = .sheet
@@ -23,18 +23,18 @@ struct ExercisePreCardioSheet: View {
 
     // Hands the run to the presenter, which pushes the live screen inside the
     // same presentation.
-    var onStart: (ExerciseQuickWorkout) -> Void = { _ in }
+    var onStart: (ExerciseQuickSession) -> Void = { _ in }
 
     @Environment(ExerciseBuilder.self) private var builder
     @Environment(\.dismiss) private var dismiss
 
     @State private var isEditing = false
-    @State private var isPickingDevices = false
-    @State private var source = ExerciseSessionSource.phoneAndWatch
 
     private var item: ExerciseTemplateItem? {
-        let legs = workout.cardioItems
-        return legs.indices.contains(leg) ? legs[leg] : legs.first
+        guard case let .cardio(index)? = session.legs[safe: leg] else {
+            return session.cardioItems.first
+        }
+        return session.items[safe: index]
     }
 
     private var plan: ExerciseCardioPlan {
@@ -44,21 +44,18 @@ struct ExercisePreCardioSheet: View {
     // The session's own name when the run is all it is, and the run's name when
     // it's one leg among others.
     private var title: String {
-        guard workout.hasStrength || workout.cardioItems.count > 1 else { return workout.name }
-        return item?.exerciseName ?? workout.name
+        guard session.hasStrength || session.cardioItems.count > 1 else { return session.name }
+        return item?.exerciseName ?? session.name
     }
 
     private var symbol: String {
-        item.map { ExerciseDemoLibrary.glyph(for: $0.exerciseName).symbol } ?? workout.symbol
+        item.map { ExerciseDemoLibrary.glyph(for: $0.exerciseName).symbol } ?? session.symbol
     }
 
     var body: some View {
         page
             .navigationDestination(isPresented: $isEditing) {
-                ExerciseCreateSessionSheet(editing: workout) { isEditing = false }
-            }
-            .navigationDestination(isPresented: $isPickingDevices) {
-                ExerciseDevicesSheet(source: $source)
+                ExerciseCreateSessionSheet(editing: session) { isEditing = false }
             }
     }
 
@@ -68,7 +65,7 @@ struct ExercisePreCardioSheet: View {
             BrightPageSheetView(
                 horizontalPadding: .spacing0x,
                 backgroundColor: .defaultBackground,
-                trailing: { ToolbarItem(placement: .topBarTrailing) { sourcePill } },
+                trailing: { ToolbarItem(placement: .topBarTrailing) { sourceMenu } },
                 content: {
                     content
                         .toolbar {
@@ -97,7 +94,7 @@ struct ExercisePreCardioSheet: View {
                         ExerciseInlineTitle(file: #file)
                     }
 
-                    ToolbarItem(placement: .topBarTrailing) { sourcePill }
+                    ToolbarItem(placement: .topBarTrailing) { sourceMenu }
                 },
                 content: { content }
             )
@@ -149,16 +146,24 @@ struct ExercisePreCardioSheet: View {
         }
     }
 
-    // Which devices the run will be recorded on, and the way through to changing
-    // them.
-    private var sourcePill: some View {
-        Button {
-            isPickingDevices = true
+    private var sourceMenu: some View {
+        Menu {
+            Picker("Start session on", selection: Bindable(builder).source) {
+                Label(ExerciseSessionSource.phone.title, systemImage: "iphone")
+                    .tag(ExerciseSessionSource.phone)
+            }
+
+            Button {
+            } label: {
+                Label(ExerciseSessionSource.phoneAndWatch.title, systemImage: "applewatch")
+            }
+            .disabled(true)
         } label: {
-            ExerciseDeviceGlyphs(symbols: source.symbols)
-                .contentShape(Rectangle())
+            // The Menu owns the tap, so the glyphs are label only.
+            ExerciseDeviceGlyphs(symbols: builder.source.symbols)
+                .allowsHitTesting(false)
         }
-        .buttonStyle(.plain)
+        .brightHaptic(.light, trigger: builder.source)
     }
 
     // MARK: - Targets
@@ -245,16 +250,16 @@ struct ExercisePreCardioSheet: View {
         HStack(spacing: .spacing2x) {
             Menu {
                 Button("Duplicate", systemImage: "plus.square.on.square") {
-                    withAnimation(.brightSnappy) { builder.duplicate(workout) }
+                    withAnimation(.brightSnappy) { builder.duplicate(session) }
                 }
 
                 Button("Edit", systemImage: "pencil") {
-                    builder.loadDraft(from: workout)
+                    builder.loadDraft(from: session)
                     isEditing = true
                 }
 
                 Button("Delete", systemImage: "trash", role: .destructive) {
-                    builder.delete(workout)
+                    builder.delete(session)
                     close()
                 }
                 .tint(.defaultRed)
@@ -266,7 +271,7 @@ struct ExercisePreCardioSheet: View {
             Spacer(minLength: .spacing2x)
 
             BrightRoundButton(systemImage: "play.fill", size: .finalBossLarge, color: .defaultGreen) {
-                onStart(workout)
+                onStart(session)
             }
         }
         .padding(.spacing4x)
@@ -360,7 +365,7 @@ struct ExercisePreCardioSheet: View {
     Color.defaultBackground
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
-            ExercisePreCardioSheet(workout: ExerciseDemoWorkouts.all.first { $0.isCardio }!)
+            ExercisePreCardioSheet(session: ExerciseDemoSessions.all.first { $0.isCardio }!)
                 .environment(ExerciseBuilder())
         }
 }

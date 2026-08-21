@@ -38,7 +38,7 @@ private struct MetricSpec: Identifiable {
     let unit: String
     let values: [Double]
     let yTicks: [Int]?
-    // Shown when nothing is scrubbed — the workout's average for this metric.
+    // Shown when nothing is scrubbed — the session's average for this metric.
     let restingReadout: String
 
     var id: ExerciseCompleteGraphMetric { metric }
@@ -384,18 +384,18 @@ extension [Double] {
 
 #Preview {
     @Previewable @State var selectedSecond: Double?
-    let workout = ExerciseDemoComplete.cardio.workout
+    let session = ExerciseDemoComplete.cardio.summary
 
     return ExerciseCompletePerformanceGraphWidget(
-        hrAvg: workout.hrAvg ?? 0,
-        duration: workout.duration ?? TimeDuration(),
-        avgPace: workout.avgPaceSecondsPerKm ?? 0,
-        altitudeGain: workout.altitudeGain ?? Amount(unit: "M", value: 0),
+        hrAvg: session.hrAvg ?? 0,
+        duration: session.duration ?? TimeDuration(),
+        avgPace: session.avgPaceSecondsPerKm ?? 0,
+        altitudeGain: session.altitudeGain ?? Amount(unit: "M", value: 0),
         data: ExerciseCompleteCombinedGraphData(
-            heartData: workout.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
-            altitudeData: workout.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
-            paceData: workout.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
-            cadenceData: workout.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+            heartData: session.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
+            altitudeData: session.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
+            paceData: session.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
+            cadenceData: session.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
         ),
         selectedSecond: $selectedSecond
     )

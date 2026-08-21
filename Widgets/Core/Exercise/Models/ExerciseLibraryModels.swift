@@ -54,20 +54,20 @@ nonisolated enum ExerciseLibraryCategory: String, CaseIterable, Identifiable {
     var displayName: String { rawValue.capitalized }
 
     // Push, pull, legs and core are all lifting; only the cardio tab isn't.
-    var workoutCategory: ExerciseWorkoutCategory {
+    var type: ExerciseCategory {
         self == .cardio ? .cardio : .gym
     }
 
-    var accentColor: Color { workoutCategory.tint }
+    var accentColor: Color { type.tint }
 }
 
-nonisolated enum ExerciseWorkoutCategory: String, CaseIterable, Identifiable {
+nonisolated enum ExerciseCategory: String, CaseIterable, Identifiable {
     case gym
     case bodyweight
     case cardio
     case sports
 
-    static let standard: [ExerciseWorkoutCategory] = allCases
+    static let standard: [ExerciseCategory] = allCases
 
     var id: String { rawValue }
 
@@ -116,13 +116,13 @@ nonisolated struct ExerciseHistoryEntry: Identifiable {
 
 nonisolated struct ExerciseDefinition: Identifiable {
     let name: String
-    let workoutCategory: ExerciseWorkoutCategory
+    let type: ExerciseCategory
     let equipment: ExerciseEquipment
     let primaryMuscle: ExerciseMuscle
     let secondaryMuscles: [ExerciseMuscle]
     let category: ExerciseLibraryCategory
     let instructions: [String]
-    let records: [ExerciseWorkoutStat]
+    let records: [ExerciseStrengthStat]
     let history: [ExerciseHistoryEntry]
     let progression: [ExerciseProgressionPoint]
     let progressionMetric: String
@@ -130,7 +130,7 @@ nonisolated struct ExerciseDefinition: Identifiable {
     var id: String { name }
 
     // The only icons an exercise ever wears are its library tab's four.
-    var symbol: String { workoutCategory.symbol }
+    var symbol: String { type.symbol }
 
     var equipmentLabel: String { equipment.displayName }
 }

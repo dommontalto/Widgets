@@ -66,7 +66,7 @@ struct BrightSwipePageView<Content: View>: View {
     // sites; sheets that follow a tighter header spec can shrink it.
     let titleSize: FontSizes
     let titleWeight: Font.Weight
-    // Rendered directly beneath the large title (e.g. a workout's time range and
+    // Rendered directly beneath the large title (e.g. a session's time range and
     // source), so it scrolls, fades and blurs away with it.
     let titleSubtitle: AnyView?
     // How far the pill row travels upward as the large title scrolls away,
