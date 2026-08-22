@@ -24,6 +24,14 @@ static float roundedRectSDF(float2 p, float2 halfSize, float radius) {
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 }
 
+// As above, but with independent radii for the top and bottom corner pairs
+// (radii.x = top, radii.y = bottom), selected by the pixel's vertical half.
+static float roundedRectSDF2(float2 p, float2 halfSize, float2 radii) {
+    float r = (p.y < 0.0) ? radii.x : radii.y;
+    float2 q = abs(p) - halfSize + r;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
 // Piecewise-linear alpha lookup. `stops` is [pos, alpha] pairs, pos in 0..1.
 static float stopsAlpha(device const float *stops, int floatCount, float t) {
     int n = floatCount / 2;
@@ -113,7 +121,7 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     half4 inColor,
     float2 size,
     float beamAngle,        // fraction of a full turn, 0..1
-    float cornerRadius,
+    float2 cornerRadii,     // x = top corners, y = bottom corners
     float borderWidth,
     float layerKind,
     float edgeMaskPx,       // inner layer edge fade width; 0 ⇒ none
@@ -131,15 +139,15 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     int kind = int(layerKind);
 
     // Geometry mask: ring band for stroke/bloom, full rounded rect for inner.
-    float outerSDF = roundedRectSDF(rel, center, cornerRadius);
+    float outerSDF = roundedRectSDF2(rel, center, cornerRadii);
     float aa = 1.0;
     float geom;
     float outerCov = 1.0 - smoothstep(-aa, 0.0, outerSDF);
     if (kind == 1) {
         geom = outerCov;
     } else {
-        float innerRadius = max(cornerRadius - borderWidth, 0.0);
-        float innerSDF = roundedRectSDF(rel, center - borderWidth, innerRadius);
+        float2 innerRadii = max(cornerRadii - borderWidth, 0.0);
+        float innerSDF = roundedRectSDF2(rel, center - borderWidth, innerRadii);
         float innerCov = 1.0 - smoothstep(-aa, 0.0, innerSDF);
         geom = outerCov - innerCov;   // band between outer and inner rects
     }

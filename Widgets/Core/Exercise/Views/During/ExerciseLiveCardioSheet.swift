@@ -20,10 +20,6 @@ struct ExerciseLiveCardioSheet: View {
     @State private var isPaused = false
     @State private var runningSince = Date()
     @State private var bankedElapsed: TimeInterval = 0
-    @State private var isBeamActive = false
-    // Bumped on each play to restart the beam's burst. Opening the sheet counts
-    // as the first play, so the burst runs from the initial `.task`.
-    @State private var beamBurst = 0
 
     var body: some View {
         VStack(spacing: .spacing0x) {
@@ -56,7 +52,8 @@ struct ExerciseLiveCardioSheet: View {
         // Full-screen cover, so the beam takes the display's own curve and rings
         // every edge.
         .overlay {
-            BrightScreenEdgeBeam(isActive: isBeamActive)
+            // Runs for the whole session; pausing puts it out, playing relights it.
+            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .defaultGreen)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -68,13 +65,6 @@ struct ExerciseLiveCardioSheet: View {
                         .foregroundStyle(Color.textColor)
                 }
             }
-        }
-        .task(id: beamBurst) {
-            isBeamActive = true
-            // A new tap cancels this sleep; leave the beam lit for the burst
-            // that replaced it rather than switching it off on the way out.
-            do { try await Task.sleep(for: .seconds(Constants.beamBurst)) } catch { return }
-            isBeamActive = false
         }
     }
 
@@ -161,6 +151,8 @@ struct ExerciseLiveCardioSheet: View {
             HStack(alignment: .lastTextBaseline, spacing: .spacing1x) {
                 BrightText(value, size: .giant, color: color)
                     .monospacedDigit()
+
+                BrightText("/ KM", size: .standout1, color: color.opacity(.lowOpacity))
 
                 if let delta {
                     BrightText(delta, size: .standout1, color: color.opacity(.lowOpacity))
@@ -252,11 +244,8 @@ struct ExerciseLiveCardioSheet: View {
 
     private func togglePause() {
         if isPaused {
-            beamBurst += 1
             runningSince = Date()
         } else {
-            // Pausing mid-burst puts the beam out rather than letting it finish.
-            isBeamActive = false
             bankedElapsed += Date().timeIntervalSince(runningSince)
         }
         isPaused.toggle()
@@ -276,7 +265,6 @@ struct ExerciseLiveCardioSheet: View {
     private enum Constants {
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
-        static let beamBurst: TimeInterval = 4
         static let segmentWidth: CGFloat = 9
         static let segmentHeight: CGFloat = 43
     }

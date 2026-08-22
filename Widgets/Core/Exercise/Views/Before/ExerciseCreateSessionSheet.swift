@@ -11,6 +11,10 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
+private struct ExerciseProgressionTarget: Identifiable {
+    let id: String
+}
+
 // One screen for whatever the session holds. The picker under the name walks
 // through the exercises added to it, and each one brings its own editor: sets
 // for a lift, a cardio plan for a run or a sport.
@@ -30,9 +34,17 @@ struct ExerciseCreateSessionSheet: View {
 
     @State private var swapTarget: ExerciseSwapTarget?
 
+    @State private var progressionTarget: ExerciseProgressionTarget?
+
+    // Each lift's progression rule, kept apart from the builder because saved
+    // sessions don't carry it yet.
+    @State private var progressions: [String: ExerciseProgression] = [:]
+
     @State private var isAddingExercise = false
 
     @State private var isEditingSupersets = false
+
+    @State private var isReordering = false
 
     @State private var nameNudge = 0
 
@@ -100,8 +112,18 @@ struct ExerciseCreateSessionSheet: View {
                 }
             }
         }
+        .sheet(item: $progressionTarget) { target in
+            ExerciseProgressionSheet(progression: progression(for: target.id)) { applied in
+                progressions[target.id] = applied
+            }
+        }
         .sheet(isPresented: $isEditingSupersets) {
             ExerciseSupersetSheet(exercises: builder.draftExercises) { edited in
+                withAnimation(.brightSnappy) { builder.applySupersets(edited) }
+            }
+        }
+        .sheet(isPresented: $isReordering) {
+            ExerciseReorderSheet(exercises: builder.draftExercises) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
             }
         }
@@ -154,7 +176,6 @@ struct ExerciseCreateSessionSheet: View {
                 systemImage: ExerciseCategory.gym.symbol,
                 title: "Nothing added yet",
                 subtitle: "Add exercises, runs or sports and they'll line up above.",
-                imageColor: ExerciseCategory.gym.tint,
                 buttonTitle: "Add exercise"
             ) {
                 isAddingExercise = true
@@ -196,6 +217,12 @@ struct ExerciseCreateSessionSheet: View {
             Spacer(minLength: .spacing0x)
 
             Menu {
+                Button("Supersets", systemImage: "link") {
+                    isEditingSupersets = true
+                }
+                Button("Reorder", systemImage: "arrow.up.arrow.down") {
+                    isReordering = true
+                }
                 Button("Swap out exercise", systemImage: "rectangle.2.swap") {
                     swapTarget = ExerciseSwapTarget(id: exercise)
                 }
@@ -220,13 +247,13 @@ struct ExerciseCreateSessionSheet: View {
 
     private func cardFooter(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            BrightText(volumeLabel(for: exercise), size: .body2, color: .textColor.opacity(.veryLowOpacity))
+            BrightRoundButton(systemImage: "chart.line.uptrend.xyaxis") {
+                progressionTarget = ExerciseProgressionTarget(id: exercise)
+            }
+
+            BrightText(progression(for: exercise).summary, size: .body2)
 
             Spacer(minLength: .spacing2x)
-
-            BrightRoundButton(systemImage: "link") {
-                isEditingSupersets = true
-            }
 
             BrightRoundButton(systemImage: "plus") {
                 withAnimation(.brightSnappy) { builder.addSet(to: exercise) }
@@ -344,14 +371,8 @@ struct ExerciseCreateSessionSheet: View {
             .joined(separator: "\n")
     }
 
-    private func volumeLabel(for exercise: String) -> String {
-        let sets = builder.sets[exercise] ?? []
-        let volume = sets.reduce(into: 0.0) { total, set in
-            let weight = Double(set.weight.filter { $0.isNumber || $0 == "." }) ?? 0
-            let reps = Double(set.reps.filter(\.isNumber)) ?? 0
-            total += weight * reps
-        }
-        return "\(Int(volume)) kg total"
+    private func progression(for exercise: String) -> ExerciseProgression {
+        progressions[exercise] ?? ExerciseProgression()
     }
 
     private enum Constants {

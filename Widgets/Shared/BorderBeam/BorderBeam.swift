@@ -22,6 +22,7 @@ public struct BorderBeam<Content: View>: View {
     private let duration: Double?
     private let active: Bool
     private let borderRadius: Double?
+    private let borderRadiusBottom: Double?
     private let brightness: Double?
     private let saturation: Double?
     private let hueRange: Double
@@ -49,6 +50,7 @@ public struct BorderBeam<Content: View>: View {
         duration: Double? = nil,
         active: Bool = true,
         borderRadius: Double? = nil,
+        borderRadiusBottom: Double? = nil,
         brightness: Double? = nil,
         saturation: Double? = nil,
         hueRange: Double = 30,
@@ -65,6 +67,7 @@ public struct BorderBeam<Content: View>: View {
         self.duration = duration
         self.active = active
         self.borderRadius = borderRadius
+        self.borderRadiusBottom = borderRadiusBottom
         self.brightness = brightness
         self.saturation = saturation
         self.hueRange = hueRange
@@ -148,14 +151,19 @@ public struct BorderBeam<Content: View>: View {
         colorVariant.isSingleHue ? 0 : hueRange
     }
 
+    private var resolvedVariant: BeamColorVariant {
+        colorVariant.resolved(forDark: resolvedTheme == "dark")
+    }
+
     private var rotateConfig: RotateBeamConfig {
         RotateBeamConfig(
             size: size,
-            variant: colorVariant,
+            variant: resolvedVariant,
             theme: resolvedTheme,
             staticColors: staticColors,
             duration: duration ?? BeamSpec.shared.defaults.duration.rotate,
             borderRadius: borderRadius,
+            borderRadiusBottom: borderRadiusBottom,
             brightness: brightness,
             saturation: saturation,
             hueRange: finalHueRange,
@@ -166,7 +174,7 @@ public struct BorderBeam<Content: View>: View {
     private var lineConfig: LineBeamConfig {
         let spec = BeamSpec.shared
         return LineBeamConfig(
-            variant: colorVariant,
+            variant: resolvedVariant,
             theme: resolvedTheme,
             staticColors: staticColors,
             duration: duration ?? spec.defaults.duration.line,
@@ -182,7 +190,7 @@ public struct BorderBeam<Content: View>: View {
     private var pulseConfig: PulseBeamConfig {
         PulseBeamConfig(
             size: size,
-            variant: colorVariant,
+            variant: resolvedVariant,
             theme: resolvedTheme,
             staticColors: staticColors,
             duration: duration ?? BeamSpec.shared.defaults.duration.pulse,
@@ -209,6 +217,9 @@ public extension View {
         duration: Double? = nil,
         active: Bool = true,
         borderRadius: Double? = nil,
+        // Rotate family only: a differing bottom corner pair, for cards whose
+        // bottom corners don't match the top.
+        borderRadiusBottom: Double? = nil,
         brightness: Double? = nil,
         saturation: Double? = nil,
         hueRange: Double = 30,
@@ -225,6 +236,7 @@ public extension View {
             duration: duration,
             active: active,
             borderRadius: borderRadius,
+            borderRadiusBottom: borderRadiusBottom,
             brightness: brightness,
             saturation: saturation,
             hueRange: hueRange,

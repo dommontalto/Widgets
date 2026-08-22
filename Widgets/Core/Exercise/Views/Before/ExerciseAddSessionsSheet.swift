@@ -5,8 +5,6 @@
 //  Created by Dom Montalto on 31/7/2026.
 //
 
-// DONT PORT THIS FILE TO IOS YET
-
 import SwiftUI
 
 nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
@@ -32,8 +30,7 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
     var accentColor: Color {
         switch kind {
         case .strength: .defaultPurple
-        case .run: .defaultGreen
-        case .cycle: .defaultOrange
+        case .run, .cycle: .defaultSkyBlue
         case .rest: .defaultSkyBlue
         }
     }
@@ -51,30 +48,45 @@ nonisolated struct ExercisePlanDay: Identifiable {
 }
 
 struct ExerciseAddSessionsSheet: View {
+    // Set when this week finishes the whole flow: the button reads Create and
+    // `onDone` closes the presenting sheet. Unset, it says Save and pops back.
+    let isCreating: Bool
+    // The custom flow plans its week from scratch; only the guided flow
+    // arrives with one already filled in.
+    let startsEmpty: Bool
+    let onDone: (() -> Void)?
+
     @Environment(\.dismiss) private var dismiss
 
-    @State private var days = ExerciseDemoPlanner.week
+    @State private var days: [ExercisePlanDay]
 
     @State private var repeatsWeekly = false
 
-    @State private var clipboard: ExercisePlannedSession?
-
-    @State private var weekClipboard: [ExercisePlanDay]?
-
-    @State private var copyTick = 0
+    init(isCreating: Bool = false, startsEmpty: Bool = false, onDone: (() -> Void)? = nil) {
+        self.isCreating = isCreating
+        self.startsEmpty = startsEmpty
+        self.onDone = onDone
+        _days = State(initialValue: startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week)
+    }
 
     var body: some View {
-        BrightPageSheetView(
-            title: "Add Sessions",
+        BrightPageView(
+            scrollableTitle: false,
             horizontalPadding: .spacing0x,
-            showBackButton: true,
-            trailing: {
+            backgroundColor: .defaultSheetBackground,
+            toolbar: {
                 ToolbarItem(placement: .principal) {
                     ExerciseInlineTitle(title: "Add Sessions", file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") { dismiss() }
+                    Button(isCreating ? "Create" : "Save") {
+                        if let onDone {
+                            onDone()
+                        } else {
+                            dismiss()
+                        }
+                    }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultSkyBlue)
                 }
@@ -92,10 +104,8 @@ struct ExerciseAddSessionsSheet: View {
                             .background(Color.defaultCards.padding(.bottom, -Constants.backgroundBleed))
                     }
                 }
-                .safeAreaInset(edge: .bottom) { bottomBar }
             }
         )
-        .brightHaptic(.light, trigger: copyTick)
         .animation(.brightSnappy, value: days.map(\.sessions))
     }
 
@@ -117,8 +127,8 @@ struct ExerciseAddSessionsSheet: View {
             Spacer()
 
             Menu {
-                Button("Add variable week", systemImage: "calendar.badge.plus") {
-                    days = ExerciseDemoPlanner.week
+                Button("Undo changes", systemImage: "arrow.counterclockwise") {
+                    days = startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week
                 }
 
                 Divider()
@@ -159,15 +169,15 @@ struct ExerciseAddSessionsSheet: View {
         HStack(alignment: .top, spacing: .spacing105x) {
             dayChip(day.wrappedValue.name)
 
-            addButton(for: day)
-                .padding(.top, .spacing05x)
-
             VStack(spacing: .spacing1x) {
                 ForEach(day.wrappedValue.sessions) { session in
                     sessionCard(session, in: day)
                 }
             }
             .frame(maxWidth: .infinity)
+
+            addButton(for: day)
+                .padding(.top, .spacing05x)
         }
     }
 
@@ -187,13 +197,6 @@ struct ExerciseAddSessionsSheet: View {
             ForEach(ExerciseDemoPlanner.templates) { template in
                 Button(template.title, systemImage: templateSymbol(template.kind)) {
                     day.wrappedValue.sessions.append(template.duplicated)
-                }
-            }
-
-            if let clipboard {
-                Divider()
-                Button("Paste \"\(clipboard.title)\"", systemImage: "arrow.right.page.on.clipboard") {
-                    day.wrappedValue.sessions.append(clipboard.duplicated)
                 }
             }
         } label: {
@@ -219,18 +222,6 @@ struct ExerciseAddSessionsSheet: View {
             }
 
             Spacer(minLength: .spacing0x)
-
-            Button {
-                clipboard = session
-                copyTick += 1
-            } label: {
-                Image(systemName: "square.on.square")
-                    .font(.system(size: FontSizes.body3.rawValue, weight: .regular))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color.textColor)
-            }
-            .buttonStyle(.plain)
-            .padding(.trailing, .spacing05x)
         }
         .padding(.horizontal, .spacing105x)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -256,53 +247,6 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     // MARK: - Bottom bar
-
-    private var bottomBar: some View {
-        HStack(spacing: .spacing0x) {
-            BrightRoundButton(systemImage: "arrow.counterclockwise", size: .large) {
-                days = ExerciseDemoPlanner.week
-                clipboard = nil
-                weekClipboard = nil
-            }
-
-            Spacer()
-
-            HStack(spacing: .spacing2x) {
-                Button {
-                    weekClipboard = days
-                    copyTick += 1
-                } label: {
-                    Image(systemName: "square.on.square")
-                        .font(.system(size: FontSizes.subheading.rawValue, weight: .light))
-                        .foregroundStyle(Color.textColor)
-                        .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.medium.rawValue)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    if let weekClipboard {
-                        days = weekClipboard.map { day in
-                            ExercisePlanDay(name: day.name, sessions: day.sessions.map(\.duplicated))
-                        }
-                    }
-                } label: {
-                    Image(systemName: "arrow.right.page.on.clipboard")
-                        .font(.system(size: FontSizes.subheading.rawValue, weight: .light))
-                        .foregroundStyle(Color.textColor.opacity(weekClipboard == nil ? .semiLowOpacity : .opaque))
-                        .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.medium.rawValue)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(weekClipboard == nil)
-            }
-            .padding(.horizontal, .spacing1x)
-            .frame(height: BrightButtonSizes.large.rawValue)
-            .modifier(GlassEffect())
-        }
-        .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing1x)
-    }
 
     // MARK: - Derived state
 
@@ -343,5 +287,7 @@ private struct DiagonalStripesShape: Shape {
 }
 
 #Preview {
-    ExerciseAddSessionsSheet()
+    NavigationStack {
+        ExerciseAddSessionsSheet()
+    }
 }

@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-// Groups the exercises of a run into supersets, re-orders them, and adds new
-// ones from the library. The order is held locally so backing out leaves the run
+// Groups the exercises of a run into supersets; re-ordering lives in
+// ExerciseReorderSheet. The order is held locally so backing out leaves the run
 // as it was — only Save hands the new order back.
 struct ExerciseSupersetSheet: View {
     private enum Constants {
@@ -39,7 +39,6 @@ struct ExerciseSupersetSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var order: [ExerciseActiveExercise]
-    @State private var isAddingExercise = false
     @State private var linkAnchor: UUID?
     @State private var groupSlots: [UUID: Int] = [:]
     @State private var linkTick = 0
@@ -69,36 +68,15 @@ struct ExerciseSupersetSheet: View {
             },
             content: {
                 exerciseList
-                    .safeAreaInset(edge: .bottom) {
-                        addExerciseButton
-                    }
             }
         )
-        .sheet(isPresented: $isAddingExercise) {
-            NavigationStack {
-                ExerciseLibrarySheet(
-                    category: .gym,
-                    showCloseButton: true,
-                    included: Set(order.map(\.name))
-                ) { exercise in
-                    add(exercise.name)
-                }
-            }
-        }
         .brightHaptic(.light, trigger: modeTick)
         .brightHaptic(.success, trigger: linkTick)
     }
 
-    // `editActions: .move` gives the rows the system's lift-and-drag straight
-    // out of the box — no edit mode.
     private var exerciseList: some View {
-        List($order, editActions: .move) { $exercise in
+        List(order) { exercise in
             row(exercise)
-                // Same placement as the Bright app's customise-menu list: the
-                // preview shape sits on the row, outside the card, and states a
-                // plain rounded rect — a `.continuous` style here gets swapped
-                // for the system's own platter rounding.
-                .contentShape(.dragPreview, RoundedRectangle(cornerRadius: Constants.cardCornerRadius))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 // The vertical gap is padding inside the row, not a row inset:
@@ -112,7 +90,7 @@ struct ExerciseSupersetSheet: View {
                 ))
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
-                        remove($exercise.wrappedValue)
+                        remove(exercise)
                     } label: {
                         Image(systemName: "trash")
                     }
@@ -140,19 +118,11 @@ struct ExerciseSupersetSheet: View {
 
             Spacer(minLength: .spacing2x)
 
-            // The pair sits tight against the handle's box, the way a library
-            // row's tick hangs off the trailing edge.
-            HStack(spacing: .spacing1x) {
-                linkButton(for: exercise)
-
-                // Matches the tick on a library row: same glyph size, and the same
-                // 44pt box holding it off the card's trailing edge.
-                Image(systemName: "arrow.up.and.down.circle.fill")
-                    .font(.standard(size: .standout2, weight: .light))
-                    .foregroundStyle(Color.defaultGreen)
-                    .frame(width: ExerciseLibraryRow.Constants.tickTouchSize,
-                           height: ExerciseLibraryRow.Constants.tickTouchSize)
-            }
+            linkButton(for: exercise)
+                // Matches the tick on a library row: the same 44pt box holding
+                // it off the card's trailing edge.
+                .frame(width: ExerciseLibraryRow.Constants.tickTouchSize,
+                       height: ExerciseLibraryRow.Constants.tickTouchSize)
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, minHeight: ExerciseLibraryRow.Constants.minHeight, alignment: .leading)
@@ -233,14 +203,6 @@ struct ExerciseSupersetSheet: View {
             Color.clear
                 .frame(width: ExerciseLibraryRow.Constants.thumbnailWidth)
         }
-    }
-
-    private var addExerciseButton: some View {
-        BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {
-            isAddingExercise = true
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.spacing3x)
     }
 
     // MARK: - Supersets
@@ -385,14 +347,6 @@ struct ExerciseSupersetSheet: View {
             order[last].supersetID = nil
         }
         groupSlots = groupSlots.filter { group, _ in order.contains { $0.supersetID == group } }
-    }
-
-    private func add(_ name: String) {
-        guard !order.contains(where: { $0.name == name }) else { return }
-        let item = ExerciseTemplateItem(exerciseName: name, target: "")
-        withAnimation(.brightSnappy) {
-            order.append(contentsOf: ExerciseActiveExercise.fromTemplate([item]))
-        }
     }
 
     private func setsLabel(of exercise: ExerciseActiveExercise) -> String {

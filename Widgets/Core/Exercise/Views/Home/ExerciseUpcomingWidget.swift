@@ -10,6 +10,7 @@ import SwiftUI
 struct ExerciseUpcomingWidget: View {
     var sessions: [ExerciseUpcomingSession] = []
     var onQuickSession: (ExerciseQuickSession) -> Void = { _ in }
+    var onCreateSession: () -> Void = {}
 
     @Environment(ExerciseBuilder.self) private var builder
 
@@ -104,17 +105,24 @@ struct ExerciseUpcomingWidget: View {
         .padding(.bottom, .spacing4x)
     }
 
+    @ViewBuilder
     private var quickSessionMenu: some View {
-        Menu {
-            Section("My Sessions") {
-                ForEach(builder.saved) { session in
-                    quickSessionButton(session)
+        if builder.saved.isEmpty {
+            // Nothing saved to pick from, so the pill goes straight to
+            // building a session.
+            BrightPillButton("Quick session", buttonSize: .large, onTapCallback: onCreateSession)
+        } else {
+            Menu {
+                Section("My Sessions") {
+                    ForEach(builder.saved) { session in
+                        quickSessionButton(session)
+                    }
                 }
+            } label: {
+                BrightPillButton("Quick session", buttonSize: .large) {}
+                // The pill is only the label — let the Menu take the tap.
+                .allowsHitTesting(false)
             }
-        } label: {
-            BrightPillButton("Quick session", buttonSize: .large) {}
-            // The pill is only the label — let the Menu take the tap.
-            .allowsHitTesting(false)
         }
     }
 

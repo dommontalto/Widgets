@@ -10,6 +10,9 @@ struct RotateBeamConfig {
     let staticColors: Bool
     let duration: Double
     let borderRadius: Double?
+    // Bottom corner pair when it differs from the top, e.g. a card whose
+    // bottom corners follow the screen edge. nil keeps all four equal.
+    let borderRadiusBottom: Double?
     let brightness: Double?
     let saturation: Double?
     let hueRange: Double
@@ -28,6 +31,7 @@ struct RotateBeamConfig {
     }
 
     var radius: Double { borderRadius ?? sizeConfig.borderRadius }
+    var radiusBottom: Double { borderRadiusBottom ?? radius }
     var borderWidth: Double { sizeConfig.borderWidth }
     var finalBrightness: Double { brightness ?? themeConfig.brightness ?? spec.defaults.brightnessFallback }
     var finalSaturation: Double { saturation ?? themeConfig.saturation }
@@ -219,7 +223,7 @@ struct RotateBeamLayers: View {
         let shader = ShaderLibrary.default.beamRotateLayer(
             .float2(size),
             .float(angle),
-            .float(config.radius),
+            .float2(config.radius, config.radiusBottom),
             .float(config.borderWidth),
             .float(kind),
             .float(edgeMaskPx),

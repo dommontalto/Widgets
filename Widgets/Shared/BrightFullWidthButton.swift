@@ -12,6 +12,7 @@ struct BrightFullWidthButton: View {
     let title: String
     let size: FontSizes
     let color: Color?
+    let textColor: Color?
     let horizontalPadding: CGFloat
     let onTapCallback: () -> Void
 
@@ -23,6 +24,7 @@ struct BrightFullWidthButton: View {
         _ title: String,
         size: FontSizes = .subheading2,
         color: Color? = .defaultGreen,
+        textColor: Color? = nil,
         horizontalPadding: CGFloat = .spacing3x, // + the standard 18pt container margin = 36pt (spacing6x) total
 
         onTapCallback: @escaping (() -> Void)
@@ -30,6 +32,7 @@ struct BrightFullWidthButton: View {
         self.title = title
         self.size = size
         self.color = color
+        self.textColor = textColor
         self.horizontalPadding = horizontalPadding
         self.onTapCallback = onTapCallback
     }
@@ -39,7 +42,7 @@ struct BrightFullWidthButton: View {
             BrightText(
                 title,
                 size: size,
-                color: color == nil ? .textColor : .black,
+                color: textColor ?? (color == nil ? .textColor : .black),
                 weight: .regular
             )
             .frame(maxWidth: .infinity)

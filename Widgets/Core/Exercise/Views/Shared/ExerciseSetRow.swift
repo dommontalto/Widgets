@@ -16,7 +16,6 @@ struct ExerciseSetRow: View {
     var isTyping: FocusState<Bool>.Binding
     let onPickKind: (ExerciseSetKind) -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
 
     // The row is a fixed-height grid of fields, so every measurement has to grow
     // with the text or the numbers clip at accessibility sizes.
@@ -56,15 +55,9 @@ struct ExerciseSetRow: View {
         .background {
             if isTinted {
                 RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
-                    .fill(tint)
+                    .fill(Color.exerciseRowTint)
             }
         }
-    }
-
-    private var tint: Color {
-        colorScheme == .dark
-            ? .defaultSheetBackground.opacity(.veryLowOpacity)
-            : .defaultMainGrey.opacity(.ultraLowOpacity)
     }
 
     private var badge: some View {

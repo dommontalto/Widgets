@@ -22,6 +22,7 @@ struct ExerciseLiveStrengthSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
+
     @State private var startDate = Date()
     @State private var exercises: [ExerciseActiveExercise]
     @State private var currentIndex = 0
@@ -41,7 +42,9 @@ struct ExerciseLiveStrengthSheet: View {
     @State private var isConfirmingDiscard = false
     @State private var isConfirmingFinish = false
     @State private var isShowingProgression = false
-    @State private var isEditingSession = false
+    @State private var isEditingSupersets = false
+
+    @State private var isReordering = false
     // Names the skip that was just tapped, in place of the clock, until its
     // window runs out.
     @State private var transportLabel: String?
@@ -119,7 +122,8 @@ struct ExerciseLiveStrengthSheet: View {
                 if currentIndex + 1 < exercises.count { showTransport("NEXT") }
                 advance()
             },
-            onEdit: { isEditingSession = true },
+            onEditSupersets: { isEditingSupersets = true },
+            onReorder: { isReordering = true },
             onCancel: { isConfirmingDiscard = true },
             onEnd: confirmFinish
         )
@@ -245,8 +249,11 @@ struct ExerciseLiveStrengthSheet: View {
         } message: {
             Text("You still have some exercises to complete. Are you sure you want to finish your session?")
         }
-        .sheet(isPresented: $isEditingSession) {
+        .sheet(isPresented: $isEditingSupersets) {
             ExerciseSupersetSheet(exercises: exercises, onSave: applyEdits)
+        }
+        .sheet(isPresented: $isReordering) {
+            ExerciseReorderSheet(exercises: exercises, onSave: applyEdits)
         }
         .animation(.brightEaseInOut, value: restEndDate)
         .animation(.brightEaseInOut, value: currentIndex)
@@ -529,10 +536,11 @@ struct ExerciseLiveStrengthSheet: View {
         // Rest rings the status card; working is signalled on the active set row.
         .borderBeam(
             .md,
-            colorVariant: .defaultBlue,
+            colorVariant: .skyBlueCyan,
             theme: .auto,
             active: isResting && !isPaused,
-            borderRadius: Constants.statusBeamRadius
+            borderRadius: Constants.statusBeamRadius,
+            borderRadiusBottom: Constants.statusBeamBottomRadius
         )
         .brightMiniSheet(isPresented: $isPickingRPE) {
             ExerciseValuePicker.rpe(ratedSet(\.rpe)) { isPickingRPE = false }
@@ -852,12 +860,10 @@ struct ExerciseLiveStrengthSheet: View {
         static let elapsedTick: TimeInterval = 1
         static let transportReveal: TimeInterval = 2
         static let thumbnailSize: CGFloat = 60
-        // The status card's corners run 36 at the top and 44 at the bottom; the
-        // beam takes one radius, so it splits them.
-        // The beam takes one radius for all four corners, so it follows the
-        // status card's softer top rather than splitting the difference with
-        // the tighter bottom, which sits at the screen edge.
+        // The status card's corners run 36 at the top and 44 at the bottom,
+        // so the beam takes both to hug the card's actual shape.
         static let statusBeamRadius: Double = 36
+        static let statusBeamBottomRadius: Double = 44
         // Stands in for HealthKit until the session is wired to real samples.
         static let demoHeartRate = "132"
         static let demoLastSession = "Fri, 7 Aug"
@@ -1035,7 +1041,7 @@ private struct ExerciseLiveSetRow: View {
         // Marks the set you're working on.
         .borderBeam(
             .md,
-            colorVariant: .orange,
+            colorVariant: .defaultOrange,
             theme: .auto,
             active: isActive && !isResting && !isPaused,
             borderRadius: CGFloat.cornerRadius24

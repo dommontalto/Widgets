@@ -37,6 +37,7 @@ nonisolated extension Color {
     static let defaultSearchBarBg = Color(hex: "#9E9E9E").opacity(.minimalOpacity)
     
     static let defaultBlue = Color(light: .defaultElectricBlue, dark: .defaultSkyBlue)
+    static let defaultSlateBlue = Color(light: .slateBlueLight, dark: .slateBlueDark)
     static let defaultCyan = Color(light: .cyanLight, dark: .cyanDark)
     static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
     
@@ -64,6 +65,9 @@ nonisolated extension Color {
     
     fileprivate static let scoreGreenLight = Color(hex: "#00D54F")
     fileprivate static let scoreGreenDark = Color(hex: "#00FF5F")
+    
+    fileprivate static let slateBlueLight = Color(hex: "#5C86B0")
+    fileprivate static let slateBlueDark = Color(hex: "#9CC3E8")
     
     fileprivate static let cyanLight = Color(hex: "#00D2E1")
     fileprivate static let cyanDark = Color(hex: "#00EEFF")
@@ -145,6 +149,11 @@ nonisolated extension Color {
     
     static let exerciseLiveBar = Color(light: .white, dark: Color(hex: "#34343A").opacity(.veryLowOpacity))
     static let exerciseLiveAccent = Color(light: .defaultSkyBlue, dark: .defaultCyan)
+    // The wash a set or block row tints with inside a card.
+    static let exerciseRowTint = Color(
+        light: .mainGreyLight.opacity(.ultraLowOpacity),
+        dark: .sheetGrey.opacity(.veryLowOpacity)
+    )
 }
 
 // MARK: - Support

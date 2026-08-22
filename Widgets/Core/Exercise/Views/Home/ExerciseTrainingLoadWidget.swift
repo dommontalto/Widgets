@@ -18,7 +18,7 @@ struct ExerciseTrainingLoadWidget: View {
         VStack(alignment: .leading, spacing: .spacing4x) {
             VStack(alignment: .leading, spacing: .spacing05x) {
                 BrightText("Split", size: .body1, color: .textColor,)
-                BrightText("Monthly AVG", size: .body2, color: .lightTextColor)
+                BrightText("Past 4 weeks", size: .body2, color: .lightTextColor)
             }
 
             VStack(spacing: .spacing105x) {

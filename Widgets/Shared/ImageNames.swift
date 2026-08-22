@@ -55,6 +55,12 @@ nonisolated class ImageNames {
     static let exerciseRecordHexagonV5     = "Exercise/exercise_record_hexagon_v5"
     static let exerciseRecordHexagonGoldV5 = "Exercise/exercise_record_hexagon_gold_v5"
 
+    // MARK: - Scores
+
+    static let recoveryV5 = "recovery_v5"
+    static let stressV5   = "stress_v5"
+    static let strainV5   = "strain_v5"
+
     // MARK: - Heart
 
     static let heartPulseRedV5 = "Heart/heart_pulse_red_v5"

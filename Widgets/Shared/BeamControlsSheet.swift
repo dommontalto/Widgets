@@ -48,7 +48,7 @@ struct BeamConfig {
     static let screen = BeamConfig()
 
     static let card = BeamConfig(
-        colorVariant: .orange,
+        colorVariant: .defaultOrange,
         cornerRadius: CGFloat.cornerRadius24
     )
 }
@@ -197,8 +197,12 @@ extension BeamColorVariant: Identifiable {
     var title: String {
         switch self {
         case .brand: "Brand"
-        case .orange: "Orange"
+        case .defaultOrange: "Orange"
         case .defaultBlue: "Blue"
+        case .defaultSkyBlue: "Sky Blue"
+        case .defaultCyan: "Cyan"
+        case .defaultGreen: "Green"
+        case .skyBlueCyan: "Sky Blue / Cyan"
         }
     }
 }

@@ -25,7 +25,8 @@ struct ExerciseLiveStrengthMenu: View {
     var onScrub: (TimeInterval) -> Void
     var onScrubEnd: () -> Void
     var onAdvance: () -> Void
-    var onEdit: () -> Void
+    var onEditSupersets: () -> Void
+    var onReorder: () -> Void
     var onCancel: () -> Void
     var onEnd: () -> Void
 
@@ -136,8 +137,13 @@ struct ExerciseLiveStrengthMenu: View {
         HStack(spacing: .spacing105x) {
             sectionLabel("Playlist", symbol: "text.append", color: .defaultPink)
 
-            BrightRoundButton(systemImage: "link") {
-                onEdit()
+            Menu {
+                Button("Supersets", systemImage: "link", action: onEditSupersets)
+                Button("Reorder", systemImage: "arrow.up.arrow.down", action: onReorder)
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.standard(size: .standout4, weight: .light))
+                    .foregroundStyle(Color.semiLightTextColor)
             }
         }
     }

@@ -29,19 +29,24 @@ struct GlassEffect: ViewModifier {
         case circle
         case roundedRect
         case unevenRoundedRect(top: CGFloat, bottom: CGFloat)
+        case cornerRadii(RectangleCornerRadii)
     }
 
     private var unevenRect: UnevenRoundedRectangle {
-        guard case let .unevenRoundedRect(top, bottom) = shape else {
-            return UnevenRoundedRectangle(cornerRadii: .init(
+        switch shape {
+        case let .unevenRoundedRect(top, bottom):
+            UnevenRoundedRectangle(cornerRadii: .init(
+                topLeading: top, bottomLeading: bottom,
+                bottomTrailing: bottom, topTrailing: top
+            ))
+        case let .cornerRadii(radii):
+            UnevenRoundedRectangle(cornerRadii: radii)
+        default:
+            UnevenRoundedRectangle(cornerRadii: .init(
                 topLeading: cornerRadius, bottomLeading: cornerRadius,
                 bottomTrailing: cornerRadius, topTrailing: cornerRadius
             ))
         }
-        return UnevenRoundedRectangle(cornerRadii: .init(
-            topLeading: top, bottomLeading: bottom,
-            bottomTrailing: bottom, topTrailing: top
-        ))
     }
 
     func body(content: Content) -> some View {
@@ -59,7 +64,7 @@ struct GlassEffect: ViewModifier {
                 content
                     .glassEffect(glassStyle, in: .rect(cornerRadius: cornerRadius))
                     .id(colorScheme)
-            case .unevenRoundedRect:
+            case .unevenRoundedRect, .cornerRadii:
                 content
                     .glassEffect(glassStyle, in: unevenRect)
                     .id(colorScheme)
@@ -74,7 +79,7 @@ struct GlassEffect: ViewModifier {
                 content.background(.ultraThinMaterial, in: .circle)
             case .roundedRect:
                 content.background(.ultraThinMaterial, in: .rect(cornerRadius: cornerRadius))
-            case .unevenRoundedRect:
+            case .unevenRoundedRect, .cornerRadii:
                 content.background(.ultraThinMaterial, in: unevenRect)
             }
         }

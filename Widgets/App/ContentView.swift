@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var showingSession = false
-    @State private var showingAddSessions = false
-    @State private var showingExerciseDetail = false
+    @State private var showingChat = false
+    @State private var showingProgramme = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -37,17 +37,20 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
-                    VStack(alignment: .leading, spacing: .spacing2x) {
-                        addSessionsButton
-                        viewExerciseButton
-                    }
-                    .padding(.top, .spacing2x)
-                    .padding(.bottom, .spacing3x)
-
                     widgetLabel("ExerciseUpcomingWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Upcoming") {
-                        ExerciseUpcomingWidget { session in
-                            start(session)
+                        ExerciseUpcomingWidget(
+                            onQuickSession: { session in start(session) },
+                            onCreateSession: { showingSession = true }
+                        )
+                    }
+                        .padding(.top, .spacing2x)
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseWeeklyPlanWidget")
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Weekly plan (Demo Data)") {
+                        ExerciseWeeklyPlanWidget {
+                            showingProgramme = true
                         }
                     }
                         .padding(.bottom, .spacing3x)
@@ -86,12 +89,6 @@ struct ContentView: View {
                     }
                         .padding(.bottom, .spacing3x)
 
-                    widgetLabel("ExerciseWeeklyPlanWidget")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Weekly plan") {
-                        ExerciseWeeklyPlanWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
                     widgetLabel("ExerciseProgramPhaseWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
                         ExerciseProgramPhaseWidget()
@@ -119,6 +116,15 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingChat = true
+                } label: {
+                    Label("Create with AI", systemImage: "apple.intelligence")
+                        .labelStyle(.iconOnly)
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section("My Sessions") {
                         ForEach(sessions) { session in
@@ -138,15 +144,11 @@ struct ContentView: View {
         .sheet(isPresented: $showingSession) {
             ExerciseSheet()
         }
-        .sheet(isPresented: $showingAddSessions) {
-            ExerciseAddSessionsSheet()
+        .sheet(isPresented: $showingChat) {
+            ExerciseChatSheet()
         }
-        .sheet(isPresented: $showingExerciseDetail) {
-            if let exercise = ExerciseDemoLibrary.exercise(named: "Squat") {
-                BrightPageSheetView(title: exercise.name, horizontalPadding: .spacing0x) {
-                    ExerciseDetailSheet(exercise: exercise)
-                }
-            }
+        .sheet(isPresented: $showingProgramme) {
+            ExerciseCreateProgrammeSheet()
         }
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
@@ -229,36 +231,6 @@ struct ContentView: View {
                 tuning: cardBeam.tuning
             )
             .padding(.horizontal, .spacing3x)
-    }
-
-    private var addSessionsButton: some View {
-        Button {
-            showingAddSessions = true
-        } label: {
-            BrightText("ExerciseAddSessionsSheet", size: .body2, weight: .regular)
-                .padding(.horizontal, .spacing3x)
-                .padding(.vertical, .spacing105x)
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
-                }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var viewExerciseButton: some View {
-        Button {
-            showingExerciseDetail = true
-        } label: {
-            BrightText("ExerciseDetailSheet", size: .body2, weight: .regular)
-                .padding(.horizontal, .spacing3x)
-                .padding(.vertical, .spacing105x)
-                .overlay {
-                    Capsule()
-                        .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
-                }
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder

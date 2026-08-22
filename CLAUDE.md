@@ -8,6 +8,8 @@ iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always u
 
 **Never build (xcodebuild or otherwise) unless explicitly asked.**
 
+This repo (`/Users/dommontalto/mac_documents/projects/Widgets`) is the current prototype app: designs are built and iterated here first. The Bright iOS app — the main front end they sync to and from — lives at `/Users/dommontalto/ios`. Shared components (`BrightPillButton`, `BrightCarousel`, etc.) are kept identical between the two repos, but **never edit the iOS app unless explicitly asked to** — by default changes land in this repo only.
+
 ---
 
 ## Comments
@@ -15,6 +17,8 @@ iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always u
 Do not add pointless comments. Never write a comment that merely restates what the code or a symbol name already says (e.g. `// Returns the sorted clinics` above `func sorted(...)`). Only comment when it explains *why* — non-obvious intent, a workaround, or a constraint the code can't express on its own.
 
 **Always `//`, never `///`.** Doc comments are not used in this codebase — if a comment is necessary, write it as `//`.
+
+Never write comments stating that code was ported from, synced with, or originates in the iOS app (or any other repo) — provenance lives in git, not comments.
 
 ---
 
@@ -83,6 +87,8 @@ Color.defaultOrange        // #FF512D
 Color.defaultBrightGreen   // #2FB360
 ```
 
+**Never branch on `@Environment(\.colorScheme)` to pick a colour in a view.** A colour that differs between light and dark mode is an adaptive token: define it once in `Color+StylingExtensions.swift` with `Color(light:dark:)` (e.g. `exerciseRowTint`) and use that.
+
 Use `.opacity(Double.<token>)` — never a raw float — when dimming colours:
 
 ```swift
@@ -134,6 +140,22 @@ Available weights via `Font.standard`: `.regular`, `.light`, `.medium`.
 .font(.standard(size: .giant, weight: .light))      // 50pt — large stats
 .font(.standard(size: .enormous, weight: .light))   // 65pt — hero numbers
 ```
+
+**Numbers that change get `.monospacedDigit()`.** A digit that updates in place
+jitters as the glyph widths shift — every counter, timer, live stat, picker value,
+enumerated label (`Block 1`, `Week 3`) and animated total needs it. Put it on the
+view, directly after the `BrightText`:
+
+```swift
+BrightText("\(weeks)", size: .enormous)
+    .monospacedDigit()
+
+BrightText(session.duration, size: .body1, color: .lightTextColor)
+    .monospacedDigit()
+```
+
+Pair it with `.contentTransition(.numericText())` when the value animates.
+Numbers baked into static copy don't need it.
 
 ---
 
@@ -231,6 +253,12 @@ space hittable, and glass applied outside the `Button` is decoration, not target
 Declare `.contentShape(Circle())` — or `Rectangle()` for square/pill labels.
 Same for full-width rows and `Menu` labels: put `.contentShape(Rectangle())` on
 the row's `HStack` so the gaps between text and trailing accessory still tap.
+
+---
+
+## Last-row trailing chrome
+
+When rows in a stack carry their own trailing chrome — a divider after each row, or bottom padding between rows — the last row must drop it, or it stacks with the container's own padding. Pass `isLast` into the row builder and branch on it (see `ExerciseHistoryWidget.sessionRow` here, and the iOS app's `ExerciseCompletePerformanceGraphWidget`).
 
 ---
 

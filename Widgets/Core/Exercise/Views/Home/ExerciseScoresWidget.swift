@@ -7,48 +7,23 @@
 
 import SwiftUI
 
+// The three score rings from the iOS app's 2x1 combined-scores widget, bare
+// (no card) and with each score named beneath its ring.
 struct ExerciseScoresWidget: View {
     @State private var scores = ExerciseDemoData.scores
 
     var body: some View {
-        HStack(spacing: .spacing105x) {
-            tile(title: "Recovery", value: scores.recovery, imageName: ImageNames.exerciseRecoveryV5) {
-                Image(systemName: "arrow.trianglehead.2.clockwise")
-            }
-            tile(title: "Stress", value: scores.stress, imageName: ImageNames.exerciseStressV5) {
-                HStack(spacing: -.spacing05x) {
-                    Image(systemName: "chevron.right")
-                    Image(systemName: "chevron.left")
-                }
-            }
-            tile(title: "Strain", value: scores.strain, imageName: ImageNames.exerciseStrainV5) {
-                Image(systemName: "arrow.left.and.line.vertical.and.arrow.right")
-            }
+        HStack(spacing: .spacing3x) {
+            tile(title: "Recovery", score: scores.recovery, icon: ImageNames.recoveryV5, color: .defaultGreen)
+            tile(title: "Stress", score: scores.stress, icon: ImageNames.stressV5, color: .defaultPurple)
+            tile(title: "Strain", score: scores.strain, icon: ImageNames.strainV5, color: .defaultRed)
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func tile(
-        title: String,
-        value: Int,
-        imageName: String,
-        @ViewBuilder icon: () -> some View
-    ) -> some View {
-        VStack(spacing: .spacing105x) {
-            ZStack {
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-
-                VStack(spacing: .spacing1x) {
-                    BrightText("\(value)", size: .huge, color: .black)
-                    icon()
-                        .font(.standard(size: .subheading, weight: .medium))
-                }
-                .foregroundStyle(Color.black)
-                .blendMode(.overlay)
-            }
-            .aspectRatio(1, contentMode: .fit)
+    private func tile(title: String, score: Int, icon: String, color: Color) -> some View {
+        VStack(spacing: .spacing3x) {
+            ScoreRing(score: score, icon: icon, color: color)
 
             BrightText(title, size: .body2)
         }

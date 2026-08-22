@@ -19,10 +19,11 @@ struct ExerciseHistoryWidget: View {
             }
 
             key
+                .padding(.vertical, .spacing2x)
 
             VStack(spacing: .spacing0x) {
                 ForEach(sessions) { session in
-                    sessionRow(session)
+                    sessionRow(session, isLast: session.id == sessions.last?.id)
 
                     if session.id != sessions.last?.id {
                         Rectangle()
@@ -63,7 +64,7 @@ struct ExerciseHistoryWidget: View {
         }
     }
 
-    private func sessionRow(_ session: ExerciseLoggedSession) -> some View {
+    private func sessionRow(_ session: ExerciseLoggedSession, isLast: Bool) -> some View {
         let color = color(for: session)
         return Button {
             selectedSession = session
@@ -91,7 +92,10 @@ struct ExerciseHistoryWidget: View {
                         .foregroundStyle(Color.lightTextColor)
                 }
             }
-            .padding(.vertical, .spacing105x)
+            .padding(.top, .spacing105x)
+            // The card's own padding closes the widget, so the last row's
+            // bottom breath would double it.
+            .padding(.bottom, isLast ? .spacing0x : .spacing105x)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
