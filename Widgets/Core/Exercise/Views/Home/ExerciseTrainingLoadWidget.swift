@@ -87,14 +87,17 @@ struct ExerciseTrainingLoadWidget: View {
             BrightText(week.name, size: .body3, color: .lightTextColor)
 
             GeometryReader { proxy in
-                HStack(spacing: .spacing0x) {
+                // The pair sits together; a week lighter than the peak leaves
+                // its missing volume as trailing air, not a hole in the middle.
+                let track = proxy.size.width - .spacing05x
+                HStack(spacing: .spacing05x) {
                     Capsule()
                         .fill(Color.defaultPurple.opacity(.veryMinimalOpacity))
-                        .frame(width: proxy.size.width * week.strengthFraction)
-                    Spacer(minLength: .spacing05x)
+                        .frame(width: track * week.strengthFraction)
                     Capsule()
                         .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
-                        .frame(width: proxy.size.width * week.cardioFraction)
+                        .frame(width: track * week.cardioFraction)
+                    Spacer(minLength: .spacing0x)
                 }
             }
             .frame(height: weekBarHeight)

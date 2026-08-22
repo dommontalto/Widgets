@@ -60,6 +60,10 @@ struct ExerciseCreateProgrammeSheet: View {
     // Which icon each cluster slot shows; one swaps for an unseen sport on a beat.
     @State private var clusterOrder = Array(Constants.clusterSymbols.indices.prefix(7))
 
+    // The last few icons to leave, kept off the board so a swap never brings
+    // one straight back and reads as a duplicate.
+    @State private var clusterBench: [Int] = []
+
     @State private var goals = ""
 
     @State private var name = ""
@@ -187,9 +191,10 @@ struct ExerciseCreateProgrammeSheet: View {
     private func swapClusterIcon() {
         guard let slot = clusterOrder.indices.randomElement(),
               let replacement = Constants.clusterSymbols.indices
-                  .filter({ !clusterOrder.contains($0) })
+                  .filter({ !clusterOrder.contains($0) && !clusterBench.contains($0) })
                   .randomElement()
         else { return }
+        clusterBench = Array((clusterBench + [clusterOrder[slot]]).suffix(Constants.clusterBenchSize))
         clusterOrder[slot] = replacement
     }
 
@@ -506,6 +511,7 @@ struct ExerciseCreateProgrammeSheet: View {
                 Button("Remove period", systemImage: "trash", role: .destructive) {
                     remove(period.wrappedValue)
                 }
+                .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.standard(size: .standout4, weight: .light))
@@ -796,8 +802,11 @@ struct ExerciseCreateProgrammeSheet: View {
             "figure.outdoor.cycle", "figure.run", "figure.badminton",
             "figure.strengthtraining.traditional", "figure.boxing",
             "figure.tennis", "figure.pool.swim", "figure.hiking",
-            "figure.yoga", "figure.jumprope",
+            "figure.yoga", "figure.jumprope", "figure.dance",
+            "figure.rower", "figure.core.training", "figure.cooldown",
+            "figure.golf", "figure.climbing",
         ]
+        static let clusterBenchSize = 4
         static let clusterBox: CGFloat = 40
         static let clusterSwapEvery: TimeInterval = 2
 

@@ -448,7 +448,7 @@ extension ExerciseDemoComplete {
         ),
     ]
 
-    fileprivate static let strain = ExerciseCompleteStrain(value: 43, label: "High", fraction: 0.72)
+    fileprivate static let strain = ExerciseCompleteStrain(value: 43, label: "High")
 
     fileprivate static let intervalStrip = ExerciseCompleteIntervalStrip(
         steps: [
@@ -532,7 +532,7 @@ extension ExerciseDemoComplete {
         .init(
             badge: ImageNames.exerciseRecordHexagonGoldV5,
             glyph: .symbol("trophy.fill"),
-            title: "Bench Press Record",
+            title: "Bench Press",
             detail: "Heaviest",
             value: "100 KG",
             exercise: "Bench Press"
@@ -540,7 +540,7 @@ extension ExerciseDemoComplete {
         .init(
             badge: ImageNames.exerciseRecordHexagonGoldV5,
             glyph: .symbol("trophy.fill"),
-            title: "Barbell Squat Record",
+            title: "Barbell Squat",
             detail: "Most reps",
             value: "23 reps",
             exercise: "Squat"

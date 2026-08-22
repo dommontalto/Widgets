@@ -201,6 +201,21 @@ Defined in `CGFloat+StylingExtensions.swift`.
 
 ---
 
+## Dates
+
+User-facing dates are year-aware: this year shows no year (`4 Aug, 8:05 PM`), only
+previous years carry one (`4 Aug 2025`), and standalone values say `Today` /
+`Yesterday`. Apple's stock presets — `.formatted()`,
+`formatted(date: .abbreviated, time: .shortened)`, ad-hoc `.dateTime` chains — always
+print the year, so never use them for display text, even as prototype filler: they get
+ported to the main app verbatim and ship the wrong format. Use the styles in
+`Shared/BrightDateFormatting.swift` (`.brightTimestamp`, `.brightDate`, `.brightTime`,
+`brightTimeRange`); if a design needs a shape the file can't produce yet, hard-code the
+correctly-shaped string (e.g. `"4 Aug, 8:05 PM"`) rather than reaching for a stock
+preset. The main app's `Date+FormatStyle.swift` is the source of truth for every shape.
+
+---
+
 ## Haptics & wiggle
 
 Never call `UIImpactFeedbackGenerator` or `sensoryFeedback` directly — use
@@ -253,6 +268,12 @@ space hittable, and glass applied outside the `Button` is decoration, not target
 Declare `.contentShape(Circle())` — or `Rectangle()` for square/pill labels.
 Same for full-width rows and `Menu` labels: put `.contentShape(Rectangle())` on
 the row's `HStack` so the gaps between text and trailing accessory still tap.
+
+---
+
+## Destructive red needs an explicit tint
+
+The iOS app tints its whole TabView, which outranks the red that `role: .destructive` gives menu items, context-menu items, and swipe actions. This repo has no global tint, so destructive items look red here and silently lose it when ported. Always add `.tint(.defaultRed)` to every destructive `Button` — in menus, context menus, and swipe actions — even though it looks redundant in this repo.
 
 ---
 

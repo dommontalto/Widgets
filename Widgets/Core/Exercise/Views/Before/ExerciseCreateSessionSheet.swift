@@ -229,6 +229,7 @@ struct ExerciseCreateSessionSheet: View {
                 Button("Remove exercise", systemImage: "trash", role: .destructive) {
                     remove(exercise)
                 }
+                .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.standard(size: .standout4, weight: .light))

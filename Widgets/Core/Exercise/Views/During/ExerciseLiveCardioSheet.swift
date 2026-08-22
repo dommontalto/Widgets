@@ -152,8 +152,6 @@ struct ExerciseLiveCardioSheet: View {
                 BrightText(value, size: .giant, color: color)
                     .monospacedDigit()
 
-                BrightText("/ KM", size: .standout1, color: color.opacity(.lowOpacity))
-
                 if let delta {
                     BrightText(delta, size: .standout1, color: color.opacity(.lowOpacity))
                         .monospacedDigit()

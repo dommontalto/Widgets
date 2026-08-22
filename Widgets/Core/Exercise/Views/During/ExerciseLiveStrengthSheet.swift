@@ -785,7 +785,7 @@ struct ExerciseLiveStrengthSheet: View {
 
         return ExerciseLoggedSession(
             name: sessionName,
-            timestamp: Date().formatted(date: .abbreviated, time: .shortened),
+            timestamp: Date().formatted(.brightTimestamp),
             type: .strength,
             summary: "\(duration) • \(volumeString) kg • \(completedSets) sets",
             detail: ExerciseStrengthDetail(

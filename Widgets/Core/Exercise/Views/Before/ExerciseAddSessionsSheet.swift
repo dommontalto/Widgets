@@ -140,6 +140,7 @@ struct ExerciseAddSessionsSheet: View {
                     days = ExerciseDemoPlanner.emptyWeek
                     dismiss()
                 }
+                .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: FontSizes.subheading2.rawValue, weight: .medium))
@@ -238,6 +239,7 @@ struct ExerciseAddSessionsSheet: View {
             Button("Remove", systemImage: "trash", role: .destructive) {
                 day.wrappedValue.sessions.removeAll { $0.id == session.id }
             }
+            .tint(.defaultRed)
         }
     }
 

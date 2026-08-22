@@ -38,7 +38,7 @@ struct ExercisePreCardioSheet: View {
     }
 
     private var plan: ExerciseCardioPlan {
-        item?.plan ?? ExerciseCardioPlan()
+        (item?.plan ?? ExerciseCardioPlan()).effective
     }
 
     // The session's own name when the run is all it is, and the run's name when

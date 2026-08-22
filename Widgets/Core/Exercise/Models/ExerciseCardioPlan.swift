@@ -209,6 +209,31 @@ struct ExerciseCardioPlan {
         goal == .distance || goal == .duration
     }
 
+    // A target of nothing is no target: zeroed or empty values drop away, and
+    // a goal left without one collapses to a freerun.
+    var effective: ExerciseCardioPlan {
+        var copy = self
+        if Self.isBlank(distance) { copy.distance = "" }
+        if Self.isBlank(duration) { copy.duration = "" }
+        if Self.isBlank(calories) { copy.calories = "" }
+        if Self.isBlank(pace) { copy.pace = "" }
+
+        switch copy.goal {
+        case .distance where copy.distance.isEmpty,
+             .duration where copy.duration.isEmpty,
+             .calorie where copy.calories.isEmpty:
+            copy.goal = .freerun
+        default:
+            break
+        }
+        return copy
+    }
+
+    private static func isBlank(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty || Double(trimmed) == 0
+    }
+
     // Everything the plan holds, so an edit screen can tell a change from a no-op.
     var signature: String {
         let legs = intervals.map { "\($0.phase.rawValue):\($0.value)" }.joined(separator: ",")

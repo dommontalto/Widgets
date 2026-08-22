@@ -19,6 +19,7 @@ struct ExerciseScoresWidget: View {
             tile(title: "Strain", score: scores.strain, icon: ImageNames.strainV5, color: .defaultRed)
         }
         .frame(maxWidth: .infinity)
+        .padding(.top, .spacing3x)
     }
 
     private func tile(title: String, score: Int, icon: String, color: Color) -> some View {

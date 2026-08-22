@@ -22,7 +22,7 @@ struct ExerciseMonthData {
 
 struct ExerciseWeekLoad {
     let name: String
-    // Fractions of the row's bar track, so the pair leaves a gap where they meet.
+    // The week's own split of the row's bar track; the pair sums to one.
     let strengthFraction: CGFloat
     let cardioFraction: CGFloat
     let ratio: String
@@ -268,7 +268,7 @@ enum ExerciseDemoData {
         ExerciseLoggedSession(name: "Push & run", timestamp: "5:30 PM, 21 Jul", type: .both, summary: "1:12:05 • 9,240 kg • 4.1 km", detail: strengthDetail),
         ExerciseLoggedSession(name: "Gym, run & footy", timestamp: "4:15 PM, 20 Jul", type: .both, summary: "2:04:18 • 7,900 kg • 3.2 km", detail: strengthDetail, parts: [.gym, .cardio, .sports]),
         ExerciseLoggedSession(name: "Pull day", timestamp: "6:10 PM, 21 Jul", type: .strength, summary: "52:10 • 11,160 kg • 19 sets", detail: strengthDetail),
-        ExerciseLoggedSession(name: "Functional strength", timestamp: "12:20 PM, 20 Jul", type: .strength, summary: "34:02 • 4,120 kg • 12 sets", detail: strengthDetail, isFromAppleHealth: true),
+        ExerciseLoggedSession(name: "Strength Training", timestamp: "12:20 PM, 20 Jul", type: .strength, summary: "34:02 • 4,120 kg • 12 sets", detail: strengthDetail, isFromAppleHealth: true),
         ExerciseLoggedSession(name: "Tempo run", timestamp: "7:05 AM, 19 Jul", type: .cardio, summary: "6.10 km • 4’41” /km", detail: cardioDetail, hasRoute: true),
         ExerciseLoggedSession(name: "Outdoor walk", timestamp: "1:10 PM, 19 Jul", type: .cardio, summary: "3.40 km • 11’02” /km", detail: cardioDetail, isFromAppleHealth: true),
         ExerciseLoggedSession(name: "Leg day", timestamp: "5:45 PM, 18 Jul", type: .strength, summary: "61:33 • 14,820 kg • 22 sets", detail: strengthDetail),
@@ -288,10 +288,10 @@ enum ExerciseDemoData {
         strengthPercent: 45,
         cardioPercent: 55,
         weeks: [
-            ExerciseWeekLoad(name: "Week 1", strengthFraction: 0.35, cardioFraction: 0.63, ratio: "40/60"),
-            ExerciseWeekLoad(name: "Week 2", strengthFraction: 0.47, cardioFraction: 0.51, ratio: "40/60"),
-            ExerciseWeekLoad(name: "Week 3", strengthFraction: 0.20, cardioFraction: 0.78, ratio: "40/60"),
-            ExerciseWeekLoad(name: "Week 4", strengthFraction: 0.58, cardioFraction: 0.40, ratio: "40/60"),
+            ExerciseWeekLoad(name: "Week 1", strengthFraction: 0.35, cardioFraction: 0.65, ratio: "35/65"),
+            ExerciseWeekLoad(name: "Week 2", strengthFraction: 0.47, cardioFraction: 0.53, ratio: "47/53"),
+            ExerciseWeekLoad(name: "Week 3", strengthFraction: 0.20, cardioFraction: 0.80, ratio: "20/80"),
+            ExerciseWeekLoad(name: "Week 4", strengthFraction: 0.58, cardioFraction: 0.42, ratio: "58/42"),
         ]
     )
 

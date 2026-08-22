@@ -65,8 +65,12 @@ enum ExerciseCompleteIcon {
 struct ExerciseCompleteStrain {
     let value: Int
     let label: String
-    // Share of the ring the reading fills, 0...1.
-    let fraction: Double
+
+    // Share of the ring the reading fills, so the arc always agrees with the
+    // number it circles.
+    var fraction: Double {
+        Double(min(max(value, 0), 100)) / 100
+    }
 }
 
 // MARK: - Exertion
