@@ -1,5 +1,5 @@
 //
-//  BrightRulerPicker.swift
+//  BrightPicker.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 21/8/2026.
@@ -10,7 +10,7 @@ import SwiftUI
 // A ruler dragged under a fixed centre: a fine tick per step, a heavier one on
 // the majors, and the picked step drawn solid. Ported from the cycle-tracking
 // onboarding ruler in the Bright iOS app.
-struct BrightRulerPicker: View {
+struct BrightPicker: View {
     @Binding var value: Int
     let range: ClosedRange<Int>
     var majorEvery = 10
@@ -158,6 +158,6 @@ struct BrightRulerPicker: View {
 #Preview {
     @Previewable @State var value = 5
 
-    BrightRulerPicker(value: $value, range: 0 ... 100)
+    BrightPicker(value: $value, range: 0 ... 100)
         .frame(height: 60)
 }

@@ -384,7 +384,7 @@ struct ExerciseCreateProgrammeSheet: View {
 
             Spacer(minLength: .spacing0x)
 
-            BrightRulerPicker(
+            BrightPicker(
                 value: $weeks,
                 range: Constants.weekRange,
                 majorEvery: Constants.weekMajorEvery,
