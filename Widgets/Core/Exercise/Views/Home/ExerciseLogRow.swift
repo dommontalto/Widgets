@@ -23,6 +23,7 @@ extension ExerciseLoggedSession {
 
 struct ExerciseLogRow: View {
     let session: ExerciseLoggedSession
+    var isFirst = false
     let isLast: Bool
     let onTap: () -> Void
 
@@ -51,7 +52,7 @@ struct ExerciseLogRow: View {
                         .foregroundStyle(Color.lightTextColor)
                 }
             }
-            .padding(.top, .spacing105x)
+            .padding(.top, isFirst ? .spacing0x : .spacing105x)
             // The card's own padding closes the widget, so the last row's
             // bottom breath would double it.
             .padding(.bottom, isLast ? .spacing0x : .spacing105x)

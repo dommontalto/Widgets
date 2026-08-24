@@ -13,7 +13,7 @@ struct ExerciseAllLogsSheet: View {
     @State private var selectedSession: ExerciseLoggedSession?
 
     var body: some View {
-        BrightPageSheetView(title: "Logs") {
+        BrightPageSheetView(title: "Session History") {
             list
         }
         .sheet(item: $selectedSession) { session in
@@ -28,7 +28,11 @@ struct ExerciseAllLogsSheet: View {
             LazyVStack(spacing: .spacing0x) {
                 ForEach(sessions) { session in
                     let isLast = session.id == sessions.last?.id
-                    ExerciseLogRow(session: session, isLast: isLast) {
+                    ExerciseLogRow(
+                        session: session,
+                        isFirst: session.id == sessions.first?.id,
+                        isLast: isLast
+                    ) {
                         selectedSession = session
                     }
 
@@ -42,7 +46,6 @@ struct ExerciseAllLogsSheet: View {
             .modifier(CardModifier(color: .defaultSheetModalCards))
         }
         .scrollIndicators(.hidden)
-        .padding(.top, .spacing2x)
     }
 }
 
