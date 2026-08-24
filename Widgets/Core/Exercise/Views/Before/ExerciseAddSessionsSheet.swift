@@ -197,7 +197,7 @@ struct ExerciseAddSessionsSheet: View {
         Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
                 Button(template.title, systemImage: templateSymbol(template.kind)) {
-                    day.wrappedValue.sessions.append(template.duplicated)
+                    add(template, to: day)
                 }
             }
         } label: {
@@ -205,6 +205,18 @@ struct ExerciseAddSessionsSheet: View {
                 .font(.system(size: Constants.plusIconSize, weight: .light))
                 .foregroundStyle(Color.defaultSkyBlue)
         }
+    }
+
+    // A rest day is the whole day, so it clears the day it lands on and any
+    // session added after it takes the day back.
+    private func add(_ template: ExercisePlannedSession, to day: Binding<ExercisePlanDay>) {
+        guard template.kind != .rest else {
+            day.wrappedValue.sessions = [template.duplicated]
+            return
+        }
+
+        day.wrappedValue.sessions.removeAll { $0.kind == .rest }
+        day.wrappedValue.sessions.append(template.duplicated)
     }
 
     private func sessionCard(_ session: ExercisePlannedSession, in day: Binding<ExercisePlanDay>) -> some View {

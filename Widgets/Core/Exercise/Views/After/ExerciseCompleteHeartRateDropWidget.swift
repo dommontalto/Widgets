@@ -1,5 +1,5 @@
 //
-//  ExerciseCompleteRecoveryWidget.swift
+//  ExerciseCompleteHeartRateDropWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 19/8/2026.
@@ -8,8 +8,10 @@
 import Charts
 import SwiftUI
 
-struct ExerciseCompleteRecoveryWidget: View {
+struct ExerciseCompleteHeartRateDropWidget: View {
     let data: HeartWorkoutSummaryPostWorkoutHeartGraphData
+
+    @State private var selectedBar: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -27,10 +29,14 @@ struct ExerciseCompleteRecoveryWidget: View {
 
                 HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
                     BrightText(
-                        String(data.bpmDrop ?? 0),
+                        readingValue,
                         size: .huge,
                         color: .textColor
                     )
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.brightEaseInOut, value: readingValue)
+
                     BrightText(
                         "BPM",
                         size: .body1,
@@ -118,13 +124,15 @@ struct ExerciseCompleteRecoveryWidget: View {
                     yEnd: .value("Heart Rate", heartData.max ?? 0),
                     width: MarkDimension(floatLiteral: Constants.barMarkWidth)
                 )
-                .foregroundStyle(Color.defaultRed)
+                .foregroundStyle(Color.defaultRed.opacity(barOpacity(at: index)))
                 .cornerRadius(.cornerRadius8)
             }
         }
         .chartYScale(domain: start ... end)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
+        .chartXSelection(value: selectionBinding)
+        .animation(.brightEaseInOut, value: selectedIndex)
         .chartOverlay { _ in
             GeometryReader { geometry in
                 Path { path in
@@ -138,6 +146,53 @@ struct ExerciseCompleteRecoveryWidget: View {
                 )
             }
         }
+    }
+
+    private var readingValue: String {
+        if let selectedDrop { return String(selectedDrop) }
+        return String(data.bpmDrop ?? 0)
+    }
+
+    private var selectedIndex: Int? {
+        guard let selectedBar,
+              let index = Int(selectedBar),
+              (data.data ?? []).indices.contains(index)
+        else { return nil }
+
+        return index
+    }
+
+    // How far the rate has fallen by the bar being held, so the reading is a
+    // drop at every point of the drag and lands on the session's own total.
+    private var selectedDrop: Int? {
+        guard let selectedIndex, let start = bpm(at: 0), let held = bpm(at: selectedIndex) else { return nil }
+
+        return max(0, start - held)
+    }
+
+    private func bpm(at index: Int) -> Int? {
+        guard let sample = (data.data ?? [])[safe: index] else { return nil }
+
+        if let avg = sample.avg, avg != 0 { return Int(avg.rounded()) }
+        if let min = sample.min, let max = sample.max { return Int(((min + max) / 2).rounded()) }
+        return nil
+    }
+
+    private func barOpacity(at index: Int) -> CGFloat {
+        guard let selectedIndex else { return 1 }
+        return index == selectedIndex ? 1 : Double.veryLowOpacity
+    }
+
+    private var selectionBinding: Binding<String?> {
+        Binding(
+            get: { selectedBar },
+            set: { newValue in
+                if let newValue, newValue != selectedBar {
+                    BrightHaptic.light.play()
+                }
+                selectedBar = newValue
+            }
+        )
     }
 
     var chartBorderLayout: some View {
@@ -268,7 +323,7 @@ struct ExerciseCompleteRecoveryWidget: View {
 }
 
 #Preview {
-    ExerciseCompleteRecoveryWidget(
+    ExerciseCompleteHeartRateDropWidget(
         data: HeartWorkoutSummaryPostWorkoutHeartGraphData()
     )
 }

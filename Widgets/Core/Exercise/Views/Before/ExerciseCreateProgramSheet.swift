@@ -1,5 +1,5 @@
 //
-//  ExerciseCreateProgrammeSheet.swift
+//  ExerciseCreateProgramSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 21/8/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum ExerciseProgrammeRoute: Hashable {
+enum ExerciseProgramRoute: Hashable {
     case sessions(creates: Bool)
 }
 
@@ -48,21 +48,16 @@ nonisolated struct ExerciseTrainingPeriod: Identifiable, Equatable {
 // Builds a program in one sheet: an intro, a guided-or-custom fork, the template
 // style and — when the template periodises — how many weeks it runs and the
 // training periods it splits into, before pushing a block's week to the planner.
-struct ExerciseCreateProgrammeSheet: View {
+struct ExerciseCreateProgramSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @FocusState private var isTyping: Bool
 
     @State private var step = Step.intro
 
-    @State private var stylePage: Int? = ProgrammeStyle.guided.rawValue
+    @State private var stylePage: Int? = ProgramStyle.guided.rawValue
 
-    // Which icon each cluster slot shows; one swaps for an unseen sport on a beat.
-    @State private var clusterOrder = Array(Constants.clusterSymbols.indices.prefix(7))
-
-    // The last few icons to leave, kept off the board so a swap never brings
-    // one straight back and reads as a duplicate.
-    @State private var clusterBench: [Int] = []
+    @State private var sportIndex = 0
 
     @State private var goals = ""
 
@@ -104,10 +99,10 @@ struct ExerciseCreateProgrammeSheet: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background {
                         if step.showsWash {
-                            ExerciseProgrammeBackground()
+                            ExerciseProgramBackground()
                         }
                     }
-                    .navigationDestination(for: ExerciseProgrammeRoute.self) { route in
+                    .navigationDestination(for: ExerciseProgramRoute.self) { route in
                         destination(for: route)
                     }
             }
@@ -115,7 +110,7 @@ struct ExerciseCreateProgrammeSheet: View {
     }
 
     @ViewBuilder
-    private func destination(for route: ExerciseProgrammeRoute) -> some View {
+    private func destination(for route: ExerciseProgramRoute) -> some View {
         switch route {
         case let .sessions(creates):
             ExerciseAddSessionsSheet(
@@ -147,13 +142,13 @@ struct ExerciseCreateProgrammeSheet: View {
         VStack(spacing: .spacing0x) {
             Spacer(minLength: .spacing0x)
 
-            sportsCluster
-                .padding(.bottom, .spacing5x)
+            sportIcon
+                .padding(.bottom, .spacing7x)
 
             heroTitle("Programs")
 
             blurb("Welcome to Exercise. Here you can create and plan your sessions to suit your goals and schedule.")
-                .padding(.top, .spacing2x)
+                .padding(.top, .spacing4x)
 
             Spacer(minLength: .spacing0x)
 
@@ -164,61 +159,26 @@ struct ExerciseCreateProgrammeSheet: View {
         .padding(.horizontal, .spacing3x)
     }
 
-    // The sports a program can be built from, clustered rather than gridded so
-    // the shape reads as a scatter above the title. On a beat one random slot
-    // morphs into a sport not currently shown, using the symbol replace effect.
-    private var sportsCluster: some View {
-        ZStack {
-            ForEach(Array(clusterOrder.enumerated()), id: \.offset) { slot, symbolIndex in
-                clusterIcon(Constants.clusterSymbols[symbolIndex])
-                    .contentTransition(.symbolEffect(.replace))
-                    .offset(clusterSlot(at: slot))
-            }
-        }
-        .frame(width: Constants.clusterWidth, height: Constants.clusterHeight)
-        .task {
-            while true {
-                withAnimation(.brightEaseInOut) { swapClusterIcon() }
-                do {
-                    try await Task.sleep(for: .seconds(Constants.clusterSwapEvery))
-                } catch {
-                    return
+    // The sports a program can be built from, one at a time: on a beat the
+    // glyph morphs into the next with the symbol replace effect.
+    private var sportIcon: some View {
+        Image(systemName: Constants.sportSymbols[sportIndex])
+            .font(.system(size: Constants.sportIconSize, weight: .light))
+            .foregroundStyle(Color.defaultSlateBlue)
+            .contentTransition(.symbolEffect(.replace))
+            .frame(height: Constants.sportIconSize)
+            .task {
+                while true {
+                    do {
+                        try await Task.sleep(for: .seconds(Constants.sportSwapEvery))
+                    } catch {
+                        return
+                    }
+                    withAnimation(.brightEaseInOut) {
+                        sportIndex = (sportIndex + 1) % Constants.sportSymbols.count
+                    }
                 }
             }
-        }
-    }
-
-    private func swapClusterIcon() {
-        guard let slot = clusterOrder.indices.randomElement(),
-              let replacement = Constants.clusterSymbols.indices
-                  .filter({ !clusterOrder.contains($0) && !clusterBench.contains($0) })
-                  .randomElement()
-        else { return }
-        clusterBench = Array((clusterBench + [clusterOrder[slot]]).suffix(Constants.clusterBenchSize))
-        clusterOrder[slot] = replacement
-    }
-
-    // The 2-3-2 scatter's slot centres, relative to the cluster's middle.
-    private func clusterSlot(at index: Int) -> CGSize {
-        let rowStep = Constants.clusterBox + .spacing2x
-        let outerX = (Constants.clusterBox + .spacing6x) / 2
-        let middleX = Constants.clusterBox + .spacing5x
-        return switch index {
-        case 0: CGSize(width: -outerX, height: -rowStep)
-        case 1: CGSize(width: outerX, height: -rowStep)
-        case 2: CGSize(width: -middleX, height: 0)
-        case 3: CGSize(width: 0, height: 0)
-        case 4: CGSize(width: middleX, height: 0)
-        case 5: CGSize(width: -outerX, height: rowStep)
-        default: CGSize(width: outerX, height: rowStep)
-        }
-    }
-
-    private func clusterIcon(_ symbol: String) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: Constants.clusterIconSize, weight: .light))
-            .foregroundStyle(Color.defaultSlateBlue)
-            .frame(width: Constants.clusterBox, height: Constants.clusterBox)
     }
 
     // MARK: Guided or custom
@@ -227,11 +187,11 @@ struct ExerciseCreateProgrammeSheet: View {
         VStack(spacing: .spacing3x) {
             Spacer(minLength: .spacing0x)
 
-            BrightCarousel(items: ProgrammeStyle.allCases, activeIndex: $stylePage) { style, width in
+            BrightCarousel(items: ProgramStyle.allCases, activeIndex: $stylePage) { style, width in
                 styleCard(style, width: width)
             }
 
-            BrightPageIndicator(total: ProgrammeStyle.allCases.count, activeIndex: $stylePage)
+            BrightPageIndicator(total: ProgramStyle.allCases.count, activeIndex: $stylePage)
                 .padding(.top, .spacing4x)
 
             Spacer(minLength: .spacing0x)
@@ -240,7 +200,7 @@ struct ExerciseCreateProgrammeSheet: View {
 
     // The glyph sits at the top and the words at the foot, so the two cards read
     // as a matched pair however long their copy runs.
-    private func styleCard(_ style: ProgrammeStyle, width: CGFloat) -> some View {
+    private func styleCard(_ style: ProgramStyle, width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             Image(systemName: style.symbol)
                 .font(.system(size: Constants.promptIconSize, weight: .light))
@@ -522,7 +482,7 @@ struct ExerciseCreateProgrammeSheet: View {
 
     private func blockRow(_ block: Binding<ExerciseTrainingBlock>) -> some View {
         Button {
-            path.append(ExerciseProgrammeRoute.sessions(creates: false))
+            path.append(ExerciseProgramRoute.sessions(creates: false))
         } label: {
             HStack(spacing: .spacing2x) {
                 BrightText(block.wrappedValue.name, size: .body1)
@@ -627,7 +587,7 @@ struct ExerciseCreateProgrammeSheet: View {
                 // A single block skips the periods list and plans its week
                 // directly.
                 isTyping = false
-                path.append(ExerciseProgrammeRoute.sessions(creates: true))
+                path.append(ExerciseProgramRoute.sessions(creates: true))
             }
         case .weeks:
             go(to: .periods)
@@ -688,8 +648,8 @@ struct ExerciseCreateProgrammeSheet: View {
         "\(count) \(count == 1 ? "week" : "weeks")"
     }
 
-    private var chosenStyle: ProgrammeStyle {
-        ProgrammeStyle(rawValue: stylePage ?? 0) ?? .guided
+    private var chosenStyle: ProgramStyle {
+        ProgramStyle(rawValue: stylePage ?? 0) ?? .guided
     }
 
     private var trailingTitle: String? {
@@ -727,7 +687,7 @@ struct ExerciseCreateProgrammeSheet: View {
         var showsWash: Bool { self != .periods }
     }
 
-    private enum ProgrammeStyle: Int, CaseIterable, Identifiable {
+    private enum ProgramStyle: Int, CaseIterable, Identifiable {
         case guided
         case custom
 
@@ -794,10 +754,8 @@ struct ExerciseCreateProgrammeSheet: View {
         static let defaultWeeks = 6
         static let weekRange = 1 ... 52
         static let weekMajorEvery = 5
-        static let clusterIconSize: CGFloat = 30
-        // The first seven fill the scatter's slots; the rest wait unseen for
-        // the swap beat to bring them in.
-        static let clusterSymbols = [
+        static let sportIconSize: CGFloat = 64
+        static let sportSymbols = [
             "figure.volleyball", "figure.basketball",
             "figure.outdoor.cycle", "figure.run", "figure.badminton",
             "figure.strengthtraining.traditional", "figure.boxing",
@@ -806,9 +764,7 @@ struct ExerciseCreateProgrammeSheet: View {
             "figure.rower", "figure.core.training", "figure.cooldown",
             "figure.golf", "figure.climbing",
         ]
-        static let clusterBenchSize = 4
-        static let clusterBox: CGFloat = 40
-        static let clusterSwapEvery: TimeInterval = 2
+        static let sportSwapEvery: TimeInterval = 1.5
 
         static let guidedName = "My Program"
 
@@ -827,8 +783,6 @@ struct ExerciseCreateProgrammeSheet: View {
                 ]),
             ]
         }
-        static let clusterWidth: CGFloat = clusterBox * 3 + .spacing5x * 2
-        static let clusterHeight: CGFloat = clusterBox * 3 + .spacing2x * 2
         static let heroIconSize: CGFloat = 34
         static let promptIconSize: CGFloat = 22
         // Tall enough for a major tick, the label gap and a full body1 label,
@@ -843,7 +797,7 @@ struct ExerciseCreateProgrammeSheet: View {
 // The pale blue wash every step of the builder sits on, fading out before the
 // bottom so the ruler and the pills stay legible against the sheet. The AI
 // chat sheet shares it, so it is not private.
-struct ExerciseProgrammeBackground: View {
+struct ExerciseProgramBackground: View {
     var body: some View {
         MeshGradient(
             width: 3,
@@ -890,5 +844,5 @@ struct ExerciseProgrammeBackground: View {
 }
 
 #Preview {
-    ExerciseCreateProgrammeSheet()
+    ExerciseCreateProgramSheet()
 }

@@ -49,7 +49,7 @@ enum ExerciseDemoComplete {
     static let cardio = ExerciseCompleteSession(
         summary: cardioSummary,
         metrics: cardioMetrics,
-        strain: strain,
+        fatigue: fatigue,
         records: cardioRecords,
         intervals: intervalStrip,
         category: .cardio
@@ -58,7 +58,7 @@ enum ExerciseDemoComplete {
     static let strength = ExerciseCompleteSession(
         summary: strengthSummary,
         metrics: strengthMetrics,
-        strain: strain,
+        fatigue: fatigue,
         exertion: exertion,
         records: strengthRecords,
         progressions: progressions
@@ -67,7 +67,7 @@ enum ExerciseDemoComplete {
     static let sports = ExerciseCompleteSession(
         summary: sportsSummary,
         metrics: sportsMetrics,
-        strain: strain,
+        fatigue: fatigue,
         records: cardioRecords,
         category: .sports
     )
@@ -448,7 +448,7 @@ extension ExerciseDemoComplete {
         ),
     ]
 
-    fileprivate static let strain = ExerciseCompleteStrain(value: 43, label: "High")
+    fileprivate static let fatigue = ExerciseCompleteFatigue(value: 43, label: "High")
 
     fileprivate static let intervalStrip = ExerciseCompleteIntervalStrip(
         steps: [
@@ -535,7 +535,8 @@ extension ExerciseDemoComplete {
             title: "Bench Press",
             detail: "Heaviest",
             value: "100 KG",
-            exercise: "Bench Press"
+            exercise: "Bench Press",
+            logId: "demo-strength"
         ),
         .init(
             badge: ImageNames.exerciseRecordHexagonGoldV5,
@@ -543,7 +544,8 @@ extension ExerciseDemoComplete {
             title: "Barbell Squat",
             detail: "Most reps",
             value: "23 reps",
-            exercise: "Squat"
+            exercise: "Squat",
+            logId: "demo-strength"
         ),
     ]
 
@@ -553,14 +555,18 @@ extension ExerciseDemoComplete {
             glyph: .captioned("1K", symbol: "hare.fill"),
             title: "Fastest Mile",
             detail: "",
-            value: "5\u{2019}12"
+            value: "5\u{2019}12",
+            exercise: "Outdoor Run",
+            logId: "demo-cardio"
         ),
         .init(
             badge: ImageNames.exerciseRecordHexagonV5,
             glyph: .symbol("lines.measurement.horizontal.aligned.bottom"),
             title: "Longest Distance",
             detail: "",
-            value: "32 KM"
+            value: "32 KM",
+            exercise: "Outdoor Run",
+            logId: "demo-cardio"
         ),
     ]
 }

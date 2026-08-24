@@ -12,6 +12,16 @@ This repo (`/Users/dommontalto/mac_documents/projects/Widgets`) is the current p
 
 ---
 
+## Chat ids
+
+Whenever a chat, session or transcript id is asked for, give it back as a ready-to-run resume command and nothing else:
+
+```
+claude --resume 4902ea18-3d8f-4559-8e9a-e515e8458ca4 --dangerously-skip-permissions
+```
+
+Session transcripts live in `~/.claude/projects/<slugged-project-path>/<id>.jsonl`.
+
 ## Comments
 
 Do not add pointless comments. Never write a comment that merely restates what the code or a symbol name already says (e.g. `// Returns the sorted clinics` above `func sorted(...)`). Only comment when it explains *why* — non-obvious intent, a workaround, or a constraint the code can't express on its own.

@@ -12,7 +12,7 @@ import SwiftUI
 struct ExerciseCompleteSession {
     var summary: HeartWorkoutSummaryResponseData
     var metrics: [ExerciseCompleteMetric] = []
-    var strain: ExerciseCompleteStrain?
+    var fatigue: ExerciseCompleteFatigue?
     var exertion: ExerciseCompleteExertion?
     var records: [ExerciseCompleteRecord] = []
     var progressions: [ExerciseCompleteProgression] = []
@@ -60,9 +60,9 @@ enum ExerciseCompleteIcon {
     case system(String, tint: Color)
 }
 
-// MARK: - Session strain
+// MARK: - Session fatigue
 
-struct ExerciseCompleteStrain {
+struct ExerciseCompleteFatigue {
     let value: Int
     let label: String
 
@@ -100,6 +100,9 @@ struct ExerciseCompleteRecord: Identifiable {
     // The exercise the record was set on, when there is one — a cardio record
     // is a distance or a time and has none.
     var exercise: String?
+    // The leg the record was set in, so a tap can open the session.
+    var logId: String?
+    var legIds: [String]?
 }
 
 enum ExerciseCompleteRecordGlyph {

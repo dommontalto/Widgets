@@ -23,8 +23,6 @@ struct ExerciseChatSheet: View {
     @State private var isThinking = false
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
-    @State private var draftNudge = 0
-
     @FocusState private var isTyping: Bool
 
     var body: some View {
@@ -41,7 +39,7 @@ struct ExerciseChatSheet: View {
             content: {
                 thread
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background { ExerciseProgrammeBackground() }
+                    .background { ExerciseProgramBackground() }
                     .safeAreaInset(edge: .bottom, spacing: .spacing2x) {
                         inputBar
                     }
@@ -118,46 +116,13 @@ struct ExerciseChatSheet: View {
     // MARK: - Input
 
     private var inputBar: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            TextField("", text: $draft, axis: .vertical)
-                .focused($isTyping)
-                .font(.standard(size: .body2, weight: .light))
-                .foregroundStyle(Color.textColor)
-                .lineLimit(1...4)
-                .brightWiggle(trigger: draftNudge)
-                .overlay(alignment: .leading) {
-                    if draft.isEmpty {
-                        BrightText(
-                            "What would you like us to do?",
-                            size: .body2,
-                            color: .textColor.opacity(.semiLowOpacity)
-                        )
-                        .allowsHitTesting(false)
-                    }
-                }
-
-            HStack(spacing: .spacing0x) {
-                Spacer(minLength: .spacing0x)
-
-                BrightRoundButton(
-                    systemImage: isThinking ? "stop.fill" : "arrow.up",
-                    size: .large,
-                    imageColor: .defaultSkyBlue
-                ) {
-                    if isThinking {
-                        stopThinking()
-                    } else {
-                        send()
-                    }
-                }
-            }
-        }
-        .padding(.spacing3x)
-        .background(
-            Color.defaultWhite.opacity(.veryMinimalOpacity),
-            in: RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
+        BrightPromptInputBar(
+            text: $draft,
+            isBusy: isThinking,
+            isFocused: $isTyping,
+            onSend: send,
+            onStop: stopThinking
         )
-        .shadow(color: .black.opacity(.ultraLowOpacity), radius: 15)
         .padding(.horizontal, .spacing3x)
     }
 
@@ -165,10 +130,7 @@ struct ExerciseChatSheet: View {
 
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else {
-            draftNudge += 1
-            return
-        }
+        guard !text.isEmpty else { return }
 
         draft = ""
         withAnimation(.brightSnappy) {

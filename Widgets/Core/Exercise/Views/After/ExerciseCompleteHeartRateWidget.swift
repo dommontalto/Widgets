@@ -15,28 +15,18 @@ struct ExerciseCompleteHeartRateWidget: View {
     let endDate: String
     let data: HeartWorkoutSummaryHeartGraphData
 
+    @State private var selectedIndex: Int?
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            HStack(spacing: .spacing0x) {
-                reading(
-                    title: "AVG HR",
-                    value: hrAvg,
-                    icon: .asset(ImageNames.heartPulseBlueV5)
-                )
+            BrightText("Heart Rate", size: .body1)
 
-                BrightVerticalDivider(height: Constants.readingRule)
-
-                reading(
-                    title: "Peak HR",
-                    value: hrPeak,
-                    icon: .system("arrow.up.heart.fill", tint: .defaultRed)
-                )
-                .padding(.leading, .spacing3x)
-            }
+            reading
+                .padding(.top, .spacing3x)
 
             chart
                 .frame(height: Constants.graphHeight)
-                .padding(.top, .spacing4x)
+                .padding(.top, .spacing1x)
 
             VStack(spacing: .spacing1x) {
                 BrightDivider()
@@ -53,24 +43,21 @@ struct ExerciseCompleteHeartRateWidget: View {
         .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
-    private func reading(title: String, value: Double?, icon: ExerciseCompleteIcon) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(title, size: .body1, weight: .regular)
+    private var reading: some View {
+        HStack(alignment: .lastTextBaseline, spacing: .spacing1x) {
+            ExerciseCompleteIconView(
+                icon: .system("arrow.up.heart.fill", tint: .defaultRed),
+                size: Constants.iconSize
+            )
+            // The glyph belongs to the number, not the baseline it sits on.
+            .alignmentGuide(.lastTextBaseline) { $0[.bottom] - Constants.iconLift }
 
-            HStack(alignment: .lastTextBaseline, spacing: .spacing1x) {
-                ExerciseCompleteIconView(icon: icon, size: Constants.iconSize)
-                    // The glyph belongs to the number, not the baseline it sits on.
-                    .alignmentGuide(.lastTextBaseline) { $0[.bottom] - Constants.iconLift }
-
-                BrightText(
-                    value != nil ? String(Int(value!.rounded())) : "-",
-                    size: .huge2,
-                    color: value == nil ? .lightTextColor : .textColor
-                )
+            BrightText(readingValue, size: .huge2, color: readingColor)
                 .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.brightEaseInOut, value: readingValue)
 
-                BrightText("BPM", size: .body1, color: .lightTextColor)
-            }
+            BrightText("BPM", size: .body1, color: .lightTextColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -99,10 +86,28 @@ struct ExerciseCompleteHeartRateWidget: View {
                     .lineStyle(StrokeStyle(lineWidth: 1))
                     .foregroundStyle(Color.defaultRed)
                 }
+
+                if let selectedSample {
+                    RuleMark(
+                        x: .value("Selected", selectedSample.index),
+                        yStart: .value("BPM", lowest),
+                        yEnd: .value("BPM", highest)
+                    )
+                    .foregroundStyle(Color.textColor.opacity(.lowOpacity))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
+
+                    PointMark(
+                        x: .value("Selected", selectedSample.index),
+                        y: .value("BPM", selectedSample.value)
+                    )
+                    .symbolSize(20)
+                    .foregroundStyle(Color.defaultRed)
+                }
             }
             .chartYScale(domain: lowest ... highest)
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
+            .chartXSelection(value: selectionBinding)
 
             legend
         }
@@ -132,6 +137,7 @@ struct ExerciseCompleteHeartRateWidget: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .frame(width: Constants.legendWidth)
+        .offset(x: .spacing05x)
     }
 
     private func legendLabel(
@@ -152,6 +158,36 @@ struct ExerciseCompleteHeartRateWidget: View {
         return height * (1 - fraction)
     }
 
+    private var readingValue: String {
+        if let selectedSample {
+            return String(Int(selectedSample.value.rounded()))
+        }
+
+        guard let peakSample else { return "-" }
+        return String(Int(peakSample.rounded()))
+    }
+
+    private var readingColor: Color {
+        peakSample == nil ? .lightTextColor : .textColor
+    }
+
+    private var selectedSample: (index: Int, value: Double)? {
+        guard let selectedIndex, samples.indices.contains(selectedIndex) else { return nil }
+        return (selectedIndex, samples[selectedIndex])
+    }
+
+    private var selectionBinding: Binding<Int?> {
+        Binding(
+            get: { selectedIndex },
+            set: { newValue in
+                if let newValue, newValue != selectedIndex {
+                    BrightHaptic.light.play()
+                }
+                selectedIndex = newValue
+            }
+        )
+    }
+
     private var samples: [Double] {
         (data.data ?? []).map { Double($0.value ?? 0) }
     }
@@ -167,7 +203,7 @@ struct ExerciseCompleteHeartRateWidget: View {
     }
 
     private var highest: Double {
-        Double(data.yTicks?.last ?? 150)
+        max(peakSample ?? Double(data.yTicks?.last ?? 150), lowest + 1)
     }
 
     private func timeLabel(_ iso: String) -> String {
@@ -175,7 +211,6 @@ struct ExerciseCompleteHeartRateWidget: View {
     }
 
     private enum Constants {
-        static let readingRule: CGFloat = 64
         static let iconSize: CGFloat = 26
         static let iconLift: CGFloat = 4
         static let graphHeight: CGFloat = 130

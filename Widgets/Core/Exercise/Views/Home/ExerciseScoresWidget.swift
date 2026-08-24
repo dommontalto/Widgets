@@ -12,23 +12,38 @@ import SwiftUI
 struct ExerciseScoresWidget: View {
     @State private var scores = ExerciseDemoData.scores
 
+    // In the app a tapped ring presents the wellbeing stats sheet for that
+    // score; the sheet has no prototype counterpart, so the tap surfaces here.
+    var onSelectScore: ((String) -> Void)?
+
     var body: some View {
-        HStack(spacing: .spacing3x) {
-            tile(title: "Recovery", score: scores.recovery, icon: ImageNames.recoveryV5, color: .defaultGreen)
-            tile(title: "Stress", score: scores.stress, icon: ImageNames.stressV5, color: .defaultPurple)
-            tile(title: "Strain", score: scores.strain, icon: ImageNames.strainV5, color: .defaultRed)
+        HStack(spacing: .spacing2x) {
+            tile(title: "Recovery", score: scores.recovery, color: .defaultGreen)
+            tile(title: "Fatigue", score: scores.fatigue, color: .defaultRed)
+            tile(title: "Readiness", score: scores.readiness, color: .defaultSkyBlue)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, .spacing3x)
     }
 
-    private func tile(title: String, score: Int, icon: String, color: Color) -> some View {
-        VStack(spacing: .spacing3x) {
-            ScoreRing(score: score, icon: icon, color: color)
+    private func tile(title: String, score: Int, color: Color) -> some View {
+        Button {
+            onSelectScore?(title)
+        } label: {
+            VStack(spacing: .spacing105x) {
+                Color.clear
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        ScoreRing(score: score, color: color, valueSize: .standout1)
+                    }
+                    .modifier(CardModifier())
 
-            BrightText(title, size: .body2)
+                BrightText(title, size: .body1)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.plain)
     }
 }
 

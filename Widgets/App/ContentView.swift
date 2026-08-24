@@ -10,13 +10,16 @@ import SwiftUI
 struct ContentView: View {
     @State private var showingSession = false
     @State private var showingChat = false
-    @State private var showingProgramme = false
+    @State private var showingProgram = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
     @State private var builder = ExerciseBuilder()
     @State private var sessionStage: ExerciseSessionStage?
+    @State private var openedExerciseName: String?
+    @State private var showingRecordSession = false
+    @State private var recordSessionPart = 0
 
     var body: some View {
         NavigationStack {
@@ -50,7 +53,7 @@ struct ContentView: View {
                     widgetLabel("ExerciseWeeklyPlanWidget")
                     ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Weekly plan (Demo Data)") {
                         ExerciseWeeklyPlanWidget {
-                            showingProgramme = true
+                            showingProgram = true
                         }
                     }
                         .padding(.bottom, .spacing3x)
@@ -67,8 +70,13 @@ struct ContentView: View {
                         title: "Personal Records"
                     ) {
                         ExercisePersonalRecordsWidget(
-                            records: ExerciseDemoComplete.cardio.records,
-                            cardColor: .defaultCards
+                            records: ExerciseDemoComplete.strength.records + ExerciseDemoComplete.cardio.records,
+                            cardColor: .defaultCards,
+                            onSelectExercise: { openedExerciseName = $0 },
+                            onSelectSession: { record in
+                                recordSessionPart = record.logId == "demo-cardio" ? 1 : 0
+                                showingRecordSession = true
+                            }
                         )
                     }
                         .padding(.bottom, .spacing3x)
@@ -147,8 +155,21 @@ struct ContentView: View {
         .sheet(isPresented: $showingChat) {
             ExerciseChatSheet()
         }
-        .sheet(isPresented: $showingProgramme) {
-            ExerciseCreateProgrammeSheet()
+        .sheet(isPresented: $showingProgram) {
+            ExerciseCreateProgramSheet()
+        }
+        .sheet(isPresented: $showingRecordSession) {
+            ExerciseCompleteSheet(
+                sessions: [ExerciseDemoComplete.strength, ExerciseDemoComplete.cardio],
+                initialPart: recordSessionPart
+            )
+        }
+        .navigationDestination(item: $openedExerciseName) { name in
+            if let exercise = ExerciseDemoLibrary.exercise(named: name) {
+                ExerciseDetailSheet(exercise: exercise, cardColor: .defaultCards)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .background(Color.defaultBackground.ignoresSafeArea())
+            }
         }
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen

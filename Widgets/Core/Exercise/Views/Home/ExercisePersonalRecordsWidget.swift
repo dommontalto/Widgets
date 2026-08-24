@@ -17,6 +17,9 @@ struct ExercisePersonalRecordsWidget: View {
     // Set to let a record open the exercise it was set on.
     var onSelectExercise: ((String) -> Void)?
 
+    // Set to let a record open the session it was set in.
+    var onSelectSession: ((ExerciseCompleteRecord) -> Void)?
+
     var body: some View {
         VStack(spacing: .spacing0x) {
             ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
@@ -34,8 +37,24 @@ struct ExercisePersonalRecordsWidget: View {
 
     @ViewBuilder
     private func row(_ record: ExerciseCompleteRecord) -> some View {
-        if let onSelectExercise, let exercise = record.exercise {
-            Button { onSelectExercise(exercise) } label: { rowContent(record) }
+        let openExercise = record.exercise.flatMap { exercise in
+            onSelectExercise.map { open in { open(exercise) } }
+        }
+        let openSession = record.logId == nil
+            ? nil
+            : onSelectSession.map { open in { open(record) } }
+
+        // Both targets earn a menu; a single one keeps the direct tap.
+        if let openExercise, let openSession {
+            Menu {
+                Button("View Exercise", systemImage: "dumbbell") { openExercise() }
+                Button("View Session", systemImage: "backward.end.alt") { openSession() }
+            } label: {
+                rowContent(record)
+            }
+            .buttonStyle(.plain)
+        } else if let open = openExercise ?? openSession {
+            Button { open() } label: { rowContent(record) }
                 .buttonStyle(.plain)
         } else {
             rowContent(record)

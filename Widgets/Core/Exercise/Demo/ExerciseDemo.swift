@@ -36,8 +36,8 @@ struct ExerciseTrainingLoad {
 
 struct ExerciseScores {
     let recovery: Int
-    let stress: Int
-    let strain: Int
+    let readiness: Int
+    let fatigue: Int
 }
 
 struct ExerciseMuscleGroup {
@@ -168,7 +168,7 @@ enum ExerciseDemoData {
         bullets: ["+ 1km to your run.", "Increasing weights in gym sessions."]
     )
 
-    static let scores = ExerciseScores(recovery: 92, stress: 34, strain: 84)
+    static let scores = ExerciseScores(recovery: 92, readiness: 66, fatigue: 84)
 
     static let muscleGroups = [
         ExerciseMuscleGroup(name: "Shoulders", sets: 5, status: "Optimal"),

@@ -64,6 +64,18 @@ struct ExerciseCompleteSheet: View {
     // `dismiss` would pop back instead.
     var onClose: (() -> Void)?
 
+    init(
+        sessions: [ExerciseCompleteSession],
+        chrome: ExercisePageChrome = .sheet,
+        initialPart: Int = 0,
+        onClose: (() -> Void)? = nil
+    ) {
+        self.sessions = sessions
+        self.chrome = chrome
+        self.onClose = onClose
+        _selectedPart = State(initialValue: initialPart)
+    }
+
     @State private var selectedIndex = ExerciseCompleteTab.summary.rawValue
     @State private var selectedGraphSecond: Double?
     @State private var showingMap = false
@@ -287,12 +299,12 @@ struct ExerciseCompleteSheet: View {
 
             ExerciseCompleteMetricGrid(metrics: summaryMetrics)
 
-            if let strain = session.strain {
+            if let fatigue = session.fatigue {
                 ExerciseWidgetSection(
                     icon: .symbol("arrow.left.and.right"),
-                    title: "Session Strain"
+                    title: "Session Fatigue"
                 ) {
-                    ExerciseCompleteStrainWidget(strain: strain)
+                    ExerciseCompleteFatigueWidget(fatigue: fatigue)
                 }
             }
 
@@ -328,7 +340,7 @@ struct ExerciseCompleteSheet: View {
             }
 
             if summary.postWorkoutHeartGraph?.data?.isEmpty == false {
-                ExerciseCompleteRecoveryWidget(
+                ExerciseCompleteHeartRateDropWidget(
                     data: summary.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
                 )
             }

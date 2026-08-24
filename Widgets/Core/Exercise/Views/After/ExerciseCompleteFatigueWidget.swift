@@ -1,5 +1,5 @@
 //
-//  ExerciseCompleteStrainWidget.swift
+//  ExerciseCompleteFatigueWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 19/8/2026.
@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct ExerciseCompleteStrainWidget: View {
-    let strain: ExerciseCompleteStrain
+struct ExerciseCompleteFatigueWidget: View {
+    let fatigue: ExerciseCompleteFatigue
 
     var body: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(String(strain.value), size: .huge2)
+            BrightText(String(fatigue.value), size: .huge2)
                 .monospacedDigit()
 
-            BrightText(strain.label.uppercased(), size: .body1, color: .defaultRed)
+            BrightText(fatigue.label.uppercased(), size: .body1, color: .defaultRed)
                 .padding(.horizontal, .spacing1x)
                 .frame(height: Constants.tagHeight)
                 .background(Capsule().fill(Color.defaultRed.opacity(.minimalOpacity)))
@@ -36,7 +36,7 @@ struct ExerciseCompleteStrainWidget: View {
                 .stroke(Color.defaultRed.opacity(.minimalOpacity), lineWidth: Constants.ringWidth)
 
             Circle()
-                .trim(from: 0, to: strain.fraction)
+                .trim(from: 0, to: fatigue.fraction)
                 .stroke(
                     Color.defaultRed,
                     style: StrokeStyle(lineWidth: Constants.ringWidth, lineCap: .round)
@@ -50,14 +50,14 @@ struct ExerciseCompleteStrainWidget: View {
     private enum Constants {
         static let cardHeight: CGFloat = 72
         static let tagHeight: CGFloat = 30
-        static let ringSize: CGFloat = 48
+        static let ringSize: CGFloat = 44
         static let ringWidth: CGFloat = 7
     }
 }
 
 #Preview {
-    ExerciseWidgetSection(icon: .symbol("arrow.left.and.right"), title: "Session Strain") {
-        ExerciseCompleteStrainWidget(strain: ExerciseDemoComplete.strength.strain!)
+    ExerciseWidgetSection(icon: .symbol("arrow.left.and.right"), title: "Session Fatigue") {
+        ExerciseCompleteFatigueWidget(fatigue: ExerciseDemoComplete.strength.fatigue!)
     }
         .padding(.spacing3x)
         .frame(maxHeight: .infinity, alignment: .top)

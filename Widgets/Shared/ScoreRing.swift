@@ -9,11 +9,10 @@ import SwiftUI
 
 struct ScoreRing: View {
     let score: Int?
-    let icon: String
     let color: Color
     var diameter: CGFloat = 74
     var lineWidth: CGFloat = .spacing2x
-    var iconSize: CGFloat = .spacing5x
+    var valueSize: FontSizes = .standout3
 
     @State private var animatedProgress: CGFloat = 0
 
@@ -26,16 +25,8 @@ struct ScoreRing: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(color.opacity(.ultraLowOpacity))
-                .overlay {
-                    Image(icon)
-                        .renderingMode(.original)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: iconSize, height: iconSize)
-                }
-                .padding(lineWidth)
+            BrightText(String(score ?? 0), size: valueSize, weight: .regular)
+                .monospacedDigit()
 
             Circle()
                 .stroke(
@@ -66,9 +57,9 @@ struct ScoreRing: View {
 
 #Preview {
     HStack(spacing: .spacing3x) {
-        ScoreRing(score: 77, icon: ImageNames.recoveryV5, color: .defaultGreen)
-        ScoreRing(score: 34, icon: ImageNames.stressV5, color: .defaultPurple)
-        ScoreRing(score: 84, icon: ImageNames.strainV5, color: .defaultRed)
+        ScoreRing(score: 77, color: .defaultGreen)
+        ScoreRing(score: 66, color: .defaultBlue)
+        ScoreRing(score: 84, color: .defaultRed)
     }
     .padding(.spacing4x)
 }

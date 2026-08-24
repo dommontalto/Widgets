@@ -269,7 +269,13 @@ final class ExerciseBuilder {
     }
 
     private var templateItems: [ExerciseTemplateItem] {
-        added.map { exercise in
+        // Groups flatten to small ints, numbered by first appearance.
+        var groups: [UUID: Int] = [:]
+        for exercise in added {
+            guard let group = supersets[exercise], groups[group] == nil else { continue }
+            groups[group] = groups.count + 1
+        }
+        return added.map { exercise in
             ExerciseTemplateItem(
                 exerciseName: exercise,
                 target: target(for: exercise),
@@ -280,9 +286,32 @@ final class ExerciseBuilder {
                         kind: draft.kind
                     )
                 },
-                plan: plans[exercise]
+                plan: plans[exercise],
+                supersetGroup: supersets[exercise].flatMap { groups[$0] }
             )
         }
+    }
+
+    // The exercises the pill at `id` stands for: its whole superset block, or
+    // just itself. A group needs two members to count as one.
+    func groupMembers(for exercise: String) -> [String] {
+        guard let group = supersets[exercise] else { return [exercise] }
+        let members = added.filter { supersets[$0] == group }
+        return members.count > 1 ? members : [exercise]
+    }
+
+    // One entry per picker pill: supersetted exercises collapse into their
+    // first member.
+    var groupLeaders: [String] {
+        var seen: Set<UUID> = []
+        return added.filter { exercise in
+            guard let group = supersets[exercise], groupMembers(for: exercise).count > 1 else { return true }
+            return seen.insert(group).inserted
+        }
+    }
+
+    func groupTitle(for exercise: String) -> String {
+        groupMembers(for: exercise).joined(separator: " & ")
     }
 
     func planBinding(for exercise: String) -> Binding<ExerciseCardioPlan> {

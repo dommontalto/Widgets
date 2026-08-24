@@ -15,13 +15,17 @@ struct ExerciseSessionPicker: View {
 
     @Binding var selection: String?
 
+    // A superset pill carries the whole block's name while keeping its
+    // leader's id.
+    var title: (String) -> String = { $0 }
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: .spacing1x) {
                     ForEach(exercises, id: \.self) { exercise in
                         BrightTag(
-                            title: exercise,
+                            title: title(exercise),
                             systemImage: ExerciseDemoLibrary.glyph(for: exercise).symbol,
                             isSelected: exercise == selection
                         ) {

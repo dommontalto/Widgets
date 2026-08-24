@@ -165,7 +165,7 @@ struct ExerciseProgressionSheet: View {
     // MARK: - Ruler
 
     private var ruler: some View {
-        BrightRulerPicker(value: rulerValue, range: rulerRange)
+        BrightPicker(value: rulerValue, range: rulerRange)
             .frame(height: Constants.rulerHeight)
             // The ruler seeds itself from the binding once, so swapping metric
             // hands it a fresh one at the other metric's position.

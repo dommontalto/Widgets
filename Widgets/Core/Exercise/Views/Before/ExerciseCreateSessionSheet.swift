@@ -88,7 +88,11 @@ struct ExerciseCreateSessionSheet: View {
                         nameField
                             .padding(.horizontal, .spacing3x)
 
-                        ExerciseSessionPicker(exercises: builder.added, selection: $selected)
+                        ExerciseSessionPicker(
+                            exercises: builder.groupLeaders,
+                            selection: $selected,
+                            title: { builder.groupTitle(for: $0) }
+                        )
 
                         editor
                             .padding(.horizontal, .spacing3x)
@@ -120,11 +124,13 @@ struct ExerciseCreateSessionSheet: View {
         .sheet(isPresented: $isEditingSupersets) {
             ExerciseSupersetSheet(exercises: builder.draftExercises) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
+                reanchorSelection()
             }
         }
         .sheet(isPresented: $isReordering) {
             ExerciseReorderSheet(exercises: builder.draftExercises) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
+                reanchorSelection()
             }
         }
         .sheet(isPresented: $isAddingExercise) {
@@ -161,15 +167,28 @@ struct ExerciseCreateSessionSheet: View {
         }
     }
 
+    // A regroup can fold the selected pill's exercise into a block led by
+    // another, so the selection follows it to its leader.
+    private func reanchorSelection() {
+        guard let selected else { return }
+        self.selected = builder.groupLeaders.first { builder.groupMembers(for: $0).contains(selected) }
+            ?? builder.added.first
+    }
+
     // MARK: - Editor
 
     @ViewBuilder
     private var editor: some View {
         if let selected, builder.isAdded(selected) {
-            if builder.isCardio(selected) {
-                cardioCard(selected)
-            } else {
-                exerciseCard(selected)
+            // A superset pill stands for its whole block, stacked on one screen.
+            VStack(alignment: .leading, spacing: .spacing3x) {
+                ForEach(builder.groupMembers(for: selected), id: \.self) { member in
+                    if builder.isCardio(member) {
+                        cardioCard(member)
+                    } else {
+                        exerciseCard(member)
+                    }
+                }
             }
         } else {
             BrightPlaceholderView(
@@ -210,10 +229,11 @@ struct ExerciseCreateSessionSheet: View {
         .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
-    // The lit tag above already names the exercise and wears its glyph, so the
-    // card carries only what you can do to it.
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
+            BrightText(exercise, size: .subheading2, weight: .regular)
+                .lineLimit(1)
+
             Spacer(minLength: .spacing0x)
 
             Menu {
@@ -367,7 +387,8 @@ struct ExerciseCreateSessionSheet: View {
                 let sets = (builder.sets[exercise] ?? [])
                     .map { "\($0.kind)|\($0.weight)|\($0.reps)|\($0.rest)" }
                     .joined(separator: ";")
-                return "\(exercise)>\(sets)"
+                let group = builder.supersets[exercise].map { "#\($0.uuidString)" } ?? ""
+                return "\(exercise)\(group)>\(sets)"
             }
             .joined(separator: "\n")
     }

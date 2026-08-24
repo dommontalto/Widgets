@@ -119,7 +119,7 @@ struct ExerciseLiveStrengthSheet: View {
             onScrub: scrub,
             onScrubEnd: { isScrubbing = false },
             onAdvance: {
-                if currentIndex + 1 < exercises.count { showTransport("NEXT") }
+                if (currentGroup.last ?? currentIndex) + 1 < exercises.count { showTransport("NEXT") }
                 advance()
             },
             onEditSupersets: { isEditingSupersets = true },
@@ -342,8 +342,8 @@ struct ExerciseLiveStrengthSheet: View {
             }
             .buttonStyle(.plain)
 
-            BrightText(currentExercise.name, size: .standout3)
-                .lineLimit(1)
+            BrightText(currentGroupTitle, size: .standout3)
+                .lineLimit(2)
 
             Spacer(minLength: .spacing2x)
 
@@ -411,11 +411,12 @@ struct ExerciseLiveStrengthSheet: View {
     }
 
     // The chevrons walk down a column rather than across the row, so kg leads to
-    // the next kg and reps to the next reps.
+    // the next kg and reps to the next reps — through the whole superset block.
     private func column(of field: ExerciseSetField) -> [ExerciseSetField] {
-        switch field {
-        case .weight: currentExercise.sets.map { .weight($0.id) }
-        case .reps: currentExercise.sets.map { .reps($0.id) }
+        let sets = currentGroup.flatMap { exercises[$0].sets }
+        return switch field {
+        case .weight: sets.map { .weight($0.id) }
+        case .reps: sets.map { .reps($0.id) }
         }
     }
 
@@ -435,54 +436,67 @@ struct ExerciseLiveStrengthSheet: View {
 
     // MARK: - Sets
 
+    // A superset stacks each member's rows under its own title; alone, an
+    // exercise is just its rows.
     private var setRows: some View {
         VStack(spacing: .spacing105x) {
-            setsList
+            ForEach(currentGroup, id: \.self) { member in
+                if currentGroup.count > 1 {
+                    sectionTitle(for: member)
+                        .padding(.horizontal, .spacing3x)
+                        .padding(.leading, .spacing1x)
+                        .padding(.top, member == currentGroup.first ? .spacing0x : .spacing2x)
+                }
 
-            addSetButton
-                .padding(.horizontal, .spacing3x)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                setsList(for: member)
+
+                addSetButton(for: member)
+                    .padding(.horizontal, .spacing3x)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
     }
 
-    private var setsList: some View {
+    private func sectionTitle(for member: Int) -> some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: "link")
+                .font(.standard(size: .body3, weight: .regular))
+                .foregroundStyle(Color.lightTextColor)
+
+            BrightText(exercises[member].name, size: .body1, color: .semiLightTextColor)
+                .lineLimit(1)
+
+            Spacer(minLength: .spacing0x)
+        }
+    }
+
+    private func setsList(for member: Int) -> some View {
         List {
-            ForEach($exercises[currentIndex].sets) { $set in
+            ForEach($exercises[member].sets) { $set in
                 ExerciseLiveSetRow(
                     set: $set,
-                    index: workingIndex(of: $set.wrappedValue, in: currentExercise),
+                    index: workingIndex(of: $set.wrappedValue, in: exercises[member]),
                     isActive: $set.wrappedValue.id == activeSet?.id,
                     isResting: isResting,
                     isPaused: isPaused,
                     focus: $focusedField,
-                    onTickActiveSet: startRest,
+                    onTickActiveSet: { restAfterCompleting(exerciseAt: member) },
                     columnWidths: columnWidths
                 )
                 .listRowInsets(EdgeInsets(top: .spacing0x, leading: .spacing3x, bottom: .spacing0x, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
-                .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) {
-                        withAnimation(.brightSnappy) {
-                            exercises[currentIndex].sets.removeAll { $0.id == $set.wrappedValue.id }
-                        }
-                    } label: {
-                        Image(systemName: "trash")
-                    }
-                    // The Bright app tints its whole TabView, which outranks the
-                    // destructive role's red on a swipe action.
-                    .tint(.defaultRed)
-
+                .contextMenu {
                     if $set.wrappedValue.isTagged {
-                        Button {
+                        Button("Remove tags", systemImage: "tag.slash") {
                             withAnimation(.brightSnappy) { clearTags(of: $set.wrappedValue) }
-                        } label: {
-                            Image(systemName: "tag.slash")
                         }
-                        // Same reason as the trash: the app's tint would colour
-                        // this one too, so it states its own.
-                        .tint(.defaultMainGrey)
                     }
+
+                    Button("Delete set", systemImage: "trash", role: .destructive) {
+                        withAnimation(.brightSnappy) { exercises[member].sets.removeAll { $0.id == $set.wrappedValue.id } }
+                    }
+                    .tint(.defaultRed)
                 }
             }
         }
@@ -492,8 +506,8 @@ struct ExerciseLiveStrengthSheet: View {
         .scrollDisabled(true)
         .contentMargins(.vertical, .spacing0x, for: .scrollContent)
         .environment(\.defaultMinListRowHeight, Constants.rowHeight)
-        .frame(width: pageWidth > 0 ? pageWidth : nil, height: setsHeight)
-        .animation(.brightSnappy, value: setsHeight)
+        .frame(width: pageWidth > 0 ? pageWidth : nil, height: setsHeight(for: member))
+        .animation(.brightSnappy, value: setsHeight(for: member))
         .onPreferenceChange(ExerciseSetChipWidths.self) { widths in
             columnWidths = widths
         }
@@ -501,21 +515,21 @@ struct ExerciseLiveStrengthSheet: View {
 
     // A failed set carries a second line, so the list can't multiply one row
     // height by the count.
-    private var setsHeight: CGFloat {
-        currentExercise.sets.reduce(.spacing0x) { total, set in
+    private func setsHeight(for member: Int) -> CGFloat {
+        exercises[member].sets.reduce(.spacing0x) { total, set in
             total + ExerciseLiveSetRow.height(for: set) + .spacing2x
         }
     }
 
-    private var addSetButton: some View {
+    private func addSetButton(for member: Int) -> some View {
         BrightRoundButton(systemImage: "plus", size: .medium) {
-            let last = currentExercise.sets.last
-            exercises[currentIndex].sets.append(
+            let last = exercises[member].sets.last
+            exercises[member].sets.append(
                 ExerciseActiveSet(
                     weight: last?.weight ?? "20",
                     reps: last?.reps ?? "10",
                     previous: last?.previous ?? "\u{2014}",
-                    kind: .working(currentExercise.sets.filter(\.kind.countsAsSet).count + 1)
+                    kind: .working(exercises[member].sets.filter(\.kind.countsAsSet).count + 1)
                 )
             )
         }
@@ -554,21 +568,26 @@ struct ExerciseLiveStrengthSheet: View {
 
     // The set the pickers write to: the one being worked on, or the last one
     // logged once the exercise is done.
+    // The set the pickers write to: the one being worked on, or the last one
+    // logged once the block is done. Its exercise is `activeExerciseIndex`.
     private var ratedIndex: Int? {
-        currentExercise.sets.firstIndex(where: \.isPending) ?? currentExercise.sets.indices.last
+        activeSlot?.setIndex ?? currentExercise.sets.indices.last
     }
 
     private func ratedSet(_ field: WritableKeyPath<ExerciseActiveSet, Int?>) -> Binding<Int?> {
         guard let ratedIndex else { return .constant(nil) }
+        // Pinned when the binding is made — logging the set moves the active
+        // slot to the superset's other member.
+        let exercise = activeExerciseIndex
         return Binding(
-            get: { exercises[currentIndex].sets[ratedIndex][keyPath: field] },
+            get: { exercises[exercise].sets[ratedIndex][keyPath: field] },
             set: { newValue in
-                exercises[currentIndex].sets[ratedIndex][keyPath: field] = newValue
+                exercises[exercise].sets[ratedIndex][keyPath: field] = newValue
                 // Rating a set or logging the rep it failed on is only something
                 // you do once it's been worked, so it logs the set as well.
-                guard newValue != nil, !exercises[currentIndex].sets[ratedIndex].isDone else { return }
-                exercises[currentIndex].sets[ratedIndex].isDone = true
-                startRest()
+                guard newValue != nil, !exercises[exercise].sets[ratedIndex].isDone else { return }
+                exercises[exercise].sets[ratedIndex].isDone = true
+                restAfterCompleting(exerciseAt: exercise)
             }
         )
     }
@@ -582,14 +601,16 @@ struct ExerciseLiveStrengthSheet: View {
         if let restEndDate {
             .resting(upNext: currentBlockName, until: restEndDate)
         } else if activeSet == nil {
-            isLastExercise ? .allSetsComplete : .nextExercise(name: exercises[currentIndex + 1].name)
+            isLastExercise
+                ? .allSetsComplete
+                : .nextExercise(name: groupTitle(containing: (currentGroup.last ?? currentIndex) + 1))
         } else {
             .working(set: currentBlockName, target: activeTarget)
         }
     }
 
     private var isLastExercise: Bool {
-        currentIndex == exercises.count - 1
+        (currentGroup.last ?? currentIndex) == exercises.count - 1
     }
 
     // MARK: - Actions
@@ -652,26 +673,30 @@ struct ExerciseLiveStrengthSheet: View {
     }
 
     private func completeActiveSet() {
-        guard let activeSet, let index = currentExercise.sets.firstIndex(where: { $0.id == activeSet.id }) else {
+        guard let slot = activeSlot else {
             advance()
             return
         }
-        exercises[currentIndex].sets[index].isDone = true
-        startRest()
+        exercises[slot.exercise].sets[slot.setIndex].isDone = true
+        restAfterCompleting(exerciseAt: slot.exercise)
     }
 
-    // No rest once the last set is ticked — the exercise is over.
-    private func startRest() {
+    // A superset rests after its last member's set; between members you move
+    // straight on to the paired exercise. No rest once the block is over.
+    private func restAfterCompleting(exerciseAt index: Int) {
         guard activeSet != nil else { return }
+        guard groupIndices(containing: index).last == index else { return }
         restEndDate = Date().addingTimeInterval(Constants.restSeconds)
     }
 
     // Clears the row's tags together — the rating and the failed rep are one
     // gesture's worth of undo.
     private func clearTags(of set: ExerciseActiveSet) {
-        guard let index = currentExercise.sets.firstIndex(where: { $0.id == set.id }) else { return }
-        exercises[currentIndex].sets[index].rpe = nil
-        exercises[currentIndex].sets[index].failedRep = nil
+        for exercise in exercises.indices {
+            guard let index = exercises[exercise].sets.firstIndex(where: { $0.id == set.id }) else { continue }
+            exercises[exercise].sets[index].rpe = nil
+            exercises[exercise].sets[index].failedRep = nil
+        }
     }
 
     // Skips the rest while one's running; otherwise it's the set that's passed
@@ -682,14 +707,13 @@ struct ExerciseLiveStrengthSheet: View {
             return
         }
 
-        guard let activeSet,
-              let index = currentExercise.sets.firstIndex(where: { $0.id == activeSet.id }) else {
+        guard let slot = activeSlot else {
             advance()
             return
         }
 
         withAnimation(.brightSnappy) {
-            exercises[currentIndex].sets[index].isSkipped = true
+            exercises[slot.exercise].sets[slot.setIndex].isSkipped = true
         }
     }
 
@@ -705,16 +729,17 @@ struct ExerciseLiveStrengthSheet: View {
     }
 
     private func advance() {
-        guard currentIndex + 1 < exercises.count else {
+        guard (currentGroup.last ?? currentIndex) + 1 < exercises.count else {
             finish()
             return
         }
-        currentIndex += 1
+        currentIndex = (currentGroup.last ?? currentIndex) + 1
     }
 
     private func goBack() {
-        guard currentIndex > 0 else { return }
-        currentIndex -= 1
+        let first = currentGroup.first ?? currentIndex
+        guard first > 0 else { return }
+        currentIndex = groupIndices(containing: first - 1).first ?? first - 1
     }
 
     // Winding the disc moves the start rather than the clock, since the elapsed
@@ -742,12 +767,55 @@ struct ExerciseLiveStrengthSheet: View {
 
     // MARK: - Derived state
 
+    // The contiguous block of exercises supersetted with the one the run is on
+    // — just itself when it stands alone.
+    private var currentGroup: [Int] {
+        groupIndices(containing: currentIndex)
+    }
+
+    private func groupIndices(containing index: Int) -> [Int] {
+        guard exercises.indices.contains(index) else { return [] }
+        guard let group = exercises[index].supersetID else { return [index] }
+        var lower = index
+        while lower > 0, exercises[lower - 1].supersetID == group { lower -= 1 }
+        var upper = index
+        while upper + 1 < exercises.count, exercises[upper + 1].supersetID == group { upper += 1 }
+        return Array(lower ... upper)
+    }
+
+    // "Bicep Curl & Barbell Row" while the block is a superset.
+    private var currentGroupTitle: String {
+        groupTitle(containing: currentIndex)
+    }
+
+    private func groupTitle(containing index: Int) -> String {
+        groupIndices(containing: index).map { exercises[$0].name }.joined(separator: " & ")
+    }
+
+    // The next set to work, alternating through a superset round by round:
+    // A's set 1, B's set 1, A's set 2, B's set 2 …
+    private var activeSlot: (exercise: Int, setIndex: Int)? {
+        let group = currentGroup
+        let rounds = group.map { exercises[$0].sets.count }.max() ?? 0
+        for round in 0 ..< rounds {
+            for member in group where exercises[member].sets.indices.contains(round) {
+                if exercises[member].sets[round].isPending { return (member, round) }
+            }
+        }
+        return nil
+    }
+
+    // The group member being worked; the run's own anchor once the block is done.
+    private var activeExerciseIndex: Int {
+        activeSlot?.exercise ?? currentIndex
+    }
+
     private var currentExercise: ExerciseActiveExercise {
-        exercises[currentIndex]
+        exercises[activeExerciseIndex]
     }
 
     private var activeSet: ExerciseActiveSet? {
-        currentExercise.sets.first(where: \.isPending)
+        activeSlot.map { exercises[$0.exercise].sets[$0.setIndex] }
     }
 
     // What the active set is for: the weight and reps it's set to, the way the
@@ -766,8 +834,11 @@ struct ExerciseLiveStrengthSheet: View {
 
     private var currentBlockName: String {
         guard let activeSet else { return "Finished" }
-        if activeSet.isWarmup { return "Warmup" }
-        return "Set \(workingIndex(of: activeSet, in: currentExercise))"
+        let name = "Set \(workingIndex(of: activeSet, in: currentExercise))"
+        let block = activeSet.isWarmup ? "Warmup" : name
+        // A superset block names the member too, or the set number is ambiguous.
+        guard currentGroup.count > 1 else { return block }
+        return "\(currentExercise.name) \u{00B7} \(block)"
     }
 
     private var finishedSession: ExerciseLoggedSession {
@@ -1123,6 +1194,8 @@ struct ExerciseTemplateItem: Identifiable, Sendable {
     var sets: [ExerciseTemplateSet] = []
     // What a run or a sport is chasing. Nil for anything logged set by set.
     var plan: ExerciseCardioPlan?
+    // Items sharing a group run as one superset block.
+    var supersetGroup: Int?
 }
 
 struct ExerciseTemplateSet: Sendable {
@@ -1169,15 +1242,22 @@ struct ExerciseActiveExercise: Identifiable, Sendable {
     }
 
     nonisolated static func fromTemplate(_ items: [ExerciseTemplateItem]) -> [ExerciseActiveExercise] {
-        items.map { item in
-            ExerciseActiveExercise(
+        var groups: [Int: UUID] = [:]
+        return items.map { item in
+            var supersetID: UUID?
+            if let group = item.supersetGroup {
+                supersetID = groups[group] ?? UUID()
+                groups[group] = supersetID
+            }
+            return ExerciseActiveExercise(
                 name: item.exerciseName,
                 notes: item.target,
                 sets: item.sets.isEmpty
                     ? blankSets
                     : item.sets.map {
                         ExerciseActiveSet(weight: $0.weight, reps: $0.reps, kind: $0.kind)
-                    }
+                    },
+                supersetID: supersetID
             )
         }
     }
