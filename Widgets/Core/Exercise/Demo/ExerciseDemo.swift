@@ -153,7 +153,7 @@ enum ExerciseDemoData {
         currentPace: "3\u{2019}23 / KM",
         distance: "5.24 KM",
         heartRate: "136",
-        heartRateZone: "Z2",
+        heartRateZone: "Z5",
         averagePace: "5\u{2019}21",
         splitPace: "5\u{2019}19",
         splitDelta: "-2",

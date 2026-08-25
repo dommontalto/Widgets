@@ -19,6 +19,18 @@ extension Locale {
 
 extension FormatStyle where Self == Date.FormatStyle {
     static var brightTime: Self { Date.FormatStyle(locale: .bright).hour(.defaultDigits(amPM: .abbreviated)).minute() }
+    static var brightDay: Self { Date.FormatStyle(locale: .bright).day(.defaultDigits) }
+    static var brightWeekdayInitial: Self { Date.FormatStyle(locale: .bright).weekday(.narrow) }
+}
+
+extension FormatStyle where Self == Date.VerbatimFormatStyle {
+    static var brightTime24: Self {
+        Date.VerbatimFormatStyle(
+            format: "\(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)",
+            timeZone: .current,
+            calendar: Calendar(identifier: .gregorian)
+        )
+    }
 }
 
 struct BrightDateStyle: FormatStyle {

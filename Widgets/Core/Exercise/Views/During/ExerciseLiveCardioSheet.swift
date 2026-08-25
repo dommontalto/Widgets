@@ -74,7 +74,7 @@ struct ExerciseLiveCardioSheet: View {
         VStack(spacing: .spacing1x) {
             BrightText(label, size: .heading, color: color)
 
-            BrightText(value, size: .enormous, color: color, scaleTextSize: 0.8)
+            BrightText(value, size: .enormous, color: color)
                 .monospacedDigit()
                 .lineLimit(1)
         }
@@ -89,7 +89,7 @@ struct ExerciseLiveCardioSheet: View {
                 .foregroundStyle(Color.defaultRed)
                 .exerciseHeartRatePulse(bpm: Double(session.heartRate))
 
-            BrightText(session.heartRate, size: .enormous, color: .defaultRed, scaleTextSize: 0.8)
+            BrightText(session.heartRate, size: .enormous, color: .defaultRed)
                 .monospacedDigit()
                 .lineLimit(1)
 
@@ -102,13 +102,13 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var zoneChip: some View {
-        BrightText(session.heartRateZone, size: .standout28, color: .defaultYellow)
+        BrightText(session.heartRateZone, size: .standout28, color: .defaultRed)
             .padding(.horizontal, .spacing105x)
             .padding(.vertical, .spacing2x)
             .overlay {
                 RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
                     .strokeBorder(
-                        Color.defaultYellow.opacity(.lowOpacity),
+                        Color.defaultRed.opacity(.lowOpacity),
                         lineWidth: Constants.hairline
                     )
             }
@@ -224,7 +224,7 @@ struct ExerciseLiveCardioSheet: View {
             Spacer(minLength: .spacing1x)
 
             TimelineView(.animation(minimumInterval: Constants.tick, paused: isPaused)) { context in
-                BrightText(elapsedString(at: context.date), size: .huge, scaleTextSize: 0.7)
+                BrightText(elapsedString(at: context.date), size: .huge)
                     .monospacedDigit()
                     .lineLimit(1)
             }

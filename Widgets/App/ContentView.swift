@@ -40,6 +40,13 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
+                    widgetLabel("ExerciseCalendarWidget")
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Calendar") {
+                        ExerciseCalendarWidget()
+                    }
+                        .padding(.top, .spacing2x)
+                        .padding(.bottom, .spacing3x)
+
                     widgetLabel("ExerciseUpcomingWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Upcoming") {
                         ExerciseUpcomingWidget(
