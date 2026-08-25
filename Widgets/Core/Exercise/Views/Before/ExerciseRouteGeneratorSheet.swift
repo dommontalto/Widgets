@@ -25,8 +25,6 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var tappedPoints: [CLLocationCoordinate2D] = []
     @State private var drawnPoints: [CLLocationCoordinate2D] = []
     @State private var strokeScreenPoints: [CGPoint] = []
-    @State private var panPreviousCentroid: CGPoint?
-    @State private var isPanningMap = false
     @State private var isExtending = false
     @State private var route: GeneratedRoute?
     @State private var isGenerating = false
@@ -34,14 +32,18 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var redoStack: [Snapshot] = []
     @State private var isSearching = false
     @State private var searchText = ""
+    @State private var isEnteringDistance = false
+    @State private var distanceText = ""
+    @State private var distanceNudge = 0
+    @FocusState private var isDistanceFocused: Bool
     @State private var generationTick = 0
     @State private var locator = RouteLocator()
 
     var body: some View {
         MapReader { proxy in
             map
-                .gesture(RoutePanGesture(isEnabled: mode == .draw) { location, touches, state in
-                    handlePan(location, touches: touches, state: state, proxy: proxy)
+                .gesture(RoutePanGesture(isEnabled: mode == .draw) { location, state in
+                    handlePan(location, state: state, proxy: proxy)
                 })
                 .overlay { liveStroke }
                 .onTapGesture { point in
@@ -111,75 +113,32 @@ struct ExerciseRouteGeneratorSheet: View {
         }
     }
 
-    // Draw mode routes single-finger drags to the stroke and pans the camera
-    // under two fingers — MapKit's own pan can't be limited to two fingers, so
-    // it stays off and the recognizer's centroid moves the camera instead.
-    // Pinch, rotate and pitch pass through to the map untouched. The stroke
-    // stays in screen space until the fingers lift: MapPolyline rebuilds its
-    // overlay on every appended point, far too slowly to track a finger, and
-    // the camera can't move mid-stroke (that cancels it) so the screen is a
-    // stable frame of reference.
-    private func handlePan(
-        _ location: CGPoint,
-        touches: Int,
-        state: UIGestureRecognizer.State,
-        proxy: MapProxy
-    ) {
+    // Draw mode gives single-finger drags to the stroke; multi-finger map
+    // gestures still pass through since only panning is switched off. The
+    // stroke stays in screen space until the finger lifts: MapPolyline
+    // rebuilds its overlay on every appended point, far too slowly to track a
+    // finger, and the camera can't move mid-stroke (that cancels it) so the
+    // screen is a stable frame of reference.
+    private func handlePan(_ location: CGPoint, state: UIGestureRecognizer.State, proxy: MapProxy) {
         guard mode == .draw, !isGenerating else { return }
 
         switch state {
         case .began, .changed:
-            if touches >= 2 {
-                strokeScreenPoints = []
-                isPanningMap = true
+            if strokeScreenPoints.isEmpty {
+                isExtending = isNearRouteEnd(location, proxy: proxy)
             }
-
-            if isPanningMap {
-                if touches >= 2, let previous = panPreviousCentroid {
-                    panCamera(from: previous, to: location, proxy: proxy)
-                }
-                panPreviousCentroid = touches >= 2 ? location : nil
-            } else {
-                if strokeScreenPoints.isEmpty {
-                    isExtending = isNearRouteEnd(location, proxy: proxy)
-                }
-                if let last = strokeScreenPoints.last,
-                   hypot(location.x - last.x, location.y - last.y) < Constants.minStrokeSamplePt {
-                    return
-                }
-                strokeScreenPoints.append(location)
+            if let last = strokeScreenPoints.last,
+               hypot(location.x - last.x, location.y - last.y) < Constants.minStrokeSamplePt {
+                return
             }
+            strokeScreenPoints.append(location)
         case .ended, .cancelled, .failed:
-            panPreviousCentroid = nil
-            isPanningMap = false
             drawnPoints = strokeScreenPoints.compactMap { proxy.convert($0, from: .local) }
             strokeScreenPoints = []
             commitStroke()
         default:
             break
         }
-    }
-
-    private func panCamera(from previous: CGPoint, to current: CGPoint, proxy: MapProxy) {
-        guard let previousCoordinate = proxy.convert(previous, from: .local),
-              let currentCoordinate = proxy.convert(current, from: .local)
-        else {
-            return
-        }
-
-        cameraPosition = .camera(
-            MapCamera(
-                centerCoordinate: CLLocationCoordinate2D(
-                    latitude: currentCamera.centerCoordinate.latitude
-                        + previousCoordinate.latitude - currentCoordinate.latitude,
-                    longitude: currentCamera.centerCoordinate.longitude
-                        + previousCoordinate.longitude - currentCoordinate.longitude
-                ),
-                distance: currentCamera.distance,
-                heading: currentCamera.heading,
-                pitch: currentCamera.pitch
-            )
-        )
     }
 
     private var liveStroke: some View {
@@ -285,6 +244,10 @@ struct ExerciseRouteGeneratorSheet: View {
             darkButton("pencil.and.scribble", isActive: mode == .draw) {
                 select(.draw)
             }
+
+            darkButton("point.topleft.down.to.point.bottomright.curvepath", isActive: isEnteringDistance) {
+                toggleDistanceEntry()
+            }
         }
     }
 
@@ -327,9 +290,9 @@ struct ExerciseRouteGeneratorSheet: View {
             BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
 
             BrightText("Generating route…", size: .body2, color: .defaultWhite)
+        } else if isEnteringDistance {
+            distanceEntry
         } else if let route {
-            grabber
-
             statsRow(route)
         } else if mode == .draw {
             Image(systemName: "pencil.and.scribble")
@@ -352,10 +315,32 @@ struct ExerciseRouteGeneratorSheet: View {
         }
     }
 
-    private var grabber: some View {
-        Capsule()
-            .fill(Color.defaultWhite.opacity(.semiLowOpacity))
-            .frame(width: Constants.grabberWidth, height: Constants.grabberHeight)
+    private var distanceEntry: some View {
+        HStack(spacing: .spacing2x) {
+            TextField(
+                "",
+                text: $distanceText,
+                prompt: Text("Distance in KM")
+                    .foregroundStyle(Color.defaultWhite.opacity(.lowOpacity))
+            )
+            .font(.standard(size: .body1, weight: .light))
+            .foregroundStyle(Color.defaultWhite)
+            .keyboardType(.decimalPad)
+            .focused($isDistanceFocused)
+            .padding(.vertical, .spacing2x)
+            .padding(.horizontal, .spacing3x)
+            .background(Color.defaultWhite.opacity(.ultraLowOpacity), in: Capsule())
+            .brightWiggle(trigger: distanceNudge)
+
+            BrightRoundButton(
+                systemImage: "checkmark",
+                size: .large,
+                color: .defaultGreen,
+                imageColor: .defaultBlack
+            ) {
+                submitDistance()
+            }
+        }
     }
 
     private func statsRow(_ route: GeneratedRoute) -> some View {
@@ -386,6 +371,107 @@ struct ExerciseRouteGeneratorSheet: View {
                     distance: currentCamera.distance,
                     heading: currentCamera.heading,
                     pitch: is3D ? Constants.pitch3D : 0
+                )
+            )
+        }
+    }
+
+    private func toggleDistanceEntry() {
+        withAnimation(.brightSnappy) {
+            isEnteringDistance.toggle()
+        }
+        isDistanceFocused = isEnteringDistance
+        if !isEnteringDistance {
+            distanceText = ""
+        }
+    }
+
+    private func submitDistance() {
+        let digits = distanceText.filter { "0123456789.".contains($0) }
+        guard let kilometres = Double(digits), kilometres > 0 else {
+            distanceNudge += 1
+            return
+        }
+
+        withAnimation(.brightSnappy) {
+            isEnteringDistance = false
+        }
+        isDistanceFocused = false
+        distanceText = ""
+
+        pushUndo()
+        route = nil
+        tappedPoints = []
+        generate(through: loopWaypoints(kilometres: kilometres), framesResult: true)
+    }
+
+    // A rough circle through the start whose circumference matches the asked
+    // distance, headed in a random direction; routing along real paths
+    // stretches it, so the radius is scaled down to compensate.
+    private func loopWaypoints(kilometres: Double) -> [CLLocationCoordinate2D] {
+        let start = locator.lastLocation?.coordinate ?? currentCamera.centerCoordinate
+        let radius = kilometres * 1000 / (2 * .pi) * Constants.loopRadiusScale
+        let outboundBearing = Double.random(in: 0 ..< 360)
+        let centre = coordinate(from: start, metres: radius, bearingDegrees: outboundBearing)
+
+        // The start sits on the circle opposite the outbound bearing; the rest
+        // of the waypoints walk the circle back around to it.
+        let startAngle = outboundBearing + 180
+        var waypoints = [start]
+        for step in 1 ..< Constants.loopWaypointCount {
+            let angle = startAngle + 360 * Double(step) / Double(Constants.loopWaypointCount)
+            waypoints.append(coordinate(from: centre, metres: radius, bearingDegrees: angle))
+        }
+        waypoints.append(start)
+        return waypoints
+    }
+
+    private func coordinate(
+        from origin: CLLocationCoordinate2D,
+        metres: Double,
+        bearingDegrees: Double
+    ) -> CLLocationCoordinate2D {
+        let bearing = bearingDegrees * .pi / 180
+        let latitudeDelta = metres * cos(bearing) / Constants.metresPerDegreeLatitude
+        let longitudeDelta = metres * sin(bearing)
+            / (Constants.metresPerDegreeLatitude * cos(origin.latitude * .pi / 180))
+        return CLLocationCoordinate2D(
+            latitude: origin.latitude + latitudeDelta,
+            longitude: origin.longitude + longitudeDelta
+        )
+    }
+
+    private func frame(_ coordinates: [CLLocationCoordinate2D]) {
+        guard let first = coordinates.first else { return }
+
+        var minLat = first.latitude
+        var maxLat = first.latitude
+        var minLon = first.longitude
+        var maxLon = first.longitude
+        for point in coordinates {
+            minLat = min(minLat, point.latitude)
+            maxLat = max(maxLat, point.latitude)
+            minLon = min(minLon, point.longitude)
+            maxLon = max(maxLon, point.longitude)
+        }
+
+        let centre = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
+        let height = straightLineDistance(
+            from: CLLocationCoordinate2D(latitude: minLat, longitude: centre.longitude),
+            to: CLLocationCoordinate2D(latitude: maxLat, longitude: centre.longitude)
+        )
+        let width = straightLineDistance(
+            from: CLLocationCoordinate2D(latitude: centre.latitude, longitude: minLon),
+            to: CLLocationCoordinate2D(latitude: centre.latitude, longitude: maxLon)
+        )
+
+        withAnimation(.easeOut(duration: Constants.cameraAnimation)) {
+            cameraPosition = .camera(
+                MapCamera(
+                    centerCoordinate: centre,
+                    distance: max(Constants.minFrameDistance, max(height, width) * Constants.frameDistanceFactor),
+                    heading: 0,
+                    pitch: 0
                 )
             )
         }
@@ -474,7 +560,11 @@ struct ExerciseRouteGeneratorSheet: View {
         return (0 ..< Constants.maxWaypoints).map { waypoints[Int((Double($0) * step).rounded())] }
     }
 
-    private func generate(through waypoints: [CLLocationCoordinate2D], extending base: GeneratedRoute? = nil) {
+    private func generate(
+        through waypoints: [CLLocationCoordinate2D],
+        extending base: GeneratedRoute? = nil,
+        framesResult: Bool = false
+    ) {
         guard waypoints.count >= 2 else { return }
         isGenerating = true
 
@@ -536,6 +626,9 @@ struct ExerciseRouteGeneratorSheet: View {
                 route = base.map { $0.appending(generated) } ?? generated
                 drawnPoints = []
                 isGenerating = false
+            }
+            if framesResult {
+                frame(coordinates)
             }
             generationTick += 1
         }
@@ -728,15 +821,15 @@ private final class RouteLocator: NSObject, CLLocationManagerDelegate {
 }
 
 // A UIKit pan recognizer bridged into SwiftUI: unlike a SwiftUI gesture over
-// Map, its updates keep flowing while MapKit's own recognizers run, and it
-// reports its touch count so one finger can draw while two pan.
+// Map, its updates keep flowing while MapKit's own recognizers run, so the
+// stroke renders live under the finger.
 private struct RoutePanGesture: UIGestureRecognizerRepresentable {
     let isEnabled: Bool
-    let onUpdate: (CGPoint, Int, UIGestureRecognizer.State) -> Void
+    let onUpdate: (CGPoint, UIGestureRecognizer.State) -> Void
 
     func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
         let recognizer = UIPanGestureRecognizer()
-        recognizer.maximumNumberOfTouches = 2
+        recognizer.maximumNumberOfTouches = 1
         recognizer.delegate = context.coordinator
         return recognizer
     }
@@ -746,7 +839,7 @@ private struct RoutePanGesture: UIGestureRecognizerRepresentable {
     }
 
     func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
-        onUpdate(recognizer.location(in: recognizer.view), recognizer.numberOfTouches, recognizer.state)
+        onUpdate(recognizer.location(in: recognizer.view), recognizer.state)
     }
 
     func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
@@ -807,6 +900,15 @@ private enum Constants {
     static let runningSecondsPerKm: Double = 330
     static let estimatedClimbPerKm: Double = 4.4
 
+    // Auto-generated loops: waypoints per lap, how much the ideal circle
+    // shrinks to offset real paths stretching it, and how the finished loop is
+    // framed on screen.
+    static let loopWaypointCount = 5
+    static let loopRadiusScale: Double = 0.8
+    static let metresPerDegreeLatitude: Double = 111_111
+    static let frameDistanceFactor: Double = 2.2
+    static let minFrameDistance: CLLocationDistance = 800
+
     static let markerSize: CGFloat = 25
     static let markerGlyphSize: CGFloat = 12
     static let dotSize: CGFloat = 14
@@ -815,8 +917,6 @@ private enum Constants {
     static let orbSpeed: Double = 1.2
     static let drawIconSize: CGFloat = 24
     static let welcomeTextWidth: CGFloat = 220
-    static let grabberWidth: CGFloat = 29
-    static let grabberHeight: CGFloat = 4
 }
 
 #Preview {
