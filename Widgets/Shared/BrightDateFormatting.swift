@@ -70,6 +70,14 @@ extension Date {
         ISO8601DateFormatter().string(from: self)
     }
 
+    var isToday: Bool {
+        Calendar.current.isDateInToday(self)
+    }
+
+    func isSameDay(as date: Date) -> Bool {
+        Calendar.current.isDate(self, equalTo: date, toGranularity: .day)
+    }
+
     static func brightTimeRange(from: Date, to: Date) -> String {
         "\(from.formatted(.brightTime)) – \(max(from, to).formatted(.brightTime))"
     }
