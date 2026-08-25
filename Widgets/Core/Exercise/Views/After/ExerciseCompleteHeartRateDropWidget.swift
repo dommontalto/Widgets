@@ -9,17 +9,15 @@ import Charts
 import SwiftUI
 
 struct ExerciseCompleteHeartRateDropWidget: View {
-    let data: HeartWorkoutSummaryPostWorkoutHeartGraphData
+    let data: ExerciseCardioPostHeartGraph
 
     @State private var selectedBar: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            BrightText(
-                "Post-Session Heart Rate Drop",
-                size: .body1,
-                color: .textColor
-            )
+            BrightText(title, size: .body1)
+                .contentTransition(.opacity)
+                .animation(.brightEaseInOut, value: title)
 
             HStack(spacing: .spacing1x) {
                 Image(ImageNames.heartRedDownV5)
@@ -148,8 +146,12 @@ struct ExerciseCompleteHeartRateDropWidget: View {
         }
     }
 
+    private var title: String {
+        selectedBpm == nil ? "Post-Session Heart Rate Drop" : "Post-Session Heart Rate"
+    }
+
     private var readingValue: String {
-        if let selectedDrop { return String(selectedDrop) }
+        if let selectedBpm { return String(selectedBpm) }
         return String(data.bpmDrop ?? 0)
     }
 
@@ -162,12 +164,12 @@ struct ExerciseCompleteHeartRateDropWidget: View {
         return index
     }
 
-    // How far the rate has fallen by the bar being held, so the reading is a
-    // drop at every point of the drag and lands on the session's own total.
-    private var selectedDrop: Int? {
-        guard let selectedIndex, let start = bpm(at: 0), let held = bpm(at: selectedIndex) else { return nil }
+    // The rate at the bar being held. With nothing held the widget reads the
+    // session's total drop instead.
+    private var selectedBpm: Int? {
+        guard let selectedIndex else { return nil }
 
-        return max(0, start - held)
+        return bpm(at: selectedIndex)
     }
 
     private func bpm(at index: Int) -> Int? {
@@ -324,6 +326,6 @@ struct ExerciseCompleteHeartRateDropWidget: View {
 
 #Preview {
     ExerciseCompleteHeartRateDropWidget(
-        data: HeartWorkoutSummaryPostWorkoutHeartGraphData()
+        data: ExerciseCardioPostHeartGraph()
     )
 }

@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-// Names match the Bright app's Heart payload so the widgets port back unchanged;
-// here they're only ever filled from ExerciseDemoComplete.
+// Names match the Bright app's Exercise cardio payload so the widgets port back
+// unchanged; here they're only ever filled from ExerciseDemoComplete.
 
 struct TimeDuration {
     var hour: Int?
@@ -50,7 +50,7 @@ struct Amount {
     }
 }
 
-struct HeartWorkoutSummaryResponseData {
+struct ExerciseCardioSummary {
     var title: String?
     var duration: TimeDuration?
     var energyOut: Amount?
@@ -61,24 +61,24 @@ struct HeartWorkoutSummaryResponseData {
     // Conditions during the session, e.g. "14°".
     var temperature: String?
 
-    var heartGraph: HeartWorkoutSummaryHeartGraphData?
+    var heartGraph: ExerciseCardioHeartGraph?
 
     var hrAvg: Double?
     var hrPeak: Double?
     var zoneAvg: Int?
 
-    var postWorkoutHeartGraph: HeartWorkoutSummaryPostWorkoutHeartGraphData?
-    var breakdown: HeartWorkoutSummaryBreakdownData?
+    var postSessionHeartGraph: ExerciseCardioPostHeartGraph?
+    var breakdown: ExerciseCardioBreakdown?
 
     var distance: Amount?
     var altitudeGain: Amount?
     var avgPaceSecondsPerKm: Int?
 
-    var altitudeGraph: HeartWorkoutSummaryAltitudeGraphData?
-    var paceGraph: HeartWorkoutSummaryPaceGraphData?
-    var cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
-    var splits: [HeartWorkoutSummarySplit]?
-    var intervals: [HeartWorkoutSummaryInterval]?
+    var altitudeGraph: ExerciseCardioAltitudeGraph?
+    var paceGraph: ExerciseCardioPaceGraph?
+    var cadenceGraph: ExerciseCardioCadenceGraph?
+    var splits: [ExerciseCardioSummarySplit]?
+    var intervals: [ExerciseCardioSummaryInterval]?
 
     var routeLatitudes: [Double]?
     var routeLongitudes: [Double]?
@@ -91,16 +91,16 @@ struct HeartWorkoutSummaryResponseData {
 
 // MARK: - Post session heart graph
 
-struct HeartWorkoutSummaryPostWorkoutHeartGraphData {
+struct ExerciseCardioPostHeartGraph {
     var bpmDrop: Int?
     var xDates: [String]?
     var xDatesDisplay: [String]?
     var xBpm: [Int?]?
     var yTicks: [Int]?
-    var data: [HeartGraphResponseDataStats]?
+    var data: [ExerciseCardioMinMax]?
 }
 
-struct HeartGraphResponseDataStats {
+struct ExerciseCardioMinMax {
     var min: Double?
     var max: Double?
     var avg: Double?
@@ -108,10 +108,10 @@ struct HeartGraphResponseDataStats {
 
 // MARK: - Breakdown
 
-struct HeartWorkoutSummaryBreakdownData {
-    var zones: [HeartWorkoutSummaryBreakdownZones]?
+struct ExerciseCardioBreakdown {
+    var zones: [Zone]?
 
-    struct HeartWorkoutSummaryBreakdownZones {
+    struct Zone {
         var title: String?
         var rangeStr: String?
         var duration: TimeDuration?
@@ -121,7 +121,7 @@ struct HeartWorkoutSummaryBreakdownData {
 
 // MARK: - Performance graph
 
-struct HeartWorkoutSummaryHeartGraphData {
+struct ExerciseCardioHeartGraph {
     var yTicks: [Int]?
     var data: [WorkoutSummaryHeartData]?
 
@@ -132,19 +132,19 @@ struct HeartWorkoutSummaryHeartGraphData {
     }
 }
 
-struct HeartWorkoutSummaryAltitudeGraphData {
+struct ExerciseCardioAltitudeGraph {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
 }
 
-struct HeartWorkoutSummaryPaceGraphData {
+struct ExerciseCardioPaceGraph {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
 }
 
-struct HeartWorkoutSummaryCadenceGraphData {
+struct ExerciseCardioCadenceGraph {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
@@ -152,7 +152,7 @@ struct HeartWorkoutSummaryCadenceGraphData {
 
 // MARK: - Split
 
-struct HeartWorkoutSummarySplit {
+struct ExerciseCardioSummarySplit {
     var splitIndex: Int?
     var duration: TimeDuration?
     var paceSecondsPerKm: Int?
@@ -162,10 +162,10 @@ struct HeartWorkoutSummarySplit {
 
 // MARK: - Interval
 
-struct HeartWorkoutSummaryInterval {
+struct ExerciseCardioSummaryInterval {
     var index: Int?
     var name: String?
-    var kind: HeartWorkoutIntervalKind?
+    var kind: ExerciseCardioIntervalKind?
     var startTime: String?
     var endTime: String?
     var duration: TimeDuration?
@@ -176,7 +176,7 @@ struct HeartWorkoutSummaryInterval {
     var energyOut: Amount?
 }
 
-enum HeartWorkoutIntervalKind: String {
+enum ExerciseCardioIntervalKind: String {
     case warmup
     case work
     case rest

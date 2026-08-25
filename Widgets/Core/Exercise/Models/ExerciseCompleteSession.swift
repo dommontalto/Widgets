@@ -10,7 +10,7 @@ import SwiftUI
 // A finished session as the complete sheet reads it. Strength and cardio share
 // the sheet, and every widget hides when its data is absent — no kind switch.
 struct ExerciseCompleteSession {
-    var summary: HeartWorkoutSummaryResponseData
+    var summary: ExerciseCardioSummary
     var metrics: [ExerciseCompleteMetric] = []
     var fatigue: ExerciseCompleteFatigue?
     var exertion: ExerciseCompleteExertion?
@@ -35,13 +35,13 @@ struct ExerciseCompleteSession {
         (category ?? .gym).tint
     }
 
-    // The combined graph draws whichever traces exist; none at all means the
-    // widget has nothing to say.
+    // A graph only arrives when it holds real readings, so its presence is the
+    // whole test — none at all means the widget has nothing to say.
     var hasPerformanceGraph: Bool {
-        summary.heartGraph?.data?.isEmpty == false
-            || summary.altitudeGraph?.data?.isEmpty == false
-            || summary.paceGraph?.data?.isEmpty == false
-            || summary.cadenceGraph?.data?.isEmpty == false
+        summary.heartGraph != nil
+            || summary.altitudeGraph != nil
+            || summary.paceGraph != nil
+            || summary.cadenceGraph != nil
     }
 }
 

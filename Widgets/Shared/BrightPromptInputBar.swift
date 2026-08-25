@@ -74,7 +74,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 send()
             }
         }
-        .contentTransition(.symbolEffect(.replace))
+        .contentTransition(.symbolEffect(.replace.upUp))
     }
 
     private func send() {

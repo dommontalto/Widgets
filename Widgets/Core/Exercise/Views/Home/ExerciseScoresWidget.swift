@@ -23,7 +23,6 @@ struct ExerciseScoresWidget: View {
             tile(title: "Readiness", score: scores.readiness, color: .defaultSkyBlue)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, .spacing3x)
     }
 
     private func tile(title: String, score: Int, color: Color) -> some View {
@@ -36,7 +35,7 @@ struct ExerciseScoresWidget: View {
                     .overlay {
                         ScoreRing(score: score, color: color, valueSize: .standout1)
                     }
-                    .modifier(CardModifier())
+                    .modifier(GlassCardModifier())
 
                 BrightText(title, size: .body1)
             }

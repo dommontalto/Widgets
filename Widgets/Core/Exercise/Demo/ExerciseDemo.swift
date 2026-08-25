@@ -101,19 +101,34 @@ struct ExerciseProgramStatus {
 
 struct ExerciseIntervalSegment: Identifiable {
     enum Kind {
+        case warmup
         case work
+        case walk
         case rest
 
         var color: Color {
             switch self {
+            case .warmup: .defaultYellow
             case .work: .defaultGreen
+            case .walk: .defaultCyan
             case .rest: .defaultCyan
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .warmup: "WARMUP"
+            case .work: "RUN"
+            case .walk: "WALK"
+            case .rest: "REST"
             }
         }
     }
 
     let id = UUID()
     let kind: Kind
+    // Relative width on the live strip — the leg's metres.
+    var weight: Double = 1
 }
 
 struct ExerciseLiveCardioStats {
@@ -143,13 +158,13 @@ enum ExerciseDemoData {
         splitPace: "5\u{2019}19",
         splitDelta: "-2",
         intervalName: "RUN",
-        intervalRemaining: "2:49",
+        intervalRemaining: "5:42",
         intervalKind: .work,
         segments: [
-            ExerciseIntervalSegment(kind: .rest),
-            ExerciseIntervalSegment(kind: .work),
-            ExerciseIntervalSegment(kind: .rest),
-            ExerciseIntervalSegment(kind: .work),
+            ExerciseIntervalSegment(kind: .warmup, weight: 500),
+            ExerciseIntervalSegment(kind: .work, weight: 3000),
+            ExerciseIntervalSegment(kind: .walk, weight: 500),
+            ExerciseIntervalSegment(kind: .work, weight: 1000),
         ]
     )
 

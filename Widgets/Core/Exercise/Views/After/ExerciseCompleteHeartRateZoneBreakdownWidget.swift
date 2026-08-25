@@ -1,5 +1,5 @@
 //
-//  ExerciseCompleteBreakdownWidget.swift
+//  ExerciseCompleteHeartRateZoneBreakdownWidget.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 19/8/2026.
@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct ExerciseCompleteBreakdownWidget: View {
-    let data: HeartWorkoutSummaryBreakdownData
+struct ExerciseCompleteHeartRateZoneBreakdownWidget: View {
+    let data: ExerciseCardioBreakdown
 
-    private var zones: [HeartWorkoutSummaryBreakdownData.HeartWorkoutSummaryBreakdownZones] {
+    private var zones: [ExerciseCardioBreakdown.Zone] {
         let zones = data.zones ?? []
         return zones.isEmpty ? placeholderZones : zones
     }
 
-    private var placeholderZones: [HeartWorkoutSummaryBreakdownData.HeartWorkoutSummaryBreakdownZones] {
+    private var placeholderZones: [ExerciseCardioBreakdown.Zone] {
         [
             .init(title: "Zone 1", rangeStr: nil, duration: nil, scaleValue: 0),
             .init(title: "Zone 2", rangeStr: nil, duration: nil, scaleValue: 0),
@@ -125,7 +125,7 @@ struct ExerciseCompleteBreakdownWidget: View {
 }
 
 #Preview {
-    ExerciseCompleteBreakdownWidget(
-        data: HeartWorkoutSummaryBreakdownData()
+    ExerciseCompleteHeartRateZoneBreakdownWidget(
+        data: ExerciseCardioBreakdown()
     )
 }

@@ -79,7 +79,7 @@ struct ExerciseLiveCardioSheet: View {
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, .spacing5x)
+        .padding(.vertical, .spacing4x)
     }
 
     private var heartRateRow: some View {
@@ -89,16 +89,16 @@ struct ExerciseLiveCardioSheet: View {
                 .foregroundStyle(Color.defaultRed)
                 .exerciseHeartRatePulse(bpm: Double(session.heartRate))
 
-            BrightText(session.heartRate, size: .enormous, color: .defaultRed)
+            BrightText(session.heartRate, size: .enormous, color: .defaultRed, scaleTextSize: 0.8)
                 .monospacedDigit()
-                .fixedSize()
+                .lineLimit(1)
 
             ExerciseHeartRateTrace()
 
             zoneChip
         }
         .padding(.horizontal, .spacing4x)
-        .padding(.vertical, .spacing5x)
+        .padding(.vertical, .spacing4x)
     }
 
     private var zoneChip: some View {
@@ -160,53 +160,53 @@ struct ExerciseLiveCardioSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, .spacing4x)
-        .padding(.bottom, .spacing3x)
+        .padding(.bottom, .spacing4x)
     }
 
     // MARK: - Interval
 
     private var intervalRow: some View {
-        HStack(spacing: .spacing1x) {
-            intervalPill
+        TimelineView(.animation(minimumInterval: Constants.tick, paused: isPaused)) { context in
+            let state = intervalState(at: context.date)
 
-            segmentBars
+            ExerciseLiveIntervalStrip(
+                segments: session.segments.map {
+                    ExerciseLiveIntervalStrip.Segment(color: $0.kind.color, weight: $0.weight)
+                },
+                currentIndex: state.index,
+                progress: state.progress,
+                label: state.label,
+                detail: state.remaining
+            )
         }
         .padding(.horizontal, .spacing4x)
-        .padding(.top, .spacing6x)
+        .padding(.top, .spacing4x)
     }
 
-    private var intervalPill: some View {
-        HStack(spacing: .spacing2x) {
-            BrightText(session.intervalName, size: .heading, color: session.intervalColor)
+    // Plays the plan off the session clock at the demo pace, looping when the
+    // legs run out so the strip never stops moving.
+    private func intervalState(at date: Date) -> (index: Int?, progress: Double, label: String, remaining: String) {
+        let total = session.segments.reduce(0) { $0 + $1.weight }
+        guard total > 0 else { return (nil, 0, "", "") }
 
-            Spacer(minLength: .spacing2x)
+        let metres = elapsed(at: date) * Constants.demoMetresPerSecond
+        let looped = metres.truncatingRemainder(dividingBy: total)
 
-            BrightText(session.intervalRemaining, size: .heading, color: session.intervalColor)
-                .monospacedDigit()
-        }
-        .padding(.horizontal, .spacing2x)
-        .frame(height: .spacing9x)
-        .background(
-            session.intervalColor.opacity(.ultraLowOpacity),
-            in: RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
-                .strokeBorder(
-                    session.intervalColor.opacity(.lowOpacity),
-                    lineWidth: Constants.hairline
-                )
-        }
-    }
-
-    private var segmentBars: some View {
-        HStack(spacing: .spacing1x) {
-            ForEach(session.segments) { segment in
-                Capsule()
-                    .fill(segment.kind.color.opacity(.veryLowOpacity))
-                    .frame(width: Constants.segmentWidth, height: Constants.segmentHeight)
+        var covered: Double = 0
+        for (index, segment) in session.segments.enumerated() {
+            let end = covered + segment.weight
+            if looped < end {
+                let progress = (looped - covered) / max(segment.weight, 1)
+                let secondsLeft = Int((end - looped) / Constants.demoMetresPerSecond)
+                return (index, progress, segment.kind.title, remainingString(secondsLeft))
             }
+            covered = end
         }
+        return (nil, 1, "", "")
+    }
+
+    private func remainingString(_ seconds: Int) -> String {
+        String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
     // MARK: - Controls
@@ -249,9 +249,12 @@ struct ExerciseLiveCardioSheet: View {
         isPaused.toggle()
     }
 
+    private func elapsed(at date: Date) -> TimeInterval {
+        isPaused ? bankedElapsed : bankedElapsed + date.timeIntervalSince(runningSince)
+    }
+
     private func elapsedString(at date: Date) -> String {
-        let elapsed = isPaused ? bankedElapsed : bankedElapsed + date.timeIntervalSince(runningSince)
-        let centiseconds = Int(max(0, elapsed) * 100)
+        let centiseconds = Int(max(0, elapsed(at: date)) * 100)
         return String(
             format: "%02d:%02d:%02d",
             centiseconds / 6000,
@@ -263,8 +266,8 @@ struct ExerciseLiveCardioSheet: View {
     private enum Constants {
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
-        static let segmentWidth: CGFloat = 9
-        static let segmentHeight: CGFloat = 43
+        // Fast enough that the demo run crosses a leg while you watch.
+        static let demoMetresPerSecond: Double = 50
     }
 }
 

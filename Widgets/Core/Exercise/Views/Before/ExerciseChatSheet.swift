@@ -120,7 +120,8 @@ struct ExerciseChatSheet: View {
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing2x)
                 .modifier(GlassEffect(
-                    shape: .cornerRadii(Constants.userBubbleCorners),
+                    shape: .roundedRect,
+                    cornerRadius: .cardCornerRadius,
                     tint: .defaultWhite.opacity(.veryMinimalOpacity),
                     interactive: false
                 ))
@@ -210,8 +211,7 @@ struct ExerciseChatSheet: View {
             onSend: send,
             onStop: stopThinking
         )
-        .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing3x)
+        .padding(.spacing3x)
     }
 
     // MARK: - Fake replies
@@ -286,14 +286,6 @@ struct ExerciseChatSheet: View {
         // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
         // preset rate.
         static let orbSpeed: Double = 1.2
-
-        // The corner nearest the sender squares off into a tail, like iMessage.
-        static let userBubbleCorners = RectangleCornerRadii(
-            topLeading: .cardCornerRadius,
-            bottomLeading: .cardCornerRadius,
-            bottomTrailing: .cardCornerRadius,
-            topTrailing: .cornerRadius18
-        )
 
         // The interval lines are designed to sit on one line, so they shrink
         // a touch rather than wrap.

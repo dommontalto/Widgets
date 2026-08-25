@@ -10,16 +10,18 @@ import SwiftUI
 struct ExerciseAllLogsSheet: View {
     let sessions: [ExerciseLoggedSession]
 
-    @State private var selectedSession: ExerciseLoggedSession?
+    @State private var path = NavigationPath()
 
     var body: some View {
-        BrightPageSheetView(title: "Session History") {
+        BrightPageSheetView(title: "Session History", path: $path) {
             list
-        }
-        .sheet(item: $selectedSession) { session in
-            ExerciseCompleteSheet(
-                sessions: ExerciseDemoComplete.sessions(for: session)
-            )
+                .navigationDestination(for: ExerciseLoggedSession.self) { session in
+                    ExerciseCompleteSheet(
+                        sessions: ExerciseDemoComplete.sessions(for: session),
+                        chrome: .pushed,
+                        backgroundColor: .defaultSheetBackground
+                    )
+                }
         }
     }
 
@@ -33,7 +35,7 @@ struct ExerciseAllLogsSheet: View {
                         isFirst: session.id == sessions.first?.id,
                         isLast: isLast
                     ) {
-                        selectedSession = session
+                        path.append(session)
                     }
 
                     if !isLast {

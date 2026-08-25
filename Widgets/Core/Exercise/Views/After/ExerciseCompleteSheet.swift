@@ -24,15 +24,15 @@ enum ExerciseCompleteTab: Int, CaseIterable {
         case .summary:
             return true
         case .heart:
-            return summary.hrAvg != nil
-                || summary.heartGraph?.data?.isEmpty == false
-                || summary.postWorkoutHeartGraph?.data?.isEmpty == false
-                || summary.breakdown?.zones?.isEmpty == false
+            return (summary.hrAvg ?? 0) > 0
+                || summary.heartGraph != nil
+                || summary.postSessionHeartGraph != nil
+                || summary.breakdown != nil
         case .performance:
             return session.hasPerformanceGraph
                 || summary.splits?.isEmpty == false
                 || summary.intervals?.isEmpty == false
-                || !session.progressions.isEmpty
+                || session.progressions.contains { !$0.sets.isEmpty }
         }
     }
 
@@ -59,6 +59,7 @@ struct ExerciseCompleteSheet: View {
     let sessions: [ExerciseCompleteSession]
 
     var chrome: ExercisePageChrome = .sheet
+    var backgroundColor: Color = .defaultBackground
 
     // Ends the whole run. Only the flow can do that from a pushed leg, where
     // `dismiss` would pop back instead.
@@ -67,11 +68,13 @@ struct ExerciseCompleteSheet: View {
     init(
         sessions: [ExerciseCompleteSession],
         chrome: ExercisePageChrome = .sheet,
+        backgroundColor: Color = .defaultBackground,
         initialPart: Int = 0,
         onClose: (() -> Void)? = nil
     ) {
         self.sessions = sessions
         self.chrome = chrome
+        self.backgroundColor = backgroundColor
         self.onClose = onClose
         _selectedPart = State(initialValue: initialPart)
     }
@@ -88,7 +91,7 @@ struct ExerciseCompleteSheet: View {
         sessions[min(selectedPart, sessions.count - 1)]
     }
 
-    private var summary: HeartWorkoutSummaryResponseData { session.summary }
+    private var summary: ExerciseCardioSummary { session.summary }
 
     private var visibleTabs: [ExerciseCompleteTab] {
         ExerciseCompleteTab.visible(for: session)
@@ -137,13 +140,16 @@ struct ExerciseCompleteSheet: View {
         case .pushed:
             BrightPageView(
                 horizontalPadding: .spacing0x,
+                backgroundColor: backgroundColor,
                 toolbar: {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            onClose?()
-                        } label: {
-                            Label("Close", systemImage: "xmark")
-                                .labelStyle(.iconOnly)
+                    if let onClose {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                onClose()
+                            } label: {
+                                Label("Close", systemImage: "xmark")
+                                    .labelStyle(.iconOnly)
+                            }
                         }
                     }
 
@@ -194,6 +200,8 @@ struct ExerciseCompleteSheet: View {
                     altitudeGraph: summary.altitudeGraph,
                     paceGraph: summary.paceGraph,
                     cadenceGraph: summary.cadenceGraph,
+                    startDate: summary.startTime ?? "",
+                    endDate: summary.endTime ?? "",
                     isFullScreen: true
                 )
                 // The bar keeps its stock back button but loses its background,
@@ -329,24 +337,22 @@ struct ExerciseCompleteSheet: View {
 
     private var heartTab: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            if summary.hrAvg != nil || summary.heartGraph?.data?.isEmpty == false {
+            if (summary.hrAvg ?? 0) > 0 || summary.heartGraph != nil {
                 ExerciseCompleteHeartRateWidget(
                     hrAvg: summary.hrAvg ?? 0,
                     hrPeak: summary.hrPeak,
                     startDate: summary.startTime ?? "",
                     endDate: summary.endTime ?? "",
-                    data: summary.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
+                    data: summary.heartGraph ?? ExerciseCardioHeartGraph()
                 )
             }
 
-            if summary.postWorkoutHeartGraph?.data?.isEmpty == false {
-                ExerciseCompleteHeartRateDropWidget(
-                    data: summary.postWorkoutHeartGraph ?? HeartWorkoutSummaryPostWorkoutHeartGraphData()
-                )
+            if let postSessionHeartGraph = summary.postSessionHeartGraph {
+                ExerciseCompleteHeartRateDropWidget(data: postSessionHeartGraph)
             }
 
-            if let breakdown = summary.breakdown, breakdown.zones?.isEmpty == false {
-                ExerciseCompleteBreakdownWidget(data: breakdown)
+            if let breakdown = summary.breakdown {
+                ExerciseCompleteHeartRateZoneBreakdownWidget(data: breakdown)
             }
         }
     }
@@ -363,11 +369,13 @@ struct ExerciseCompleteSheet: View {
                     avgPace: summary.avgPaceSecondsPerKm ?? 0,
                     altitudeGain: summary.altitudeGain ?? Amount(unit: "M", value: 0),
                     data: ExerciseCompleteCombinedGraphData(
-                        heartData: summary.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
-                        altitudeData: summary.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
-                        paceData: summary.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
-                        cadenceData: summary.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+                        heartData: summary.heartGraph ?? ExerciseCardioHeartGraph(),
+                        altitudeData: summary.altitudeGraph ?? ExerciseCardioAltitudeGraph(),
+                        paceData: summary.paceGraph ?? ExerciseCardioPaceGraph(),
+                        cadenceData: summary.cadenceGraph ?? ExerciseCardioCadenceGraph()
                     ),
+                    startDate: summary.startTime ?? "",
+                    endDate: summary.endTime ?? "",
                     selectedSecond: $selectedGraphSecond
                 )
             }
@@ -380,7 +388,7 @@ struct ExerciseCompleteSheet: View {
                 ExerciseCompleteIntervalWidget(data: intervals)
             }
 
-            ForEach(session.progressions) { progression in
+            ForEach(session.progressions.filter { !$0.sets.isEmpty }) { progression in
                 ExerciseCompleteProgressionWidget(progression: progression) { name in
                     openedExerciseName = name
                 }

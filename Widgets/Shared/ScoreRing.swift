@@ -25,7 +25,7 @@ struct ScoreRing: View {
 
     var body: some View {
         ZStack {
-            BrightText(String(score ?? 0), size: valueSize, weight: .regular)
+            BrightText(String(score ?? 0), size: valueSize)
                 .monospacedDigit()
 
             Circle()

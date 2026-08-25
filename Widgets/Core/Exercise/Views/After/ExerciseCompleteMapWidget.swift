@@ -20,10 +20,12 @@ struct ExerciseCompleteMapWidget: View {
     var hrAvg: Double?
     var altitudeGainMetres: Double?
     var avgPaceSecondsPerKm: Int?
-    var heartGraph: HeartWorkoutSummaryHeartGraphData?
-    var altitudeGraph: HeartWorkoutSummaryAltitudeGraphData?
-    var paceGraph: HeartWorkoutSummaryPaceGraphData?
-    var cadenceGraph: HeartWorkoutSummaryCadenceGraphData?
+    var heartGraph: ExerciseCardioHeartGraph?
+    var altitudeGraph: ExerciseCardioAltitudeGraph?
+    var paceGraph: ExerciseCardioPaceGraph?
+    var cadenceGraph: ExerciseCardioCadenceGraph?
+    var startDate = ""
+    var endDate = ""
 
     // The stretch of the route to pick out, as fractions of its length. Nil
     // lights the whole thing in its zone colours.
@@ -59,10 +61,12 @@ struct ExerciseCompleteMapWidget: View {
         hrAvg: Double? = nil,
         altitudeGainMetres: Double? = nil,
         avgPaceSecondsPerKm: Int? = nil,
-        heartGraph: HeartWorkoutSummaryHeartGraphData? = nil,
-        altitudeGraph: HeartWorkoutSummaryAltitudeGraphData? = nil,
-        paceGraph: HeartWorkoutSummaryPaceGraphData? = nil,
-        cadenceGraph: HeartWorkoutSummaryCadenceGraphData? = nil,
+        heartGraph: ExerciseCardioHeartGraph? = nil,
+        altitudeGraph: ExerciseCardioAltitudeGraph? = nil,
+        paceGraph: ExerciseCardioPaceGraph? = nil,
+        cadenceGraph: ExerciseCardioCadenceGraph? = nil,
+        startDate: String = "",
+        endDate: String = "",
         isFullScreen: Bool = false,
         onOpen: (() -> Void)? = nil
     ) {
@@ -77,6 +81,8 @@ struct ExerciseCompleteMapWidget: View {
         self.altitudeGraph = altitudeGraph
         self.paceGraph = paceGraph
         self.cadenceGraph = cadenceGraph
+        self.startDate = startDate
+        self.endDate = endDate
         self.highlight = highlight
         self.highlightTint = highlightTint
         self.isFullScreen = isFullScreen
@@ -192,11 +198,13 @@ struct ExerciseCompleteMapWidget: View {
             avgPace: avgPaceSecondsPerKm ?? 0,
             altitudeGain: Amount(unit: "M", value: altitudeGainMetres),
             data: ExerciseCompleteCombinedGraphData(
-                heartData: heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
-                altitudeData: altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
-                paceData: paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
-                cadenceData: cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+                heartData: heartGraph ?? ExerciseCardioHeartGraph(),
+                altitudeData: altitudeGraph ?? ExerciseCardioAltitudeGraph(),
+                paceData: paceGraph ?? ExerciseCardioPaceGraph(),
+                cadenceData: cadenceGraph ?? ExerciseCardioCadenceGraph()
             ),
+            startDate: startDate,
+            endDate: endDate,
             selectedSecond: stickySelection,
             usesGlass: true
         )

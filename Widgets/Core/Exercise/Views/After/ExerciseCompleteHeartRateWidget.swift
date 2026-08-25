@@ -13,7 +13,7 @@ struct ExerciseCompleteHeartRateWidget: View {
     let hrPeak: Double?
     let startDate: String
     let endDate: String
-    let data: HeartWorkoutSummaryHeartGraphData
+    let data: ExerciseCardioHeartGraph
 
     @State private var selectedIndex: Int?
 
@@ -31,11 +31,11 @@ struct ExerciseCompleteHeartRateWidget: View {
             VStack(spacing: .spacing1x) {
                 BrightDivider()
 
-                HStack {
-                    BrightText(timeLabel(startDate), size: .body1, color: .lightTextColor)
-                    Spacer()
-                    BrightText(timeLabel(endDate), size: .body1, color: .lightTextColor)
-                }
+                ExerciseGraphTimeAxis(
+                    startLabel: timeLabel(startDate),
+                    endLabel: timeLabel(endDate),
+                    scrub: scrub
+                )
             }
             .padding(.trailing, Constants.legendWidth + .spacing1x)
         }
@@ -108,8 +108,35 @@ struct ExerciseCompleteHeartRateWidget: View {
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartXSelection(value: selectionBinding)
+            .background { fill }
 
             legend
+        }
+    }
+
+    // A gradient across the whole plot masked by the area under the trace, so it
+    // is anchored to the frame rather than to the line's own peak — a gradient
+    // handed straight to the AreaMark would restart at every high point.
+    private var fill: some View {
+        LinearGradient(
+            colors: [Color.defaultRed.opacity(.veryMinimalOpacity), .clear],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .mask {
+            Chart {
+                ForEach(samples.indices, id: \.self) { index in
+                    AreaMark(
+                        x: .value("Sample", index),
+                        y: .value("BPM", samples[index])
+                    )
+                    .interpolationMethod(.linear)
+                    .foregroundStyle(.black)
+                }
+            }
+            .chartYScale(domain: lowest ... highest)
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
         }
     }
 
@@ -206,6 +233,31 @@ struct ExerciseCompleteHeartRateWidget: View {
         max(peakSample ?? Double(data.yTicks?.last ?? 150), lowest + 1)
     }
 
+    private var scrub: ExerciseGraphTimeAxis.Scrub? {
+        guard let selectedSample else { return nil }
+
+        let last = max(samples.count - 1, 1)
+        return ExerciseGraphTimeAxis.Scrub(
+            fraction: Double(selectedSample.index) / Double(last),
+            label: heldLabel(at: selectedSample.index)
+        )
+    }
+
+    // Each reading carries its own stamp; a run that arrived without them falls
+    // back to where the sample sits between the two ends.
+    private func heldLabel(at index: Int) -> String {
+        if let stamp = (data.data ?? [])[safe: index]?.heartDate, !stamp.isEmpty {
+            return stamp.isoStringToDate().formatted(.brightTime)
+        }
+
+        guard !startDate.isEmpty, !endDate.isEmpty else { return "-" }
+
+        let start = startDate.isoStringToDate()
+        let span = endDate.isoStringToDate().timeIntervalSince(start)
+        let fraction = Double(index) / Double(max(samples.count - 1, 1))
+        return start.addingTimeInterval(span * fraction).formatted(.brightTime)
+    }
+
     private func timeLabel(_ iso: String) -> String {
         iso.isEmpty ? "-" : iso.isoStringToDate().formatted(.brightTime)
     }
@@ -227,7 +279,7 @@ struct ExerciseCompleteHeartRateWidget: View {
         hrPeak: session.hrPeak,
         startDate: session.startTime ?? "",
         endDate: session.endTime ?? "",
-        data: session.heartGraph ?? HeartWorkoutSummaryHeartGraphData()
+        data: session.heartGraph ?? ExerciseCardioHeartGraph()
     )
     .padding(.spacing3x)
     .frame(maxHeight: .infinity, alignment: .top)

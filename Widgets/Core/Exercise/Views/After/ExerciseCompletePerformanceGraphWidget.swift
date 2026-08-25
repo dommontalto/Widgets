@@ -9,10 +9,10 @@ import Charts
 import SwiftUI
 
 struct ExerciseCompleteCombinedGraphData {
-    let heartData: HeartWorkoutSummaryHeartGraphData
-    let altitudeData: HeartWorkoutSummaryAltitudeGraphData
-    let paceData: HeartWorkoutSummaryPaceGraphData
-    let cadenceData: HeartWorkoutSummaryCadenceGraphData
+    let heartData: ExerciseCardioHeartGraph
+    let altitudeData: ExerciseCardioAltitudeGraph
+    let paceData: ExerciseCardioPaceGraph
+    let cadenceData: ExerciseCardioCadenceGraph
 }
 
 enum ExerciseCompleteGraphMetric: CaseIterable {
@@ -51,6 +51,10 @@ struct ExerciseCompletePerformanceGraphWidget: View {
     let avgPace: Int
     let altitudeGain: Amount
     let data: ExerciseCompleteCombinedGraphData
+    // The wall clock either end of the run, which the axis reads instead of
+    // elapsed time.
+    var startDate = ""
+    var endDate = ""
 
     // Owned by the caller so the map sheet can drive its camera from the same
     // scrub position.
@@ -79,6 +83,8 @@ struct ExerciseCompletePerformanceGraphWidget: View {
             duration: duration,
             metrics: metrics,
             graphHeight: graphHeight,
+            startDate: startDate,
+            endDate: endDate,
             readout: readout(for:)
         )
     }
@@ -193,6 +199,8 @@ extension ExerciseCompletePerformanceGraphWidget {
         let duration: TimeDuration
         let metrics: [MetricSpec]
         let graphHeight: CGFloat
+        let startDate: String
+        let endDate: String
         let readout: (MetricSpec) -> String
 
         var body: some View {
@@ -207,15 +215,40 @@ extension ExerciseCompletePerformanceGraphWidget {
 
                 BrightDivider()
 
-                HStack {
-                    BrightText("0:00:00", size: .body1, color: .lightTextColor)
-
-                    Spacer()
-
-                    BrightText(duration.totalSeconds.hmsString, size: .body1, color: .lightTextColor)
-                }
+                ExerciseGraphTimeAxis(
+                    startLabel: timeLabel(startDate),
+                    endLabel: timeLabel(endDate),
+                    scrub: scrub
+                )
+                // Starts where the plot does, past the readout column, so the
+                // first time sits under the line the graph begins on.
+                .padding(.leading, MetricGraphComponent.Constants.labelWidth)
                 .padding(.top, .spacing1x)
             }
+        }
+
+        private var scrub: ExerciseGraphTimeAxis.Scrub? {
+            guard let selectedSecond else { return nil }
+
+            let total = max(duration.totalSeconds, 1)
+            return ExerciseGraphTimeAxis.Scrub(
+                fraction: selectedSecond / total,
+                label: heldLabel(at: selectedSecond)
+            )
+        }
+
+        // The x axis counts elapsed seconds, so the held time is the start plus
+        // however far in it sits. With no start logged it falls back to elapsed.
+        private func heldLabel(at second: Double) -> String {
+            guard !startDate.isEmpty else { return second.hmsString }
+
+            return startDate.isoStringToDate()
+                .addingTimeInterval(second)
+                .formatted(.brightTime)
+        }
+
+        private func timeLabel(_ iso: String) -> String {
+            iso.isEmpty ? "-" : iso.isoStringToDate().formatted(.brightTime)
         }
 
         @ViewBuilder
@@ -285,7 +318,7 @@ extension ExerciseCompletePerformanceGraphWidget {
                         y: .value(title, values[index])
                     )
                     .interpolationMethod(.cardinal(tension: 1.1))
-                    .lineStyle(StrokeStyle(lineWidth: 0.75))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
                     .foregroundStyle(color)
                 }
 
@@ -392,10 +425,10 @@ extension [Double] {
         avgPace: session.avgPaceSecondsPerKm ?? 0,
         altitudeGain: session.altitudeGain ?? Amount(unit: "M", value: 0),
         data: ExerciseCompleteCombinedGraphData(
-            heartData: session.heartGraph ?? HeartWorkoutSummaryHeartGraphData(),
-            altitudeData: session.altitudeGraph ?? HeartWorkoutSummaryAltitudeGraphData(),
-            paceData: session.paceGraph ?? HeartWorkoutSummaryPaceGraphData(),
-            cadenceData: session.cadenceGraph ?? HeartWorkoutSummaryCadenceGraphData()
+            heartData: session.heartGraph ?? ExerciseCardioHeartGraph(),
+            altitudeData: session.altitudeGraph ?? ExerciseCardioAltitudeGraph(),
+            paceData: session.paceGraph ?? ExerciseCardioPaceGraph(),
+            cadenceData: session.cadenceGraph ?? ExerciseCardioCadenceGraph()
         ),
         selectedSecond: $selectedSecond
     )

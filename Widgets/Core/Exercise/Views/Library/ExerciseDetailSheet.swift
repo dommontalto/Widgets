@@ -45,11 +45,7 @@ struct ExerciseDetailSheet: View {
 
     var body: some View {
         BrightSwipePageView(
-            pages: [
-                SwipePage(title: "Summary", systemImage: "ellipsis.calendar"),
-                SwipePage(title: "Impact", systemImage: "arrow.down.circle.fill"),
-                SwipePage(title: "Data", systemImage: "chart.xyaxis.line"),
-            ],
+            pages: pages,
             fakeLargeTitle: "",
             collapsesTitleToToolbar: false,
             scrollControlledPageIndex: 0,
@@ -77,12 +73,26 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Summary
 
+    private var pages: [SwipePage] {
+        var pages = [
+            SwipePage(title: "Summary", systemImage: "ellipsis.calendar"),
+            SwipePage(title: "Impact", systemImage: "arrow.down.circle.fill"),
+        ]
+        if !exerciseHistory.isEmpty {
+            pages.append(SwipePage(title: "Data", systemImage: "chart.xyaxis.line"))
+        }
+        return pages
+    }
+
     private var summaryPage: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             formCard
             muscleChips
             statsSection
-            progressionCard
+
+            if ExerciseDemoData.detailProgression.contains(where: { $0.value > 0 }) {
+                progressionCard
+            }
         }
         .padding(.spacing3x)
     }
@@ -245,11 +255,15 @@ struct ExerciseDetailSheet: View {
 
     private var dataPage: some View {
         VStack(alignment: .leading, spacing: .spacing4x) {
-            ForEach(ExerciseDemoComplete.exerciseHistory) { progression in
+            ForEach(exerciseHistory) { progression in
                 ExerciseCompleteProgressionWidget(progression: progression)
             }
         }
         .padding(.spacing3x)
+    }
+
+    private var exerciseHistory: [ExerciseCompleteProgression] {
+        ExerciseDemoComplete.exerciseHistory.filter { !$0.sets.isEmpty }
     }
 
     private class Constants {
