@@ -9,10 +9,10 @@ import Charts
 import SwiftUI
 
 struct ExerciseCompleteCombinedGraphData {
-    let heartData: ExerciseCardioHeartGraph
-    let altitudeData: ExerciseCardioAltitudeGraph
-    let paceData: ExerciseCardioPaceGraph
-    let cadenceData: ExerciseCardioCadenceGraph
+    let heartData: ExerciseHeartGraphPayload
+    let altitudeData: ExerciseAltitudeGraphPayload
+    let paceData: ExercisePaceGraphPayload
+    let cadenceData: ExerciseCadenceGraphPayload
 }
 
 enum ExerciseCompleteGraphMetric: CaseIterable {
@@ -425,10 +425,10 @@ extension [Double] {
         avgPace: session.avgPaceSecondsPerKm ?? 0,
         altitudeGain: session.altitudeGain ?? Amount(unit: "M", value: 0),
         data: ExerciseCompleteCombinedGraphData(
-            heartData: session.heartGraph ?? ExerciseCardioHeartGraph(),
-            altitudeData: session.altitudeGraph ?? ExerciseCardioAltitudeGraph(),
-            paceData: session.paceGraph ?? ExerciseCardioPaceGraph(),
-            cadenceData: session.cadenceGraph ?? ExerciseCardioCadenceGraph()
+            heartData: session.heartGraph ?? ExerciseHeartGraphPayload(),
+            altitudeData: session.altitudeGraph ?? ExerciseAltitudeGraphPayload(),
+            paceData: session.paceGraph ?? ExercisePaceGraphPayload(),
+            cadenceData: session.cadenceGraph ?? ExerciseCadenceGraphPayload()
         ),
         selectedSecond: $selectedSecond
     )

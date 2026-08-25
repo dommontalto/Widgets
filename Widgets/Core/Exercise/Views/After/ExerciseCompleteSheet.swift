@@ -91,7 +91,7 @@ struct ExerciseCompleteSheet: View {
         sessions[min(selectedPart, sessions.count - 1)]
     }
 
-    private var summary: ExerciseCardioSummary { session.summary }
+    private var summary: ExerciseSummaryPayload { session.summary }
 
     private var visibleTabs: [ExerciseCompleteTab] {
         ExerciseCompleteTab.visible(for: session)
@@ -343,7 +343,7 @@ struct ExerciseCompleteSheet: View {
                     hrPeak: summary.hrPeak,
                     startDate: summary.startTime ?? "",
                     endDate: summary.endTime ?? "",
-                    data: summary.heartGraph ?? ExerciseCardioHeartGraph()
+                    data: summary.heartGraph ?? ExerciseHeartGraphPayload()
                 )
             }
 
@@ -369,10 +369,10 @@ struct ExerciseCompleteSheet: View {
                     avgPace: summary.avgPaceSecondsPerKm ?? 0,
                     altitudeGain: summary.altitudeGain ?? Amount(unit: "M", value: 0),
                     data: ExerciseCompleteCombinedGraphData(
-                        heartData: summary.heartGraph ?? ExerciseCardioHeartGraph(),
-                        altitudeData: summary.altitudeGraph ?? ExerciseCardioAltitudeGraph(),
-                        paceData: summary.paceGraph ?? ExerciseCardioPaceGraph(),
-                        cadenceData: summary.cadenceGraph ?? ExerciseCardioCadenceGraph()
+                        heartData: summary.heartGraph ?? ExerciseHeartGraphPayload(),
+                        altitudeData: summary.altitudeGraph ?? ExerciseAltitudeGraphPayload(),
+                        paceData: summary.paceGraph ?? ExercisePaceGraphPayload(),
+                        cadenceData: summary.cadenceGraph ?? ExerciseCadenceGraphPayload()
                     ),
                     startDate: summary.startTime ?? "",
                     endDate: summary.endTime ?? "",

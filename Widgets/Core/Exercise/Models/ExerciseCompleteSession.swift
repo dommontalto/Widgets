@@ -10,7 +10,7 @@ import SwiftUI
 // A finished session as the complete sheet reads it. Strength and cardio share
 // the sheet, and every widget hides when its data is absent — no kind switch.
 struct ExerciseCompleteSession {
-    var summary: ExerciseCardioSummary
+    var summary: ExerciseSummaryPayload
     var metrics: [ExerciseCompleteMetric] = []
     var fatigue: ExerciseCompleteFatigue?
     var exertion: ExerciseCompleteExertion?

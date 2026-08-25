@@ -20,10 +20,10 @@ struct ExerciseCompleteMapWidget: View {
     var hrAvg: Double?
     var altitudeGainMetres: Double?
     var avgPaceSecondsPerKm: Int?
-    var heartGraph: ExerciseCardioHeartGraph?
-    var altitudeGraph: ExerciseCardioAltitudeGraph?
-    var paceGraph: ExerciseCardioPaceGraph?
-    var cadenceGraph: ExerciseCardioCadenceGraph?
+    var heartGraph: ExerciseHeartGraphPayload?
+    var altitudeGraph: ExerciseAltitudeGraphPayload?
+    var paceGraph: ExercisePaceGraphPayload?
+    var cadenceGraph: ExerciseCadenceGraphPayload?
     var startDate = ""
     var endDate = ""
 
@@ -61,10 +61,10 @@ struct ExerciseCompleteMapWidget: View {
         hrAvg: Double? = nil,
         altitudeGainMetres: Double? = nil,
         avgPaceSecondsPerKm: Int? = nil,
-        heartGraph: ExerciseCardioHeartGraph? = nil,
-        altitudeGraph: ExerciseCardioAltitudeGraph? = nil,
-        paceGraph: ExerciseCardioPaceGraph? = nil,
-        cadenceGraph: ExerciseCardioCadenceGraph? = nil,
+        heartGraph: ExerciseHeartGraphPayload? = nil,
+        altitudeGraph: ExerciseAltitudeGraphPayload? = nil,
+        paceGraph: ExercisePaceGraphPayload? = nil,
+        cadenceGraph: ExerciseCadenceGraphPayload? = nil,
         startDate: String = "",
         endDate: String = "",
         isFullScreen: Bool = false,
@@ -198,10 +198,10 @@ struct ExerciseCompleteMapWidget: View {
             avgPace: avgPaceSecondsPerKm ?? 0,
             altitudeGain: Amount(unit: "M", value: altitudeGainMetres),
             data: ExerciseCompleteCombinedGraphData(
-                heartData: heartGraph ?? ExerciseCardioHeartGraph(),
-                altitudeData: altitudeGraph ?? ExerciseCardioAltitudeGraph(),
-                paceData: paceGraph ?? ExerciseCardioPaceGraph(),
-                cadenceData: cadenceGraph ?? ExerciseCardioCadenceGraph()
+                heartData: heartGraph ?? ExerciseHeartGraphPayload(),
+                altitudeData: altitudeGraph ?? ExerciseAltitudeGraphPayload(),
+                paceData: paceGraph ?? ExercisePaceGraphPayload(),
+                cadenceData: cadenceGraph ?? ExerciseCadenceGraphPayload()
             ),
             startDate: startDate,
             endDate: endDate,

@@ -9,7 +9,7 @@ import Charts
 import SwiftUI
 
 struct ExerciseCompleteHeartRateDropWidget: View {
-    let data: ExerciseCardioPostHeartGraph
+    let data: ExercisePostHeartGraphPayload
 
     @State private var selectedBar: String?
 
@@ -326,6 +326,6 @@ struct ExerciseCompleteHeartRateDropWidget: View {
 
 #Preview {
     ExerciseCompleteHeartRateDropWidget(
-        data: ExerciseCardioPostHeartGraph()
+        data: ExercisePostHeartGraphPayload()
     )
 }

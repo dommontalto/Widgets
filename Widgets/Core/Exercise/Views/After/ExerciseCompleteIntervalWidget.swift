@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseCompleteIntervalWidget: View {
-    let data: [ExerciseCardioSummaryInterval]
+    let data: [ExerciseIntervalPayload]
 
     @State private var isExpanded = false
 
@@ -148,8 +148,8 @@ struct ExerciseCompleteIntervalWidget: View {
     }
 
     private func displayName(
-        for interval: ExerciseCardioSummaryInterval,
-        kind: ExerciseCardioIntervalKind,
+        for interval: ExerciseIntervalPayload,
+        kind: ExerciseIntervalKind,
         fallbackIndex: Int
     ) -> String {
         if let name = interval.name, !name.isEmpty { return name }
@@ -157,7 +157,7 @@ struct ExerciseCompleteIntervalWidget: View {
         return "Interval \(interval.index ?? fallbackIndex)"
     }
 
-    private func label(for kind: ExerciseCardioIntervalKind) -> String? {
+    private func label(for kind: ExerciseIntervalKind) -> String? {
         switch kind {
         case .warmup: "Warm Up"
         case .work: "Work"
@@ -168,7 +168,7 @@ struct ExerciseCompleteIntervalWidget: View {
         }
     }
 
-    private func color(for kind: ExerciseCardioIntervalKind) -> Color {
+    private func color(for kind: ExerciseIntervalKind) -> Color {
         switch kind {
         case .warmup: .defaultOrange
         case .work: .defaultRed
@@ -205,7 +205,7 @@ struct ExerciseCompleteIntervalWidget: View {
     private struct IntervalRow: Identifiable {
         let id = UUID()
         let name: String
-        let kind: ExerciseCardioIntervalKind
+        let kind: ExerciseIntervalKind
         let time: String?
         let heartRate: String?
         let distance: String?

@@ -50,7 +50,7 @@ struct Amount {
     }
 }
 
-struct ExerciseCardioSummary {
+struct ExerciseSummaryPayload {
     var title: String?
     var duration: TimeDuration?
     var energyOut: Amount?
@@ -61,24 +61,24 @@ struct ExerciseCardioSummary {
     // Conditions during the session, e.g. "14°".
     var temperature: String?
 
-    var heartGraph: ExerciseCardioHeartGraph?
+    var heartGraph: ExerciseHeartGraphPayload?
 
     var hrAvg: Double?
     var hrPeak: Double?
     var zoneAvg: Int?
 
-    var postSessionHeartGraph: ExerciseCardioPostHeartGraph?
-    var breakdown: ExerciseCardioBreakdown?
+    var postSessionHeartGraph: ExercisePostHeartGraphPayload?
+    var breakdown: ExerciseBreakdownPayload?
 
     var distance: Amount?
     var altitudeGain: Amount?
     var avgPaceSecondsPerKm: Int?
 
-    var altitudeGraph: ExerciseCardioAltitudeGraph?
-    var paceGraph: ExerciseCardioPaceGraph?
-    var cadenceGraph: ExerciseCardioCadenceGraph?
-    var splits: [ExerciseCardioSummarySplit]?
-    var intervals: [ExerciseCardioSummaryInterval]?
+    var altitudeGraph: ExerciseAltitudeGraphPayload?
+    var paceGraph: ExercisePaceGraphPayload?
+    var cadenceGraph: ExerciseCadenceGraphPayload?
+    var splits: [ExerciseSplitPayload]?
+    var intervals: [ExerciseIntervalPayload]?
 
     var routeLatitudes: [Double]?
     var routeLongitudes: [Double]?
@@ -91,16 +91,16 @@ struct ExerciseCardioSummary {
 
 // MARK: - Post session heart graph
 
-struct ExerciseCardioPostHeartGraph {
+struct ExercisePostHeartGraphPayload {
     var bpmDrop: Int?
     var xDates: [String]?
     var xDatesDisplay: [String]?
     var xBpm: [Int?]?
     var yTicks: [Int]?
-    var data: [ExerciseCardioMinMax]?
+    var data: [ExerciseMinMaxPayload]?
 }
 
-struct ExerciseCardioMinMax {
+struct ExerciseMinMaxPayload {
     var min: Double?
     var max: Double?
     var avg: Double?
@@ -108,7 +108,7 @@ struct ExerciseCardioMinMax {
 
 // MARK: - Breakdown
 
-struct ExerciseCardioBreakdown {
+struct ExerciseBreakdownPayload {
     var zones: [Zone]?
 
     struct Zone {
@@ -121,30 +121,30 @@ struct ExerciseCardioBreakdown {
 
 // MARK: - Performance graph
 
-struct ExerciseCardioHeartGraph {
+struct ExerciseHeartGraphPayload {
     var yTicks: [Int]?
-    var data: [WorkoutSummaryHeartData]?
+    var data: [Point]?
 
-    struct WorkoutSummaryHeartData {
+    struct Point {
         var heartDate: String?
         var value: Int?
         var zone: Int?
     }
 }
 
-struct ExerciseCardioAltitudeGraph {
+struct ExerciseAltitudeGraphPayload {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
 }
 
-struct ExerciseCardioPaceGraph {
+struct ExercisePaceGraphPayload {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
 }
 
-struct ExerciseCardioCadenceGraph {
+struct ExerciseCadenceGraphPayload {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
@@ -152,7 +152,7 @@ struct ExerciseCardioCadenceGraph {
 
 // MARK: - Split
 
-struct ExerciseCardioSummarySplit {
+struct ExerciseSplitPayload {
     var splitIndex: Int?
     var duration: TimeDuration?
     var paceSecondsPerKm: Int?
@@ -162,10 +162,10 @@ struct ExerciseCardioSummarySplit {
 
 // MARK: - Interval
 
-struct ExerciseCardioSummaryInterval {
+struct ExerciseIntervalPayload {
     var index: Int?
     var name: String?
-    var kind: ExerciseCardioIntervalKind?
+    var kind: ExerciseIntervalKind?
     var startTime: String?
     var endTime: String?
     var duration: TimeDuration?
@@ -176,7 +176,7 @@ struct ExerciseCardioSummaryInterval {
     var energyOut: Amount?
 }
 
-enum ExerciseCardioIntervalKind: String {
+enum ExerciseIntervalKind: String {
     case warmup
     case work
     case rest

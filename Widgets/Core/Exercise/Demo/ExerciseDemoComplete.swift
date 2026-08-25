@@ -76,7 +76,7 @@ enum ExerciseDemoComplete {
 
     // A match is timed and tracked but not run to a route, so it carries no map
     // and no splits.
-    private static let sportsSummary: ExerciseCardioSummary = {
+    private static let sportsSummary: ExerciseSummaryPayload = {
         var session = cardioSummary
         session.title = "Football"
         session.duration = TimeDuration(hour: 1, minute: 5, second: 0)
@@ -91,7 +91,7 @@ enum ExerciseDemoComplete {
         return session
     }()
 
-    private static let strengthSummary: ExerciseCardioSummary = {
+    private static let strengthSummary: ExerciseSummaryPayload = {
         var session = cardioSummary
         session.title = "Quick Push"
         session.duration = TimeDuration(hour: 0, minute: 45, second: 43)
@@ -108,7 +108,7 @@ enum ExerciseDemoComplete {
         return session
     }()
 
-    private static let cardioSummary = ExerciseCardioSummary(
+    private static let cardioSummary = ExerciseSummaryPayload(
         title: "Outdoor Run",
         duration: TimeDuration(hour: 0, minute: 45, second: 54),
         energyOut: Amount(unit: "kcal", value: 512),
@@ -116,7 +116,7 @@ enum ExerciseDemoComplete {
         endTime: "2026-07-25T06:57:00Z",
         source: "Logged with Apple Watch",
         temperature: "14°",
-        heartGraph: ExerciseCardioHeartGraph(
+        heartGraph: ExerciseHeartGraphPayload(
             yTicks: [65, 152],
             data: heartSamples
         ),
@@ -128,15 +128,15 @@ enum ExerciseDemoComplete {
         distance: Amount(unit: "M", value: 8_640),
         altitudeGain: Amount(unit: "M", value: 96),
         avgPaceSecondsPerKm: 313,
-        altitudeGraph: ExerciseCardioAltitudeGraph(
+        altitudeGraph: ExerciseAltitudeGraphPayload(
             yTicks: [12, 78],
             data: altitudeSamples
         ),
-        paceGraph: ExerciseCardioPaceGraph(
+        paceGraph: ExercisePaceGraphPayload(
             yTicks: [275, 360],
             data: paceSamples
         ),
-        cadenceGraph: ExerciseCardioCadenceGraph(
+        cadenceGraph: ExerciseCadenceGraphPayload(
             yTicks: [150, 190],
             data: cadenceSamples
         ),
@@ -157,7 +157,7 @@ enum ExerciseDemoComplete {
         static let peakBpm: Double = 145
     }
 
-    private static var heartSamples: [ExerciseCardioHeartGraph.WorkoutSummaryHeartData] {
+    private static var heartSamples: [ExerciseHeartGraphPayload.Point] {
         let base = "2026-07-25T06:12:00Z".isoStringToDate()
         let raw = (0 ..< sampleCount).map { heartRate(atFraction: Double($0) / Double(sampleCount - 1)) }
 
@@ -241,7 +241,7 @@ enum ExerciseDemoComplete {
 
     // MARK: Post-session drop
 
-    private static let recoveryDrop = ExerciseCardioPostHeartGraph(
+    private static let recoveryDrop = ExercisePostHeartGraphPayload(
         bpmDrop: 42,
         xDates: [
             "2026-07-25T06:57:00Z",
@@ -255,7 +255,7 @@ enum ExerciseDemoComplete {
             let t = Double(index) / 17
             let centre = 168 - (46 * (1 - exp(-3.1 * t)))
             let spread = 4.5 - (1.6 * t)
-            return ExerciseCardioMinMax(
+            return ExerciseMinMaxPayload(
                 min: centre - spread,
                 max: centre + spread,
                 avg: centre
@@ -265,7 +265,7 @@ enum ExerciseDemoComplete {
 
     // MARK: Zone breakdown
 
-    private static let breakdown = ExerciseCardioBreakdown(zones: [
+    private static let breakdown = ExerciseBreakdownPayload(zones: [
         .init(title: "Zone 1", rangeStr: "93-111", duration: TimeDuration(hour: 0, minute: 3), scaleValue: 7),
         .init(title: "Zone 2", rangeStr: "112-130", duration: TimeDuration(hour: 0, minute: 6), scaleValue: 14),
         .init(title: "Zone 3", rangeStr: "131-148", duration: TimeDuration(hour: 0, minute: 19), scaleValue: 42),
@@ -275,7 +275,7 @@ enum ExerciseDemoComplete {
 
     // MARK: Splits
 
-    private static let splits: [ExerciseCardioSummarySplit] = [
+    private static let splits: [ExerciseSplitPayload] = [
         .init(splitIndex: 1, duration: TimeDuration(minute: 5, second: 8), paceSecondsPerKm: 308, avgHeartRate: 138, zoneIndex: 2),
         .init(splitIndex: 2, duration: TimeDuration(minute: 3, second: 20), paceSecondsPerKm: 200, avgHeartRate: 159, zoneIndex: 4),
         .init(splitIndex: 3, duration: TimeDuration(minute: 5, second: 13), paceSecondsPerKm: 313, avgHeartRate: 159, zoneIndex: 3),
@@ -288,7 +288,7 @@ enum ExerciseDemoComplete {
 
     // MARK: Intervals
 
-    private static let intervals: [ExerciseCardioSummaryInterval] = [
+    private static let intervals: [ExerciseIntervalPayload] = [
         .init(
             index: 1,
             kind: .warmup,

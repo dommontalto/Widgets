@@ -13,7 +13,7 @@ struct ExerciseCompleteHeartRateWidget: View {
     let hrPeak: Double?
     let startDate: String
     let endDate: String
-    let data: ExerciseCardioHeartGraph
+    let data: ExerciseHeartGraphPayload
 
     @State private var selectedIndex: Int?
 
@@ -279,7 +279,7 @@ struct ExerciseCompleteHeartRateWidget: View {
         hrPeak: session.hrPeak,
         startDate: session.startTime ?? "",
         endDate: session.endTime ?? "",
-        data: session.heartGraph ?? ExerciseCardioHeartGraph()
+        data: session.heartGraph ?? ExerciseHeartGraphPayload()
     )
     .padding(.spacing3x)
     .frame(maxHeight: .infinity, alignment: .top)

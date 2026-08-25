@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExerciseCompleteSplitWidget: View {
-    let data: [ExerciseCardioSummarySplit]
+    let data: [ExerciseSplitPayload]
 
     @State private var isExpanded = false
 

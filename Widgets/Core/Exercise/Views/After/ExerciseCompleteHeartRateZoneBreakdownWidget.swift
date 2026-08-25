@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct ExerciseCompleteHeartRateZoneBreakdownWidget: View {
-    let data: ExerciseCardioBreakdown
+    let data: ExerciseBreakdownPayload
 
-    private var zones: [ExerciseCardioBreakdown.Zone] {
+    private var zones: [ExerciseBreakdownPayload.Zone] {
         let zones = data.zones ?? []
         return zones.isEmpty ? placeholderZones : zones
     }
 
-    private var placeholderZones: [ExerciseCardioBreakdown.Zone] {
+    private var placeholderZones: [ExerciseBreakdownPayload.Zone] {
         [
             .init(title: "Zone 1", rangeStr: nil, duration: nil, scaleValue: 0),
             .init(title: "Zone 2", rangeStr: nil, duration: nil, scaleValue: 0),
@@ -126,6 +126,6 @@ struct ExerciseCompleteHeartRateZoneBreakdownWidget: View {
 
 #Preview {
     ExerciseCompleteHeartRateZoneBreakdownWidget(
-        data: ExerciseCardioBreakdown()
+        data: ExerciseBreakdownPayload()
     )
 }
