@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var openedExerciseName: String?
     @State private var showingRecordSession = false
     @State private var recordSessionPart = 0
+    @State private var showingRouteGenerator = false
 
     var body: some View {
         NavigationStack {
@@ -132,6 +133,15 @@ struct ContentView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    showingRouteGenerator = true
+                } label: {
+                    Label("Generate route", systemImage: "map")
+                        .labelStyle(.iconOnly)
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
                     showingChat = true
                 } label: {
                     Label("Create with AI", systemImage: "apple.intelligence")
@@ -180,6 +190,9 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
+        }
+        .fullScreenCover(isPresented: $showingRouteGenerator) {
+            ExerciseRouteGeneratorSheet()
         }
         .exerciseSessionFlow($sessionStage)
     }
