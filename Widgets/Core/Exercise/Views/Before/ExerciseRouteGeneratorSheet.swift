@@ -5,10 +5,11 @@
 //  Created by Dom Montalto on 25/8/2026.
 //
 
+import MapboxMaps
 import MapKit
 import SwiftUI
 
-// Full-screen route builder over Apple Maps: tap two points or draw a stroke
+// Full-screen route builder over Mapbox: tap two points or draw a stroke
 // and the route snaps to walkable paths via MKDirections.
 struct ExerciseRouteGeneratorSheet: View {
     private enum Mode {
@@ -16,12 +17,26 @@ struct ExerciseRouteGeneratorSheet: View {
         case draw
     }
 
+    // Set when the map is opened from a session plan: the plan's route toggle
+    // rides the top bar, and closing hands back instead of dismissing.
+    var routeToggle: Binding<Bool>?
+    var onClose: (() -> Void)?
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var mode: Mode?
     @State private var is3D = true
-    @State private var cameraPosition: MapCameraPosition = .camera(Constants.initialCamera)
-    @State private var currentCamera = Constants.initialCamera
+    @State private var isDarkMap = false
+    @State private var viewport: Viewport = .camera(
+        center: Constants.initialCenter,
+        zoom: Constants.initialZoom,
+        bearing: 0,
+        pitch: Constants.pitch3D
+    )
+    // Camera values are only read when an action needs them, never by body.
+    // onCameraChanged fires on every rendered frame, so holding them as state
+    // would rewrite it mid-update and re-run body just as often.
+    @State private var camera = CameraStore()
     @State private var tappedPoints: [CLLocationCoordinate2D] = []
     @State private var drawnPoints: [CLLocationCoordinate2D] = []
     @State private var strokeScreenPoints: [CGPoint] = []
@@ -32,30 +47,26 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var redoStack: [Snapshot] = []
     @State private var isSearching = false
     @State private var searchText = ""
-    @State private var isEnteringDistance = false
-    @State private var distanceText = ""
-    @State private var distanceNudge = 0
-    @FocusState private var isDistanceFocused: Bool
     @State private var generationTick = 0
     @State private var locator = RouteLocator()
 
     var body: some View {
-        MapReader { proxy in
-            map
-                .gesture(RoutePanGesture(isEnabled: mode == .draw) { location, state in
-                    handlePan(location, state: state, proxy: proxy)
-                })
-                .overlay { liveStroke }
-                .onTapGesture { point in
-                    guard mode != .draw, !isGenerating else { return }
-                    if let coordinate = proxy.convert(point, from: .local) {
-                        addTappedPoint(coordinate)
-                    }
-                }
+        ZStack(alignment: .bottom) {
+            MapboxMaps.MapReader { proxy in
+                map
+                    .gesture(RoutePanGesture(isEnabled: mode == .draw) { location, state in
+                        handlePan(location, state: state, proxy: proxy)
+                    })
+                    .overlay { liveStroke }
+            }
+            .ignoresSafeArea()
+
+            bottomControls
         }
-        .ignoresSafeArea()
+        // Container only, so the keyboard still lifts the card during
+        // distance entry.
+        .ignoresSafeArea(.container, edges: .bottom)
         .overlay(alignment: .topLeading) { topBar }
-        .overlay(alignment: .bottom) { bottomControls }
         .brightHaptic(.success, trigger: generationTick)
         .onAppear { locator.request() }
         .onChange(of: locator.lastLocation) { _, location in
@@ -66,60 +77,100 @@ struct ExerciseRouteGeneratorSheet: View {
     // MARK: - Map
 
     private var map: some View {
-        Map(position: $cameraPosition, interactionModes: mode == .draw ? Constants.drawInteractions : .all) {
+        MapboxMaps.Map(viewport: $viewport) {
+            TapInteraction { context in
+                guard mode != .draw, !isGenerating else { return false }
+                addTappedPoint(context.coordinate)
+                return true
+            }
+
             if locator.isAuthorized {
-                UserAnnotation()
+                Puck2D()
             }
 
             if drawnPoints.count >= 2 {
-                MapPolyline(coordinates: drawnPoints)
-                    .stroke(Color.defaultPink.opacity(.lowOpacity), style: Constants.routeStroke)
+                PolylineAnnotation(lineCoordinates: drawnPoints)
+                    .lineColor(StyleColor(UIColor(Color.defaultPink)))
+                    .lineWidth(Constants.routeLineWidth)
+                    .lineJoin(.round)
+                    .lineEmissiveStrength(Constants.routeEmissiveStrength)
             }
 
             if let route {
-                MapPolyline(coordinates: route.coordinates)
-                    .stroke(Color.defaultPink, style: Constants.routeStroke)
+                PolylineAnnotation(lineCoordinates: route.coordinates)
+                    .lineColor(StyleColor(UIColor(Color.defaultPink)))
+                    .lineWidth(Constants.routeLineWidth)
+                    .lineJoin(.round)
+                    .lineEmissiveStrength(Constants.routeEmissiveStrength)
 
                 if let start = route.coordinates.first {
-                    Annotation("", coordinate: start) {
+                    MapViewAnnotation(coordinate: start) {
                         routeMarker("figure.run")
                     }
+                    .allowOverlap(true)
                 }
 
                 if let end = route.coordinates.last {
-                    Annotation("", coordinate: end) {
+                    MapViewAnnotation(coordinate: end) {
                         routeMarker("flag.pattern.checkered")
                     }
+                    .allowOverlap(true)
                 }
             } else {
-                ForEach(tappedPoints.indices, id: \.self) { index in
-                    Annotation("", coordinate: tappedPoints[index]) {
+                if let first = tappedPoints.first {
+                    MapViewAnnotation(coordinate: first) {
                         tappedDot
                     }
+                    .allowOverlap(true)
+                }
+
+                if tappedPoints.count > 1 {
+                    MapViewAnnotation(coordinate: tappedPoints[1]) {
+                        tappedDot
+                    }
+                    .allowOverlap(true)
                 }
             }
         }
-        .mapControls {}
-        .mapStyle(.standard(elevation: .realistic))
-        .onMapCameraChange(frequency: .continuous) { context in
-            currentCamera = context.camera
+        .mapStyle(.standard(lightPreset: isDarkMap ? .night : .day))
+        .gestureOptions(gestureOptions)
+        // No compass or scale bar — the logo and attribution have to stay.
+        .ornamentOptions(OrnamentOptions(
+            scaleBar: ScaleBarViewOptions(visibility: .hidden),
+            compass: CompassViewOptions(visibility: .hidden)
+        ))
+        .onCameraChanged { event in
+            camera.center = event.cameraState.center
+            camera.zoom = event.cameraState.zoom
+            camera.bearing = event.cameraState.bearing
 
             // The map only moves mid-stroke when a second finger lands (pinch,
-            // rotate or pitch) — the user is navigating, not drawing.
-            if mode == .draw, !strokeScreenPoints.isEmpty || !drawnPoints.isEmpty {
+            // rotate or pitch) — the user is navigating, not drawing. Deferred
+            // so the clear lands after the frame that reported the move.
+            guard mode == .draw, !strokeScreenPoints.isEmpty || !drawnPoints.isEmpty else { return }
+            Task {
                 strokeScreenPoints = []
                 drawnPoints = []
             }
         }
     }
 
-    // Draw mode gives single-finger drags to the stroke; multi-finger map
-    // gestures still pass through since only panning is switched off. The
-    // stroke stays in screen space until the finger lifts: MapPolyline
-    // rebuilds its overlay on every appended point, far too slowly to track a
+    // Draw mode gives the single finger to the stroke; multi-finger map
+    // gestures still pass through since only pan and the one-finger zooms are
+    // switched off.
+    private var gestureOptions: GestureOptions {
+        var options = GestureOptions()
+        options.panEnabled = mode != .draw
+        options.doubleTapToZoomInEnabled = mode != .draw
+        options.quickZoomEnabled = mode != .draw
+        return options
+    }
+
+    // The stroke stays in screen space until the finger lifts: a polyline
+    // annotation rebuilds on every appended point, far too slowly to track a
     // finger, and the camera can't move mid-stroke (that cancels it) so the
     // screen is a stable frame of reference.
-    private func handlePan(_ location: CGPoint, state: UIGestureRecognizer.State, proxy: MapProxy) {
+    private func handlePan(_ location: CGPoint, state: UIGestureRecognizer.State, proxy: MapboxMaps.MapProxy) {
         guard mode == .draw, !isGenerating else { return }
 
         switch state {
@@ -133,7 +184,9 @@ struct ExerciseRouteGeneratorSheet: View {
             }
             strokeScreenPoints.append(location)
         case .ended, .cancelled, .failed:
-            drawnPoints = strokeScreenPoints.compactMap { proxy.convert($0, from: .local) }
+            if let map = proxy.map {
+                drawnPoints = strokeScreenPoints.map { map.coordinate(for: $0) }
+            }
             strokeScreenPoints = []
             commitStroke()
         default:
@@ -174,16 +227,48 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private var topBar: some View {
         HStack(spacing: .spacing2x) {
-            BrightRoundButton(systemImage: "xmark", size: .large) {
-                dismiss()
+            mapButton("xmark") {
+                close()
             }
 
             if isSearching {
                 BrightSearchBar("Search", text: $searchText)
                     .onSubmit { performSearch() }
             }
+
+            Spacer(minLength: .spacing2x)
+
+            if let routeToggle, !isSearching {
+                Toggle("", isOn: routeToggle)
+                    .labelsHidden()
+                    .tint(Color.defaultGreen)
+                    .brightHaptic(.light, trigger: routeToggle.wrappedValue)
+                    .padding(.spacing1x)
+                    .modifier(GlassEffect(
+                        shape: .capsule,
+                        tint: .defaultBlack.opacity(.lowOpacity),
+                        interactive: false
+                    ))
+            }
+
+            mapButton(isDarkMap ? "sun.max.fill" : "moon.fill") {
+                withAnimation(.brightSnappy) { isDarkMap.toggle() }
+            }
+            .contentTransition(.symbolEffect(.replace))
+
+            mapButton(is3D ? "view.2d" : "view.3d") {
+                toggleDimension()
+            }
         }
-        .padding(.horizontal, .spacing4x)
+        .padding(.horizontal, .spacing3x)
+    }
+
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
     }
 
     private var bottomControls: some View {
@@ -199,59 +284,73 @@ struct ExerciseRouteGeneratorSheet: View {
 
                 modeColumn
             }
-            .padding(.horizontal, .spacing4x)
+            // Overlaid rather than placed between the clusters, which are
+            // uneven widths and would push it off the card's centre.
+            .overlay(alignment: .bottom) {
+                if route != nil, !isGenerating {
+                    BrightPillButton(
+                        "Clear Route",
+                        systemImage: "xmark",
+                        color: .defaultBlack.opacity(.lowOpacity),
+                        textColor: .defaultWhite
+                    ) {
+                        clearRoute()
+                    }
+                    .frame(height: BrightButtonSizes.large.rawValue)
+                }
+            }
 
             bottomCard
-                .padding(.horizontal, .spacing2x)
         }
-        .padding(.bottom, .spacing2x)
+        .padding(.spacing3x)
+    }
+
+    private func clearRoute() {
+        pushUndo()
+        withAnimation(.brightSnappy) {
+            route = nil
+            tappedPoints = []
+            drawnPoints = []
+        }
     }
 
     private var searchAndLocate: some View {
-        HStack(spacing: .spacing1x) {
-            darkButton("magnifyingglass") {
+        HStack(spacing: .spacing2x) {
+            mapButton("magnifyingglass") {
                 withAnimation(.brightSnappy) { isSearching.toggle() }
             }
 
-            darkButton("dot.scope") {
+            mapButton("dot.scope") {
                 locator.request()
             }
         }
     }
 
     private var undoRedo: some View {
-        HStack(spacing: .spacing1x) {
-            darkButton("arrow.uturn.left", isEnabled: !undoStack.isEmpty && !isGenerating) {
+        HStack(spacing: .spacing2x) {
+            mapButton("arrow.uturn.left", isEnabled: !undoStack.isEmpty && !isGenerating) {
                 undo()
             }
 
-            darkButton("arrow.uturn.forward", isEnabled: !redoStack.isEmpty && !isGenerating) {
+            mapButton("arrow.uturn.forward", isEnabled: !redoStack.isEmpty && !isGenerating) {
                 redo()
             }
         }
     }
 
     private var modeColumn: some View {
-        VStack(spacing: .spacing1x) {
-            darkButton(is3D ? "view.2d" : "view.3d") {
-                toggleDimension()
-            }
-
-            darkButton("hand.tap.fill", isActive: mode == .tap) {
+        VStack(spacing: .spacing2x) {
+            mapButton("hand.tap.fill", isActive: mode == .tap) {
                 select(.tap)
             }
 
-            darkButton("pencil.and.scribble", isActive: mode == .draw) {
+            mapButton("pencil.and.scribble", isActive: mode == .draw) {
                 select(.draw)
-            }
-
-            darkButton("point.topleft.down.to.point.bottomright.curvepath", isActive: isEnteringDistance) {
-                toggleDistanceEntry()
             }
         }
     }
 
-    private func darkButton(
+    private func mapButton(
         _ systemImage: String,
         isActive: Bool = false,
         isEnabled: Bool = true,
@@ -275,10 +374,9 @@ struct ExerciseRouteGeneratorSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, .spacing3x)
-        .padding(.vertical, .spacing4x)
+        .frame(height: Constants.cardHeight)
         .modifier(GlassEffect(
-            shape: .roundedRect,
-            cornerRadius: .cornerRadius40,
+            shape: .unevenRoundedRect(top: Constants.cardTopCorner, bottom: Constants.cardBottomCorner),
             tint: .defaultBlack.opacity(.lowOpacity),
             interactive: false
         ))
@@ -290,8 +388,6 @@ struct ExerciseRouteGeneratorSheet: View {
             BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
 
             BrightText("Generating route…", size: .body2, color: .defaultWhite)
-        } else if isEnteringDistance {
-            distanceEntry
         } else if let route {
             statsRow(route)
         } else if mode == .draw {
@@ -312,34 +408,6 @@ struct ExerciseRouteGeneratorSheet: View {
             )
             .multilineTextAlignment(.center)
             .frame(maxWidth: Constants.welcomeTextWidth)
-        }
-    }
-
-    private var distanceEntry: some View {
-        HStack(spacing: .spacing2x) {
-            TextField(
-                "",
-                text: $distanceText,
-                prompt: Text("Distance in KM")
-                    .foregroundStyle(Color.defaultWhite.opacity(.lowOpacity))
-            )
-            .font(.standard(size: .body1, weight: .light))
-            .foregroundStyle(Color.defaultWhite)
-            .keyboardType(.decimalPad)
-            .focused($isDistanceFocused)
-            .padding(.vertical, .spacing2x)
-            .padding(.horizontal, .spacing3x)
-            .background(Color.defaultWhite.opacity(.ultraLowOpacity), in: Capsule())
-            .brightWiggle(trigger: distanceNudge)
-
-            BrightRoundButton(
-                systemImage: "checkmark",
-                size: .large,
-                color: .defaultGreen,
-                imageColor: .defaultBlack
-            ) {
-                submitDistance()
-            }
         }
     }
 
@@ -364,115 +432,12 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func toggleDimension() {
         is3D.toggle()
-        withAnimation(.easeInOut(duration: Constants.cameraAnimation)) {
-            cameraPosition = .camera(
-                MapCamera(
-                    centerCoordinate: currentCamera.centerCoordinate,
-                    distance: currentCamera.distance,
-                    heading: currentCamera.heading,
-                    pitch: is3D ? Constants.pitch3D : 0
-                )
-            )
-        }
-    }
-
-    private func toggleDistanceEntry() {
-        withAnimation(.brightSnappy) {
-            isEnteringDistance.toggle()
-        }
-        isDistanceFocused = isEnteringDistance
-        if !isEnteringDistance {
-            distanceText = ""
-        }
-    }
-
-    private func submitDistance() {
-        let digits = distanceText.filter { "0123456789.".contains($0) }
-        guard let kilometres = Double(digits), kilometres > 0 else {
-            distanceNudge += 1
-            return
-        }
-
-        withAnimation(.brightSnappy) {
-            isEnteringDistance = false
-        }
-        isDistanceFocused = false
-        distanceText = ""
-
-        pushUndo()
-        route = nil
-        tappedPoints = []
-        generate(through: loopWaypoints(kilometres: kilometres), framesResult: true)
-    }
-
-    // A rough circle through the start whose circumference matches the asked
-    // distance, headed in a random direction; routing along real paths
-    // stretches it, so the radius is scaled down to compensate.
-    private func loopWaypoints(kilometres: Double) -> [CLLocationCoordinate2D] {
-        let start = locator.lastLocation?.coordinate ?? currentCamera.centerCoordinate
-        let radius = kilometres * 1000 / (2 * .pi) * Constants.loopRadiusScale
-        let outboundBearing = Double.random(in: 0 ..< 360)
-        let centre = coordinate(from: start, metres: radius, bearingDegrees: outboundBearing)
-
-        // The start sits on the circle opposite the outbound bearing; the rest
-        // of the waypoints walk the circle back around to it.
-        let startAngle = outboundBearing + 180
-        var waypoints = [start]
-        for step in 1 ..< Constants.loopWaypointCount {
-            let angle = startAngle + 360 * Double(step) / Double(Constants.loopWaypointCount)
-            waypoints.append(coordinate(from: centre, metres: radius, bearingDegrees: angle))
-        }
-        waypoints.append(start)
-        return waypoints
-    }
-
-    private func coordinate(
-        from origin: CLLocationCoordinate2D,
-        metres: Double,
-        bearingDegrees: Double
-    ) -> CLLocationCoordinate2D {
-        let bearing = bearingDegrees * .pi / 180
-        let latitudeDelta = metres * cos(bearing) / Constants.metresPerDegreeLatitude
-        let longitudeDelta = metres * sin(bearing)
-            / (Constants.metresPerDegreeLatitude * cos(origin.latitude * .pi / 180))
-        return CLLocationCoordinate2D(
-            latitude: origin.latitude + latitudeDelta,
-            longitude: origin.longitude + longitudeDelta
-        )
-    }
-
-    private func frame(_ coordinates: [CLLocationCoordinate2D]) {
-        guard let first = coordinates.first else { return }
-
-        var minLat = first.latitude
-        var maxLat = first.latitude
-        var minLon = first.longitude
-        var maxLon = first.longitude
-        for point in coordinates {
-            minLat = min(minLat, point.latitude)
-            maxLat = max(maxLat, point.latitude)
-            minLon = min(minLon, point.longitude)
-            maxLon = max(maxLon, point.longitude)
-        }
-
-        let centre = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
-        let height = straightLineDistance(
-            from: CLLocationCoordinate2D(latitude: minLat, longitude: centre.longitude),
-            to: CLLocationCoordinate2D(latitude: maxLat, longitude: centre.longitude)
-        )
-        let width = straightLineDistance(
-            from: CLLocationCoordinate2D(latitude: centre.latitude, longitude: minLon),
-            to: CLLocationCoordinate2D(latitude: centre.latitude, longitude: maxLon)
-        )
-
-        withAnimation(.easeOut(duration: Constants.cameraAnimation)) {
-            cameraPosition = .camera(
-                MapCamera(
-                    centerCoordinate: centre,
-                    distance: max(Constants.minFrameDistance, max(height, width) * Constants.frameDistanceFactor),
-                    heading: 0,
-                    pitch: 0
-                )
+        withViewportAnimation(.easeOut(duration: Constants.cameraAnimation)) {
+            viewport = .camera(
+                center: camera.center,
+                zoom: camera.zoom,
+                bearing: camera.bearing,
+                pitch: is3D ? Constants.pitch3D : 0
             )
         }
     }
@@ -523,12 +488,10 @@ struct ExerciseRouteGeneratorSheet: View {
         generate(through: downsampled(drawnPoints))
     }
 
-    private func isNearRouteEnd(_ point: CGPoint, proxy: MapProxy) -> Bool {
-        guard let end = route?.coordinates.last,
-              let endPoint = proxy.convert(end, to: .local)
-        else {
-            return false
-        }
+    private func isNearRouteEnd(_ point: CGPoint, proxy: MapboxMaps.MapProxy) -> Bool {
+        guard let map = proxy.map, let end = route?.coordinates.last else { return false }
+
+        let endPoint = map.point(for: end)
         return hypot(point.x - endPoint.x, point.y - endPoint.y) <= Constants.extendGrabRadius
     }
 
@@ -562,8 +525,7 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func generate(
         through waypoints: [CLLocationCoordinate2D],
-        extending base: GeneratedRoute? = nil,
-        framesResult: Bool = false
+        extending base: GeneratedRoute? = nil
     ) {
         guard waypoints.count >= 2 else { return }
         isGenerating = true
@@ -626,9 +588,6 @@ struct ExerciseRouteGeneratorSheet: View {
                 route = base.map { $0.appending(generated) } ?? generated
                 drawnPoints = []
                 isGenerating = false
-            }
-            if framesResult {
-                frame(coordinates)
             }
             generationTick += 1
         }
@@ -716,7 +675,7 @@ struct ExerciseRouteGeneratorSheet: View {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         request.region = MKCoordinateRegion(
-            center: currentCamera.centerCoordinate,
+            center: camera.center,
             span: MKCoordinateSpan(
                 latitudeDelta: Constants.searchSpanDegrees,
                 longitudeDelta: Constants.searchSpanDegrees
@@ -734,14 +693,12 @@ struct ExerciseRouteGeneratorSheet: View {
     }
 
     private func fly(to coordinate: CLLocationCoordinate2D) {
-        withAnimation(.easeOut(duration: Constants.cameraAnimation)) {
-            cameraPosition = .camera(
-                MapCamera(
-                    centerCoordinate: coordinate,
-                    distance: Constants.flyDistance,
-                    heading: 0,
-                    pitch: is3D ? Constants.pitch3D : 0
-                )
+        withViewportAnimation(.fly(duration: Constants.cameraAnimation)) {
+            viewport = .camera(
+                center: coordinate,
+                zoom: Constants.flyZoom,
+                bearing: 0,
+                pitch: is3D ? Constants.pitch3D : 0
             )
         }
     }
@@ -775,6 +732,13 @@ private struct GeneratedRoute {
             durationSeconds: durationSeconds + other.durationSeconds
         )
     }
+}
+
+// Deliberately not @Observable: nothing here should invalidate the view.
+private final class CameraStore {
+    var center = Constants.initialCenter
+    var zoom = Constants.initialZoom
+    var bearing: CLLocationDirection = 0
 }
 
 private struct Snapshot {
@@ -867,23 +831,20 @@ private extension MKPolyline {
 }
 
 private enum Constants {
-    static let initialCamera = MapCamera(
-        centerCoordinate: CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006),
-        distance: 1600,
-        heading: 0,
-        pitch: pitch3D
-    )
+    static let initialCenter = CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006)
+    static let initialZoom: CGFloat = 14.5
+    static let flyZoom: CGFloat = 15
     static let pitch3D: CGFloat = 55
-    static let flyDistance: CLLocationDistance = 1200
     static let cameraAnimation: TimeInterval = 0.6
     static let searchSpanDegrees: CLLocationDegrees = 0.5
 
     static let routeStroke = StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
+    static let routeLineWidth: Double = 5
+    // Standard's lighting dims unlit layers, which reads as a washed-out line.
+    static let routeEmissiveStrength: Double = 1
     static let maxWaypoints = 6
     static let minWaypointSeparation: CLLocationDistance = 150
     static let minStrokeLength: CLLocationDistance = 150
-    // Single-finger panning stays off in draw mode — that finger is the pen.
-    static let drawInteractions: MapInteractionModes = [.zoom, .rotate, .pitch]
     // How close to the finish marker a stroke must start to extend the route.
     static let extendGrabRadius: CGFloat = 30
     static let minStrokeSamplePt: CGFloat = 3
@@ -900,14 +861,10 @@ private enum Constants {
     static let runningSecondsPerKm: Double = 330
     static let estimatedClimbPerKm: Double = 4.4
 
-    // Auto-generated loops: waypoints per lap, how much the ideal circle
-    // shrinks to offset real paths stretching it, and how the finished loop is
-    // framed on screen.
-    static let loopWaypointCount = 5
-    static let loopRadiusScale: Double = 0.8
-    static let metresPerDegreeLatitude: Double = 111_111
-    static let frameDistanceFactor: Double = 2.2
-    static let minFrameDistance: CLLocationDistance = 800
+    // The live session card's geometry, so the two bottom cards read as one.
+    static let cardHeight: CGFloat = 160
+    static let cardTopCorner: CGFloat = 36
+    static let cardBottomCorner: CGFloat = 44
 
     static let markerSize: CGFloat = 25
     static let markerGlyphSize: CGFloat = 12

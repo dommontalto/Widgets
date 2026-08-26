@@ -10,17 +10,16 @@ import SwiftUI
 struct ExerciseCalendarSheet: View {
     @Binding var selectedDate: Date
 
+    // The binding's source of truth is the calendar widget behind this sheet;
+    // writing to it live re-renders that hidden widget — blur transition and
+    // all — for every day boundary a swipe crosses. The sheet works on a
+    // local date and hands it back on close instead.
+    @State private var sheetDate = Calendar.current.startOfDay(for: Date())
+
     @State private var topHour: Int?
     @State private var bannerShadowProgress: CGFloat = 0
 
     private let calendar = Calendar.current
-
-    init(selectedDate: Binding<Date>) {
-        _selectedDate = selectedDate
-
-        let nowHour = Calendar.current.component(.hour, from: Date())
-        _topHour = State(initialValue: max(Constants.startHour, nowHour - 3))
-    }
 
     var body: some View {
         BrightPageSheetView(
@@ -28,9 +27,9 @@ struct ExerciseCalendarSheet: View {
             content: {
                 VStack(spacing: .spacing0x) {
                     BrightCalendar(
-                        selectedDate: $selectedDate,
+                        selectedDate: $sheetDate,
                         backgroundColor: .defaultSheetBackground,
-                        hasDot: { !ExerciseCalendarDemo.events(on: $0).isEmpty }
+                        dotStyle: { ExerciseCalendarDemo.dotStyle(on: $0) }
                     )
 
                     programBanner
@@ -41,6 +40,8 @@ struct ExerciseCalendarSheet: View {
                 .frame(maxHeight: .infinity, alignment: .top)
             }
         )
+        .onAppear { sheetDate = selectedDate }
+        .onDisappear { selectedDate = sheetDate }
     }
 
     private var programBanner: some View {
@@ -61,21 +62,20 @@ struct ExerciseCalendarSheet: View {
 
     private var timeline: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: .spacing0x) {
-                ForEach(Constants.startHour...Constants.endHour, id: \.self) { hour in
-                    hourRow(hour)
-                        .frame(height: Constants.hourHeight, alignment: .top)
-                        .id(hour)
+            TimelineHourGrid()
+                .equatable()
+                .overlay(alignment: .top) {
+                    eventsOverlay
                 }
-            }
-            .scrollTargetLayout()
-            .overlay(alignment: .top) {
-                eventsOverlay
-            }
-            .padding(.leading, .spacing3x)
-            .padding(.top, .spacing4x)
+                .padding(.leading, .spacing3x)
+                .padding(.top, .spacing4x)
         }
         .scrollPosition(id: $topHour, anchor: .top)
+        .onAppear {
+            // Set only after the sheet has laid out — an initial value from
+            // init is applied while the scroll view has no size and is lost.
+            topHour = max(Constants.startHour, calendar.component(.hour, from: Date()) - 1)
+        }
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
         } action: { _, offset in
@@ -88,27 +88,9 @@ struct ExerciseCalendarSheet: View {
         }
     }
 
-    private func hourRow(_ hour: Int) -> some View {
-        ZStack(alignment: .topLeading) {
-            Rectangle()
-                .fill(Color.textColor.opacity(.ultraLowOpacity))
-                .frame(height: 1)
-                .padding(.leading, Constants.gutterWidth)
-
-            HStack(spacing: .spacing05x) {
-                BrightText("\(hour % 12 == 0 ? 12 : hour % 12)", size: .body2, weight: .regular)
-                    .monospacedDigit()
-                    .frame(width: Constants.hourLabelWidth, alignment: .trailing)
-                BrightText(hour < 12 ? "AM" : "PM", size: .body2, weight: .regular)
-                    .opacity(.semiLowOpacity)
-            }
-            .offset(y: -Constants.hourLabelOffset)
-        }
-    }
-
     private var eventsOverlay: some View {
         ZStack(alignment: .top) {
-            ForEach(ExerciseCalendarDemo.events(on: selectedDate)) { event in
+            ForEach(ExerciseCalendarDemo.events(on: sheetDate)) { event in
                 eventView(event)
                     .padding(.leading, Constants.gutterWidth)
                     .padding(.trailing, .spacing1x)
@@ -117,12 +99,12 @@ struct ExerciseCalendarSheet: View {
                     .transition(.blurReplace)
             }
 
-            if calendar.isDateInToday(selectedDate) {
+            if calendar.isDateInToday(sheetDate) {
                 nowIndicator
             }
         }
         .frame(maxWidth: .infinity, alignment: .top)
-        .animation(.brightEaseInOut, value: selectedDate)
+        .animation(.brightEaseInOut, value: sheetDate)
     }
 
     @ViewBuilder private func eventView(_ event: ExerciseCalendarEvent) -> some View {
@@ -209,6 +191,44 @@ struct ExerciseCalendarSheet: View {
         static let nowPillHeight: CGFloat = 28
         static let nowLineHeight: CGFloat = 1.5
     }
+}
+
+// The hour grid never changes, but it sits inside a body that re-renders
+// twice per day crossed while swiping the calendar — always-equal Equatable
+// lets SwiftUI skip re-diffing its 24 rows on every one of those passes.
+private struct TimelineHourGrid: View, Equatable {
+    typealias Constants = ExerciseCalendarSheet.Constants
+
+    var body: some View {
+        VStack(spacing: .spacing0x) {
+            ForEach(Constants.startHour...Constants.endHour, id: \.self) { hour in
+                hourRow(hour)
+                    .frame(height: Constants.hourHeight, alignment: .top)
+                    .id(hour)
+            }
+        }
+        .scrollTargetLayout()
+    }
+
+    private func hourRow(_ hour: Int) -> some View {
+        ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(Color.textColor.opacity(.ultraLowOpacity))
+                .frame(height: 1)
+                .padding(.leading, Constants.gutterWidth)
+
+            HStack(spacing: .spacing05x) {
+                BrightText("\(hour % 12 == 0 ? 12 : hour % 12)", size: .body2, weight: .regular)
+                    .monospacedDigit()
+                    .frame(width: Constants.hourLabelWidth, alignment: .trailing)
+                BrightText(hour < 12 ? "AM" : "PM", size: .body2, weight: .regular)
+                    .opacity(.semiLowOpacity)
+            }
+            .offset(y: -Constants.hourLabelOffset)
+        }
+    }
+
+    static func == (_: Self, _: Self) -> Bool { true }
 }
 
 private struct DiagonalHatch: Shape {

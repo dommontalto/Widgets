@@ -1,5 +1,5 @@
 //
-//  ExerciseChatSheet.swift
+//  ExerciseChatView.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 21/8/2026.
@@ -38,40 +38,31 @@ nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
 // A demo chat with the AI coach: what you type lands as an iMessage-style
 // bubble, the assistant "thinks" for a beat, then a canned reply slides in.
 // The first reply is the program response — plain text, the week cards and
-// a generate button, per the Figma prompt-program screens.
-struct ExerciseChatSheet: View {
+// a confirm button, per the Figma prompt-program screens. Embedded as the
+// guided step of the program builder, which supplies the wash behind it.
+struct ExerciseChatView: View {
+    // Called when the proposed program is confirmed — the builder advances.
+    var onConfirm: () -> Void = {}
+
     @State private var messages = [ExerciseChatMessage]()
     @State private var draft = ""
     @State private var isThinking = false
     @State private var replyIndex = 0
-    @State private var hasGenerated = false
+    @State private var hasConfirmed = false
     @State private var replyTask: Task<Void, Never>?
     @FocusState private var isTyping: Bool
 
     var body: some View {
-        BrightPageSheetView(
-            // The wash has to run edge to edge, so the sheet's own padding is
-            // turned off and the thread and input bar pad themselves.
-            horizontalPadding: .spacing0x,
-            showBackButton: true,
-            bottomSafeArea: false,
-            trailing: {
-                ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(file: #file)
-                }
-            },
-            content: {
-                thread
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background { ExerciseProgramBackground() }
-                    .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
-                        inputBar
-                    }
-                    .ignoresSafeArea(.container, edges: .bottom)
+        thread
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
+                inputBar
             }
-        )
-        .brightHaptic(.light, trigger: messages.count)
-        .onDisappear { replyTask?.cancel() }
+            // The input bar hugs the true bottom edge — its own padding is the
+            // gap — rather than stacking the sheet's bottom insets under it.
+            .ignoresSafeArea(.container, edges: .bottom)
+            .brightHaptic(.light, trigger: messages.count)
+            .onDisappear { replyTask?.cancel() }
     }
 
     // MARK: - Thread
@@ -153,18 +144,18 @@ struct ExerciseChatSheet: View {
                 weekCard(week)
             }
 
-            if !hasGenerated {
+            if !hasConfirmed {
                 BrightText(Constants.programQuestion, size: .body2, color: .semiLightTextColor)
                     .multilineTextAlignment(.center)
                     .padding(.top, .spacing4x)
 
                 BrightPillButton(
-                    "Generate",
-                    color: .defaultGreen,
+                    "Confirm",
+                    color: .defaultSkyBlue,
                     textColor: .defaultWhite,
                     buttonSize: .large
                 ) {
-                    generate()
+                    confirm()
                 }
                 .padding(.top, .spacing1x)
             }
@@ -252,26 +243,9 @@ struct ExerciseChatSheet: View {
         }
     }
 
-    private func generate() {
-        withAnimation(.brightSnappy) {
-            hasGenerated = true
-            isThinking = true
-        }
-
-        replyTask = Task { await confirmGenerate() }
-    }
-
-    private func confirmGenerate() async {
-        do {
-            try await Task.sleep(for: .seconds(Double.random(in: Constants.thinkingRange)))
-        } catch {
-            return
-        }
-
-        withAnimation(.brightSnappy) {
-            isThinking = false
-            messages.append(ExerciseChatMessage(kind: .assistant, text: Constants.generateReply))
-        }
+    private func confirm() {
+        withAnimation(.brightSnappy) { hasConfirmed = true }
+        onConfirm()
     }
 
     private func stopThinking() {
@@ -316,12 +290,10 @@ struct ExerciseChatSheet: View {
             "Week 1: run 1 minute, walk 90 seconds, repeat 8 times. The strength days are 20 minutes — calf raises, step-downs, glute bridges and side planks.",
             "I've spaced the runs with a rest day between each. If your shins flare up, repeat the previous week and keep the strength work going.",
         ]
-
-        static let generateReply = "Done — I've added the plan to your weekly schedule. "
-            + "You can move sessions around from the Upcoming widget whenever you need to."
     }
 }
 
 #Preview {
-    ExerciseChatSheet()
+    ExerciseChatView()
+        .background { ExerciseProgramBackground() }
 }

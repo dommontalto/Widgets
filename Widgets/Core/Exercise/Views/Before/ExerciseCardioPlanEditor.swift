@@ -18,6 +18,8 @@ struct ExerciseCardioPlanEditor: View {
     // it holds.
     @ScaledMetric(relativeTo: .body) private var intervalRowHeight = ExerciseIntervalRow.Constants.rowHeight
 
+    @State private var isShowingRouteMap = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             section("Primary goal") {
@@ -40,9 +42,17 @@ struct ExerciseCardioPlanEditor: View {
                     } else {
                         uTurnCard
                     }
+
+                    routeRow
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
+        }
+        .fullScreenCover(isPresented: $isShowingRouteMap) {
+            ExerciseRouteGeneratorSheet(
+                routeToggle: routeToggle,
+                onClose: { isShowingRouteMap = false }
+            )
         }
         .animation(.brightSnappy, value: plan.goal)
         .onChange(of: plan.goal) { _, _ in
@@ -203,7 +213,7 @@ struct ExerciseCardioPlanEditor: View {
     private var uTurnCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             rowContent(
-                badge: badge(symbol: "arrow.uturn.backward", tint: .defaultCyan, isCircled: false),
+                badge: badge(symbol: "arrow.uturn.backward", tint: .defaultSkyBlueCyan, isCircled: false),
                 title: "U-Turn"
             ) {
                 Toggle("", isOn: $plan.isUTurnOn)
@@ -222,6 +232,70 @@ struct ExerciseCardioPlanEditor: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
+
+    // MARK: - Route
+
+    private var routeRow: some View {
+        HStack(spacing: .spacing2x) {
+            routeThumbnail
+
+            Spacer(minLength: .spacing2x)
+
+            Toggle("", isOn: routeToggle)
+                .labelsHidden()
+                .tint(Color.defaultGreen)
+                .brightHaptic(.light, trigger: plan.isRouteOn)
+        }
+        .padding(.leading, .spacing105x)
+        .padding(.trailing, .spacing3x)
+        .frame(height: Constants.rowHeight)
+        .frame(maxWidth: .infinity)
+        .overlay {
+            BrightText("Generate Route", size: .body1, color: .defaultWhite)
+        }
+        .background(Color.defaultBlack.opacity(.lowOpacity), in: Capsule())
+        // The toggle takes its own taps; everywhere else opens the map.
+        .contentShape(.rect)
+        .onTapGesture { isShowingRouteMap = true }
+    }
+
+    // Switching on opens the map; switching off from inside closes it.
+    private var routeToggle: Binding<Bool> {
+        Binding(
+            get: { plan.isRouteOn },
+            set: { isOn in
+                plan.isRouteOn = isOn
+                isShowingRouteMap = isOn
+            }
+        )
+    }
+
+    private var routeThumbnail: some View {
+        AsyncImage(url: Self.routeThumbnailURL) { image in
+            image
+                .resizable()
+                .scaledToFill()
+        } placeholder: {
+            Color.defaultCapsule
+                .overlay {
+                    Image(systemName: "map.fill")
+                        .font(.standard(size: .body5, weight: .medium))
+                        .foregroundStyle(Color.textColor)
+                }
+        }
+        .frame(width: Constants.routeThumbnailSize, height: Constants.routeThumbnailSize)
+        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous))
+    }
+
+    // A static Mapbox shot of the map the generator opens on, so the row hints
+    // at what's behind it without running a live map.
+    private static let routeThumbnailURL: URL? = {
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else { return nil }
+        return URL(
+            string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
+                + "151.2006,-33.8769,12,0/86x86@2x?access_token=\(token)&logo=false&attribution=false"
+        )
+    }()
 
     // MARK: - Intervals
 
@@ -382,6 +456,7 @@ struct ExerciseCardioPlanEditor: View {
         static let rowHeight: CGFloat = 62
         static let badgeSize: CGFloat = 30
         static let zoneRowHeight: CGFloat = 48
+        static let routeThumbnailSize: CGFloat = 43
     }
 }
 

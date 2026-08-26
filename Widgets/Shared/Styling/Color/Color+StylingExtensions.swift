@@ -39,6 +39,8 @@ nonisolated extension Color {
     static let defaultBlue = Color(light: .defaultElectricBlue, dark: .defaultSkyBlue)
     static let defaultSlateBlue = Color(light: .slateBlueLight, dark: .slateBlueDark)
     static let defaultCyan = Color(light: .cyanLight, dark: .cyanDark)
+    // Sky blue that turns cyan in the dark — the exercise accent.
+    static let defaultSkyBlueCyan = Color(light: .defaultSkyBlue, dark: .defaultCyan)
     static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
     
     static let defaultGrey = Color(hex: "#EDEFF2")
@@ -113,7 +115,7 @@ nonisolated extension Color {
     static let progressBarNearingEndMaroon = Color(hex: "B581A0")
     
     // Cycle Tracking
-    
+
     static let defaultCapsule = Color(light: .black.opacity(.finalBossLowOpacity), dark: .sheetModalCardGrey)
     
     static let cycleSymptomsOnlyTop = Color(hex: "#F2E1FF")
@@ -148,7 +150,6 @@ nonisolated extension Color {
     // Exercise
     
     static let exerciseLiveBar = Color(light: .white, dark: Color(hex: "#34343A").opacity(.veryLowOpacity))
-    static let exerciseLiveAccent = Color(light: .defaultSkyBlue, dark: .defaultCyan)
     // The wash a set or block row tints with inside a card.
     static let exerciseRowTint = Color(
         light: .mainGreyLight.opacity(.ultraLowOpacity),

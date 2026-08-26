@@ -192,6 +192,7 @@ struct ExerciseCardioPlan {
     var zone: ExerciseHeartZone = .two
     var isUTurnOn = false
     var isIntervalsOn = false
+    var isRouteOn = false
     var intervals = ExerciseCardioInterval.defaults
 
     // A stop condition pairs with an intensity and vice versa, so a distance or
@@ -239,7 +240,7 @@ struct ExerciseCardioPlan {
         let legs = intervals.map { "\($0.phase.rawValue):\($0.value)" }.joined(separator: ",")
         return [
             goal.rawValue, secondary.rawValue, distance, duration, calories, pace,
-            "\(zone.rawValue)", "\(isUTurnOn)", "\(isIntervalsOn)", legs,
+            "\(zone.rawValue)", "\(isUTurnOn)", "\(isIntervalsOn)", "\(isRouteOn)", legs,
         ].joined(separator: "|")
     }
 

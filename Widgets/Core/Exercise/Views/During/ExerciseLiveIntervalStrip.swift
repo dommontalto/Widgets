@@ -123,9 +123,9 @@ struct ExerciseLiveIntervalStrip: View {
     ExerciseLiveIntervalStrip(
         segments: [
             .init(color: .defaultYellow, weight: 500),
-            .init(color: .defaultGreen, weight: 3000),
-            .init(color: .defaultCyan, weight: 500),
-            .init(color: .defaultGreen, weight: 1000),
+            .init(color: .defaultSkyBlueCyan, weight: 3000),
+            .init(color: .defaultGreen, weight: 500),
+            .init(color: .defaultSkyBlueCyan, weight: 1000),
         ],
         currentIndex: 1,
         progress: 0.45,

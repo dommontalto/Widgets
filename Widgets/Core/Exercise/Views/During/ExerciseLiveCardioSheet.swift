@@ -23,7 +23,7 @@ struct ExerciseLiveCardioSheet: View {
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            metric("CURRENT PACE", value: session.currentPace, color: .defaultCyan)
+            metric("CURRENT PACE", value: session.currentPace, color: .defaultSkyBlueCyan)
 
             BrightDivider()
 
@@ -53,7 +53,7 @@ struct ExerciseLiveCardioSheet: View {
         // every edge.
         .overlay {
             // Runs for the whole session; pausing puts it out, playing relights it.
-            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .defaultGreen)
+            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .skyBlueCyan)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

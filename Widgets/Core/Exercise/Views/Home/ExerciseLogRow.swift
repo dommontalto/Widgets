@@ -7,16 +7,27 @@
 
 import SwiftUI
 
+extension ExerciseDayType {
+    // A both day blends its two ingredients — strength's purple falling into
+    // cardio's blue, purple leading.
+    static let bothGradient = LinearGradient(
+        colors: [.defaultPurple, .defaultSkyBlueCyan],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+}
+
 extension ExerciseLoggedSession {
-    // The same three the consistency heatmap uses, and red for anything that
+    // The same palette the consistency heatmap uses, and red for anything that
     // came in from Apple Health rather than being run here.
-    var logColor: Color {
-        guard !isFromAppleHealth else { return .defaultRed }
+    var logStyle: AnyShapeStyle {
+        guard !isFromAppleHealth else { return AnyShapeStyle(Color.defaultRed) }
 
         return switch type {
-        case .cardio: .defaultSkyBlue
-        case .both: .defaultGreen
-        case .strength, .rest: .defaultPurple
+        case .cardio: AnyShapeStyle(Color.defaultSkyBlueCyan)
+        case .both: AnyShapeStyle(ExerciseDayType.bothGradient)
+        case .strength: AnyShapeStyle(Color.defaultPurple)
+        case .rest: AnyShapeStyle(Color.defaultGreen)
         }
     }
 }
@@ -33,7 +44,7 @@ struct ExerciseLogRow: View {
                 // The same square the consistency heatmap draws, so a log entry
                 // and its cell on the grid read as the same thing.
                 RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
-                    .fill(session.logColor)
+                    .fill(session.logStyle)
                     .frame(width: Constants.swatchSize, height: Constants.swatchSize)
                     .frame(width: Constants.iconWidth)
 

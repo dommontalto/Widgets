@@ -59,8 +59,6 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var sportIndex = 0
 
-    @State private var goals = ""
-
     @State private var name = ""
 
     @State private var template: Template?
@@ -72,6 +70,8 @@ struct ExerciseCreateProgramSheet: View {
     @State private var periods = [ExerciseTrainingPeriod.empty]
 
     @State private var path = NavigationPath()
+
+    @State private var insertionEdge = Edge.trailing
 
     var body: some View {
         BrightPageSheetView(
@@ -95,11 +95,24 @@ struct ExerciseCreateProgramSheet: View {
                 }
             },
             content: {
-                stepContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background {
-                        if step.showsWash {
-                            ExerciseProgramBackground()
+                ZStack {
+                    // Always in the tree and faded rather than swapped in and
+                    // out — re-inserting the wash mid-transition flashes the
+                    // plain sheet through for a beat.
+                    ExerciseProgramBackground()
+                        .opacity(step.showsWash ? .opaque : 0)
+
+                    stepContent
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                    .safeAreaInset(edge: .bottom) {
+                        if let ctaTitle {
+                            BrightFullWidthButton(ctaTitle, color: .defaultCards, textColor: .textColor) {
+                                advance()
+                            }
+                            .padding(.horizontal, .spacing3x)
+                            .opacity(canAdvance ? .opaque : .semiLowOpacity)
+                            .animation(.brightEaseInOut, value: canAdvance)
                         }
                     }
                     .navigationDestination(for: ExerciseProgramRoute.self) { route in
@@ -126,14 +139,25 @@ struct ExerciseCreateProgramSheet: View {
     @ViewBuilder
     private var stepContent: some View {
         switch step {
-        case .intro: intro
-        case .style: stylePager
-        case .goals: goalsField
-        case .name: nameField
-        case .template: templatePicker
-        case .weeks: lengthPicker
-        case .periods: periodList
+        case .intro: intro.transition(slide)
+        case .style: stylePager.transition(slide)
+        case .goals: chatStep.transition(slide)
+        case .name: nameField.transition(slide)
+        case .template: templatePicker.transition(slide)
+        case .weeks: lengthPicker.transition(slide)
+        case .periods: periodList.transition(slide)
         }
+    }
+
+    // Forward arrives from the right and back from the left, so the wizard
+    // reads as a stack even without a progress indicator. The outgoing step
+    // fades in place rather than sliding across the incoming one — two views
+    // moving at full opacity ghost each other.
+    private var slide: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: insertionEdge).combined(with: .opacity),
+            removal: .opacity
+        )
     }
 
     // MARK: Intro
@@ -151,10 +175,6 @@ struct ExerciseCreateProgramSheet: View {
                 .padding(.top, .spacing4x)
 
             Spacer(minLength: .spacing0x)
-
-            BrightFullWidthButton("Create program", color: .defaultCards, textColor: .textColor) {
-                advance()
-            }
         }
         .padding(.horizontal, .spacing3x)
     }
@@ -223,30 +243,15 @@ struct ExerciseCreateProgramSheet: View {
         )
     }
 
-    // MARK: Guided — fitness goals
+    // MARK: Guided — AI chat
 
-    // Left-aligned and top-anchored: the keyboard owns the bottom of this screen,
-    // so the prompt and what you type have to sit above it.
-    private var goalsField: some View {
-        VStack(alignment: .leading, spacing: .spacing105x) {
-            Image(systemName: "figure.outdoor.cycle")
-                .font(.system(size: Constants.promptIconSize, weight: .light))
-                .foregroundStyle(Color.defaultSlateBlue)
-
-            BrightText("Describe your fitness goals", size: .heading, color: .defaultSlateBlue)
-
-            TextField("", text: $goals, axis: .vertical)
-                .focused($isTyping)
-                .font(.standard(size: .heading, weight: .light))
-                .foregroundStyle(Color.textColor)
-                .submitLabel(.done)
-                .onSubmit(advance)
-
-            Spacer(minLength: .spacing0x)
+    // The guided fork talks to the coach: describe the goals, get the proposed
+    // weeks back, and the chat's own confirm carries the flow to the blocks.
+    private var chatStep: some View {
+        ExerciseChatView {
+            seedGuidedPlan()
+            go(to: .periods)
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing3x)
-        .onAppear { isTyping = true }
     }
 
     // MARK: Custom — program name
@@ -356,12 +361,7 @@ struct ExerciseCreateProgramSheet: View {
                 showsLabels: true
             )
             .frame(height: Constants.rulerHeight)
-
-            BrightPillButton("Skip", buttonSize: .large) {
-                go(to: .periods)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.spacing3x)
+            .padding(.bottom, .spacing3x)
         }
     }
 
@@ -370,36 +370,43 @@ struct ExerciseCreateProgramSheet: View {
     // A periodised program is a list of periods, each holding the blocks whose
     // weeks add up to the period's total. A block's row leads to its own week.
     private var periodList: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: .spacing3x) {
-                TextField("", text: $name)
-                    .font(.standard(size: .huge205, weight: .light))
-                    .foregroundStyle(Color.textColor)
-                    .submitLabel(.done)
-                    .overlay(alignment: .leading) {
-                        if name.isEmpty {
-                            BrightText("Program Name", size: .huge205, color: .lightTextColor)
-                                .allowsHitTesting(false)
+        ScrollViewReader { scroller in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: .spacing3x) {
+                    TextField("", text: $name)
+                        .font(.standard(size: .huge205, weight: .light))
+                        .foregroundStyle(Color.textColor)
+                        .submitLabel(.done)
+                        .overlay(alignment: .leading) {
+                            if name.isEmpty {
+                                BrightText("Program Name", size: .huge205, color: .lightTextColor)
+                                    .allowsHitTesting(false)
+                            }
                         }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                ForEach($periods) { $period in
-                    periodCard($period)
+                    ForEach($periods) { $period in
+                        periodCard($period)
+                            .id(period.id)
+                    }
                 }
+                .padding(.horizontal, .spacing3x)
+                .padding(.vertical, .spacing3x)
             }
-            .padding(.horizontal, .spacing3x)
-            .padding(.vertical, .spacing3x)
+            .safeAreaInset(edge: .bottom) {
+                addPeriodButton(scroller)
+            }
+            .animation(.brightSnappy, value: periods)
         }
-        .safeAreaInset(edge: .bottom) {
-            addPeriodButton
-        }
-        .animation(.brightSnappy, value: periods)
     }
 
-    private var addPeriodButton: some View {
+    private func addPeriodButton(_ scroller: ScrollViewProxy) -> some View {
         BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {
-            withAnimation(.brightSnappy) { periods.append(.empty) }
+            let period = ExerciseTrainingPeriod.empty
+            withAnimation(.brightSnappy) {
+                periods.append(period)
+                scroller.scrollTo(period.id, anchor: .bottom)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.spacing3x)
@@ -601,15 +608,15 @@ struct ExerciseCreateProgramSheet: View {
         case .intro:
             dismiss()
         case .style:
-            go(to: .intro)
+            go(to: .intro, backwards: true)
         case .goals, .name:
-            go(to: .style)
+            go(to: .style, backwards: true)
         case .template:
-            go(to: .name)
+            go(to: .name, backwards: true)
         case .weeks:
-            go(to: .template)
+            go(to: .template, backwards: true)
         case .periods:
-            go(to: chosenStyle == .guided ? .goals : .weeks)
+            go(to: chosenStyle == .guided ? .goals : .weeks, backwards: true)
         }
     }
 
@@ -626,9 +633,10 @@ struct ExerciseCreateProgramSheet: View {
         withAnimation(.brightSnappy) { periods.removeAll { $0.id == period.id } }
     }
 
-    private func go(to next: Step) {
+    private func go(to next: Step, backwards: Bool = false) {
         isTyping = false
-        withAnimation(.brightEaseInOut) { step = next }
+        insertionEdge = backwards ? .leading : .trailing
+        withAnimation(.brightSnappy) { step = next }
     }
 
     // Stands in for what the AI would build from the goals. Only replaces an
@@ -652,11 +660,24 @@ struct ExerciseCreateProgramSheet: View {
         ProgramStyle(rawValue: stylePage ?? 0) ?? .guided
     }
 
+    // The blocks screen keeps its action in the toolbar, and the length step
+    // offers its skip there; every other step advances from the full-width
+    // button at the foot.
     private var trailingTitle: String? {
         switch step {
-        case .intro: nil
-        case .style, .goals, .name, .weeks, .template: "Next"
+        case .weeks: "Skip"
         case .periods: "Create"
+        default: nil
+        }
+    }
+
+    private var ctaTitle: String? {
+        switch step {
+        case .intro: "Create program"
+        case .style, .name, .template, .weeks: "Next"
+        // The chat's confirm advances the guided step, so its input bar owns
+        // the foot of that screen.
+        case .goals, .periods: nil
         }
     }
 

@@ -66,7 +66,7 @@ struct ExerciseCompleteExertionWidget: View {
         ExerciseCompleteGaugeWedge()
             .fill(
                 LinearGradient(
-                    colors: [.defaultCyan, .defaultGreen, .defaultYellow, .defaultOrange, .defaultRed],
+                    colors: [.defaultSkyBlueCyan, .defaultGreen, .defaultYellow, .defaultOrange, .defaultRed],
                     startPoint: .leading,
                     endPoint: .trailing
                 )

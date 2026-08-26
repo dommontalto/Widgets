@@ -159,7 +159,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
             switch self {
             case .rpe: .defaultPink
             case .failedSet: .defaultRed
-            case .skip: .exerciseLiveAccent
+            case .skip: .defaultGreen
             case .complete, .start: .defaultGreen
             case .extendRest: nil
             }
@@ -298,7 +298,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
 
         case let .resting(_, until):
             let remaining = max(0, until.timeIntervalSince(date))
-            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .exerciseLiveAccent)
+            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .defaultGreen)
 
         case .allSetsComplete:
             return ("Finish", .textColor)

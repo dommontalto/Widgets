@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var showingSession = false
-    @State private var showingChat = false
     @State private var showingProgram = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
@@ -141,15 +140,6 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingChat = true
-                } label: {
-                    Label("Create with AI", systemImage: "apple.intelligence")
-                        .labelStyle(.iconOnly)
-                }
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section("My Sessions") {
                         ForEach(sessions) { session in
@@ -168,9 +158,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingSession) {
             ExerciseSheet()
-        }
-        .sheet(isPresented: $showingChat) {
-            ExerciseChatSheet()
         }
         .sheet(isPresented: $showingProgram) {
             ExerciseCreateProgramSheet()

@@ -63,17 +63,17 @@ struct ExerciseHistoryWidget: View {
     // standing in for its rest days.
     private var key: some View {
         FlowLayout(spacing: .spacing2x) {
-            keyItem("Strength", color: .defaultPurple)
-            keyItem("Cardio", color: .defaultSkyBlue)
-            keyItem("Both", color: .defaultGreen)
-            keyItem("Apple Health", color: .defaultRed)
+            keyItem("Strength", fill: Color.defaultPurple)
+            keyItem("Cardio", fill: Color.defaultSkyBlueCyan)
+            keyItem("Both", fill: ExerciseDayType.bothGradient)
+            keyItem("Apple Health", fill: Color.defaultRed)
         }
     }
 
-    private func keyItem(_ title: String, color: Color) -> some View {
+    private func keyItem(_ title: String, fill: some ShapeStyle) -> some View {
         HStack(spacing: .spacing1x) {
             RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
-                .fill(color)
+                .fill(fill)
                 .frame(width: Constants.keySwatchSize, height: Constants.keySwatchSize)
 
             BrightText(title, size: .body3, color: .lightTextColor)

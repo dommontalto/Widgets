@@ -112,7 +112,7 @@ struct ExerciseConsistencyWidget: View {
                         VStack(spacing: cellSpacing) {
                             ForEach(0..<7, id: \.self) { row in
                                 RoundedRectangle(cornerRadius: cellCornerRadius, style: .continuous)
-                                    .fill(color(for: visibleMonths[monthIndex].columns[columnIndex][row], on: page))
+                                    .fill(cellStyle(for: visibleMonths[monthIndex].columns[columnIndex][row], on: page))
                                     .frame(width: cellSize, height: cellSize)
                             }
                         }
@@ -127,28 +127,28 @@ struct ExerciseConsistencyWidget: View {
         switch page {
         case .strength:
             HStack(spacing: .spacing3x) {
-                legendItem("Strength", color: .defaultPurple)
-                legendItem("Rest", color: Color.defaultPurple.opacity(.veryMinimalOpacity))
+                legendItem("Strength", fill: Color.defaultPurple)
+                legendItem("Rest", fill: Color.defaultPurple.opacity(.veryMinimalOpacity))
             }
         case .cardio:
             HStack(spacing: .spacing3x) {
-                legendItem("Cardio", color: .defaultSkyBlue)
-                legendItem("Rest", color: Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
+                legendItem("Cardio", fill: Color.defaultSkyBlueCyan)
+                legendItem("Rest", fill: Color.defaultSkyBlueCyan.opacity(.veryMinimalOpacity))
             }
         case .combined:
             HStack(spacing: .spacing3x) {
-                legendItem("Strength", color: .defaultPurple)
-                legendItem("Cardio", color: .defaultSkyBlue)
-                legendItem("Both", color: .defaultGreen)
-                legendItem("Rest", color: .textColor.opacity(.ultraLowOpacity))
+                legendItem("Strength", fill: Color.defaultPurple)
+                legendItem("Cardio", fill: Color.defaultSkyBlueCyan)
+                legendItem("Both", fill: ExerciseDayType.bothGradient)
+                legendItem("Rest", fill: Color.defaultGreen)
             }
         }
     }
 
-    private func legendItem(_ title: String, color: Color) -> some View {
+    private func legendItem(_ title: String, fill: some ShapeStyle) -> some View {
         HStack(spacing: .spacing1x) {
             RoundedRectangle(cornerRadius: cellCornerRadius, style: .continuous)
-                .fill(color)
+                .fill(fill)
                 .frame(width: 12, height: 12)
             BrightText(title, size: .body3, color: .lightTextColor)
         }
@@ -189,23 +189,23 @@ struct ExerciseConsistencyWidget: View {
         CGFloat(month.columns.count) * (cellSize + cellSpacing) - cellSpacing
     }
 
-    private func color(for type: ExerciseDayType?, on page: Page) -> Color {
-        guard let type else { return .clear }
+    private func cellStyle(for type: ExerciseDayType?, on page: Page) -> AnyShapeStyle {
+        guard let type else { return AnyShapeStyle(Color.clear) }
         switch page {
         case .strength:
             return type == .strength || type == .both
-                ? .defaultPurple
-                : Color.defaultPurple.opacity(.veryMinimalOpacity)
+                ? AnyShapeStyle(Color.defaultPurple)
+                : AnyShapeStyle(Color.defaultPurple.opacity(.veryMinimalOpacity))
         case .cardio:
             return type == .cardio || type == .both
-                ? .defaultSkyBlue
-                : Color.defaultSkyBlue.opacity(.veryMinimalOpacity)
+                ? AnyShapeStyle(Color.defaultSkyBlueCyan)
+                : AnyShapeStyle(Color.defaultSkyBlueCyan.opacity(.veryMinimalOpacity))
         case .combined:
             switch type {
-            case .strength: return .defaultPurple
-            case .cardio: return .defaultSkyBlue
-            case .both: return .defaultGreen
-            case .rest: return .textColor.opacity(.ultraLowOpacity)
+            case .strength: return AnyShapeStyle(Color.defaultPurple)
+            case .cardio: return AnyShapeStyle(Color.defaultSkyBlueCyan)
+            case .both: return AnyShapeStyle(ExerciseDayType.bothGradient)
+            case .rest: return AnyShapeStyle(Color.defaultGreen)
             }
         }
     }

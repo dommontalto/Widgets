@@ -22,7 +22,7 @@ struct ExerciseSupersetSheet: View {
             .defaultYellow,
             .defaultOrange,
             .defaultPink,
-            .defaultCyan,
+            .defaultSkyBlueCyan,
         ]
         static let connectorWidth: CGFloat = 3
         // Glass circle sized to the handle's glyph beside it, rather than to the

@@ -10,7 +10,8 @@ import SwiftUI
 struct BrightCalendar<Trailing: View>: View {
     @Binding var selectedDate: Date
     var backgroundColor: Color
-    var hasDot: (Date) -> Bool
+    // Nil for no dot; a day with sessions styles its dot by what they are.
+    var dotStyle: (Date) -> AnyShapeStyle?
     @ViewBuilder var trailing: Trailing
 
     @State private var scrolledID: Date?
@@ -21,12 +22,12 @@ struct BrightCalendar<Trailing: View>: View {
     init(
         selectedDate: Binding<Date>,
         backgroundColor: Color = .defaultBackground,
-        hasDot: @escaping (Date) -> Bool = { _ in false },
+        dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
         @ViewBuilder trailing: () -> Trailing
     ) {
         _selectedDate = selectedDate
         self.backgroundColor = backgroundColor
-        self.hasDot = hasDot
+        self.dotStyle = dotStyle
         self.trailing = trailing()
         _scrolledID = State(initialValue: Self.anchorDate(for: selectedDate.wrappedValue))
 
@@ -111,7 +112,7 @@ struct BrightCalendar<Trailing: View>: View {
                     DayCell(
                         date: date,
                         isSelected: date.isSameDay(as: selectedDate),
-                        showsDot: hasDot(date),
+                        dotStyle: dotStyle(date),
                         onTap: { tappedDate in
                             BrightHaptic.light.play()
                             withAnimation(.brightSnappy) {
@@ -178,12 +179,12 @@ extension BrightCalendar where Trailing == EmptyView {
     init(
         selectedDate: Binding<Date>,
         backgroundColor: Color = .defaultBackground,
-        hasDot: @escaping (Date) -> Bool = { _ in false }
+        dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil }
     ) {
         self.init(
             selectedDate: selectedDate,
             backgroundColor: backgroundColor,
-            hasDot: hasDot,
+            dotStyle: dotStyle,
             trailing: { EmptyView() }
         )
     }
@@ -192,7 +193,7 @@ extension BrightCalendar where Trailing == EmptyView {
 private struct DayCell: View {
     let date: Date
     let isSelected: Bool
-    let showsDot: Bool
+    let dotStyle: AnyShapeStyle?
     let onTap: (Date) -> Void
 
     var body: some View {
@@ -215,9 +216,8 @@ private struct DayCell: View {
                 .opacity(isSelected ? .opaque : .minimalOpacity)
 
                 Circle()
-                    .fill(Color.defaultGreen)
+                    .fill(dotStyle ?? AnyShapeStyle(Color.clear))
                     .frame(width: Constants.dotSize, height: Constants.dotSize)
-                    .opacity(showsDot ? .opaque : 0)
             }
         }
         .animation(.brightBouncy, value: isSelected)
@@ -231,7 +231,7 @@ private struct DayCell: View {
 #Preview {
     @Previewable @State var selectedDate = Calendar.current.startOfDay(for: Date())
     BrightCalendar(selectedDate: $selectedDate) { date in
-        !ExerciseCalendarDemo.events(on: date).isEmpty
+        ExerciseCalendarDemo.dotStyle(on: date)
     }
     .frame(maxHeight: .infinity, alignment: .top)
     .background(Color.defaultBackground.ignoresSafeArea())

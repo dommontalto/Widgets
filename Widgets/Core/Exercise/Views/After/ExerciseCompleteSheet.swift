@@ -352,7 +352,7 @@ struct ExerciseCompleteSheet: View {
             }
 
             if let breakdown = summary.breakdown {
-                ExerciseCompleteHeartRateZoneBreakdownWidget(data: breakdown)
+                ExerciseCompleteHeartRateZoneWidget(data: breakdown)
             }
         }
     }

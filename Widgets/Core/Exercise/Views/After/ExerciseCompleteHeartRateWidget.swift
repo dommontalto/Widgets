@@ -15,7 +15,27 @@ struct ExerciseCompleteHeartRateWidget: View {
     let endDate: String
     let data: ExerciseHeartGraphPayload
 
+    // Stored, never computed: the chart evaluates its mark closure once per
+    // sample, and a computed property here re-maps the whole payload on every
+    // one of those calls — O(n²) per render, ~150ms on a real session.
+    private let samples: [Double]
+
     @State private var selectedIndex: Int?
+
+    init(
+        hrAvg: Double,
+        hrPeak: Double?,
+        startDate: String,
+        endDate: String,
+        data: ExerciseHeartGraphPayload
+    ) {
+        self.hrAvg = hrAvg
+        self.hrPeak = hrPeak
+        self.startDate = startDate
+        self.endDate = endDate
+        self.data = data
+        samples = (data.data ?? []).map { Double($0.value ?? 0) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -213,10 +233,6 @@ struct ExerciseCompleteHeartRateWidget: View {
                 selectedIndex = newValue
             }
         )
-    }
-
-    private var samples: [Double] {
-        (data.data ?? []).map { Double($0.value ?? 0) }
     }
 
     // The line the trace actually touches, which sits below the session's peak
