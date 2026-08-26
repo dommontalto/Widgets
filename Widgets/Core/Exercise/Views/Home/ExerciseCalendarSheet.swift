@@ -16,7 +16,7 @@ struct ExerciseCalendarSheet: View {
     // local date and hands it back on close instead.
     @State private var sheetDate = Calendar.current.startOfDay(for: Date())
 
-    @State private var topHour: Int?
+    @State private var timelinePosition = ScrollPosition()
     @State private var bannerShadowProgress: CGFloat = 0
 
     private let calendar = Calendar.current
@@ -70,11 +70,11 @@ struct ExerciseCalendarSheet: View {
                 .padding(.leading, .spacing3x)
                 .padding(.top, .spacing4x)
         }
-        .scrollPosition(id: $topHour, anchor: .top)
+        .scrollPosition($timelinePosition)
         .onAppear {
             // Set only after the sheet has laid out — an initial value from
             // init is applied while the scroll view has no size and is lost.
-            topHour = max(Constants.startHour, calendar.component(.hour, from: Date()) - 1)
+            timelinePosition.scrollTo(y: openingOffset)
         }
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
@@ -169,6 +169,13 @@ struct ExerciseCalendarSheet: View {
         CGFloat(event.durationMinutes) / 60 * Constants.hourHeight - .spacing1x
     }
 
+    // Opens with the current time an hour and a half down the timeline.
+    private var openingOffset: CGFloat {
+        let now = Date()
+        let minutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+        return max(0, timelineY(atMinutes: minutes - Constants.openingLeadMinutes) + .spacing4x)
+    }
+
     private func timelineY(atMinutes minutes: Int) -> CGFloat {
         CGFloat(minutes - Constants.startHour * 60) / 60 * Constants.hourHeight
     }
@@ -179,6 +186,7 @@ struct ExerciseCalendarSheet: View {
         static let hatchStep: CGFloat = 5.7
         static let hatchRun: CGFloat = 0.75
         static let startHour = 0
+        static let openingLeadMinutes = 90
         static let endHour = 23
         static let hourHeight: CGFloat = 65
         static let gutterWidth: CGFloat = 66

@@ -49,10 +49,7 @@ struct ExerciseCardioPlanEditor: View {
             }
         }
         .fullScreenCover(isPresented: $isShowingRouteMap) {
-            ExerciseRouteGeneratorSheet(
-                routeToggle: routeToggle,
-                onClose: { isShowingRouteMap = false }
-            )
+            ExerciseRouteGeneratorSheet(onClose: { isShowingRouteMap = false })
         }
         .animation(.brightSnappy, value: plan.goal)
         .onChange(of: plan.goal) { _, _ in
@@ -236,24 +233,12 @@ struct ExerciseCardioPlanEditor: View {
     // MARK: - Route
 
     private var routeRow: some View {
-        HStack(spacing: .spacing2x) {
-            routeThumbnail
-
-            Spacer(minLength: .spacing2x)
-
+        row(badge: routeThumbnail, title: "Generate Route") {
             Toggle("", isOn: routeToggle)
                 .labelsHidden()
                 .tint(Color.defaultGreen)
                 .brightHaptic(.light, trigger: plan.isRouteOn)
         }
-        .padding(.leading, .spacing105x)
-        .padding(.trailing, .spacing3x)
-        .frame(height: Constants.rowHeight)
-        .frame(maxWidth: .infinity)
-        .overlay {
-            BrightText("Generate Route", size: .body1, color: .defaultWhite)
-        }
-        .background(Color.defaultBlack.opacity(.lowOpacity), in: Capsule())
         // The toggle takes its own taps; everywhere else opens the map.
         .contentShape(.rect)
         .onTapGesture { isShowingRouteMap = true }
@@ -283,8 +268,8 @@ struct ExerciseCardioPlanEditor: View {
                         .foregroundStyle(Color.textColor)
                 }
         }
-        .frame(width: Constants.routeThumbnailSize, height: Constants.routeThumbnailSize)
-        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous))
+        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
+        .clipShape(Circle())
     }
 
     // A static Mapbox shot of the map the generator opens on, so the row hints
@@ -293,7 +278,7 @@ struct ExerciseCardioPlanEditor: View {
         guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else { return nil }
         return URL(
             string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
-                + "151.2006,-33.8769,12,0/86x86@2x?access_token=\(token)&logo=false&attribution=false"
+                + "151.2006,-33.8769,12,0/60x60@2x?access_token=\(token)&logo=false&attribution=false"
         )
     }()
 
@@ -456,7 +441,6 @@ struct ExerciseCardioPlanEditor: View {
         static let rowHeight: CGFloat = 62
         static let badgeSize: CGFloat = 30
         static let zoneRowHeight: CGFloat = 48
-        static let routeThumbnailSize: CGFloat = 43
     }
 }
 

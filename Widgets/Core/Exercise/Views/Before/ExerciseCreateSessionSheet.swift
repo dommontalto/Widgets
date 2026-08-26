@@ -231,14 +231,19 @@ struct ExerciseCreateSessionSheet: View {
 
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            BrightText(exercise, size: .subheading2, weight: .regular)
-                .lineLimit(1)
+            if showsCardTitle(for: exercise) {
+                BrightText(exercise, size: .subheading2, weight: .regular)
+                    .lineLimit(1)
+            }
 
             Spacer(minLength: .spacing0x)
 
             Menu {
-                Button("Supersets", systemImage: "link") {
-                    isEditingSupersets = true
+                // Only lifts pair into supersets; a run or a sport is its own leg.
+                if !builder.isCardio(exercise) {
+                    Button("Supersets", systemImage: "link") {
+                        isEditingSupersets = true
+                    }
                 }
                 Button("Reorder", systemImage: "arrow.up.arrow.down") {
                     isReordering = true
@@ -256,6 +261,14 @@ struct ExerciseCreateSessionSheet: View {
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
+    }
+
+    // A superset stacks several lifts on the one screen, so each card needs
+    // naming. A lone lift already has the picker's pill above it, and a run or
+    // a sport is always alone on its screen.
+    private func showsCardTitle(for exercise: String) -> Bool {
+        guard !builder.isCardio(exercise), let selected, builder.isAdded(selected) else { return false }
+        return builder.groupMembers(for: selected).count > 1
     }
 
     private var addExerciseButton: some View {

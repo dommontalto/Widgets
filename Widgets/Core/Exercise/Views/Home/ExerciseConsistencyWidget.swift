@@ -8,20 +8,6 @@
 import SwiftUI
 
 struct ExerciseConsistencyWidget: View {
-    private enum Page: Int, CaseIterable {
-        case strength
-        case cardio
-        case combined
-
-        var title: String {
-            switch self {
-            case .strength: "Strength"
-            case .cardio: "Cardio"
-            case .combined: "Strength & Cardio"
-            }
-        }
-    }
-
     private let visibleColumns = 16
 
     private let cellSpacing: CGFloat = .spacing05x
@@ -38,6 +24,8 @@ struct ExerciseConsistencyWidget: View {
 
     @State private var gridWidth: CGFloat = 0
 
+    @State private var showingYear = false
+
     var body: some View {
         VStack(spacing: .spacing2x) {
             ZStack {
@@ -46,7 +34,7 @@ struct ExerciseConsistencyWidget: View {
                     .hidden()
 
                 TabView(selection: pageSelection) {
-                    ForEach(Page.allCases, id: \.rawValue) { page in
+                    ForEach(ExerciseConsistencyMode.allCases, id: \.rawValue) { page in
                         card(page)
                             .padding(.horizontal, .spacing3x)
                             .tag(page.rawValue)
@@ -56,17 +44,28 @@ struct ExerciseConsistencyWidget: View {
             }
             .padding(.horizontal, -.spacing3x)
 
-            BrightPageIndicator(total: Page.allCases.count, activeIndex: $activePage)
+            BrightPageIndicator(total: ExerciseConsistencyMode.allCases.count, activeIndex: $activePage)
         }
         .animation(.brightEaseInOut, value: activePage)
+        .sheet(isPresented: $showingYear) {
+            ExerciseConsistencySheet(mode: activeMode)
+        }
     }
 
     // MARK: - Heatmap
 
-    private func card(_ page: Page) -> some View {
+    private func card(_ page: ExerciseConsistencyMode) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(page.title, size: .body1)
-                .padding(.bottom, .spacing2x)
+            HStack(alignment: .top) {
+                BrightText(page.title, size: .body1)
+
+                Spacer()
+
+                BrightPillButton("See More", buttonSize: .small) {
+                    showingYear = true
+                }
+            }
+            .padding(.bottom, .spacing2x)
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 monthRow
@@ -97,7 +96,7 @@ struct ExerciseConsistencyWidget: View {
         .padding(.leading, dayColumnWidth)
     }
 
-    private func heatmap(_ page: Page) -> some View {
+    private func heatmap(_ page: ExerciseConsistencyMode) -> some View {
         HStack(alignment: .top, spacing: .spacing105x) {
             VStack(spacing: cellSpacing) {
                 ForEach(dayLabels.indices, id: \.self) { i in
@@ -112,7 +111,7 @@ struct ExerciseConsistencyWidget: View {
                         VStack(spacing: cellSpacing) {
                             ForEach(0..<7, id: \.self) { row in
                                 RoundedRectangle(cornerRadius: cellCornerRadius, style: .continuous)
-                                    .fill(cellStyle(for: visibleMonths[monthIndex].columns[columnIndex][row], on: page))
+                                    .fill(page.fill(for: visibleMonths[monthIndex].columns[columnIndex][row]))
                                     .frame(width: cellSize, height: cellSize)
                             }
                         }
@@ -122,25 +121,10 @@ struct ExerciseConsistencyWidget: View {
         }
     }
 
-    @ViewBuilder
-    private func legend(_ page: Page) -> some View {
-        switch page {
-        case .strength:
-            HStack(spacing: .spacing3x) {
-                legendItem("Strength", fill: Color.defaultPurple)
-                legendItem("Rest", fill: Color.defaultPurple.opacity(.veryMinimalOpacity))
-            }
-        case .cardio:
-            HStack(spacing: .spacing3x) {
-                legendItem("Cardio", fill: Color.defaultSkyBlueCyan)
-                legendItem("Rest", fill: Color.defaultSkyBlueCyan.opacity(.veryMinimalOpacity))
-            }
-        case .combined:
-            HStack(spacing: .spacing3x) {
-                legendItem("Strength", fill: Color.defaultPurple)
-                legendItem("Cardio", fill: Color.defaultSkyBlueCyan)
-                legendItem("Both", fill: ExerciseDayType.bothGradient)
-                legendItem("Rest", fill: Color.defaultGreen)
+    private func legend(_ page: ExerciseConsistencyMode) -> some View {
+        HStack(spacing: .spacing3x) {
+            ForEach(page.keyItems, id: \.title) { item in
+                legendItem(item.title, fill: item.fill)
             }
         }
     }
@@ -161,6 +145,10 @@ struct ExerciseConsistencyWidget: View {
             get: { activePage ?? 0 },
             set: { activePage = $0 }
         )
+    }
+
+    private var activeMode: ExerciseConsistencyMode {
+        ExerciseConsistencyMode(rawValue: activePage ?? 0) ?? .combined
     }
 
     private var visibleMonths: [ExerciseMonthData] {
@@ -187,27 +175,6 @@ struct ExerciseConsistencyWidget: View {
 
     private func monthWidth(_ month: ExerciseMonthData) -> CGFloat {
         CGFloat(month.columns.count) * (cellSize + cellSpacing) - cellSpacing
-    }
-
-    private func cellStyle(for type: ExerciseDayType?, on page: Page) -> AnyShapeStyle {
-        guard let type else { return AnyShapeStyle(Color.clear) }
-        switch page {
-        case .strength:
-            return type == .strength || type == .both
-                ? AnyShapeStyle(Color.defaultPurple)
-                : AnyShapeStyle(Color.defaultPurple.opacity(.veryMinimalOpacity))
-        case .cardio:
-            return type == .cardio || type == .both
-                ? AnyShapeStyle(Color.defaultSkyBlueCyan)
-                : AnyShapeStyle(Color.defaultSkyBlueCyan.opacity(.veryMinimalOpacity))
-        case .combined:
-            switch type {
-            case .strength: return AnyShapeStyle(Color.defaultPurple)
-            case .cardio: return AnyShapeStyle(Color.defaultSkyBlueCyan)
-            case .both: return AnyShapeStyle(ExerciseDayType.bothGradient)
-            case .rest: return AnyShapeStyle(Color.defaultGreen)
-            }
-        }
     }
 }
 

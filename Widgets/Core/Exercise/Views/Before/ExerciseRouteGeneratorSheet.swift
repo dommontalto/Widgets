@@ -17,9 +17,8 @@ struct ExerciseRouteGeneratorSheet: View {
         case draw
     }
 
-    // Set when the map is opened from a session plan: the plan's route toggle
-    // rides the top bar, and closing hands back instead of dismissing.
-    var routeToggle: Binding<Bool>?
+    // Set when the map is opened from a session plan: closing hands back
+    // instead of dismissing the presentation.
     var onClose: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -48,6 +47,8 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var isSearching = false
     @State private var searchText = ""
     @State private var generationTick = 0
+    @State private var scrubProgress: Double = 0
+    @State private var isScrubbing = false
     @State private var locator = RouteLocator()
 
     var body: some View {
@@ -68,6 +69,7 @@ struct ExerciseRouteGeneratorSheet: View {
         .ignoresSafeArea(.container, edges: .bottom)
         .overlay(alignment: .topLeading) { topBar }
         .brightHaptic(.success, trigger: generationTick)
+        .onChange(of: scrubProgress) { _, _ in followRoute() }
         .onAppear { locator.request() }
         .onChange(of: locator.lastLocation) { _, location in
             if let location { fly(to: location.coordinate) }
@@ -113,6 +115,13 @@ struct ExerciseRouteGeneratorSheet: View {
                 if let end = route.coordinates.last {
                     MapViewAnnotation(coordinate: end) {
                         routeMarker("flag.pattern.checkered")
+                    }
+                    .allowOverlap(true)
+                }
+
+                if route.coordinates.count >= 2 {
+                    MapViewAnnotation(coordinate: coordinate(atFraction: scrubProgress, along: route.coordinates)) {
+                        tappedDot
                     }
                     .allowOverlap(true)
                 }
@@ -238,26 +247,13 @@ struct ExerciseRouteGeneratorSheet: View {
 
             Spacer(minLength: .spacing2x)
 
-            if let routeToggle, !isSearching {
-                Toggle("", isOn: routeToggle)
-                    .labelsHidden()
-                    .tint(Color.defaultGreen)
-                    .brightHaptic(.light, trigger: routeToggle.wrappedValue)
-                    .padding(.spacing1x)
-                    .modifier(GlassEffect(
-                        shape: .capsule,
-                        tint: .defaultBlack.opacity(.lowOpacity),
-                        interactive: false
-                    ))
-            }
-
-            mapButton(isDarkMap ? "sun.max.fill" : "moon.fill") {
+            mapButton(isDarkMap ? "moon.fill" : "sun.max.fill") {
                 withAnimation(.brightSnappy) { isDarkMap.toggle() }
             }
             .contentTransition(.symbolEffect(.replace))
 
-            mapButton(is3D ? "view.2d" : "view.3d") {
-                toggleDimension()
+            mapButton("magnifyingglass") {
+                withAnimation(.brightSnappy) { isSearching.toggle() }
             }
         }
         .padding(.horizontal, .spacing3x)
@@ -274,11 +270,7 @@ struct ExerciseRouteGeneratorSheet: View {
     private var bottomControls: some View {
         VStack(spacing: .spacing2x) {
             HStack(alignment: .bottom) {
-                if mode == nil, route == nil {
-                    searchAndLocate
-                } else {
-                    undoRedo
-                }
+                undoRedo
 
                 Spacer()
 
@@ -307,22 +299,11 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func clearRoute() {
         pushUndo()
+        scrubProgress = 0
         withAnimation(.brightSnappy) {
             route = nil
             tappedPoints = []
             drawnPoints = []
-        }
-    }
-
-    private var searchAndLocate: some View {
-        HStack(spacing: .spacing2x) {
-            mapButton("magnifyingglass") {
-                withAnimation(.brightSnappy) { isSearching.toggle() }
-            }
-
-            mapButton("dot.scope") {
-                locator.request()
-            }
         }
     }
 
@@ -340,6 +321,14 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private var modeColumn: some View {
         VStack(spacing: .spacing2x) {
+            mapButton("dot.scope") {
+                locator.request()
+            }
+
+            mapButton(is3D ? "view.3d" : "view.2d") {
+                toggleDimension()
+            }
+
             mapButton("hand.tap.fill", isActive: mode == .tap) {
                 select(.tap)
             }
@@ -375,9 +364,11 @@ struct ExerciseRouteGeneratorSheet: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, .spacing3x)
         .frame(height: Constants.cardHeight)
+        // Filled behind the glass rather than tinting it, the way the buttons
+        // are — a tint alone washes out over the map.
+        .background(Color.defaultBlack.opacity(.lowOpacity), in: Constants.cardShape)
         .modifier(GlassEffect(
             shape: .unevenRoundedRect(top: Constants.cardTopCorner, bottom: Constants.cardBottomCorner),
-            tint: .defaultBlack.opacity(.lowOpacity),
             interactive: false
         ))
     }
@@ -390,6 +381,10 @@ struct ExerciseRouteGeneratorSheet: View {
             BrightText("Generating route…", size: .body2, color: .defaultWhite)
         } else if let route {
             statsRow(route)
+
+            routeScrubber
+                .padding(.top, .spacing1x)
+                .padding(.horizontal, .spacing1x)
         } else if mode == .draw {
             Image(systemName: "pencil.and.scribble")
                 .font(.system(size: Constants.drawIconSize, weight: .medium))
@@ -413,12 +408,27 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func statsRow(_ route: GeneratedRoute) -> some View {
         HStack(spacing: .spacing0x) {
-            ForEach([route.formattedDistance, route.formattedDuration, route.formattedElevation], id: \.self) { stat in
-                BrightText(stat, size: .standout2, color: .defaultWhite)
-                    .monospacedDigit()
-                    .frame(maxWidth: .infinity)
-            }
+            stat("Distance", value: route.formattedDistance)
+            stat("Elevation", value: route.formattedElevation)
+            stat("Est. Time", value: route.formattedDuration)
         }
+    }
+
+    private func stat(_ title: String, value: String) -> some View {
+        VStack(spacing: .spacing1x) {
+            BrightText(title, size: .body2, color: .defaultWhite.opacity(.lowOpacity), weight: .regular)
+
+            BrightText(value, size: .standout2, color: .defaultWhite)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var routeScrubber: some View {
+        Slider(value: $scrubProgress, in: 0 ... 1) { isEditing in
+            isScrubbing = isEditing
+        }
+        .tint(Color.defaultSkyBlue)
     }
 
     // MARK: - Actions
@@ -584,6 +594,7 @@ struct ExerciseRouteGeneratorSheet: View {
 
             let generated = GeneratedRoute(coordinates: coordinates, distanceMetres: distance, durationSeconds: duration)
 
+            scrubProgress = 0
             withAnimation(.brightSnappy) {
                 route = base.map { $0.appending(generated) } ?? generated
                 drawnPoints = []
@@ -690,6 +701,55 @@ struct ExerciseRouteGeneratorSheet: View {
             }
             fly(to: item.location.coordinate)
         }
+    }
+
+    // MARK: - Scrubbing
+
+    // Set directly rather than animated: scrubbing fires continuously, and
+    // restarting an ease on every update reads as a lagging crawl.
+    private func followRoute() {
+        guard isScrubbing, let route, route.coordinates.count >= 2 else { return }
+
+        let current = coordinate(atFraction: scrubProgress, along: route.coordinates)
+        let ahead = coordinate(
+            atFraction: min(1, scrubProgress + Constants.lookAheadFraction),
+            along: route.coordinates
+        )
+
+        viewport = .camera(
+            center: current,
+            zoom: Constants.followZoom,
+            bearing: bearing(from: current, to: ahead),
+            pitch: Constants.followPitch
+        )
+    }
+
+    private func coordinate(
+        atFraction fraction: Double,
+        along coordinates: [CLLocationCoordinate2D]
+    ) -> CLLocationCoordinate2D {
+        let position = fraction * Double(coordinates.count - 1)
+        let lower = max(0, min(coordinates.count - 1, Int(position.rounded(.down))))
+        let upper = max(0, min(coordinates.count - 1, Int(position.rounded(.up))))
+        let step = position - Double(lower)
+
+        let from = coordinates[lower]
+        let to = coordinates[upper]
+        return CLLocationCoordinate2D(
+            latitude: from.latitude + (to.latitude - from.latitude) * step,
+            longitude: from.longitude + (to.longitude - from.longitude) * step
+        )
+    }
+
+    private func bearing(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> CLLocationDirection {
+        let fromLatitude = from.latitude * .pi / 180
+        let toLatitude = to.latitude * .pi / 180
+        let deltaLongitude = (to.longitude - from.longitude) * .pi / 180
+
+        let y = sin(deltaLongitude) * cos(toLatitude)
+        let x = cos(fromLatitude) * sin(toLatitude)
+            - sin(fromLatitude) * cos(toLatitude) * cos(deltaLongitude)
+        return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
     }
 
     private func fly(to coordinate: CLLocationCoordinate2D) {
@@ -865,6 +925,20 @@ private enum Constants {
     static let cardHeight: CGFloat = 160
     static let cardTopCorner: CGFloat = 36
     static let cardBottomCorner: CGFloat = 44
+
+    static var cardShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(cornerRadii: .init(
+            topLeading: cardTopCorner,
+            bottomLeading: cardBottomCorner,
+            bottomTrailing: cardBottomCorner,
+            topTrailing: cardTopCorner
+        ))
+    }
+
+    // Scrubbing rides the route at street level, looking along it.
+    static let followZoom: CGFloat = 17
+    static let followPitch: CGFloat = 65
+    static let lookAheadFraction: Double = 0.02
 
     static let markerSize: CGFloat = 25
     static let markerGlyphSize: CGFloat = 12

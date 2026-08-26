@@ -323,12 +323,37 @@ enum ExerciseDemoData {
                 dayIndex += 1
                 days.append(dayIndex <= trainedThroughDay ? weighted.randomElement()! : .rest)
             }
-            let columns = stride(from: 0, to: days.count, by: 7).map { start in
-                var column = Array(days[start..<min(start + 7, days.count)])
-                column.append(contentsOf: Array(repeating: ExerciseDayType?.none, count: 7 - column.count))
-                return column
+            return ExerciseMonthData(name: name, columns: weekColumns(days))
+        }
+    }
+
+    // Sep 2025 – Aug 2026: (name, weekday of the 1st with Monday = 0, day count).
+    static func consistencyYear(daysIntoCurrentMonth: Int = 26) -> [ExerciseMonthData] {
+        // Rest outweighs the training types so the year reads sparse, like a real one
+        let weighted: [ExerciseDayType] = [.strength, .cardio, .both, .rest, .rest, .rest]
+        let months = [
+            ("Sep", 0, 30), ("Oct", 2, 31), ("Nov", 5, 30), ("Dec", 0, 31),
+            ("Jan", 3, 31), ("Feb", 6, 28), ("Mar", 6, 31), ("Apr", 2, 30),
+            ("May", 4, 31), ("Jun", 0, 30), ("Jul", 2, 31), ("Aug", 5, 31),
+        ]
+
+        return months.enumerated().map { index, month in
+            let (name, offset, dayCount) = month
+            let isCurrentMonth = index == months.count - 1
+            var days: [ExerciseDayType?] = Array(repeating: nil, count: offset)
+            for day in 1...dayCount {
+                let isFuture = isCurrentMonth && day > daysIntoCurrentMonth
+                days.append(isFuture ? nil : weighted.randomElement()!)
             }
-            return ExerciseMonthData(name: name, columns: columns)
+            return ExerciseMonthData(name: name, columns: weekColumns(days))
+        }
+    }
+
+    private static func weekColumns(_ days: [ExerciseDayType?]) -> [[ExerciseDayType?]] {
+        stride(from: 0, to: days.count, by: 7).map { start in
+            var column = Array(days[start..<min(start + 7, days.count)])
+            column.append(contentsOf: Array(repeating: ExerciseDayType?.none, count: 7 - column.count))
+            return column
         }
     }
 
