@@ -53,7 +53,7 @@ struct ExerciseHistoryWidget: View {
 
             Spacer()
 
-            BrightPillButton("Show More", buttonSize: .small) {
+            BrightPillButton("See More", buttonSize: .small) {
                 showingAllLogs = true
             }
         }

@@ -17,7 +17,6 @@ struct BrightSolvingOrb: View {
     var size: CGFloat = 20
     var speed: Double = 1
 
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var start = Date()
@@ -46,14 +45,14 @@ struct BrightSolvingOrb: View {
 
             for dot in dots {
                 let level = min(1, max(0, dot.white))
-                let ink = colorScheme == .dark ? 1 - level : level
                 let rect = CGRect(
                     x: dot.x - dot.r,
                     y: dot.y - dot.r,
                     width: dot.r * 2,
                     height: dot.r * 2
                 )
-                context.fill(Path(ellipseIn: rect), with: .color(Color(white: ink)))
+                let ink = Color(light: Color(white: level), dark: Color(white: 1 - level))
+                context.fill(Path(ellipseIn: rect), with: .color(ink))
             }
         }
         .frame(width: size, height: size)

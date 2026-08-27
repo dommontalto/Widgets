@@ -20,8 +20,77 @@ struct ExerciseLiveCardioSheet: View {
     @State private var isPaused = false
     @State private var runningSince = Date()
     @State private var bankedElapsed: TimeInterval = 0
+    @State private var page: Int? = Constants.statsPage
 
     var body: some View {
+        ZStack(alignment: .bottom) {
+            // The pages run edge to edge; only the bar below them keeps the
+            // safe area.
+            pages
+                .ignoresSafeArea()
+
+            bottomBar
+        }
+        .overlay(alignment: .topTrailing) { minimiseButton }
+        .background(Color.defaultBackground.ignoresSafeArea())
+        // Full-screen cover, so the beam takes the display's own curve and rings
+        // every edge.
+        .overlay {
+            // Runs for the whole session; pausing puts it out, playing relights it.
+            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .skyBlueCyan)
+        }
+        // No nav bar: the pages run under it, and it would push every one of
+        // them down by its own height.
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var minimiseButton: some View {
+        Button {
+            if let onClose { onClose() } else { dismiss() }
+        } label: {
+            Image(systemName: "arrow.down.right.and.arrow.up.left")
+                .font(.standard(size: .subheading, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                .frame(width: Constants.minimiseSize, height: Constants.minimiseSize)
+                .contentShape(.rect)
+        }
+        .padding(.trailing, .spacing3x)
+    }
+
+    // The pages run the full height of the screen; the indicator and the
+    // controls ride above them.
+    private var bottomBar: some View {
+        VStack(spacing: .spacing0x) {
+            BrightPageIndicator(total: Constants.pageCount, activeIndex: $page)
+
+            controls
+        }
+    }
+
+    // MARK: - Pages
+
+    private var pages: some View {
+        TabView(selection: selectedPage) {
+            ExerciseLiveCardioSplits(splits: session.splits)
+                .safeAreaPadding(.top, .spacing2x)
+                .tag(0)
+
+            statsPage
+                .safeAreaPadding(.top, .spacing2x)
+                .tag(1)
+
+            ExerciseLiveCardioMap()
+                .tag(2)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+    }
+
+    // BrightPageIndicator drives an optional index; the TabView needs a plain one.
+    private var selectedPage: Binding<Int> {
+        Binding(get: { page ?? Constants.statsPage }, set: { page = $0 })
+    }
+
+    private var statsPage: some View {
         VStack(spacing: .spacing0x) {
             metric("CURRENT PACE", value: session.currentPace, color: .defaultSkyBlueCyan)
 
@@ -42,30 +111,8 @@ struct ExerciseLiveCardioSheet: View {
             if isInterval {
                 intervalRow
             }
-
-            Spacer(minLength: .spacing4x)
-
-            controls
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.defaultBackground.ignoresSafeArea())
-        // Full-screen cover, so the beam takes the display's own curve and rings
-        // every edge.
-        .overlay {
-            // Runs for the whole session; pausing puts it out, playing relights it.
-            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .skyBlueCyan)
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    if let onClose { onClose() } else { dismiss() }
-                } label: {
-                    Image(systemName: "arrow.down.right.and.arrow.up.left")
-                        .font(.standard(size: .subheading, weight: .regular))
-                        .foregroundStyle(Color.textColor)
-                }
-            }
-        }
     }
 
     // MARK: - Stat blocks
@@ -79,7 +126,7 @@ struct ExerciseLiveCardioSheet: View {
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, .spacing4x)
+        .padding(.vertical, .spacing2x)
     }
 
     private var heartRateRow: some View {
@@ -264,6 +311,9 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private enum Constants {
+        static let pageCount = 3
+        static let minimiseSize: CGFloat = .spacing7x
+        static let statsPage = 1
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
         // Fast enough that the demo run crosses a leg while you watch.

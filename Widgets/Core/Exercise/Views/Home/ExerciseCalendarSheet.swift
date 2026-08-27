@@ -81,11 +81,6 @@ struct ExerciseCalendarSheet: View {
         } action: { _, offset in
             bannerShadowProgress = BrightCalendarDropShadow.progress(forOffset: offset)
         }
-        .overlay(alignment: .bottomTrailing) {
-            BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {}
-                .padding(.trailing, .spacing4x)
-                .padding(.bottom, .spacing2x)
-        }
     }
 
     private var eventsOverlay: some View {

@@ -233,12 +233,15 @@ struct ExerciseCardioPlanEditor: View {
     // MARK: - Route
 
     private var routeRow: some View {
-        row(badge: routeThumbnail, title: "Generate Route") {
+        rowContent(badge: routeThumbnail, title: "Generate Route") {
             Toggle("", isOn: routeToggle)
                 .labelsHidden()
                 .tint(Color.defaultGreen)
                 .brightHaptic(.light, trigger: plan.isRouteOn)
         }
+        .padding(.spacing3x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
         // The toggle takes its own taps; everywhere else opens the map.
         .contentShape(.rect)
         .onTapGesture { isShowingRouteMap = true }
@@ -269,7 +272,7 @@ struct ExerciseCardioPlanEditor: View {
                 }
         }
         .frame(width: Constants.badgeSize, height: Constants.badgeSize)
-        .clipShape(Circle())
+        .clipShape(.rect(cornerRadius: .cornerRadius10))
     }
 
     // A static Mapbox shot of the map the generator opens on, so the row hints

@@ -5,7 +5,8 @@
 //  Created by Dom Montalto on 19/8/2026.
 //
 
-import MapKit
+import CoreLocation
+import MapboxMaps
 import SwiftUI
 
 // The route as a still, zone-coloured overview. Tapping it opens the same map
@@ -38,11 +39,14 @@ struct ExerciseCompleteMapWidget: View {
     // Set on the card to show the open button; nil on the pushed page.
     var onOpen: (() -> Void)?
 
-    @State private var cameraPosition: MapCameraPosition
+    @State private var viewport: Viewport
     @State private var selectedSecond: Double? = 0
     @State private var chaseHeading: Double?
     @State private var lastFraction: Double = 0
     @State private var isFollowing = false
+
+    // Shared with the route generator so both maps read the same way.
+    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
 
     // Smoothing the route is expensive enough that it must not re-run on every
     // body evaluation, so it happens once at init.
@@ -97,10 +101,10 @@ struct ExerciseCompleteMapWidget: View {
         precomputedEndCoordinate = smoothed.last?.coordinate
         precomputedRouteSegments = Self.buildRouteSegments(from: smoothed)
 
-        // A fixed altitude rather than a region: a region is fitted to whatever
-        // frame the map currently has, so the card and the page would show the
-        // route at different distances. One camera means one framing.
-        _cameraPosition = State(initialValue: .camera(Self.overviewCamera(for: coordinates)))
+        // A fixed zoom rather than a fitted overview: an overview is framed to
+        // whatever size the map currently has, so the card and the page would
+        // show the route at different scales. One camera means one framing.
+        _viewport = State(initialValue: Self.overviewViewport(for: coordinates))
     }
 
     var body: some View {
@@ -113,8 +117,8 @@ struct ExerciseCompleteMapWidget: View {
                 }
         } else {
             map
-                .frame(height: Constants.mapHeight)
                 .clipShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
+                .frame(height: Constants.mapHeight)
                 .overlay(alignment: .topTrailing) {
                     if let onOpen {
                         BrightRoundButton(
@@ -131,55 +135,97 @@ struct ExerciseCompleteMapWidget: View {
     }
 
     private var map: some View {
-        Map(position: $cameraPosition, interactionModes: isFullScreen ? .all : []) {
+        MapboxMaps.Map(viewport: $viewport) {
             // Picking out a section drops the zone colours: the run reads as one
             // faint line so the stretch being read stands away from it.
             if let highlighted {
-                MapPolyline(fullRoute)
-                    .stroke(Color.textColor.opacity(.minimalOpacity), style: Constants.routeStroke)
-
-                MapPolyline(highlighted)
-                    .stroke(highlightTint, style: Constants.routeStroke)
-            } else {
-                ForEach(precomputedRouteSegments.indices, id: \.self) { index in
-                    let segment = precomputedRouteSegments[index]
-                    MapPolyline(segment.polyline)
-                        .stroke(segment.style, style: Constants.routeStroke)
+                PolylineAnnotationGroup {
+                    routeLine(fullRoute, color: fadedRouteColor)
+                    routeLine(highlighted, color: highlightTint)
                 }
+                .lineCap(.round)
+                .lineJoin(.round)
+            } else {
+                // A group rather than a loop: the builder takes no ForEach, and
+                // one layer for every segment is what keeps the draw cheap.
+                PolylineAnnotationGroup(precomputedRouteSegments, id: \.id) { segment in
+                    routeLine(segment.coordinates, color: segment.color)
+                }
+                .lineCap(.round)
+                .lineJoin(.round)
             }
 
             if let end = precomputedEndCoordinate {
-                Annotation("", coordinate: end) {
+                MapViewAnnotation(coordinate: end) {
                     routeFlag("flag.checkered")
                 }
+                .allowOverlap(true)
             }
 
             if let start = precomputedStartCoordinate {
-                Annotation("", coordinate: start) {
+                MapViewAnnotation(coordinate: start) {
                     routeFlag("flag.fill")
                 }
+                .allowOverlap(true)
             }
 
             if isFullScreen, let selected = selectedCoordinate {
-                Annotation("", coordinate: selected) {
+                MapViewAnnotation(coordinate: selected) {
                     routeMarker(color: highlightTint)
                         .shadow(color: .black.opacity(.mediumOpacity), radius: 4, y: 2)
                 }
+                .allowOverlap(true)
             }
         }
-        // No compass or scale — the card can't be moved, and the page reads
-        // cleaner without them.
-        .mapControls {}
-        .mapStyle(.standard(elevation: isFullScreen ? .realistic : .flat))
+        .mapStyle(.standard(
+            lightPreset: isDarkMap ? .night : .day,
+            show3dObjects: isFullScreen
+        ))
+        .gestureOptions(gestureOptions)
+        // No compass or scale bar — the card can't be moved, and the page reads
+        // cleaner without them. The logo and attribution have to stay.
+        .ornamentOptions(OrnamentOptions(
+            scaleBar: ScaleBarViewOptions(visibility: .hidden),
+            compass: CompassViewOptions(visibility: .hidden)
+        ))
         .onChange(of: selectedSecond) { _, _ in updateCamera() }
     }
 
-    private var fullRoute: MKGeodesicPolyline {
-        var coordinates = precomputedRoutePoints.map(\.coordinate)
-        return MKGeodesicPolyline(coordinates: &coordinates, count: coordinates.count)
+    // The card is a still: every gesture is off, so a swipe scrolls the sheet
+    // it sits in rather than panning the map.
+    private var gestureOptions: GestureOptions {
+        guard !isFullScreen else { return GestureOptions() }
+
+        var options = GestureOptions()
+        options.panEnabled = false
+        options.pinchEnabled = false
+        options.rotateEnabled = false
+        options.pitchEnabled = false
+        options.doubleTapToZoomInEnabled = false
+        options.doubleTouchToZoomOutEnabled = false
+        options.quickZoomEnabled = false
+        return options
     }
 
-    private var highlighted: MKGeodesicPolyline? {
+    private func routeLine(_ coordinates: [CLLocationCoordinate2D], color: Color) -> PolylineAnnotation {
+        PolylineAnnotation(lineCoordinates: coordinates)
+            .lineColor(StyleColor(UIColor(color)))
+            .lineWidth(Constants.routeLineWidth)
+            // Standard's lighting dims unlit layers, which reads as a washed-out line.
+            .lineEmissiveStrength(Constants.routeEmissiveStrength)
+    }
+
+    // Tied to the map's own light preset rather than the system appearance, so
+    // the faint line stays legible against whichever basemap is showing.
+    private var fadedRouteColor: Color {
+        (isDarkMap ? Color.defaultWhite : .defaultBlack).opacity(.veryLowOpacity)
+    }
+
+    private var fullRoute: [CLLocationCoordinate2D] {
+        precomputedRoutePoints.map(\.coordinate)
+    }
+
+    private var highlighted: [CLLocationCoordinate2D]? {
         guard let highlight, precomputedRoutePoints.count >= 2 else { return nil }
 
         let last = precomputedRoutePoints.count - 1
@@ -187,8 +233,7 @@ struct ExerciseCompleteMapWidget: View {
         let upper = max(0, min(last, Int((Double(last) * highlight.upperBound).rounded())))
         guard upper > lower else { return nil }
 
-        var coordinates = precomputedRoutePoints[lower ... upper].map(\.coordinate)
-        return MKGeodesicPolyline(coordinates: &coordinates, count: coordinates.count)
+        return precomputedRoutePoints[lower ... upper].map(\.coordinate)
     }
 
     private var breakdown: some View {
@@ -225,13 +270,13 @@ struct ExerciseCompleteMapWidget: View {
         Circle()
             .fill(color)
             .frame(width: Constants.markerDotSize, height: Constants.markerDotSize)
-            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            .overlay(Circle().stroke(Color.defaultWhite, lineWidth: 2))
     }
 
     private func routeFlag(_ systemImage: String) -> some View {
         Image(systemName: systemImage)
             .font(.system(size: Constants.markerSize, weight: .bold))
-            .foregroundStyle(Color.textColor)
+            .foregroundStyle(isDarkMap ? Color.defaultWhite : .defaultBlack)
             // The basemap is busy, so the glyph needs some separation from it.
             .shadow(color: .black.opacity(.veryLowOpacity), radius: 2, y: 1)
     }
@@ -239,7 +284,7 @@ struct ExerciseCompleteMapWidget: View {
     private enum Constants {
         // MARK: Follow camera
 
-        static let followDistance: CLLocationDistance = 500
+        static let followZoom: CGFloat = 16.5
         static let followPitch: CGFloat = 65
         static let lookAheadFraction: Double = 0.02
         // How far behind the marker the camera sits, as a fraction of the route.
@@ -250,7 +295,8 @@ struct ExerciseCompleteMapWidget: View {
         // Used for the fly-in and for discontinuous jumps.
         static let flyToDuration: TimeInterval = 0.5
 
-        static let routeStroke = StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+        static let routeLineWidth: Double = 4
+        static let routeEmissiveStrength: Double = 1
         static let mapHeight: CGFloat = 145
         static let markerSize: CGFloat = 18
         static let markerDotSize: CGFloat = 22
@@ -259,11 +305,20 @@ struct ExerciseCompleteMapWidget: View {
         // Breathing room around the route on the overview shot. 1.0 is a tight
         // bounding box; raise it to pull the camera back.
         static let regionPadding: Double = 1.2
-        // Camera distance is an altitude, not a ground extent — at a given
-        // altitude a short frame sees far less ground than a tall one. This
-        // pulls back far enough that the whole route fits in the card.
-        static let overviewDistanceFactor: Double = 3
+        // How many points of screen the whole route spans at the overview zoom.
+        // A fixed span, not a fraction of the frame, so the collapsed card and
+        // the expanded page draw the route at the same scale. Lower it to pull
+        // the camera back.
+        static let overviewSpanPoints: Double = 110
+        static let minimumOverviewExtentMetres: Double = 200
+        static let maximumOverviewZoom: CGFloat = 17
+        // Metres per point at zoom 0 on the equator, the base of Mapbox's
+        // zoom scale.
+        static let metresPerPointAtZoomZero: Double = 156_543.033_92
         static let smoothingIterations = 3
+        // One zone-to-zone hop is drawn as this many solid sub-hops, since a
+        // polyline annotation takes a single colour and can't carry a gradient.
+        static let zoneBlendSteps = 8
     }
 }
 
@@ -275,9 +330,10 @@ extension ExerciseCompleteMapWidget {
         let zoneIndex: Int
     }
 
-    struct RouteSegment {
-        let polyline: MKGeodesicPolyline
-        let style: AnyShapeStyle
+    struct RouteSegment: Identifiable {
+        let id: Int
+        let coordinates: [CLLocationCoordinate2D]
+        let color: Color
     }
 
     private static func coordinates(latitudes: [Double]?, longitudes: [Double]?) -> [CLLocationCoordinate2D] {
@@ -321,8 +377,7 @@ extension ExerciseCompleteMapWidget {
         var lastKept = points[0]
 
         for point in points.dropFirst() {
-            let distance = MKMapPoint(lastKept.coordinate).distance(to: MKMapPoint(point.coordinate))
-            if distance >= Constants.minimumDistanceMetres {
+            if distance(from: lastKept.coordinate, to: point.coordinate) >= Constants.minimumDistanceMetres {
                 filtered.append(point)
                 lastKept = point
             }
@@ -388,28 +443,39 @@ extension ExerciseCompleteMapWidget {
 
         func appendSolidSegment(coords: [CLLocationCoordinate2D], zone: Int) {
             guard coords.count >= 2 else { return }
-            var coordsCopy = coords
-            let polyline = MKGeodesicPolyline(coordinates: &coordsCopy, count: coordsCopy.count)
             segments.append(
-                RouteSegment(polyline: polyline, style: AnyShapeStyle(colorForZoneIndex(zone)))
+                RouteSegment(id: segments.count, coordinates: coords, color: colorForZoneIndex(zone))
             )
         }
 
-        // A one-hop polyline so the colour change between zones fades rather than jumps.
-        func appendGradientSegment(
+        // The hop between zones is stepped through in sub-hops so the colour
+        // change fades rather than jumps.
+        func appendBlendedSegment(
             from: CLLocationCoordinate2D,
             to: CLLocationCoordinate2D,
             fromZone: Int,
             toZone: Int
         ) {
-            var coordsCopy = [from, to]
-            let polyline = MKGeodesicPolyline(coordinates: &coordsCopy, count: coordsCopy.count)
-            let gradient = LinearGradient(
-                colors: [colorForZoneIndex(fromZone), colorForZoneIndex(toZone)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            segments.append(RouteSegment(polyline: polyline, style: AnyShapeStyle(gradient)))
+            let steps = Constants.zoneBlendSteps
+            let fromColor = colorForZoneIndex(fromZone)
+            let toColor = colorForZoneIndex(toZone)
+
+            for step in 0 ..< steps {
+                let start = Double(step) / Double(steps)
+                let end = Double(step + 1) / Double(steps)
+                let coords = [
+                    interpolate(from: from, to: to, fraction: start),
+                    interpolate(from: from, to: to, fraction: end),
+                ]
+                let mix = (start + end) / 2
+                segments.append(
+                    RouteSegment(
+                        id: segments.count,
+                        coordinates: coords,
+                        color: fromColor.mixed(with: toColor, by: mix)
+                    )
+                )
+            }
         }
 
         for i in 1 ..< points.count {
@@ -420,7 +486,7 @@ extension ExerciseCompleteMapWidget {
                 currentCoords.append(point.coordinate)
             } else {
                 appendSolidSegment(coords: currentCoords, zone: currentZone)
-                appendGradientSegment(
+                appendBlendedSegment(
                     from: prevPoint.coordinate,
                     to: point.coordinate,
                     fromZone: currentZone,
@@ -448,45 +514,67 @@ extension ExerciseCompleteMapWidget {
         }
     }
 
-    // Frames the whole route from a fixed altitude, so the collapsed card and the
-    // expanded map show it at the same distance.
-    fileprivate static func overviewCamera(for coordinates: [CLLocationCoordinate2D]) -> MapCamera {
+    fileprivate static func interpolate(
+        from: CLLocationCoordinate2D,
+        to: CLLocationCoordinate2D,
+        fraction: Double
+    ) -> CLLocationCoordinate2D {
+        CLLocationCoordinate2D(
+            latitude: from.latitude + (to.latitude - from.latitude) * fraction,
+            longitude: from.longitude + (to.longitude - from.longitude) * fraction
+        )
+    }
+
+    fileprivate static func distance(
+        from: CLLocationCoordinate2D,
+        to: CLLocationCoordinate2D
+    ) -> CLLocationDistance {
+        CLLocation(latitude: from.latitude, longitude: from.longitude)
+            .distance(from: CLLocation(latitude: to.latitude, longitude: to.longitude))
+    }
+
+    // Frames the whole route at a fixed zoom, so the collapsed card and the
+    // expanded map show it at the same scale.
+    fileprivate static func overviewViewport(for coordinates: [CLLocationCoordinate2D]) -> Viewport {
         let region = regionForCoordinates(coordinates)
 
         let north = CLLocationCoordinate2D(
-            latitude: region.center.latitude + region.span.latitudeDelta / 2,
+            latitude: region.center.latitude + region.latitudeDelta / 2,
             longitude: region.center.longitude
         )
         let south = CLLocationCoordinate2D(
-            latitude: region.center.latitude - region.span.latitudeDelta / 2,
+            latitude: region.center.latitude - region.latitudeDelta / 2,
             longitude: region.center.longitude
         )
         let east = CLLocationCoordinate2D(
             latitude: region.center.latitude,
-            longitude: region.center.longitude + region.span.longitudeDelta / 2
+            longitude: region.center.longitude + region.longitudeDelta / 2
         )
         let west = CLLocationCoordinate2D(
             latitude: region.center.latitude,
-            longitude: region.center.longitude - region.span.longitudeDelta / 2
+            longitude: region.center.longitude - region.longitudeDelta / 2
         )
 
-        let height = MKMapPoint(north).distance(to: MKMapPoint(south))
-        let width = MKMapPoint(east).distance(to: MKMapPoint(west))
-
-        return MapCamera(
-            centerCoordinate: region.center,
-            distance: max(height, width) * Constants.overviewDistanceFactor,
-            heading: 0,
-            pitch: 0
+        let extent = max(
+            distance(from: north, to: south),
+            distance(from: east, to: west),
+            Constants.minimumOverviewExtentMetres
         )
+
+        return .camera(center: region.center, zoom: zoom(forExtentMetres: extent, at: region.center.latitude))
     }
 
-    fileprivate static func regionForCoordinates(_ coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
+    private static func zoom(forExtentMetres extent: Double, at latitude: CLLocationDegrees) -> CGFloat {
+        let metresPerPoint = extent / Constants.overviewSpanPoints
+        let scale = Constants.metresPerPointAtZoomZero * cos(latitude * .pi / 180) / metresPerPoint
+        return min(Constants.maximumOverviewZoom, CGFloat(log2(max(1, scale))))
+    }
+
+    fileprivate static func regionForCoordinates(
+        _ coordinates: [CLLocationCoordinate2D]
+    ) -> (center: CLLocationCoordinate2D, latitudeDelta: CLLocationDegrees, longitudeDelta: CLLocationDegrees) {
         guard let first = coordinates.first else {
-            return MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006),
-                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-            )
+            return (CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006), 0.02, 0.02)
         }
 
         var minLat = first.latitude
@@ -501,15 +589,37 @@ extension ExerciseCompleteMapWidget {
             maxLon = max(maxLon, c.longitude)
         }
 
-        return MKCoordinateRegion(
-            center: CLLocationCoordinate2D(
+        return (
+            CLLocationCoordinate2D(
                 latitude: (minLat + maxLat) / 2,
                 longitude: (minLon + maxLon) / 2
             ),
-            span: MKCoordinateSpan(
-                latitudeDelta: max(0.01, (maxLat - minLat) * Constants.regionPadding),
-                longitudeDelta: max(0.01, (maxLon - minLon) * Constants.regionPadding)
-            )
+            max(0.01, (maxLat - minLat) * Constants.regionPadding),
+            max(0.01, (maxLon - minLon) * Constants.regionPadding)
+        )
+    }
+}
+
+// MARK: - Colour blending
+
+private extension Color {
+    // Mapbox annotations take one resolved colour per line, so the zone-to-zone
+    // fade has to be mixed here rather than handed over as a gradient.
+    func mixed(with other: Color, by fraction: Double) -> Color {
+        let from = UIColor(self)
+        let to = UIColor(other)
+
+        var fromRed: CGFloat = 0, fromGreen: CGFloat = 0, fromBlue: CGFloat = 0, fromAlpha: CGFloat = 0
+        var toRed: CGFloat = 0, toGreen: CGFloat = 0, toBlue: CGFloat = 0, toAlpha: CGFloat = 0
+        from.getRed(&fromRed, green: &fromGreen, blue: &fromBlue, alpha: &fromAlpha)
+        to.getRed(&toRed, green: &toGreen, blue: &toBlue, alpha: &toAlpha)
+
+        let step = CGFloat(max(0, min(1, fraction)))
+        return Color(
+            red: fromRed + (toRed - fromRed) * step,
+            green: fromGreen + (toGreen - fromGreen) * step,
+            blue: fromBlue + (toBlue - fromBlue) * step,
+            opacity: fromAlpha + (toAlpha - fromAlpha) * step
         )
     }
 }
@@ -559,12 +669,10 @@ extension ExerciseCompleteMapWidget {
         let upperIndex = max(0, min(precomputedRoutePoints.count - 1, Int(ceil(position))))
         let t = position - Double(lowerIndex)
 
-        let a = precomputedRoutePoints[lowerIndex].coordinate
-        let b = precomputedRoutePoints[upperIndex].coordinate
-
-        return CLLocationCoordinate2D(
-            latitude: a.latitude + (b.latitude - a.latitude) * t,
-            longitude: a.longitude + (b.longitude - a.longitude) * t
+        return Self.interpolate(
+            from: precomputedRoutePoints[lowerIndex].coordinate,
+            to: precomputedRoutePoints[upperIndex].coordinate,
+            fraction: t
         )
     }
 
@@ -596,32 +704,32 @@ extension ExerciseCompleteMapWidget {
         }
         chaseHeading = heading
 
-        let camera = MapCamera(
-            centerCoordinate: trailing,
-            distance: Constants.followDistance,
-            heading: heading,
+        let camera = Viewport.camera(
+            center: trailing,
+            zoom: Constants.followZoom,
+            bearing: heading,
             pitch: Constants.followPitch
         )
 
         // Animate the one-off transitions only. Scrubbing fires continuously, and
-        // wrapping every update in `withAnimation` restarts the ease each time, so
+        // wrapping every update in an animation restarts the ease each time, so
         // the camera decelerates towards a target it keeps re-deciding — which
         // reads as a slow crawl. Tracking updates are set directly so the camera
         // stays pinned to the finger.
         guard isFollowing else {
             isFollowing = true
-            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
-                cameraPosition = .camera(camera)
+            withViewportAnimation(.easeOut(duration: Constants.flyToDuration)) {
+                viewport = camera
             }
             return
         }
 
         if isJump {
-            withAnimation(.easeOut(duration: Constants.flyToDuration)) {
-                cameraPosition = .camera(camera)
+            withViewportAnimation(.easeOut(duration: Constants.flyToDuration)) {
+                viewport = camera
             }
         } else {
-            cameraPosition = .camera(camera)
+            viewport = camera
         }
     }
 

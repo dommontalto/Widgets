@@ -5,6 +5,7 @@
 //  Created by Dom Montalto on 1/7/2026.
 //
 
+import CoreLocation
 import SwiftUI
 
 enum ExerciseDayType: CaseIterable {
@@ -131,6 +132,16 @@ struct ExerciseIntervalSegment: Identifiable {
     var weight: Double = 1
 }
 
+struct ExerciseCardioSplit: Identifiable {
+    let index: Int
+    let pace: String
+    // Seconds against the average. Nil on the opening split, which has nothing
+    // to measure itself against yet.
+    let delta: Int?
+
+    var id: Int { index }
+}
+
 struct ExerciseLiveCardioStats {
     let currentPace: String
     let distance: String
@@ -144,6 +155,7 @@ struct ExerciseLiveCardioStats {
     let intervalRemaining: String
     let intervalKind: ExerciseIntervalSegment.Kind
     let segments: [ExerciseIntervalSegment]
+    let splits: [ExerciseCardioSplit]
 
     var intervalColor: Color { intervalKind.color }
 }
@@ -165,8 +177,36 @@ enum ExerciseDemoData {
             ExerciseIntervalSegment(kind: .work, weight: 3000),
             ExerciseIntervalSegment(kind: .walk, weight: 500),
             ExerciseIntervalSegment(kind: .work, weight: 1000),
+        ],
+        splits: [
+            ExerciseCardioSplit(index: 1, pace: "5\u{2019}15", delta: nil),
+            ExerciseCardioSplit(index: 2, pace: "5\u{2019}17", delta: 2),
+            ExerciseCardioSplit(index: 3, pace: "5\u{2019}22", delta: 5),
+            ExerciseCardioSplit(index: 4, pace: "5\u{2019}20", delta: -2),
+            ExerciseCardioSplit(index: 5, pace: "5\u{2019}22", delta: -2),
+            ExerciseCardioSplit(index: 6, pace: "5\u{2019}21", delta: -1),
+            ExerciseCardioSplit(index: 7, pace: "5\u{2019}18", delta: -3),
+            ExerciseCardioSplit(index: 8, pace: "5\u{2019}19", delta: -1),
         ]
     )
+
+    // Two thirds of a loop through the eastern suburbs, so the run reads as
+    // still in progress.
+    static let liveCardioRoute: [CLLocationCoordinate2D] = {
+        let centre = (latitude: -33.8996, longitude: 151.2345)
+        let pointCount = 220
+
+        return (0 ..< pointCount).map { index in
+            let angle = Double(index) / Double(pointCount - 1) * 1.35 * .pi
+            let radiusLatitude = 0.0092 * (1 + (0.22 * sin(angle * 3)))
+            let radiusLongitude = 0.0115 * (1 + (0.18 * cos(angle * 2)))
+
+            return CLLocationCoordinate2D(
+                latitude: centre.latitude + (radiusLatitude * sin(angle)),
+                longitude: centre.longitude + (radiusLongitude * cos(angle))
+            )
+        }
+    }()
 
     static let programStatus = ExerciseProgramStatus(
         mesocycleWeek: 2,
@@ -309,6 +349,28 @@ enum ExerciseDemoData {
             ExerciseWeekLoad(name: "Week 4", strengthFraction: 0.58, cardioFraction: 0.42, ratio: "58/42"),
         ]
     )
+
+    // Sep 2025 – Aug 2026: (month, strength share, share of the busiest month).
+    static let trainingLoadYear: ExerciseTrainingLoad = {
+        let months: [(String, Int, CGFloat)] = [
+            ("Sep", 38, 0.82), ("Oct", 44, 0.90), ("Nov", 52, 0.76), ("Dec", 61, 0.58),
+            ("Jan", 49, 0.94), ("Feb", 41, 0.88), ("Mar", 36, 1.00), ("Apr", 45, 0.85),
+            ("May", 55, 0.79), ("Jun", 47, 0.92), ("Jul", 40, 0.97), ("Aug", 43, 0.68),
+        ]
+
+        return ExerciseTrainingLoad(
+            strengthPercent: 46,
+            cardioPercent: 54,
+            weeks: months.map { name, strength, volume in
+                ExerciseWeekLoad(
+                    name: name,
+                    strengthFraction: volume * CGFloat(strength) / 100,
+                    cardioFraction: volume * CGFloat(100 - strength) / 100,
+                    ratio: "\(strength)/\(100 - strength)"
+                )
+            }
+        )
+    }()
 
     static func consistencyMonths(trainedThroughDay: Int = 45) -> [ExerciseMonthData] {
         // Rest appears twice so untrained days stay common in the demo mix

@@ -25,7 +25,7 @@ struct ExerciseRouteGeneratorSheet: View {
 
     @State private var mode: Mode?
     @State private var is3D = true
-    @State private var isDarkMap = false
+    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
     @State private var viewport: Viewport = .camera(
         center: Constants.initialCenter,
         zoom: Constants.initialZoom,
@@ -49,7 +49,9 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var generationTick = 0
     @State private var scrubProgress: Double = 0
     @State private var isScrubbing = false
+    @State private var isCameraAnimating = false
     @State private var locator = RouteLocator()
+    @State private var isAwaitingFix = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -70,9 +72,11 @@ struct ExerciseRouteGeneratorSheet: View {
         .overlay(alignment: .topLeading) { topBar }
         .brightHaptic(.success, trigger: generationTick)
         .onChange(of: scrubProgress) { _, _ in followRoute() }
-        .onAppear { locator.request() }
+        .onAppear { locate() }
         .onChange(of: locator.lastLocation) { _, location in
-            if let location { fly(to: location.coordinate) }
+            guard isAwaitingFix, let location else { return }
+            isAwaitingFix = false
+            fly(to: location.coordinate)
         }
     }
 
@@ -152,6 +156,8 @@ struct ExerciseRouteGeneratorSheet: View {
             camera.center = event.cameraState.center
             camera.zoom = event.cameraState.zoom
             camera.bearing = event.cameraState.bearing
+            camera.pitch = event.cameraState.pitch
+            syncDimension(to: event.cameraState.pitch)
 
             // The map only moves mid-stroke when a second finger lands (pinch,
             // rotate or pitch) — the user is navigating, not drawing. Deferred
@@ -241,8 +247,15 @@ struct ExerciseRouteGeneratorSheet: View {
             }
 
             if isSearching {
-                BrightSearchBar("Search", text: $searchText)
-                    .onSubmit { performSearch() }
+                BrightSearchBar(
+                    "Search",
+                    text: $searchText,
+                    color: Constants.chromeColor,
+                    textColor: .defaultWhite,
+                    height: BrightButtonSizes.large.rawValue
+                )
+                .environment(\.colorScheme, .dark)
+                .onSubmit { performSearch() }
             }
 
             Spacer(minLength: .spacing2x)
@@ -283,12 +296,13 @@ struct ExerciseRouteGeneratorSheet: View {
                     BrightPillButton(
                         "Clear Route",
                         systemImage: "xmark",
-                        color: .defaultBlack.opacity(.lowOpacity),
+                        color: Constants.chromeColor,
                         textColor: .defaultWhite
                     ) {
                         clearRoute()
                     }
                     .frame(height: BrightButtonSizes.large.rawValue)
+                    .environment(\.colorScheme, .dark)
                 }
             }
 
@@ -322,12 +336,13 @@ struct ExerciseRouteGeneratorSheet: View {
     private var modeColumn: some View {
         VStack(spacing: .spacing2x) {
             mapButton("dot.scope") {
-                locator.request()
+                locate()
             }
 
             mapButton(is3D ? "view.3d" : "view.2d") {
                 toggleDimension()
             }
+            .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
 
             mapButton("hand.tap.fill", isActive: mode == .tap) {
                 select(.tap)
@@ -348,11 +363,12 @@ struct ExerciseRouteGeneratorSheet: View {
         BrightRoundButton(
             systemImage: systemImage,
             size: .large,
-            color: isActive ? .defaultGreen : .defaultBlack.opacity(.lowOpacity),
+            color: isActive ? .defaultGreen : Constants.chromeColor,
             imageColor: isActive ? .defaultBlack : .defaultWhite,
             onTapCallback: isEnabled ? onTap : nil
         )
         .opacity(isEnabled ? .opaque : .semiLowOpacity)
+        .environment(\.colorScheme, .dark)
     }
 
     // MARK: - Bottom card
@@ -366,11 +382,14 @@ struct ExerciseRouteGeneratorSheet: View {
         .frame(height: Constants.cardHeight)
         // Filled behind the glass rather than tinting it, the way the buttons
         // are — a tint alone washes out over the map.
-        .background(Color.defaultBlack.opacity(.lowOpacity), in: Constants.cardShape)
+        .background(Constants.chromeColor, in: Constants.cardShape)
         .modifier(GlassEffect(
             shape: .unevenRoundedRect(top: Constants.cardTopCorner, bottom: Constants.cardBottomCorner),
             interactive: false
         ))
+        // The chrome is white-on-black over the map in either appearance, so
+        // its glass and adaptive tokens have to resolve dark.
+        .environment(\.colorScheme, .dark)
     }
 
     @ViewBuilder
@@ -441,7 +460,8 @@ struct ExerciseRouteGeneratorSheet: View {
     }
 
     private func toggleDimension() {
-        is3D.toggle()
+        withAnimation(.brightEaseInOut) { is3D.toggle() }
+        isCameraAnimating = true
         withViewportAnimation(.easeOut(duration: Constants.cameraAnimation)) {
             viewport = .camera(
                 center: camera.center,
@@ -449,7 +469,17 @@ struct ExerciseRouteGeneratorSheet: View {
                 bearing: camera.bearing,
                 pitch: is3D ? Constants.pitch3D : 0
             )
+        } completion: { _ in
+            Task { isCameraAnimating = false }
         }
+    }
+
+    // Written only when it crosses, since onCameraChanged fires every frame,
+    // and deferred so it lands after the frame that reported the move.
+    private func syncDimension(to pitch: CGFloat) {
+        let isFlat = pitch <= Constants.flatPitch
+        guard !isCameraAnimating, is3D == isFlat else { return }
+        Task { withAnimation(.brightEaseInOut) { is3D = !isFlat } }
     }
 
     private func addTappedPoint(_ coordinate: CLLocationCoordinate2D) {
@@ -752,7 +782,18 @@ struct ExerciseRouteGeneratorSheet: View {
         return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
     }
 
+    // The cached fix moves the camera on the tap itself; the fresh one that
+    // lands seconds later corrects it.
+    private func locate() {
+        isAwaitingFix = true
+        locator.request()
+        if let coordinate = locator.cachedLocation?.coordinate {
+            fly(to: coordinate)
+        }
+    }
+
     private func fly(to coordinate: CLLocationCoordinate2D) {
+        isCameraAnimating = true
         withViewportAnimation(.fly(duration: Constants.cameraAnimation)) {
             viewport = .camera(
                 center: coordinate,
@@ -760,6 +801,8 @@ struct ExerciseRouteGeneratorSheet: View {
                 bearing: 0,
                 pitch: is3D ? Constants.pitch3D : 0
             )
+        } completion: { _ in
+            Task { isCameraAnimating = false }
         }
     }
 }
@@ -799,6 +842,7 @@ private final class CameraStore {
     var center = Constants.initialCenter
     var zoom = Constants.initialZoom
     var bearing: CLLocationDirection = 0
+    var pitch: CGFloat = Constants.pitch3D
 }
 
 private struct Snapshot {
@@ -813,9 +857,15 @@ private final class RouteLocator: NSObject, CLLocationManagerDelegate {
     var lastLocation: CLLocation?
     var isAuthorized = false
 
+    // Whatever CoreLocation already holds, so a tap doesn't wait on a new fix.
+    var cachedLocation: CLLocation? { lastLocation ?? manager.location }
+
     override init() {
         super.init()
         manager.delegate = self
+        // A ten-metre fix arrives far sooner than a best-accuracy one, and the
+        // map is flown to at neighbourhood zoom anyway.
+        manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func request() {
@@ -895,6 +945,9 @@ private enum Constants {
     static let initialZoom: CGFloat = 14.5
     static let flyZoom: CGFloat = 15
     static let pitch3D: CGFloat = 55
+    // Mapbox rarely lands on an exact 0 at the bottom of a pitch drag.
+    static let flatPitch: CGFloat = 1
+    static let chromeColor = Color.defaultBlack.opacity(.lowOpacity)
     static let cameraAnimation: TimeInterval = 0.6
     static let searchSpanDegrees: CLLocationDegrees = 0.5
 
