@@ -25,7 +25,8 @@ struct ExerciseRouteGeneratorSheet: View {
 
     @State private var mode: Mode?
     @State private var is3D = true
-    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var viewport: Viewport = .camera(
         center: Constants.initialCenter,
         zoom: Constants.initialZoom,
@@ -145,7 +146,7 @@ struct ExerciseRouteGeneratorSheet: View {
                 }
             }
         }
-        .mapStyle(.standard(lightPreset: isDarkMap ? .night : .day))
+        .mapStyle(.standard(lightPreset: colorScheme == .dark ? .night : .day))
         .gestureOptions(gestureOptions)
         // No compass or scale bar — the logo and attribution have to stay.
         .ornamentOptions(OrnamentOptions(
@@ -258,20 +259,13 @@ struct ExerciseRouteGeneratorSheet: View {
                 BrightSearchBar(
                     "Search",
                     text: $searchText,
-                    color: Constants.chromeColor,
-                    textColor: .defaultWhite,
                     height: BrightButtonSizes.large.rawValue
                 )
-                .environment(\.colorScheme, .dark)
                 .onSubmit { performSearch() }
             }
 
             Spacer(minLength: .spacing2x)
 
-            mapButton(isDarkMap ? "moon.fill" : "sun.max.fill") {
-                withAnimation(.brightSnappy) { isDarkMap.toggle() }
-            }
-            .contentTransition(.symbolEffect(.replace))
 
             mapButton("magnifyingglass") {
                 withAnimation(.brightSnappy) { isSearching.toggle() }
@@ -304,13 +298,10 @@ struct ExerciseRouteGeneratorSheet: View {
                     BrightPillButton(
                         "Clear Route",
                         systemImage: "xmark",
-                        color: Constants.chromeColor,
-                        textColor: .defaultWhite
                     ) {
                         clearRoute()
                     }
                     .frame(height: BrightButtonSizes.large.rawValue)
-                    .environment(\.colorScheme, .dark)
                 }
             }
 
@@ -371,33 +362,18 @@ struct ExerciseRouteGeneratorSheet: View {
         BrightRoundButton(
             systemImage: systemImage,
             size: .large,
-            color: isActive ? .defaultGreen : Constants.chromeColor,
-            imageColor: isActive ? .defaultBlack : .defaultWhite,
+            color: isActive ? .defaultGreen : nil,
             onTapCallback: isEnabled ? onTap : nil
         )
         .opacity(isEnabled ? .opaque : .semiLowOpacity)
-        .environment(\.colorScheme, .dark)
     }
 
     // MARK: - Bottom card
 
     private var bottomCard: some View {
-        VStack(spacing: .spacing2x) {
+        ExerciseRouteCard {
             cardContent
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, .spacing3x)
-        .frame(height: Constants.cardHeight)
-        // Filled behind the glass rather than tinting it, the way the buttons
-        // are — a tint alone washes out over the map.
-        .background(Constants.chromeColor, in: Constants.cardShape)
-        .modifier(GlassEffect(
-            shape: .unevenRoundedRect(top: Constants.cardTopCorner, bottom: Constants.cardBottomCorner),
-            interactive: false
-        ))
-        // The chrome is white-on-black over the map in either appearance, so
-        // its glass and adaptive tokens have to resolve dark.
-        .environment(\.colorScheme, .dark)
     }
 
     @ViewBuilder
@@ -405,7 +381,7 @@ struct ExerciseRouteGeneratorSheet: View {
         if isGenerating {
             BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
 
-            BrightText("Generating route…", size: .body2, color: .defaultWhite)
+            BrightText("Generating route…", size: .body2)
         } else if let route {
             statsRow(route)
 
@@ -415,9 +391,9 @@ struct ExerciseRouteGeneratorSheet: View {
         } else if mode == .draw {
             Image(systemName: "pencil.and.scribble")
                 .font(.system(size: Constants.drawIconSize, weight: .medium))
-                .foregroundStyle(Color.defaultWhite)
+                .foregroundStyle(Color.textColor)
 
-            BrightText("Draw on the map to create a route.", size: .body2, color: .defaultWhite)
+            BrightText("Draw on the map to create a route.", size: .body2)
         } else {
             Image(systemName: "map.fill")
                 .font(.system(size: Constants.welcomeIconSize))
@@ -426,7 +402,7 @@ struct ExerciseRouteGeneratorSheet: View {
             BrightText(
                 "Welcome to route generator.\nTap on two points or draw to auto generate a route.",
                 size: .body2,
-                color: .defaultWhite
+                color: .lightTextColor
             )
             .multilineTextAlignment(.center)
             .frame(maxWidth: Constants.welcomeTextWidth)
@@ -434,21 +410,11 @@ struct ExerciseRouteGeneratorSheet: View {
     }
 
     private func statsRow(_ route: GeneratedRoute) -> some View {
-        HStack(spacing: .spacing0x) {
-            stat("Distance", value: route.formattedDistance)
-            stat("Elevation", value: route.formattedElevation)
-            stat("Est. Time", value: route.formattedDuration)
-        }
-    }
-
-    private func stat(_ title: String, value: String) -> some View {
-        VStack(spacing: .spacing1x) {
-            BrightText(title, size: .body2, color: .defaultWhite.opacity(.lowOpacity), weight: .regular)
-
-            BrightText(value, size: .standout2, color: .defaultWhite)
-                .monospacedDigit()
-        }
-        .frame(maxWidth: .infinity)
+        ExerciseRouteStats(
+            distance: route.formattedDistance,
+            elevation: route.formattedElevation,
+            estimatedTime: route.formattedDuration
+        )
     }
 
     private var routeScrubber: some View {
@@ -956,7 +922,6 @@ private enum Constants {
     static let pitch3D: CGFloat = 55
     // Mapbox rarely lands on an exact 0 at the bottom of a pitch drag.
     static let flatPitch: CGFloat = 1
-    static let chromeColor = Color.defaultBlack.opacity(.lowOpacity)
     static let cameraAnimation: TimeInterval = 0.6
     static let searchSpanDegrees: CLLocationDegrees = 0.5
 
@@ -983,19 +948,7 @@ private enum Constants {
     static let runningSecondsPerKm: Double = 330
     static let estimatedClimbPerKm: Double = 4.4
 
-    // The live session card's geometry, so the two bottom cards read as one.
-    static let cardHeight: CGFloat = 160
-    static let cardTopCorner: CGFloat = 36
-    static let cardBottomCorner: CGFloat = 44
 
-    static var cardShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(cornerRadii: .init(
-            topLeading: cardTopCorner,
-            bottomLeading: cardBottomCorner,
-            bottomTrailing: cardBottomCorner,
-            topTrailing: cardTopCorner
-        ))
-    }
 
     // Scrubbing rides the route at street level, looking along it.
     static let followZoom: CGFloat = 17

@@ -354,22 +354,23 @@ enum ExerciseDemoData {
         ]
     )
 
-    // Sep 2025 – Aug 2026: (month, strength share, share of the busiest month).
+    // Sep 2025 – Aug 2026: (month, strength share). The pair fills the track,
+    // the same way the four-week rows do.
     static let trainingLoadYear: ExerciseTrainingLoad = {
-        let months: [(String, Int, CGFloat)] = [
-            ("Sep", 38, 0.82), ("Oct", 44, 0.90), ("Nov", 52, 0.76), ("Dec", 61, 0.58),
-            ("Jan", 49, 0.94), ("Feb", 41, 0.88), ("Mar", 36, 1.00), ("Apr", 45, 0.85),
-            ("May", 55, 0.79), ("Jun", 47, 0.92), ("Jul", 40, 0.97), ("Aug", 43, 0.68),
+        let months: [(String, Int)] = [
+            ("Sep", 38), ("Oct", 44), ("Nov", 52), ("Dec", 61),
+            ("Jan", 49), ("Feb", 41), ("Mar", 36), ("Apr", 45),
+            ("May", 55), ("Jun", 47), ("Jul", 40), ("Aug", 43),
         ]
 
         return ExerciseTrainingLoad(
             strengthPercent: 46,
             cardioPercent: 54,
-            weeks: months.map { name, strength, volume in
+            weeks: months.map { name, strength in
                 ExerciseWeekLoad(
                     name: name,
-                    strengthFraction: volume * CGFloat(strength) / 100,
-                    cardioFraction: volume * CGFloat(100 - strength) / 100,
+                    strengthFraction: CGFloat(strength) / 100,
+                    cardioFraction: CGFloat(100 - strength) / 100,
                     ratio: "\(strength)/\(100 - strength)"
                 )
             }

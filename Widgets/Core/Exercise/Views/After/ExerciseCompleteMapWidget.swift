@@ -45,8 +45,7 @@ struct ExerciseCompleteMapWidget: View {
     @State private var lastFraction: Double = 0
     @State private var isFollowing = false
 
-    // Shared with the route generator so both maps read the same way.
-    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
+    @Environment(\.colorScheme) private var colorScheme
 
     // Smoothing the route is expensive enough that it must not re-run on every
     // body evaluation, so it happens once at init.
@@ -178,7 +177,7 @@ struct ExerciseCompleteMapWidget: View {
             }
         }
         .mapStyle(.standard(
-            lightPreset: isDarkMap ? .night : .day,
+            lightPreset: colorScheme == .dark ? .night : .day,
             show3dObjects: isFullScreen
         ))
         .gestureOptions(gestureOptions)
@@ -218,7 +217,7 @@ struct ExerciseCompleteMapWidget: View {
     // Tied to the map's own light preset rather than the system appearance, so
     // the faint line stays legible against whichever basemap is showing.
     private var fadedRouteColor: Color {
-        (isDarkMap ? Color.defaultWhite : .defaultBlack).opacity(.veryLowOpacity)
+        (colorScheme == .dark ? Color.defaultWhite : .defaultBlack).opacity(.veryLowOpacity)
     }
 
     private var fullRoute: [CLLocationCoordinate2D] {
@@ -276,7 +275,7 @@ struct ExerciseCompleteMapWidget: View {
     private func routeFlag(_ systemImage: String) -> some View {
         Image(systemName: systemImage)
             .font(.system(size: Constants.markerSize, weight: .bold))
-            .foregroundStyle(isDarkMap ? Color.defaultWhite : .defaultBlack)
+            .foregroundStyle(colorScheme == .dark ? Color.defaultWhite : .defaultBlack)
             // The basemap is busy, so the glyph needs some separation from it.
             .shadow(color: .black.opacity(.veryLowOpacity), radius: 2, y: 1)
     }

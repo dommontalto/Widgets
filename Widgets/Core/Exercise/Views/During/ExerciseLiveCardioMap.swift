@@ -15,6 +15,8 @@ struct ExerciseLiveCardioMap: View {
     var route: [CLLocationCoordinate2D] = ExerciseDemoData.liveCardioRoute
     // How far along the run the marker sits, as a fraction of the route.
     var progress: Double = 1
+    var is3D = false
+    var recentreTick = 0
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -49,6 +51,8 @@ struct ExerciseLiveCardioMap: View {
         ))
         .ignoresSafeArea()
         .onAppear { frameRoute() }
+        .onChange(of: is3D) { _, _ in frameRoute() }
+        .onChange(of: recentreTick) { _, _ in followPuck() }
     }
 
     private var runnerMarker: some View {
@@ -66,20 +70,33 @@ struct ExerciseLiveCardioMap: View {
         return route[index]
     }
 
+    private func followPuck() {
+        withViewportAnimation(.easeOut(duration: Constants.cameraAnimation)) {
+            viewport = .followPuck(
+                zoom: Constants.followZoom,
+                bearing: .heading,
+                pitch: is3D ? Constants.pitch3D : 0
+            )
+        }
+    }
+
     private func frameRoute() {
         guard route.count >= 2 else {
-            viewport = .followPuck(zoom: Constants.followZoom, bearing: .heading)
+            followPuck()
             return
         }
-        viewport = .overview(
-            geometry: LineString(route),
-            geometryPadding: EdgeInsets(
-                top: Constants.overviewPadding,
-                leading: Constants.overviewPadding,
-                bottom: Constants.overviewPadding,
-                trailing: Constants.overviewPadding
+        withViewportAnimation(.easeOut(duration: Constants.cameraAnimation)) {
+            viewport = .overview(
+                geometry: LineString(route),
+                pitch: is3D ? Constants.pitch3D : 0,
+                geometryPadding: EdgeInsets(
+                    top: Constants.overviewPadding,
+                    leading: Constants.overviewPadding,
+                    bottom: Constants.overviewPadding,
+                    trailing: Constants.overviewPadding
+                )
             )
-        )
+        }
     }
 
     private enum Constants {
@@ -88,6 +105,8 @@ struct ExerciseLiveCardioMap: View {
         static let markerSize: CGFloat = .spacing6x
         static let markerGlyphSize: CGFloat = 17
         static let followZoom: CGFloat = 15
+        static let pitch3D: CGFloat = 65
+        static let cameraAnimation: TimeInterval = 0.6
         static let overviewPadding: CGFloat = .spacing8x
     }
 }

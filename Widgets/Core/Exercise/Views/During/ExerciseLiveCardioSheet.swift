@@ -25,6 +25,8 @@ struct ExerciseLiveCardioSheet: View {
     // the top inset handed back through this.
     @State private var topInset: CGFloat = 0
     @State private var routeProgress: Double = 1
+    @State private var is3D = false
+    @State private var recentreTick = 0
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -33,7 +35,7 @@ struct ExerciseLiveCardioSheet: View {
 
             bottomBar
         }
-        .overlay(alignment: .topTrailing) { minimiseButton }
+        .overlay(alignment: .top) { topChrome }
         .background(Color.defaultBackground.ignoresSafeArea())
         .background {
             Color.clear
@@ -51,11 +53,27 @@ struct ExerciseLiveCardioSheet: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
+    private var topChrome: some View {
+        VStack(spacing: .spacing2x) {
+            HStack(spacing: .spacing0x) {
+                Spacer(minLength: .spacing0x)
+
+                minimiseButton
+            }
+
+            if page == Constants.mapPage {
+                mapCard
+                    .transition(.blurReplace)
+            }
+        }
+        .padding(.horizontal, .spacing3x)
+        .animation(.brightSnappy, value: page)
+    }
+
     private var minimiseButton: some View {
         BrightRoundButton(systemImage: "arrow.down.right.and.arrow.up.left", size: .large) {
             if let onClose { onClose() } else { dismiss() }
         }
-        .padding(.trailing, .spacing3x)
     }
 
     // The pages run the full height of the screen; the indicator and the
@@ -63,7 +81,7 @@ struct ExerciseLiveCardioSheet: View {
     private var bottomBar: some View {
         VStack(spacing: .spacing0x) {
             if page == Constants.mapPage {
-                mapCard
+                mapControls
                     .padding(.horizontal, .spacing3x)
                     .padding(.bottom, .spacing2x)
                     .transition(.blurReplace)
@@ -78,40 +96,34 @@ struct ExerciseLiveCardioSheet: View {
 
     // The route generator's card, carried over so the two maps read as one.
     private var mapCard: some View {
-        VStack(spacing: .spacing2x) {
-            HStack(spacing: .spacing0x) {
-                mapStat("Distance", value: session.distance)
-                mapStat("Elevation", value: session.elevation)
-                mapStat("Est. Time", value: session.estimatedTime)
-            }
+        ExerciseRouteCard(bottomCorner: ExerciseRouteCardGeometry.topCorner) {
+            ExerciseRouteStats(
+                distance: session.distance,
+                elevation: session.elevation,
+                estimatedTime: session.estimatedTime
+            )
 
             routeScrubber
                 .padding(.top, .spacing1x)
                 .padding(.horizontal, .spacing1x)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, .spacing3x)
-        .frame(height: Constants.cardHeight)
-        // Filled behind the glass rather than tinting it — a tint alone washes
-        // out over the map.
-        .background(Constants.chromeColor, in: Constants.cardShape)
-        .modifier(GlassEffect(
-            shape: .unevenRoundedRect(top: Constants.cardCorner, bottom: Constants.cardCorner),
-            interactive: false
-        ))
-        // White on black over the map in either appearance, so its glass and
-        // adaptive tokens have to resolve dark.
-        .environment(\.colorScheme, .dark)
     }
 
-    private func mapStat(_ title: String, value: String) -> some View {
-        VStack(spacing: .spacing1x) {
-            BrightText(title, size: .body2, color: .defaultWhite.opacity(.lowOpacity), weight: .regular)
+    private var mapControls: some View {
+        HStack(spacing: .spacing0x) {
+            Spacer(minLength: .spacing0x)
 
-            BrightText(value, size: .standout2, color: .defaultWhite)
-                .monospacedDigit()
+            VStack(spacing: .spacing2x) {
+                BrightRoundButton(systemImage: "dot.scope", size: .large) {
+                    recentreTick += 1
+                }
+
+                BrightRoundButton(systemImage: is3D ? "view.3d" : "view.2d", size: .large) {
+                    withAnimation(.brightEaseInOut) { is3D.toggle() }
+                }
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+            }
         }
-        .frame(maxWidth: .infinity)
     }
 
     private var routeScrubber: some View {
@@ -131,7 +143,7 @@ struct ExerciseLiveCardioSheet: View {
                 .padding(.top, topInset + .spacing2x)
                 .tag(1)
 
-            ExerciseLiveCardioMap(progress: routeProgress)
+            ExerciseLiveCardioMap(progress: routeProgress, is3D: is3D, recentreTick: recentreTick)
                 // The pager lays its pages out inside the safe area whatever
                 // the TabView ignores, so the map takes the top inset back.
                 .padding(.top, -topInset)
@@ -369,18 +381,7 @@ struct ExerciseLiveCardioSheet: View {
         static let pageCount = 3
         static let statsPage = 1
         static let mapPage = 2
-        static let chromeColor = Color.defaultBlack.opacity(.lowOpacity)
-        static let cardHeight: CGFloat = 120
-        static let cardCorner: CGFloat = 36
 
-        static var cardShape: UnevenRoundedRectangle {
-            UnevenRoundedRectangle(cornerRadii: .init(
-                topLeading: cardCorner,
-                bottomLeading: cardCorner,
-                bottomTrailing: cardCorner,
-                topTrailing: cardCorner
-            ))
-        }
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
         // Fast enough that the demo run crosses a leg while you watch.
