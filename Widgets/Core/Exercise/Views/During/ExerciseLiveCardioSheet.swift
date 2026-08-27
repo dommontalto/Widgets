@@ -80,6 +80,9 @@ struct ExerciseLiveCardioSheet: View {
                 .tag(1)
 
             ExerciseLiveCardioMap()
+                // The pager lays its pages out inside the safe area whatever
+                // the TabView ignores, so the map takes the top inset back.
+                .padding(.top, -topInset)
                 .tag(2)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
