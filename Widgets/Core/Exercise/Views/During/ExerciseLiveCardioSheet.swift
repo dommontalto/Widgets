@@ -24,9 +24,7 @@ struct ExerciseLiveCardioSheet: View {
     // The pages ignore the safe area so the map can bleed; the text pages get
     // the top inset handed back through this.
     @State private var topInset: CGFloat = 0
-    // Shared with the route generator and the completed map, so all three read
-    // the same way.
-    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
+    @State private var routeProgress: Double = 1
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -35,7 +33,7 @@ struct ExerciseLiveCardioSheet: View {
 
             bottomBar
         }
-        .overlay(alignment: .topTrailing) { topBar }
+        .overlay(alignment: .topTrailing) { minimiseButton }
         .background(Color.defaultBackground.ignoresSafeArea())
         .background {
             Color.clear
@@ -53,47 +51,72 @@ struct ExerciseLiveCardioSheet: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    private var topBar: some View {
-        HStack(spacing: .spacing2x) {
-            // The map is the only page it changes anything on.
-            if page == Constants.mapPage {
-                mapStyleButton
-                    .transition(.blurReplace)
-            }
-
-            minimiseButton
-        }
-        .padding(.trailing, .spacing3x)
-        .animation(.brightSnappy, value: page)
-    }
-
-    private var mapStyleButton: some View {
-        BrightRoundButton(
-            systemImage: isDarkMap ? "moon.fill" : "sun.max.fill",
-            size: .large,
-            color: Constants.chromeColor,
-            imageColor: .defaultWhite
-        ) {
-            withAnimation(.brightSnappy) { isDarkMap.toggle() }
-        }
-        .contentTransition(.symbolEffect(.replace))
-        .environment(\.colorScheme, .dark)
-    }
-
     private var minimiseButton: some View {
         BrightRoundButton(systemImage: "arrow.down.right.and.arrow.up.left", size: .large) {
             if let onClose { onClose() } else { dismiss() }
         }
+        .padding(.trailing, .spacing3x)
     }
 
     // The pages run the full height of the screen; the indicator and the
     // controls ride above them.
     private var bottomBar: some View {
         VStack(spacing: .spacing0x) {
+            if page == Constants.mapPage {
+                mapCard
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.bottom, .spacing2x)
+                    .transition(.blurReplace)
+            }
+
             BrightPageIndicator(total: Constants.pageCount, activeIndex: $page)
 
             controls
         }
+        .animation(.brightSnappy, value: page)
+    }
+
+    // The route generator's card, carried over so the two maps read as one.
+    private var mapCard: some View {
+        VStack(spacing: .spacing2x) {
+            HStack(spacing: .spacing0x) {
+                mapStat("Distance", value: session.distance)
+                mapStat("Elevation", value: session.elevation)
+                mapStat("Est. Time", value: session.estimatedTime)
+            }
+
+            routeScrubber
+                .padding(.top, .spacing1x)
+                .padding(.horizontal, .spacing1x)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, .spacing3x)
+        .frame(height: Constants.cardHeight)
+        // Filled behind the glass rather than tinting it — a tint alone washes
+        // out over the map.
+        .background(Constants.chromeColor, in: Constants.cardShape)
+        .modifier(GlassEffect(
+            shape: .unevenRoundedRect(top: Constants.cardCorner, bottom: Constants.cardCorner),
+            interactive: false
+        ))
+        // White on black over the map in either appearance, so its glass and
+        // adaptive tokens have to resolve dark.
+        .environment(\.colorScheme, .dark)
+    }
+
+    private func mapStat(_ title: String, value: String) -> some View {
+        VStack(spacing: .spacing1x) {
+            BrightText(title, size: .body2, color: .defaultWhite.opacity(.lowOpacity), weight: .regular)
+
+            BrightText(value, size: .standout2, color: .defaultWhite)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var routeScrubber: some View {
+        Slider(value: $routeProgress, in: 0 ... 1)
+            .tint(Color.defaultSkyBlueCyan)
     }
 
     // MARK: - Pages
@@ -108,7 +131,7 @@ struct ExerciseLiveCardioSheet: View {
                 .padding(.top, topInset + .spacing2x)
                 .tag(1)
 
-            ExerciseLiveCardioMap()
+            ExerciseLiveCardioMap(progress: routeProgress)
                 // The pager lays its pages out inside the safe area whatever
                 // the TabView ignores, so the map takes the top inset back.
                 .padding(.top, -topInset)
@@ -347,6 +370,17 @@ struct ExerciseLiveCardioSheet: View {
         static let statsPage = 1
         static let mapPage = 2
         static let chromeColor = Color.defaultBlack.opacity(.lowOpacity)
+        static let cardHeight: CGFloat = 120
+        static let cardCorner: CGFloat = 36
+
+        static var cardShape: UnevenRoundedRectangle {
+            UnevenRoundedRectangle(cornerRadii: .init(
+                topLeading: cardCorner,
+                bottomLeading: cardCorner,
+                bottomTrailing: cardCorner,
+                topTrailing: cardCorner
+            ))
+        }
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
         // Fast enough that the demo run crosses a leg while you watch.

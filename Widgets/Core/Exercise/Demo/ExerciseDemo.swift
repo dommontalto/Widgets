@@ -145,6 +145,8 @@ struct ExerciseCardioSplit: Identifiable {
 struct ExerciseLiveCardioStats {
     let currentPace: String
     let distance: String
+    let elevation: String
+    let estimatedTime: String
     let heartRate: String
     let heartRateZone: String
     let averagePace: String
@@ -164,6 +166,8 @@ enum ExerciseDemoData {
     static let liveCardioStats = ExerciseLiveCardioStats(
         currentPace: "3\u{2019}23 / KM",
         distance: "5.24 KM",
+        elevation: "96 M",
+        estimatedTime: "28 Min",
         heartRate: "136",
         heartRateZone: "Z5",
         averagePace: "5\u{2019}21",

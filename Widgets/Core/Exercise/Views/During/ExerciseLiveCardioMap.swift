@@ -13,10 +13,10 @@ import SwiftUI
 // covered, in the same sky blue as the screen's beam.
 struct ExerciseLiveCardioMap: View {
     var route: [CLLocationCoordinate2D] = ExerciseDemoData.liveCardioRoute
+    // How far along the run the marker sits, as a fraction of the route.
+    var progress: Double = 1
 
-    // Shared with the route generator and the completed map so all three read
-    // the same way.
-    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var viewport: Viewport = .idle
 
@@ -34,14 +34,14 @@ struct ExerciseLiveCardioMap: View {
                     .lineEmissiveStrength(Constants.routeEmissiveStrength)
             }
 
-            if let current = route.last {
+            if let current = coordinate(atFraction: progress) {
                 MapViewAnnotation(coordinate: current) {
                     runnerMarker
                 }
                 .allowOverlap(true)
             }
         }
-        .mapStyle(.standard(lightPreset: isDarkMap ? .night : .day))
+        .mapStyle(.standard(lightPreset: colorScheme == .dark ? .night : .day))
         // No compass or scale bar. The logo and attribution have to stay.
         .ornamentOptions(OrnamentOptions(
             scaleBar: ScaleBarViewOptions(visibility: .hidden),
@@ -58,6 +58,12 @@ struct ExerciseLiveCardioMap: View {
             .frame(width: Constants.markerSize, height: Constants.markerSize)
             .background(Color.defaultSkyBlueCyan, in: Circle())
             .shadow(color: .black.opacity(.veryLowOpacity), radius: 4, y: 2)
+    }
+
+    private func coordinate(atFraction fraction: Double) -> CLLocationCoordinate2D? {
+        guard !route.isEmpty else { return nil }
+        let index = Int((Double(route.count - 1) * min(max(fraction, 0), 1)).rounded())
+        return route[index]
     }
 
     private func frameRoute() {
