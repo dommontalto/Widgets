@@ -24,6 +24,9 @@ struct ExerciseLiveCardioSheet: View {
     // The pages ignore the safe area so the map can bleed; the text pages get
     // the top inset handed back through this.
     @State private var topInset: CGFloat = 0
+    // Shared with the route generator and the completed map, so all three read
+    // the same way.
+    @AppStorage("exerciseRouteMapIsDark") private var isDarkMap = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -32,7 +35,7 @@ struct ExerciseLiveCardioSheet: View {
 
             bottomBar
         }
-        .overlay(alignment: .topTrailing) { minimiseButton }
+        .overlay(alignment: .topTrailing) { topBar }
         .background(Color.defaultBackground.ignoresSafeArea())
         .background {
             Color.clear
@@ -50,11 +53,37 @@ struct ExerciseLiveCardioSheet: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
+    private var topBar: some View {
+        HStack(spacing: .spacing2x) {
+            // The map is the only page it changes anything on.
+            if page == Constants.mapPage {
+                mapStyleButton
+                    .transition(.blurReplace)
+            }
+
+            minimiseButton
+        }
+        .padding(.trailing, .spacing3x)
+        .animation(.brightSnappy, value: page)
+    }
+
+    private var mapStyleButton: some View {
+        BrightRoundButton(
+            systemImage: isDarkMap ? "moon.fill" : "sun.max.fill",
+            size: .large,
+            color: Constants.chromeColor,
+            imageColor: .defaultWhite
+        ) {
+            withAnimation(.brightSnappy) { isDarkMap.toggle() }
+        }
+        .contentTransition(.symbolEffect(.replace))
+        .environment(\.colorScheme, .dark)
+    }
+
     private var minimiseButton: some View {
         BrightRoundButton(systemImage: "arrow.down.right.and.arrow.up.left", size: .large) {
             if let onClose { onClose() } else { dismiss() }
         }
-        .padding(.trailing, .spacing3x)
     }
 
     // The pages run the full height of the screen; the indicator and the
@@ -83,7 +112,7 @@ struct ExerciseLiveCardioSheet: View {
                 // The pager lays its pages out inside the safe area whatever
                 // the TabView ignores, so the map takes the top inset back.
                 .padding(.top, -topInset)
-                .tag(2)
+                .tag(Constants.mapPage)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
     }
@@ -316,6 +345,8 @@ struct ExerciseLiveCardioSheet: View {
     private enum Constants {
         static let pageCount = 3
         static let statsPage = 1
+        static let mapPage = 2
+        static let chromeColor = Color.defaultBlack.opacity(.lowOpacity)
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
         // Fast enough that the demo run crosses a leg while you watch.

@@ -29,9 +29,12 @@ struct ExerciseLiveCardioSplits: View {
                     row(split, isLast: index == splits.count - 1)
                 }
             }
+            // Room to pull the first and last splits clear of the fades.
+            .padding(.top, Constants.topFade)
+            .padding(.bottom, Constants.bottomFade)
         }
-        // The last rows run out under the controls rather than stopping short
-        // of them.
+        // The rows dissolve into the header and the controls rather than
+        // stopping short of them.
         .mask(fade)
     }
 
@@ -70,22 +73,25 @@ struct ExerciseLiveCardioSplits: View {
         delta > 0 ? "+\(delta)" : "\u{2212}\(abs(delta))"
     }
 
+    // Measured in points rather than fractions: the bottom fade has to clear
+    // the page dots and the controls, whatever the screen's height.
     private var fade: some View {
-        LinearGradient(
-            stops: [
-                .init(color: .black, location: 0),
-                .init(color: .black, location: Constants.fadeStart),
-                .init(color: .clear, location: 1),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        VStack(spacing: .spacing0x) {
+            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                .frame(height: Constants.topFade)
+
+            Rectangle()
+
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: Constants.bottomFade)
+        }
     }
 
     private enum Constants {
         static let rowHeight: CGFloat = .spacing12x + .spacing2x
         static let paceWidth: CGFloat = .spacing12x + .spacing8x
-        static let fadeStart: CGFloat = 0.85
+        static let topFade: CGFloat = .spacing6x
+        static let bottomFade: CGFloat = .spacing12x + .spacing12x + .spacing2x
     }
 }
 
