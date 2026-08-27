@@ -13,7 +13,7 @@ struct ExerciseLiveCardioSplits: View {
     var splits: [ExerciseCardioSplit] = ExerciseDemoData.liveCardioStats.splits
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing4x) {
+        VStack(alignment: .leading, spacing: .spacing0x) {
             BrightText("KM SPLITS", size: .standout4, color: .semiLightTextColor)
                 .padding(.horizontal, .spacing4x)
 
@@ -30,7 +30,7 @@ struct ExerciseLiveCardioSplits: View {
                 }
             }
             // Room to pull the first and last splits clear of the fades.
-            .padding(.top, Constants.topFade)
+            .padding(.top, Constants.listTopPadding)
             .padding(.bottom, Constants.bottomFade)
         }
         // The rows dissolve into the header and the controls rather than
@@ -82,8 +82,16 @@ struct ExerciseLiveCardioSplits: View {
 
             Rectangle()
 
-            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
-                .frame(height: Constants.bottomFade)
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black.opacity(.mediumOpacity), location: Constants.bottomFadeKnee),
+                    .init(color: .clear, location: 1),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: Constants.bottomFade)
         }
     }
 
@@ -91,7 +99,11 @@ struct ExerciseLiveCardioSplits: View {
         static let rowHeight: CGFloat = .spacing12x + .spacing2x
         static let paceWidth: CGFloat = .spacing12x + .spacing8x
         static let topFade: CGFloat = .spacing6x
+        static let listTopPadding: CGFloat = .spacing2x
         static let bottomFade: CGFloat = .spacing12x + .spacing12x + .spacing2x
+        // Most of the fade is spent in the first third, so a row dissolves
+        // sharply rather than trailing off over the whole stretch.
+        static let bottomFadeKnee: CGFloat = 0.3
     }
 }
 
