@@ -40,6 +40,15 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
+                    widgetLabel("ExerciseCalendarWidgetEmpty")
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Program") {
+                        ExerciseCalendarWidgetEmpty {
+                            showingProgram = true
+                        }
+                    }
+                        .padding(.top, .spacing2x)
+                        .padding(.bottom, .spacing3x)
+
                     widgetLabel("ExerciseCalendarWidget")
                     ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Calendar") {
                         ExerciseCalendarWidget()
@@ -47,21 +56,9 @@ struct ContentView: View {
                         .padding(.top, .spacing2x)
                         .padding(.bottom, .spacing3x)
 
-                    widgetLabel("ExerciseUpcomingWidget")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Upcoming") {
-                        ExerciseUpcomingWidget(
-                            onQuickSession: { session in start(session) },
-                            onCreateSession: { showingSession = true }
-                        )
-                    }
-                        .padding(.top, .spacing2x)
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseWeeklyPlanWidget")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Weekly plan (Demo Data)") {
-                        ExerciseWeeklyPlanWidget {
-                            showingProgram = true
-                        }
+                    widgetLabel("ExerciseProgramPhaseWidget")
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
+                        ExerciseProgramPhaseWidget()
                     }
                         .padding(.bottom, .spacing3x)
 
@@ -101,12 +98,6 @@ struct ContentView: View {
                     widgetLabel("ExerciseTrainingLoadWidget")
                     ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
                         ExerciseTrainingLoadWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseProgramPhaseWidget")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
-                        ExerciseProgramPhaseWidget()
                     }
                         .padding(.bottom, .spacing3x)
 

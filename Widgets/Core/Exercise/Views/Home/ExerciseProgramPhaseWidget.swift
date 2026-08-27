@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ExerciseProgramPhaseWidget: View {
     private let barHeight: CGFloat = 29
-    private let labelWidth: CGFloat = 52
+    private let labelWidth: CGFloat = .spacing11x
 
     @State private var status = ExerciseDemoData.programStatus
 
@@ -19,18 +19,18 @@ struct ExerciseProgramPhaseWidget: View {
                 Image(systemName: "ellipsis.calendar")
                     .font(.standard(size: .body1, weight: .light))
                     .foregroundStyle(Color.textColor)
-                BrightText("Mesocycle week:", size: .body1)
+                BrightText("Program", size: .body1)
             }
 
             BrightText("\(status.mesocycleWeek)/\(status.mesocycleLength)", size: .standout1)
                 .monospacedDigit()
                 .padding(.bottom, .spacing2x)
 
-            row("Macro") { macroBar }
+            row("Period") { macroBar }
             dashedDivider
-            row("Meso") { mesoBar }
+            row("Block") { blockBar }
             dashedDivider
-            row("Micro") { microBar }
+            row("Sessions") { sessionBar }
 
             VStack(alignment: .leading, spacing: .spacing2x) {
                 Image(systemName: "sparkles")
@@ -84,7 +84,7 @@ struct ExerciseProgramPhaseWidget: View {
         .frame(height: barHeight)
     }
 
-    private var mesoBar: some View {
+    private var blockBar: some View {
         HStack(spacing: .spacing2x) {
             ForEach(0..<status.mesoCount, id: \.self) { i in
                 GeometryReader { proxy in
@@ -110,7 +110,7 @@ struct ExerciseProgramPhaseWidget: View {
         return 0
     }
 
-    private var microBar: some View {
+    private var sessionBar: some View {
         HStack(spacing: .spacing2x) {
             ForEach(0..<status.microWeeks, id: \.self) { week in
                 HStack(spacing: .spacing05x) {
