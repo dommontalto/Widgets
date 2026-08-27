@@ -550,7 +550,7 @@ struct ExerciseLiveStrengthSheet: View {
         // Rest rings the status card; working is signalled on the active set row.
         .borderBeam(
             .md,
-            colorVariant: .skyBlueCyan,
+            colorVariant: .defaultGreen,
             theme: .auto,
             active: isResting && !isPaused,
             borderRadius: Constants.statusBeamRadius,

@@ -66,7 +66,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
 
             // Aligned on the value rather than the whole stack, so the caption
             // sits above it without dragging it off the buttons' centre line.
-            HStack(alignment: .valueCentre, spacing: .spacing2x) {
+            HStack(alignment: .valueCentre, spacing: .spacing1x) {
                 VStack(alignment: .leading, spacing: .spacing1x) {
                     captionLabel
 
@@ -74,7 +74,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
                         .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
                 }
 
-                Spacer(minLength: .spacing2x)
+                Spacer(minLength: .spacing1x)
 
                 controls
                     .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
@@ -118,11 +118,17 @@ struct ExerciseLiveStrengthStatusWidget: View {
         .animation(.brightSnappy, value: primary)
     }
 
+    // Skipping a set sits beside the tick and takes the screen's own blue;
+    // skipping the rest is the primary button, so it stays green.
+    private func tint(for control: Control) -> Color? {
+        control == .skip && !isResting ? .defaultSkyBlueCyan : control.tint
+    }
+
     private func control(_ control: Control) -> some View {
         BrightRoundButton(
             systemImage: control.symbol,
             size: .extraLarge,
-            color: control.tint,
+            color: tint(for: control),
             imageRotation: .zero,
             imageOffset: control.imageOffset,
             haptic: control.haptic,
@@ -204,9 +210,9 @@ struct ExerciseLiveStrengthStatusWidget: View {
     // — and it keeps the value pinned to the same line throughout.
     private var captionLabel: some View {
         BrightText(caption ?? " ", size: .body1, color: .lightTextColor, weight: .regular)
-            .lineLimit(1)
+                .lineLimit(1)
             .fixedSize()
-            .contentTransition(.numericText())
+                .contentTransition(.numericText())
             .animation(.brightSnappy, value: caption)
     }
 
@@ -275,16 +281,14 @@ struct ExerciseLiveStrengthStatusWidget: View {
         TimelineView(.animation(minimumInterval: Constants.tick, paused: !isResting)) { context in
             let value = value(at: context.date)
 
-            BrightText(
-                value.text,
-                size: .giant,
-                color: value.color,
-                scaleTextSize: Constants.valueScale
-            )
-            .monospacedDigit()
-            .lineLimit(1)
-            .contentTransition(.numericText())
-            .animation(.brightSnappy, value: value.text)
+            BrightText(value.text, size: Constants.valueSize, color: value.color)
+                .monospacedDigit()
+                .lineLimit(1)
+                .contentTransition(.numericText())
+                .animation(.brightSnappy, value: value.text)
+                // Only the colour separates a target from a countdown, so it
+                // eases between them rather than snapping.
+                .animation(.brightEaseInOut, value: value.color)
         }
     }
 
@@ -338,7 +342,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
         static let traceWidth: CGFloat = .spacing7x
         static let traceHeight: CGFloat = .spacing3x
         static let tick: TimeInterval = 1
-        static let valueScale: CGFloat = 0.6
+        static let valueSize: FontSizes = .giant
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15
         static let longExtension: TimeInterval = 30
