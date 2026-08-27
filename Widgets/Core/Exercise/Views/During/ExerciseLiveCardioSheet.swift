@@ -21,11 +21,12 @@ struct ExerciseLiveCardioSheet: View {
     @State private var runningSince = Date()
     @State private var bankedElapsed: TimeInterval = 0
     @State private var page: Int? = Constants.statsPage
+    // The pages ignore the safe area so the map can bleed; the text pages get
+    // the top inset handed back through this.
+    @State private var topInset: CGFloat = 0
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // The pages run edge to edge; only the bar below them keeps the
-            // safe area.
             pages
                 .ignoresSafeArea()
 
@@ -33,6 +34,11 @@ struct ExerciseLiveCardioSheet: View {
         }
         .overlay(alignment: .topTrailing) { minimiseButton }
         .background(Color.defaultBackground.ignoresSafeArea())
+        .background {
+            Color.clear
+                .ignoresSafeArea()
+                .onGeometryChange(for: CGFloat.self, of: \.safeAreaInsets.top) { topInset = $0 }
+        }
         // Full-screen cover, so the beam takes the display's own curve and rings
         // every edge.
         .overlay {
@@ -45,14 +51,8 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var minimiseButton: some View {
-        Button {
+        BrightRoundButton(systemImage: "arrow.down.right.and.arrow.up.left", size: .large) {
             if let onClose { onClose() } else { dismiss() }
-        } label: {
-            Image(systemName: "arrow.down.right.and.arrow.up.left")
-                .font(.standard(size: .subheading, weight: .regular))
-                .foregroundStyle(Color.textColor)
-                .frame(width: Constants.minimiseSize, height: Constants.minimiseSize)
-                .contentShape(.rect)
         }
         .padding(.trailing, .spacing3x)
     }
@@ -72,11 +72,11 @@ struct ExerciseLiveCardioSheet: View {
     private var pages: some View {
         TabView(selection: selectedPage) {
             ExerciseLiveCardioSplits(splits: session.splits)
-                .safeAreaPadding(.top, .spacing2x)
+                .padding(.top, topInset + .spacing2x)
                 .tag(0)
 
             statsPage
-                .safeAreaPadding(.top, .spacing2x)
+                .padding(.top, topInset + .spacing2x)
                 .tag(1)
 
             ExerciseLiveCardioMap()
@@ -312,7 +312,6 @@ struct ExerciseLiveCardioSheet: View {
 
     private enum Constants {
         static let pageCount = 3
-        static let minimiseSize: CGFloat = .spacing7x
         static let statsPage = 1
         static let hairline: CGFloat = 0.5
         static let tick: TimeInterval = 0.03
