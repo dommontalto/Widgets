@@ -107,7 +107,7 @@ struct ExerciseCreateProgramSheet: View {
                 }
                     .safeAreaInset(edge: .bottom) {
                         if let ctaTitle {
-                            BrightFullWidthButton(ctaTitle, color: .defaultCards, textColor: .textColor) {
+                            BrightFullWidthButton(ctaTitle, color: .defaultWhite, textColor: .defaultBlack) {
                                 advance()
                             }
                             .padding(.horizontal, .spacing3x)
@@ -223,14 +223,15 @@ struct ExerciseCreateProgramSheet: View {
     private func styleCard(_ style: ProgramStyle, width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             Image(systemName: style.symbol)
-                .font(.system(size: Constants.promptIconSize, weight: .light))
-                .foregroundStyle(Color.textColor)
+                .font(.system(size: Constants.styleIconSize, weight: .light))
+                .foregroundStyle(Color.defaultBlack)
+                .frame(width: Constants.styleIconSize, height: Constants.styleIconSize, alignment: .leading)
 
             Spacer(minLength: .spacing4x)
 
-            BrightText(style.title, size: .standout3, weight: .regular)
+            BrightText(style.title, size: .subheading, color: .defaultBlack, weight: .regular)
 
-            BrightText(style.blurb, size: .body4, color: .semiLightTextColor)
+            BrightText(style.blurb, size: .body2, color: .defaultBlack.opacity(.lowOpacity))
                 .multilineTextAlignment(.leading)
                 .lineSpacing(.lineSpacingMedium)
         }
@@ -238,8 +239,8 @@ struct ExerciseCreateProgramSheet: View {
         .padding(.spacing3x)
         .frame(width: width, height: width * Constants.styleCardAspect, alignment: .leading)
         .background(
-            Color.defaultCards,
-            in: RoundedRectangle(cornerRadius: .cornerRadius40, style: .continuous)
+            Color.defaultWhite,
+            in: RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
         )
     }
 
@@ -307,6 +308,9 @@ struct ExerciseCreateProgramSheet: View {
 
     private func templateCard(_ option: Template) -> some View {
         let isSelected = template == option
+        // The selected fill is white in both modes, so its copy is always black.
+        let copyColor: Color = isSelected ? .defaultBlack : .textColor
+        let detailColor: Color = isSelected ? .defaultBlack.opacity(.lowOpacity) : .lightTextColor
 
         return Button {
             withAnimation(.brightSnappy) { template = option }
@@ -314,11 +318,11 @@ struct ExerciseCreateProgramSheet: View {
             VStack(alignment: .leading, spacing: .spacing105x) {
                 Image(systemName: option.symbol)
                     .font(.system(size: Constants.promptIconSize, weight: .light))
-                    .foregroundStyle(Color.textColor)
+                    .foregroundStyle(copyColor)
 
-                BrightText(option.title, size: .subheading, weight: .regular)
+                BrightText(option.title, size: .subheading, color: copyColor, weight: .regular)
 
-                BrightText(option.detail, size: .body4, color: .semiLightTextColor)
+                BrightText(option.detail, size: .body2, color: detailColor)
                     .multilineTextAlignment(.leading)
                     .lineSpacing(.lineSpacingMedium)
             }
@@ -328,7 +332,7 @@ struct ExerciseCreateProgramSheet: View {
             // Behind the glass rather than inside it, so the fill stays a
             // solid card colour instead of taking the glass's tint.
             .background(
-                isSelected ? Color.defaultCards : .clear,
+                isSelected ? Color.defaultWhite : .clear,
                 in: RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
             )
             .contentShape(Rectangle())
@@ -810,6 +814,7 @@ struct ExerciseCreateProgramSheet: View {
         // so the ruler's edge-fade mask never clips the numbers.
         static let rulerHeight: CGFloat = 60
         static let blockRowHeight = ExerciseSetRow.Constants.rowHeight
+        static let styleIconSize: CGFloat = 50
         static let styleCardAspect: CGFloat = 1.25
         static let blurbWidth: CGFloat = 300
     }
