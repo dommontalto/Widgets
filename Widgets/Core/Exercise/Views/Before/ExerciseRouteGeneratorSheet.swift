@@ -116,7 +116,7 @@ struct ExerciseRouteGeneratorSheet: View {
                     .allowOverlap(true)
                 }
 
-                if let end = route.coordinates.last {
+                if let end = route.coordinates.last, strokeScreenPoints.isEmpty {
                     MapViewAnnotation(coordinate: end) {
                         routeMarker("flag.pattern.checkered")
                     }
@@ -218,6 +218,14 @@ struct ExerciseRouteGeneratorSheet: View {
             }
         }
         .stroke(Color.defaultPink, style: Constants.routeStroke)
+        // The finish rides the finger: the camera can't move mid-stroke, so the
+        // screen point the stroke is drawn in is the marker's too.
+        .overlay {
+            if let head = strokeScreenPoints.last {
+                routeMarker("flag.pattern.checkered")
+                    .position(head)
+            }
+        }
         .allowsHitTesting(false)
     }
 
@@ -489,9 +497,10 @@ struct ExerciseRouteGeneratorSheet: View {
             withAnimation(.brightSnappy) { mode = .tap }
         }
 
-        if route != nil || tappedPoints.count >= 2 {
-            route = nil
-            tappedPoints = [coordinate]
+        // A tap past a finished route adds a leg to it rather than starting
+        // over — clearing it is what Clear Route is for.
+        if let route, let end = route.coordinates.last {
+            generate(through: [end, coordinate], extending: route)
             return
         }
 
