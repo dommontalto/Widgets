@@ -13,19 +13,11 @@ struct ExerciseCalendarWidgetEmpty: View {
     var onCreate: () -> Void = {}
 
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
-    @State private var showingCalendarSheet = false
     @State private var sportIndex = 0
 
     var body: some View {
         VStack(spacing: .spacing1x) {
-            BrightCalendar(selectedDate: $selectedDate, backgroundColor: .clear) {
-                BrightRoundButton(
-                    systemImage: "arrow.up.left.and.arrow.down.right",
-                    size: .medium
-                ) {
-                    showingCalendarSheet = true
-                }
-            }
+            BrightCalendar(selectedDate: $selectedDate, backgroundColor: .clear)
 
             prompt
                 .padding(.top, .spacing2x)
@@ -34,9 +26,6 @@ struct ExerciseCalendarWidgetEmpty: View {
         }
         .padding(.top, .spacing3x)
         .modifier(CardModifier())
-        .sheet(isPresented: $showingCalendarSheet) {
-            ExerciseCalendarSheet(selectedDate: $selectedDate)
-        }
     }
 
     private var prompt: some View {

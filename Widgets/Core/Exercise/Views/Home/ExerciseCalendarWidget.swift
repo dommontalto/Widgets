@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ExerciseCalendarWidget: View {
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
-    @State private var showingCalendarSheet = false
+    @State private var showingPlan = false
 
     var body: some View {
         VStack(spacing: .spacing1x) {
@@ -18,11 +18,8 @@ struct ExerciseCalendarWidget: View {
                 backgroundColor: .clear,
                 dotStyle: { ExerciseCalendarDemo.dotStyle(on: $0) }
             ) {
-                BrightRoundButton(
-                    systemImage: "arrow.up.left.and.arrow.down.right",
-                    size: .medium
-                ) {
-                    showingCalendarSheet = true
+                BrightPillButton("Edit", buttonSize: .small, isClear: true) {
+                    showingPlan = true
                 }
             }
 
@@ -34,8 +31,8 @@ struct ExerciseCalendarWidget: View {
         }
         .padding(.top, .spacing3x)
         .modifier(CardModifier())
-        .sheet(isPresented: $showingCalendarSheet) {
-            ExerciseCalendarSheet(selectedDate: $selectedDate)
+        .sheet(isPresented: $showingPlan) {
+            ExerciseCreateProgramSheet(startsAtBlocks: true)
         }
     }
 

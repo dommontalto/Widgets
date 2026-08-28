@@ -49,11 +49,15 @@ nonisolated struct ExerciseTrainingPeriod: Identifiable, Equatable {
 // style and — when the template periodises — how many weeks it runs and the
 // training periods it splits into, before pushing a block's week to the planner.
 struct ExerciseCreateProgramSheet: View {
+    // Entered from the calendar's edit button: the flow opens on the plan
+    // itself, so the blocks screen is the root and the week sits on top of it.
+    var startsAtBlocks = false
+
     @Environment(\.dismiss) private var dismiss
 
     @FocusState private var isTyping: Bool
 
-    @State private var step = Step.intro
+    @State private var step: Step
 
     @State private var stylePage: Int? = ProgramStyle.guided.rawValue
 
@@ -67,17 +71,32 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var nameNudge = 0
 
-    @State private var periods = [ExerciseTrainingPeriod.empty]
+    @State private var periods: [ExerciseTrainingPeriod]
 
-    @State private var path = NavigationPath()
+    @State private var path: NavigationPath
 
     @State private var insertionEdge = Edge.trailing
+
+    @State private var showingDeleteProgram = false
+
+    private let initialName: String
+    private let initialPeriods: [ExerciseTrainingPeriod]
+
+    init(startsAtBlocks: Bool = false) {
+        self.startsAtBlocks = startsAtBlocks
+        _step = State(initialValue: startsAtBlocks ? .periods : .intro)
+        _path = State(initialValue: NavigationPath())
+        let seed = [ExerciseTrainingPeriod.empty]
+        _periods = State(initialValue: seed)
+        initialName = ""
+        initialPeriods = seed
+    }
 
     var body: some View {
         BrightPageSheetView(
             horizontalPadding: .spacing0x,
-            // The first step has nothing to go back to, so it closes instead.
-            showBackButton: step != .intro,
+            // The root step has nothing to go back to, so it closes instead.
+            showBackButton: step != rootStep,
             backButtonCallback: goBack,
             path: $path,
             trailing: {
@@ -398,10 +417,39 @@ struct ExerciseCreateProgramSheet: View {
                 .padding(.vertical, .spacing3x)
             }
             .safeAreaInset(edge: .bottom) {
-                addPeriodButton(scroller)
+                planActions(scroller)
             }
             .animation(.brightSnappy, value: periods)
         }
+        .confirmationDialog(
+            "Delete this program?",
+            isPresented: $showingDeleteProgram,
+            titleVisibility: .visible
+        ) {
+            Button("Delete program", role: .destructive) {
+                dismiss()
+            }
+            .tint(.defaultRed)
+        }
+    }
+
+    private func planActions(_ scroller: ScrollViewProxy) -> some View {
+        HStack(spacing: .spacing0x) {
+            if startsAtBlocks {
+                BrightRoundButton(
+                    systemImage: "trash",
+                    size: .finalBossLarge,
+                    imageColor: .defaultRed
+                ) {
+                    showingDeleteProgram = true
+                }
+            }
+
+            Spacer(minLength: .spacing0x)
+
+            addPeriodButton(scroller)
+        }
+        .padding(.spacing3x)
     }
 
     private func addPeriodButton(_ scroller: ScrollViewProxy) -> some View {
@@ -412,8 +460,6 @@ struct ExerciseCreateProgramSheet: View {
                 scroller.scrollTo(period.id, anchor: .bottom)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.spacing3x)
     }
 
     private func periodCard(_ period: Binding<ExerciseTrainingPeriod>) -> some View {
@@ -660,6 +706,10 @@ struct ExerciseCreateProgramSheet: View {
         "\(count) \(count == 1 ? "week" : "weeks")"
     }
 
+    private var rootStep: Step {
+        startsAtBlocks ? .periods : .intro
+    }
+
     private var chosenStyle: ProgramStyle {
         ProgramStyle(rawValue: stylePage ?? 0) ?? .guided
     }
@@ -670,9 +720,15 @@ struct ExerciseCreateProgramSheet: View {
     private var trailingTitle: String? {
         switch step {
         case .weeks: "Skip"
-        case .periods: "Create"
+        // Editing an existing plan only offers the action once the plan differs
+        // from the one it opened with.
+        case .periods: startsAtBlocks ? (hasPlanChanges ? "Update" : nil) : "Create"
         default: nil
         }
+    }
+
+    private var hasPlanChanges: Bool {
+        name != initialName || periods != initialPeriods
     }
 
     private var ctaTitle: String? {

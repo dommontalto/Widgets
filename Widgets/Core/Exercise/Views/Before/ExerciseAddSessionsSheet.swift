@@ -62,11 +62,21 @@ struct ExerciseAddSessionsSheet: View {
 
     @State private var repeatsWeekly = false
 
+    private let initialSessions: [[ExercisePlannedSession]]
+
     init(isCreating: Bool = false, startsEmpty: Bool = false, onDone: (() -> Void)? = nil) {
         self.isCreating = isCreating
         self.startsEmpty = startsEmpty
         self.onDone = onDone
-        _days = State(initialValue: startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week)
+        let week = startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week
+        _days = State(initialValue: week)
+        initialSessions = week.map(\.sessions)
+    }
+
+    // Saving is offered only once the week differs from the one it opened with;
+    // creating always is, since the flow has to be finishable.
+    private var hasChanges: Bool {
+        repeatsWeekly || days.map(\.sessions) != initialSessions
     }
 
     var body: some View {
@@ -80,15 +90,17 @@ struct ExerciseAddSessionsSheet: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(isCreating ? "Create" : "Save") {
-                        if let onDone {
-                            onDone()
-                        } else {
-                            dismiss()
+                    if isCreating || hasChanges {
+                        Button(isCreating ? "Create" : "Save") {
+                            if let onDone {
+                                onDone()
+                            } else {
+                                dismiss()
+                            }
                         }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.defaultSkyBlue)
                     }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.defaultSkyBlue)
                 }
             },
             content: {
