@@ -10,6 +10,7 @@ import SwiftUI
 struct BrightSearchBar: View {
     let placeholder: String
     let height: CGFloat?
+    let autoFocuses: Bool
     @Binding var text: String
 
     @FocusState private var isFocused: Bool
@@ -17,11 +18,13 @@ struct BrightSearchBar: View {
     init(
         _ placeholder: String,
         text: Binding<String>,
-        height: CGFloat? = nil
+        height: CGFloat? = nil,
+        autoFocuses: Bool = false
     ) {
         self.placeholder = placeholder
         _text = text
         self.height = height
+        self.autoFocuses = autoFocuses
     }
 
     var body: some View {
@@ -47,5 +50,8 @@ struct BrightSearchBar: View {
         .modifier(GlassEffect())
         .contentShape(Capsule())
         .onTapGesture { isFocused = true }
+        .onAppear {
+            if autoFocuses { isFocused = true }
+        }
     }
 }

@@ -47,6 +47,7 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var redoStack: [Snapshot] = []
     @State private var isSearching = false
     @State private var searchText = ""
+    @State private var placeCompleter = PlaceSearchCompleter()
     @State private var generationTick = 0
     @State private var scrubProgress: Double = 0
     @State private var isScrubbing = false
@@ -70,9 +71,23 @@ struct ExerciseRouteGeneratorSheet: View {
         // Container only, so the keyboard still lifts the card during
         // distance entry.
         .ignoresSafeArea(.container, edges: .bottom)
-        .overlay(alignment: .topLeading) { topBar }
+        .overlay(alignment: .top) {
+            VStack(spacing: .spacing2x) {
+                topBar
+
+                if isSearching, !placeCompleter.suggestions.isEmpty {
+                    suggestionList
+                }
+            }
+            // The suggestions land from a delegate callback, outside any
+            // withAnimation, so the show/hide has to be driven from here.
+            .animation(.brightSnappy, value: placeCompleter.suggestions)
+        }
         .brightHaptic(.success, trigger: generationTick)
         .onChange(of: scrubProgress) { _, _ in followRoute() }
+        .onChange(of: searchText) { _, text in
+            placeCompleter.update(query: text, around: camera.center)
+        }
         .onAppear { locate() }
         .onChange(of: locator.lastLocation) { _, location in
             guard isAwaitingFix, let location else { return }
@@ -259,19 +274,62 @@ struct ExerciseRouteGeneratorSheet: View {
                 BrightSearchBar(
                     "Search",
                     text: $searchText,
-                    height: BrightButtonSizes.large.rawValue
+                    height: BrightButtonSizes.large.rawValue,
+                    autoFocuses: true
                 )
+                .frame(maxWidth: .infinity)
                 .onSubmit { performSearch() }
+            } else {
+                Spacer(minLength: .spacing2x)
             }
 
-            Spacer(minLength: .spacing2x)
-
-
             mapButton("magnifyingglass") {
-                withAnimation(.brightSnappy) { isSearching.toggle() }
+                if isSearching {
+                    closeSearch()
+                } else {
+                    withAnimation(.brightSnappy) { isSearching = true }
+                }
             }
         }
         .padding(.horizontal, .spacing3x)
+    }
+
+    private var suggestionList: some View {
+        VStack(spacing: .spacing0x) {
+            ForEach(Array(placeCompleter.suggestions.enumerated()), id: \.offset) { offset, suggestion in
+                suggestionRow(suggestion)
+
+                if offset != placeCompleter.suggestions.count - 1 {
+                    ExerciseLogDivider()
+                        .padding(.horizontal, .spacing3x)
+                }
+            }
+        }
+        .padding(.vertical, .spacing1x)
+        .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius20, interactive: false))
+        .padding(.horizontal, .spacing3x)
+        .transition(.blurReplace)
+    }
+
+    private func suggestionRow(_ suggestion: MKLocalSearchCompletion) -> some View {
+        Button {
+            select(suggestion)
+        } label: {
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                BrightText(suggestion.title, size: .body2)
+                    .lineLimit(1)
+
+                if !suggestion.subtitle.isEmpty {
+                    BrightText(suggestion.subtitle, size: .body4, color: .lightTextColor)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, .spacing3x)
+            .padding(.vertical, .spacing105x)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func close() {
@@ -700,11 +758,26 @@ struct ExerciseRouteGeneratorSheet: View {
 
         Task {
             guard let item = try? await MKLocalSearch(request: request).start().mapItems.first else { return }
-            withAnimation(.brightSnappy) {
-                isSearching = false
-                searchText = ""
-            }
+            closeSearch()
             fly(to: item.location.coordinate)
+        }
+    }
+
+    private func select(_ suggestion: MKLocalSearchCompletion) {
+        let request = MKLocalSearch.Request(completion: suggestion)
+
+        Task {
+            guard let item = try? await MKLocalSearch(request: request).start().mapItems.first else { return }
+            closeSearch()
+            fly(to: item.location.coordinate)
+        }
+    }
+
+    // Clearing the text also empties the suggestions via onChange.
+    private func closeSearch() {
+        withAnimation(.brightSnappy) {
+            isSearching = false
+            searchText = ""
         }
     }
 
@@ -825,6 +898,47 @@ private struct Snapshot {
     let route: GeneratedRoute?
 }
 
+// Streams place suggestions for the typed fragment, biased to where the
+// camera currently sits so nearby places rank first.
+@Observable
+private final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
+    private let completer = MKLocalSearchCompleter()
+
+    var suggestions: [MKLocalSearchCompletion] = []
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = [.address, .pointOfInterest]
+    }
+
+    func update(query: String, around center: CLLocationCoordinate2D) {
+        let fragment = query.trimmingCharacters(in: .whitespaces)
+        guard !fragment.isEmpty else {
+            completer.cancel()
+            suggestions = []
+            return
+        }
+
+        completer.region = MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(
+                latitudeDelta: Constants.searchSpanDegrees,
+                longitudeDelta: Constants.searchSpanDegrees
+            )
+        )
+        completer.queryFragment = fragment
+    }
+
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        suggestions = Array(completer.results.prefix(Constants.maxSuggestions))
+    }
+
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        suggestions = []
+    }
+}
+
 @Observable
 private final class RouteLocator: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
@@ -924,6 +1038,7 @@ private enum Constants {
     static let flatPitch: CGFloat = 1
     static let cameraAnimation: TimeInterval = 0.6
     static let searchSpanDegrees: CLLocationDegrees = 0.5
+    static let maxSuggestions = 5
 
     static let routeStroke = StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
     static let routeLineWidth: Double = 5
