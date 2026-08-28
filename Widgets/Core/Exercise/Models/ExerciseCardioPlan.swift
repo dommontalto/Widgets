@@ -5,7 +5,78 @@
 //  Created by Dom Montalto on 18/8/2026.
 //
 
+import CoreLocation
 import SwiftUI
+
+nonisolated enum ExerciseRouteManeuver: String, Codable, Sendable {
+    case straight
+    case left
+    case right
+    case uTurn = "uturn"
+    case arrive
+
+    var symbol: String {
+        switch self {
+        case .straight: "arrow.up"
+        case .left: "arrow.turn.up.left"
+        case .right: "arrow.turn.up.right"
+        case .uTurn: "arrow.uturn.down"
+        case .arrive: "flag.pattern.checkered"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .straight: "Straight"
+        case .left: "Left"
+        case .right: "Right"
+        case .uTurn: "U-Turn"
+        case .arrive: "Finish"
+        }
+    }
+}
+
+nonisolated struct ExercisePlannedRouteStep: Sendable, Equatable {
+    var maneuver: ExerciseRouteManeuver
+    var coordinateIndex: Int
+}
+
+nonisolated struct ExercisePlannedRoute: Sendable {
+    var coordinates: [CLLocationCoordinate2D]
+    var distanceMetres: Double
+    var durationSeconds: Double
+    var steps: [ExercisePlannedRouteStep]
+
+    var formattedDistance: String {
+        String(format: "%.1f KM", distanceMetres / 1000)
+    }
+
+    var formattedDuration: String {
+        "\(Int((durationSeconds / 60).rounded())) Min"
+    }
+
+    var formattedElevation: String {
+        "\(Int((distanceMetres / 1000 * Constants.estimatedClimbPerKm).rounded())) M"
+    }
+
+    func appending(_ other: ExercisePlannedRoute) -> ExercisePlannedRoute {
+        ExercisePlannedRoute(
+            coordinates: coordinates + other.coordinates,
+            distanceMetres: distanceMetres + other.distanceMetres,
+            durationSeconds: durationSeconds + other.durationSeconds,
+            steps: steps.filter { $0.maneuver != .arrive } + other.steps.map {
+                ExercisePlannedRouteStep(
+                    maneuver: $0.maneuver,
+                    coordinateIndex: $0.coordinateIndex + coordinates.count
+                )
+            }
+        )
+    }
+
+    private enum Constants {
+        static let estimatedClimbPerKm: Double = 4.4
+    }
+}
 
 // What the run is chasing. Picked from the menu on the primary row's badge, the
 // way a set's kind is picked on a strength session.
@@ -190,10 +261,11 @@ struct ExerciseCardioPlan {
     var calories = ""
     var pace = ""
     var zone: ExerciseHeartZone = .two
-    var isUTurnOn = false
     var isIntervalsOn = false
-    var isRouteOn = false
+    var route: ExercisePlannedRoute?
     var intervals = ExerciseCardioInterval.defaults
+
+    var isRouteOn: Bool { route != nil }
 
     // A stop condition pairs with an intensity and vice versa, so a distance or
     // timed run only takes a pace, while a zone run takes the distance or time it
@@ -238,9 +310,10 @@ struct ExerciseCardioPlan {
     // Everything the plan holds, so an edit screen can tell a change from a no-op.
     var signature: String {
         let legs = intervals.map { "\($0.phase.rawValue):\($0.value)" }.joined(separator: ",")
+        let routeMark = route.map { "\($0.coordinates.count):\(Int($0.distanceMetres))" } ?? "off"
         return [
             goal.rawValue, secondary.rawValue, distance, duration, calories, pace,
-            "\(zone.rawValue)", "\(isUTurnOn)", "\(isIntervalsOn)", "\(isRouteOn)", legs,
+            "\(zone.rawValue)", "\(isIntervalsOn)", routeMark, legs,
         ].joined(separator: "|")
     }
 

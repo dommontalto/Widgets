@@ -94,19 +94,8 @@ struct ExerciseCalendarWidget: View {
 
     private func sessionBody(_ session: ExerciseCalendarSession) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing05x) {
-                BrightText(session.name, size: .body2, color: session.color, weight: .regular)
-
-                Spacer()
-
-                Image(systemName: "stopwatch")
-                    .font(.standard(size: .body2, weight: .light))
-                    .foregroundStyle(session.color)
-                BrightText(session.duration, size: .body2, color: session.color)
-            }
-
-            BrightText(session.time, size: .body2, color: session.color)
-                .opacity(.lowOpacity)
+            BrightText(session.name, size: .body2, color: session.color, weight: .regular)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: .spacing1x) {
                 ForEach(session.symbols, id: \.self) { symbol in

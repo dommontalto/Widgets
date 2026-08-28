@@ -17,9 +17,12 @@ struct ExerciseRouteGeneratorSheet: View {
         case draw
     }
 
-    // Set when the map is opened from a session plan: closing hands back
-    // instead of dismissing the presentation.
-    var onClose: (() -> Void)?
+    // Set when the map is opened from a session plan: closing hands the route
+    // back instead of dismissing the presentation.
+    var onClose: ((ExercisePlannedRoute?) -> Void)?
+    var initialRoute: ExercisePlannedRoute?
+    var targetDistanceKm: Double?
+    var autoGeneratesOnOpen = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -41,18 +44,19 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var drawnPoints: [CLLocationCoordinate2D] = []
     @State private var strokeScreenPoints: [CGPoint] = []
     @State private var isExtending = false
-    @State private var route: GeneratedRoute?
+    @State private var route: ExercisePlannedRoute?
     @State private var isGenerating = false
+    @State private var isAwaitingGenerateFix = false
     @State private var undoStack: [Snapshot] = []
     @State private var redoStack: [Snapshot] = []
+    @State private var placeCompleter = PlaceSearchCompleter()
     @State private var isSearching = false
     @State private var searchText = ""
-    @State private var placeCompleter = PlaceSearchCompleter()
     @State private var generationTick = 0
     @State private var scrubProgress: Double = 0
     @State private var isScrubbing = false
     @State private var isCameraAnimating = false
-    @State private var locator = RouteLocator()
+    @State private var locator = ExerciseRouteLocator()
     @State private var isAwaitingFix = false
 
     var body: some View {
@@ -83,14 +87,40 @@ struct ExerciseRouteGeneratorSheet: View {
             // withAnimation, so the show/hide has to be driven from here.
             .animation(.brightSnappy, value: placeCompleter.suggestions)
         }
-        .brightHaptic(.success, trigger: generationTick)
-        .onChange(of: scrubProgress) { _, _ in followRoute() }
         .onChange(of: searchText) { _, text in
             placeCompleter.update(query: text, around: camera.center)
         }
-        .onAppear { locate() }
+        .brightHaptic(.success, trigger: generationTick)
+        .onChange(of: scrubProgress) { _, _ in followRoute() }
+        .onAppear {
+            if let initialRoute, initialRoute.coordinates.count >= 2 {
+                route = initialRoute
+                viewport = .overview(
+                    geometry: LineString(initialRoute.coordinates),
+                    pitch: Constants.pitch3D,
+                    geometryPadding: EdgeInsets(
+                        top: Constants.overviewPadding,
+                        leading: Constants.overviewPadding,
+                        bottom: Constants.overviewPadding,
+                        trailing: Constants.overviewPadding
+                    )
+                )
+                locator.request()
+            } else {
+                locate()
+            }
+
+            if autoGeneratesOnOpen {
+                generateFromTarget()
+            }
+        }
         .onChange(of: locator.lastLocation) { _, location in
-            guard isAwaitingFix, let location else { return }
+            guard let location else { return }
+            if isAwaitingGenerateFix {
+                isAwaitingGenerateFix = false
+                generate(targetMetres: targetMetres, from: location.coordinate)
+            }
+            guard isAwaitingFix else { return }
             isAwaitingFix = false
             fly(to: location.coordinate)
         }
@@ -234,8 +264,6 @@ struct ExerciseRouteGeneratorSheet: View {
             }
         }
         .stroke(Color.defaultPink, style: Constants.routeStroke)
-        // The finish rides the finger: the camera can't move mid-stroke, so the
-        // screen point the stroke is drawn in is the marker's too.
         .overlay {
             if let head = strokeScreenPoints.last {
                 routeMarker("flag.pattern.checkered")
@@ -334,10 +362,14 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func close() {
         if let onClose {
-            onClose()
+            onClose(route)
         } else {
             dismiss()
         }
+    }
+
+    private var targetMetres: Double {
+        (targetDistanceKm ?? 0) * 1000
     }
 
     private var bottomControls: some View {
@@ -352,12 +384,19 @@ struct ExerciseRouteGeneratorSheet: View {
             // Overlaid rather than placed between the clusters, which are
             // uneven widths and would push it off the card's centre.
             .overlay(alignment: .bottom) {
-                if route != nil, !isGenerating {
-                    BrightPillButton(
-                        "Clear Route",
-                        systemImage: "xmark",
-                    ) {
-                        clearRoute()
+                if !isGenerating {
+                    HStack(spacing: .spacing2x) {
+                        if route != nil {
+                            BrightPillButton("Clear Route", systemImage: "xmark") {
+                                clearRoute()
+                            }
+                        }
+
+                        if targetMetres > 0 {
+                            BrightPillButton("Generate", systemImage: "sparkles") {
+                                generateFromTarget()
+                            }
+                        }
                     }
                     .frame(height: BrightButtonSizes.large.rawValue)
                 }
@@ -467,7 +506,7 @@ struct ExerciseRouteGeneratorSheet: View {
         }
     }
 
-    private func statsRow(_ route: GeneratedRoute) -> some View {
+    private func statsRow(_ route: ExercisePlannedRoute) -> some View {
         ExerciseRouteStats(
             distance: route.formattedDistance,
             elevation: route.formattedElevation,
@@ -521,8 +560,6 @@ struct ExerciseRouteGeneratorSheet: View {
             withAnimation(.brightSnappy) { mode = .tap }
         }
 
-        // A tap past a finished route adds a leg to it rather than starting
-        // over — clearing it is what Clear Route is for.
         if let route, let end = route.coordinates.last {
             generate(through: [end, coordinate], extending: route)
             return
@@ -598,68 +635,26 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func generate(
         through waypoints: [CLLocationCoordinate2D],
-        extending base: GeneratedRoute? = nil
+        extending base: ExercisePlannedRoute? = nil
     ) {
         guard waypoints.count >= 2 else { return }
         isGenerating = true
 
         Task {
-            var coordinates: [CLLocationCoordinate2D] = []
-            var distance: Double = 0
-
-            var from = waypoints[0]
-
-            for (offset, to) in waypoints.dropFirst().enumerated() {
-                let request = MKDirections.Request()
-                request.source = MKMapItem(
-                    location: CLLocation(latitude: from.latitude, longitude: from.longitude),
-                    address: nil
-                )
-                request.destination = MKMapItem(
-                    location: CLLocation(latitude: to.latitude, longitude: to.longitude),
-                    address: nil
-                )
-                request.transportType = .walking
-
-                guard let leg = try? await MKDirections(request: request).calculate().routes.first else { continue }
-
-                // A leg that routes far longer than its crow-flies span has
-                // dipped into a side street and doubled back — drop that
-                // waypoint and let the next leg bridge the gap. The final leg
-                // keeps the stroke's endpoint regardless.
-                let isFinal = offset == waypoints.count - 2
-                if !isFinal, leg.distance > straightLineDistance(from: from, to: to) * Constants.maxLegDetourFactor {
-                    continue
-                }
-
-                coordinates += leg.polyline.routeCoordinates
-                distance += leg.distance
-                from = to
+            guard let built = await ExerciseRouteGenerator.route(through: waypoints) else {
+                isGenerating = false
+                return
             }
 
-            // Directions can fail offline or over unroutable ground — fall back
-            // to the raw points so the gesture still becomes a route.
-            if coordinates.count < 2 {
-                coordinates = waypoints
-                distance = straightLineDistance(of: waypoints)
+            var combined = base.map { $0.appending(built) } ?? built
+            if let last = combined.coordinates.indices.last {
+                combined.steps.removeAll { $0.maneuver == .arrive }
+                combined.steps.append(ExercisePlannedRouteStep(maneuver: .arrive, coordinateIndex: last))
             }
-
-            let routedLength = straightLineDistance(of: coordinates)
-            let pruned = prunedSpurs(coordinates)
-            let prunedLength = straightLineDistance(of: pruned)
-            if prunedLength < routedLength, routedLength > 0 {
-                distance *= prunedLength / routedLength
-                coordinates = pruned
-            }
-
-            // Routing walks the path network, but the time reads as a run.
-            let duration = distance / 1000 * Constants.runningSecondsPerKm
-
-            let generated = GeneratedRoute(coordinates: coordinates, distanceMetres: distance, durationSeconds: duration)
 
             scrubProgress = 0
             withAnimation(.brightSnappy) {
-                route = base.map { $0.appending(generated) } ?? generated
+                route = combined
                 drawnPoints = []
                 isGenerating = false
             }
@@ -667,47 +662,64 @@ struct ExerciseRouteGeneratorSheet: View {
         }
     }
 
-    // Cuts out-and-back spurs from the routed polyline: a stretch that leaves
-    // a point and returns to within a few metres of it is a dip into a side
-    // road, not part of the route. Deliberate out-and-backs longer than
-    // maxSpurLength survive.
-    private func prunedSpurs(_ coordinates: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
-        guard coordinates.count > 2 else { return coordinates }
+    // MARK: - Target generation
 
-        var pruned: [CLLocationCoordinate2D] = []
-        pruned.reserveCapacity(coordinates.count)
+    private func generateFromTarget() {
+        guard targetMetres > 0, !isGenerating else { return }
+        if let start = locator.cachedLocation?.coordinate {
+            generate(targetMetres: targetMetres, from: start)
+        } else {
+            isAwaitingGenerateFix = true
+            locator.request()
+        }
+    }
 
-        var i = 0
-        while i < coordinates.count {
-            pruned.append(coordinates[i])
-
-            var pathLength: Double = 0
-            var cutTo: Int?
-            var j = i + 1
-
-            while j < coordinates.count, pathLength <= Constants.maxSpurLength {
-                pathLength += straightLineDistance(from: coordinates[j - 1], to: coordinates[j])
-                if pathLength >= Constants.minSpurLength,
-                   straightLineDistance(from: coordinates[i], to: coordinates[j]) <= Constants.spurReturnRadius {
-                    cutTo = j
-                }
-                j += 1
-            }
-
-            i = cutTo ?? (i + 1)
+    private func generate(targetMetres: Double, from start: CLLocationCoordinate2D) {
+        pushUndo()
+        isGenerating = true
+        scrubProgress = 0
+        withAnimation(.brightSnappy) {
+            route = nil
+            tappedPoints = []
+            drawnPoints = []
         }
 
-        return pruned
+        Task {
+            let generated = await ExerciseRouteGenerator.outAndBack(targetMetres: targetMetres, from: start)
+            withAnimation(.brightSnappy) {
+                route = generated
+                isGenerating = false
+            }
+            generationTick += 1
+            frame(generated)
+        }
+    }
+
+    private func frame(_ route: ExercisePlannedRoute) {
+        guard route.coordinates.count >= 2 else { return }
+        isCameraAnimating = true
+        withViewportAnimation(.easeOut(duration: Constants.cameraAnimation)) {
+            viewport = .overview(
+                geometry: LineString(route.coordinates),
+                pitch: is3D ? Constants.pitch3D : 0,
+                geometryPadding: EdgeInsets(
+                    top: Constants.overviewPadding,
+                    leading: Constants.overviewPadding,
+                    bottom: Constants.overviewPadding,
+                    trailing: Constants.overviewPadding
+                )
+            )
+        } completion: { _ in
+            Task { isCameraAnimating = false }
+        }
     }
 
     private func straightLineDistance(of points: [CLLocationCoordinate2D]) -> Double {
-        zip(points, points.dropFirst()).reduce(0) { total, pair in
-            total + straightLineDistance(from: pair.0, to: pair.1)
-        }
+        ExerciseRouteGenerator.straightLineDistance(of: points)
     }
 
     private func straightLineDistance(from a: CLLocationCoordinate2D, to b: CLLocationCoordinate2D) -> Double {
-        MKMapPoint(a).distance(to: MKMapPoint(b))
+        ExerciseRouteGenerator.straightLineDistance(from: a, to: b)
     }
 
     // MARK: - Undo / redo
@@ -759,18 +771,30 @@ struct ExerciseRouteGeneratorSheet: View {
         Task {
             guard let item = try? await MKLocalSearch(request: request).start().mapItems.first else { return }
             closeSearch()
-            fly(to: item.location.coordinate)
+            fly(to: coordinate(of: item))
         }
     }
 
     private func select(_ suggestion: MKLocalSearchCompletion) {
-        let request = MKLocalSearch.Request(completion: suggestion)
-
         Task {
-            guard let item = try? await MKLocalSearch(request: request).start().mapItems.first else { return }
+            guard let item = try? await MKLocalSearch(request: MKLocalSearch.Request(completion: suggestion))
+                .start().mapItems.first else { return }
             closeSearch()
-            fly(to: item.location.coordinate)
+            fly(to: coordinate(of: item))
         }
+    }
+
+    private func coordinate(of item: MKMapItem) -> CLLocationCoordinate2D {
+        if #available(iOS 26, *) {
+            item.location.coordinate
+        } else {
+            legacyCoordinate(of: item)
+        }
+    }
+
+    @available(iOS, deprecated: 26.0)
+    private func legacyCoordinate(of item: MKMapItem) -> CLLocationCoordinate2D {
+        item.placemark.coordinate
     }
 
     // Clearing the text also empties the suggestions via onChange.
@@ -857,34 +881,6 @@ struct ExerciseRouteGeneratorSheet: View {
 
 // MARK: - Support
 
-private struct GeneratedRoute {
-    let coordinates: [CLLocationCoordinate2D]
-    let distanceMetres: Double
-    let durationSeconds: Double
-
-    var formattedDistance: String {
-        String(format: "%.1f KM", distanceMetres / 1000)
-    }
-
-    var formattedDuration: String {
-        "\(Int((durationSeconds / 60).rounded())) Min"
-    }
-
-    // MKRoute carries no elevation data, so the prototype estimates the gain
-    // from distance at a flat-city climb rate.
-    var formattedElevation: String {
-        "\(Int((distanceMetres / 1000 * Constants.estimatedClimbPerKm).rounded())) M"
-    }
-
-    func appending(_ other: GeneratedRoute) -> GeneratedRoute {
-        GeneratedRoute(
-            coordinates: coordinates + other.coordinates,
-            distanceMetres: distanceMetres + other.distanceMetres,
-            durationSeconds: durationSeconds + other.durationSeconds
-        )
-    }
-}
-
 // Deliberately not @Observable: nothing here should invalidate the view.
 private final class CameraStore {
     var center = Constants.initialCenter
@@ -895,7 +891,7 @@ private final class CameraStore {
 
 private struct Snapshot {
     let tappedPoints: [CLLocationCoordinate2D]
-    let route: GeneratedRoute?
+    let route: ExercisePlannedRoute?
 }
 
 // Streams place suggestions for the typed fragment, biased to where the
@@ -939,50 +935,6 @@ private final class PlaceSearchCompleter: NSObject, MKLocalSearchCompleterDelega
     }
 }
 
-@Observable
-private final class RouteLocator: NSObject, CLLocationManagerDelegate {
-    private let manager = CLLocationManager()
-
-    var lastLocation: CLLocation?
-    var isAuthorized = false
-
-    // Whatever CoreLocation already holds, so a tap doesn't wait on a new fix.
-    var cachedLocation: CLLocation? { lastLocation ?? manager.location }
-
-    override init() {
-        super.init()
-        manager.delegate = self
-        // A ten-metre fix arrives far sooner than a best-accuracy one, and the
-        // map is flown to at neighbourhood zoom anyway.
-        manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-    }
-
-    func request() {
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            manager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse, .authorizedAlways:
-            manager.requestLocation()
-        default:
-            break
-        }
-    }
-
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        isAuthorized = manager.authorizationStatus == .authorizedWhenInUse
-            || manager.authorizationStatus == .authorizedAlways
-        if isAuthorized {
-            manager.requestLocation()
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        lastLocation = locations.last
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {}
-}
-
 // A UIKit pan recognizer bridged into SwiftUI: unlike a SwiftUI gesture over
 // Map, its updates keep flowing while MapKit's own recognizers run, so the
 // stroke renders live under the finger.
@@ -1021,14 +973,6 @@ private struct RoutePanGesture: UIGestureRecognizerRepresentable {
     }
 }
 
-private extension MKPolyline {
-    var routeCoordinates: [CLLocationCoordinate2D] {
-        var coordinates = [CLLocationCoordinate2D](repeating: CLLocationCoordinate2D(), count: pointCount)
-        getCoordinates(&coordinates, range: NSRange(location: 0, length: pointCount))
-        return coordinates
-    }
-}
-
 private enum Constants {
     static let initialCenter = CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006)
     static let initialZoom: CGFloat = 14.5
@@ -1050,19 +994,7 @@ private enum Constants {
     // How close to the finish marker a stroke must start to extend the route.
     static let extendGrabRadius: CGFloat = 30
     static let minStrokeSamplePt: CGFloat = 3
-    // How much longer than crow-flies a leg may route before it reads as a
-    // dip into a side street rather than a road genuinely winding.
-    static let maxLegDetourFactor: Double = 2.5
-    // Spur pruning: how close a return point must be to where it left, the
-    // shortest detour worth cutting, and the longest stretch still treated as
-    // a spur rather than a deliberate out-and-back.
-    static let spurReturnRadius: CLLocationDistance = 20
-    static let minSpurLength: CLLocationDistance = 40
-    static let maxSpurLength: CLLocationDistance = 400
-    // Average recreational running pace, 5:30 min/km.
-    static let runningSecondsPerKm: Double = 330
-    static let estimatedClimbPerKm: Double = 4.4
-
+    static let overviewPadding: CGFloat = .spacing8x
 
 
     // Scrubbing rides the route at street level, looking along it.

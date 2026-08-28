@@ -17,9 +17,24 @@ struct ExerciseLiveCardioSplits: View {
             BrightText("KM SPLITS", size: .standout4, color: .semiLightTextColor)
                 .padding(.horizontal, .spacing4x)
 
-            list
+            if splits.isEmpty {
+                emptyState
+            } else {
+                list
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .animation(.brightSnappy, value: splits.count)
+    }
+
+    private var emptyState: some View {
+        BrightPlaceholderView(
+            systemImage: "point.bottomleft.forward.to.point.topright.scurvepath",
+            title: "No splits yet",
+            subtitle: "Your first split lands at the 1 KM mark.",
+            imageColor: .lightTextColor
+        )
+        .padding(.bottom, Constants.bottomFade)
     }
 
     private var list: some View {
@@ -109,5 +124,10 @@ struct ExerciseLiveCardioSplits: View {
 
 #Preview {
     ExerciseLiveCardioSplits()
+        .background(Color.defaultBackground.ignoresSafeArea())
+}
+
+#Preview("Empty") {
+    ExerciseLiveCardioSplits(splits: [])
         .background(Color.defaultBackground.ignoresSafeArea())
 }

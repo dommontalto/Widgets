@@ -66,7 +66,9 @@ struct ExerciseCompletePerformanceGraphWidget: View {
 
     @ViewBuilder
     var body: some View {
-        if usesGlass {
+        if metrics.isEmpty {
+            EmptyView()
+        } else if usesGlass {
             stack
                 .padding(.spacing3x)
                 .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius24, interactive: false))

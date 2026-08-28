@@ -24,7 +24,6 @@ struct ExerciseLiveCardioSheet: View {
     // The pages ignore the safe area so the map can bleed; the text pages get
     // the top inset handed back through this.
     @State private var topInset: CGFloat = 0
-    @State private var routeProgress: Double = 1
     @State private var is3D = false
     @State private var recentreTick = 0
 
@@ -97,16 +96,79 @@ struct ExerciseLiveCardioSheet: View {
     // The route generator's card, carried over so the two maps read as one.
     private var mapCard: some View {
         ExerciseRouteCard(bottomCorner: ExerciseRouteCardGeometry.topCorner) {
-            ExerciseRouteStats(
-                distance: session.distance,
-                elevation: session.elevation,
-                estimatedTime: session.estimatedTime
-            )
+            HStack(spacing: .spacing0x) {
+                mapStat("Distance", value: session.distance)
 
-            routeScrubber
-                .padding(.top, .spacing1x)
-                .padding(.horizontal, .spacing1x)
+                mapStat("Current Pace", value: session.currentPace.replacingOccurrences(of: " / KM", with: ""))
+
+                trailingMapStat
+            }
+
+            BrightDivider()
+
+            TimelineView(.animation(minimumInterval: 1, paused: isPaused)) { context in
+                directionRow(at: context.date)
+            }
         }
+    }
+
+    private func mapStat(_ title: String, value: String, color: Color? = nil) -> some View {
+        VStack(spacing: .spacing1x) {
+            BrightText(title, size: .body2, color: color ?? .lightTextColor, weight: .regular)
+
+            BrightText(value, size: .standout2, color: color ?? .textColor)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private var trailingMapStat: some View {
+        if isInterval {
+            mapStat(session.intervalName, value: session.intervalRemaining, color: .defaultGreen)
+        } else {
+            mapStat("Zone", value: String(session.heartRateZone.dropFirst()), color: .defaultGreen)
+        }
+    }
+
+    private static let demoDirections = ExerciseRouteDirections(route: ExerciseDemoData.plannedRoute)
+
+    private func directionRow(at date: Date) -> some View {
+        let route = ExerciseDemoData.plannedRoute
+        let metres = elapsed(at: date) * Constants.demoMetresPerSecond
+        let fraction = (metres / route.distanceMetres).truncatingRemainder(dividingBy: 1)
+        let index = Int(fraction * Double(route.coordinates.count - 1))
+        let direction = upcomingDirection(after: index)
+
+        return HStack(spacing: .spacing3x) {
+            Image(systemName: direction.symbol)
+                .font(.standard(size: .huge, weight: .light))
+                .foregroundStyle(Color.textColor)
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+
+            BrightText(direction.text, size: .standout2)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            Spacer(minLength: .spacing0x)
+        }
+        .padding(.horizontal, .spacing1x)
+    }
+
+    private func upcomingDirection(after index: Int) -> (symbol: String, text: String) {
+        guard let next = Self.demoDirections.upcoming(after: index) else {
+            return (ExerciseRouteManeuver.arrive.symbol, "Finish in 0M")
+        }
+
+        if next.maneuver != .straight, next.metres < Constants.straightThresholdMetres {
+            let metres = Int((next.metres / 10).rounded() * 10)
+            return (next.maneuver.symbol, "\(next.maneuver.title) in \(metres)M")
+        }
+        return (
+            ExerciseRouteManeuver.straight.symbol,
+            String(format: "Straight for %.1fKM", next.metres / 1000)
+        )
     }
 
     private var mapControls: some View {
@@ -126,11 +188,6 @@ struct ExerciseLiveCardioSheet: View {
         }
     }
 
-    private var routeScrubber: some View {
-        Slider(value: $routeProgress, in: 0 ... 1)
-            .tint(Color.defaultSkyBlueCyan)
-    }
-
     // MARK: - Pages
 
     private var pages: some View {
@@ -143,11 +200,16 @@ struct ExerciseLiveCardioSheet: View {
                 .padding(.top, topInset + .spacing2x)
                 .tag(1)
 
-            ExerciseLiveCardioMap(progress: routeProgress, is3D: is3D, recentreTick: recentreTick)
-                // The pager lays its pages out inside the safe area whatever
-                // the TabView ignores, so the map takes the top inset back.
-                .padding(.top, -topInset)
-                .tag(Constants.mapPage)
+            ExerciseLiveCardioMap(
+                plannedRoute: ExerciseDemoData.plannedRoute.coordinates,
+                trackedRoute: Array(ExerciseDemoData.plannedRoute.coordinates.prefix(Constants.demoCoveredPoints)),
+                is3D: is3D,
+                recentreTick: recentreTick
+            )
+            // The pager lays its pages out inside the safe area whatever
+            // the TabView ignores, so the map takes the top inset back.
+            .padding(.top, -topInset)
+            .tag(Constants.mapPage)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
     }
@@ -386,6 +448,8 @@ struct ExerciseLiveCardioSheet: View {
         static let tick: TimeInterval = 0.03
         // Fast enough that the demo run crosses a leg while you watch.
         static let demoMetresPerSecond: Double = 50
+        static let straightThresholdMetres: Double = 750
+        static let demoCoveredPoints = 150
     }
 }
 

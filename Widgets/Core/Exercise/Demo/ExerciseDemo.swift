@@ -212,6 +212,19 @@ enum ExerciseDemoData {
         }
     }()
 
+    static let plannedRoute = ExercisePlannedRoute(
+        coordinates: liveCardioRoute,
+        distanceMetres: 8000,
+        durationSeconds: 8000 / 1000 * 330,
+        steps: [
+            ExercisePlannedRouteStep(maneuver: .left, coordinateIndex: 40),
+            ExercisePlannedRouteStep(maneuver: .right, coordinateIndex: 90),
+            ExercisePlannedRouteStep(maneuver: .uTurn, coordinateIndex: 120),
+            ExercisePlannedRouteStep(maneuver: .left, coordinateIndex: 170),
+            ExercisePlannedRouteStep(maneuver: .arrive, coordinateIndex: 219),
+        ]
+    )
+
     static let programStatus = ExerciseProgramStatus(
         mesocycleWeek: 2,
         mesocycleLength: 4,

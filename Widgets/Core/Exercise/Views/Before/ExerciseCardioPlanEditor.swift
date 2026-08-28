@@ -5,6 +5,7 @@
 //  Created by Dom Montalto on 18/8/2026.
 //
 
+import CoreLocation
 import SwiftUI
 
 // The cardio half of ExerciseCreateSessionSheet: what the run is chasing, and
@@ -12,13 +13,15 @@ import SwiftUI
 struct ExerciseCardioPlanEditor: View {
     @Binding var plan: ExerciseCardioPlan
 
+    @State private var isShowingRouteMap = false
+    @State private var isShowingRegeneratePrompt = false
+    @State private var autoGeneratesOnOpen = false
+
     var isTyping: FocusState<Bool>.Binding
 
     // Mirrors the interval row's own scaling so the list's height matches the rows
     // it holds.
     @ScaledMetric(relativeTo: .body) private var intervalRowHeight = ExerciseIntervalRow.Constants.rowHeight
-
-    @State private var isShowingRouteMap = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
@@ -39,8 +42,6 @@ struct ExerciseCardioPlanEditor: View {
 
                     if plan.hasIntervals {
                         intervalsCard
-                    } else {
-                        uTurnCard
                     }
 
                     routeRow
@@ -49,13 +50,41 @@ struct ExerciseCardioPlanEditor: View {
             }
         }
         .fullScreenCover(isPresented: $isShowingRouteMap) {
-            ExerciseRouteGeneratorSheet(onClose: { isShowingRouteMap = false })
+            ExerciseRouteGeneratorSheet(
+                onClose: { route in
+                    plan.route = route
+                    if let route {
+                        syncValues(from: route)
+                    }
+                    autoGeneratesOnOpen = false
+                    isShowingRouteMap = false
+                },
+                initialRoute: plan.route,
+                targetDistanceKm: Double(plan.distance),
+                autoGeneratesOnOpen: autoGeneratesOnOpen
+            )
         }
         .animation(.brightSnappy, value: plan.goal)
         .onChange(of: plan.goal) { _, _ in
             if !plan.secondaryOptions.contains(plan.secondary) {
                 plan.secondary = plan.secondaryOptions[0]
             }
+        }
+        .onChange(of: isTyping.wrappedValue) { _, focused in
+            guard !focused, isRouteStale else { return }
+            isShowingRegeneratePrompt = true
+        }
+        .alert("Generate New Route?", isPresented: $isShowingRegeneratePrompt) {
+            Button("Generate") {
+                autoGeneratesOnOpen = true
+                isShowingRouteMap = true
+            }
+
+            Button("Cancel", role: .cancel) {
+                revertDistance()
+            }
+        } message: {
+            Text("Your saved route no longer matches the distance.")
         }
     }
 
@@ -204,86 +233,6 @@ struct ExerciseCardioPlanEditor: View {
         }
         .buttonStyle(.plain)
     }
-
-    // MARK: - U-Turn
-
-    private var uTurnCard: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            rowContent(
-                badge: badge(symbol: "arrow.uturn.backward", tint: .defaultSkyBlueCyan, isCircled: false),
-                title: "U-Turn"
-            ) {
-                Toggle("", isOn: $plan.isUTurnOn)
-                    .labelsHidden()
-                    .tint(Color.defaultGreen)
-                    .brightHaptic(.light, trigger: plan.isUTurnOn)
-            }
-
-            BrightText(
-                "Notify to turn around at half way point",
-                size: .body3,
-                color: .lightTextColor
-            )
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
-    }
-
-    // MARK: - Route
-
-    private var routeRow: some View {
-        rowContent(badge: routeThumbnail, title: "Generate Route") {
-            Toggle("", isOn: routeToggle)
-                .labelsHidden()
-                .tint(Color.defaultGreen)
-                .brightHaptic(.light, trigger: plan.isRouteOn)
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
-        // The toggle takes its own taps; everywhere else opens the map.
-        .contentShape(.rect)
-        .onTapGesture { isShowingRouteMap = true }
-    }
-
-    // Switching on opens the map; switching off from inside closes it.
-    private var routeToggle: Binding<Bool> {
-        Binding(
-            get: { plan.isRouteOn },
-            set: { isOn in
-                plan.isRouteOn = isOn
-                isShowingRouteMap = isOn
-            }
-        )
-    }
-
-    private var routeThumbnail: some View {
-        AsyncImage(url: Self.routeThumbnailURL) { image in
-            image
-                .resizable()
-                .scaledToFill()
-        } placeholder: {
-            Color.defaultCapsule
-                .overlay {
-                    Image(systemName: "map.fill")
-                        .font(.standard(size: .body5, weight: .medium))
-                        .foregroundStyle(Color.textColor)
-                }
-        }
-        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
-        .clipShape(.rect(cornerRadius: .cornerRadius10))
-    }
-
-    // A static Mapbox shot of the map the generator opens on, so the row hints
-    // at what's behind it without running a live map.
-    private static let routeThumbnailURL: URL? = {
-        guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else { return nil }
-        return URL(
-            string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
-                + "151.2006,-33.8769,12,0/60x60@2x?access_token=\(token)&logo=false&attribution=false"
-        )
-    }()
 
     // MARK: - Intervals
 
@@ -440,10 +389,134 @@ struct ExerciseCardioPlanEditor: View {
         .opacity(text.wrappedValue.isEmpty ? .semiLowOpacity : .opaque)
     }
 
+    // MARK: - Route
+
+    private var routeRow: some View {
+        row(badge: routeThumbnail, title: "Generate Route") {
+            Toggle("", isOn: routeToggle)
+                .labelsHidden()
+                .tint(Color.defaultGreen)
+                .brightHaptic(.light, trigger: plan.isRouteOn)
+        }
+        // The toggle takes its own taps; everywhere else opens the map.
+        .contentShape(.rect)
+        .onTapGesture { isShowingRouteMap = true }
+    }
+
+    private var isRouteStale: Bool {
+        guard let route = plan.route,
+              let target = Double(plan.distance), target > 0 else { return false }
+        return abs(1 - route.distanceMetres / (target * 1000)) > Constants.staleTolerance
+    }
+
+    private func syncValues(from route: ExercisePlannedRoute) {
+        let kilometres = (route.distanceMetres / 100).rounded() / 10
+        plan.distance = kilometres == kilometres.rounded()
+            ? "\(Int(kilometres))"
+            : String(format: "%.1f", kilometres)
+        if plan.goal == .duration {
+            plan.duration = "\(Int((route.durationSeconds / 60).rounded()))"
+        }
+    }
+
+    private func revertDistance() {
+        guard let route = plan.route else { return }
+        syncValues(from: route)
+    }
+
+    // Switching on opens the map; switching off drops the saved route.
+    private var routeToggle: Binding<Bool> {
+        Binding(
+            get: { plan.isRouteOn },
+            set: { isOn in
+                if isOn {
+                    isShowingRouteMap = true
+                } else {
+                    plan.route = nil
+                }
+            }
+        )
+    }
+
+    private var routeThumbnail: some View {
+        AsyncImage(url: routeThumbnailURL) { image in
+            image
+                .resizable()
+                .scaledToFill()
+        } placeholder: {
+            Color.defaultCapsule
+                .overlay {
+                    Image(systemName: "map.fill")
+                        .font(.standard(size: .body5, weight: .medium))
+                        .foregroundStyle(Color.textColor)
+                }
+        }
+        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
+        .clipShape(.rect(cornerRadius: .cornerRadius14))
+        .id(plan.route?.coordinates.count ?? 0)
+    }
+
+    // A static Mapbox shot centred on the saved route — or, before one exists,
+    // the map the generator opens on — so the row hints at what's behind it
+    // without running a live map.
+    private var routeThumbnailURL: URL? {
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else { return nil }
+
+        guard let route = plan.route, route.coordinates.count >= 2 else {
+            return URL(
+                string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
+                    + "151.2006,-33.8769,12,0/60x60@2x?access_token=\(token)&logo=false&attribution=false"
+            )
+        }
+
+        let path = Self.encodedPolyline(Self.downsampled(route.coordinates))
+        guard let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { return nil }
+        return URL(
+            string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
+                + "path-3+ff4cc9(\(encodedPath))/auto/60x60@2x"
+                + "?padding=6&access_token=\(token)&logo=false&attribution=false"
+        )
+    }
+
+    private static func downsampled(_ coordinates: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        guard coordinates.count > Constants.thumbnailMaxPoints else { return coordinates }
+        let step = Double(coordinates.count - 1) / Double(Constants.thumbnailMaxPoints - 1)
+        return (0 ..< Constants.thumbnailMaxPoints).map { coordinates[Int((Double($0) * step).rounded())] }
+    }
+
+    private static func encodedPolyline(_ coordinates: [CLLocationCoordinate2D]) -> String {
+        var encoded = ""
+        var lastLatitude = 0
+        var lastLongitude = 0
+
+        for coordinate in coordinates {
+            let latitude = Int((coordinate.latitude * 1e5).rounded())
+            let longitude = Int((coordinate.longitude * 1e5).rounded())
+            encoded += encodedValue(latitude - lastLatitude)
+            encoded += encodedValue(longitude - lastLongitude)
+            lastLatitude = latitude
+            lastLongitude = longitude
+        }
+        return encoded
+    }
+
+    private static func encodedValue(_ value: Int) -> String {
+        var shifted = value < 0 ? ~(value << 1) : value << 1
+        var chunk = ""
+        while shifted >= 0x20 {
+            chunk.append(Character(UnicodeScalar(((shifted & 0x1F) | 0x20) + 63)!))
+            shifted >>= 5
+        }
+        chunk.append(Character(UnicodeScalar(shifted + 63)!))
+        return chunk
+    }
+
     private enum Constants {
         static let rowHeight: CGFloat = 62
         static let badgeSize: CGFloat = 30
         static let zoneRowHeight: CGFloat = 48
+        static let thumbnailMaxPoints = 40
+        static let staleTolerance: Double = 0.15
     }
 }
 

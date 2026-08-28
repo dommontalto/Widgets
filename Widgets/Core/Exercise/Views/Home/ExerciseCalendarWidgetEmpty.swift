@@ -20,7 +20,6 @@ struct ExerciseCalendarWidgetEmpty: View {
             BrightCalendar(selectedDate: $selectedDate, backgroundColor: .clear)
 
             prompt
-                .padding(.top, .spacing2x)
                 .padding(.horizontal, .spacing3x)
                 .padding(.bottom, .spacing3x)
         }
