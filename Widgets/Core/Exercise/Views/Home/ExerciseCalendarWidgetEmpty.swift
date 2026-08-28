@@ -45,7 +45,7 @@ struct ExerciseCalendarWidgetEmpty: View {
 
             BrightText(
                 "Plan your sessions with programs",
-                size: .body1,
+                size: .subheading2,
                 color: .defaultSlateBlue,
                 weight: .regular
             )
@@ -53,6 +53,7 @@ struct ExerciseCalendarWidgetEmpty: View {
 
             BrightPillButton(
                 "Create",
+                textColor: .defaultBlack,
                 buttonSize: .large,
                 isClear: true,
                 onTapCallback: onCreate
@@ -63,7 +64,7 @@ struct ExerciseCalendarWidgetEmpty: View {
         .padding(.horizontal, .spacing3x)
         .frame(maxWidth: .infinity)
         .background {
-            ExerciseProgramBackground()
+            ExerciseProgramBackground(fades: false)
         }
         .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
     }
@@ -92,7 +93,7 @@ struct ExerciseCalendarWidgetEmpty: View {
 
     private enum Constants {
         static let sportIconSize: CGFloat = 44
-        static let sportSwapEvery: TimeInterval = 1.5
+        static let sportSwapEvery: TimeInterval = 5
         static let sportSymbols = [
             "figure.volleyball", "figure.basketball",
             "figure.outdoor.cycle", "figure.run", "figure.badminton",

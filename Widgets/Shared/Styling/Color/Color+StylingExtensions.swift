@@ -146,6 +146,8 @@ nonisolated extension Color {
     // Lighthouse
     
     static let defaultLighthouseBlue = Color(hex: "#CFEBFF")
+
+    static let defaultSheetScrim = Color(light: .defaultGrey, dark: .black.opacity(.lowOpacity))
     
     // Exercise
     

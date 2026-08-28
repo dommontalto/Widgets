@@ -789,7 +789,7 @@ struct ExerciseCreateProgramSheet: View {
             "figure.rower", "figure.core.training", "figure.cooldown",
             "figure.golf", "figure.climbing",
         ]
-        static let sportSwapEvery: TimeInterval = 1.5
+        static let sportSwapEvery: TimeInterval = 3
 
         static let guidedName = "My Program"
 
@@ -824,6 +824,8 @@ struct ExerciseCreateProgramSheet: View {
 // bottom so the ruler and the pills stay legible against the sheet. The AI
 // chat sheet shares it, so it is not private.
 struct ExerciseProgramBackground: View {
+    var fades = true
+
     var body: some View {
         MeshGradient(
             width: 3,
@@ -845,8 +847,17 @@ struct ExerciseProgramBackground: View {
         // scale keeps the blur's own transparent edge off screen.
         .blur(radius: Constants.blur)
         .scaleEffect(Constants.overscan)
-        .mask(fade)
+        .mask { fadeMask }
         .ignoresSafeArea()
+    }
+
+    @ViewBuilder
+    private var fadeMask: some View {
+        if fades {
+            fade
+        } else {
+            Color.black
+        }
     }
 
     private var fade: some View {
