@@ -46,7 +46,7 @@ enum ExerciseCalendarDemo {
         if hasStrength, hasCardio { return AnyShapeStyle(ExerciseDayType.bothGradient) }
         if hasStrength { return AnyShapeStyle(Color.defaultPurple) }
         if hasCardio { return AnyShapeStyle(Color.defaultSkyBlueCyan) }
-        return AnyShapeStyle(colors[0])
+        return nil
     }
 
     private static func offset(of date: Date) -> Int {
@@ -74,7 +74,7 @@ enum ExerciseCalendarDemo {
             name: "Soccer",
             time: "8:30 - 9:00 PM",
             duration: "30min",
-            color: .defaultGreen,
+            color: .defaultSkyBlueCyan,
             symbols: ["figure.indoor.soccer"]
         ),
     ]
@@ -83,13 +83,13 @@ enum ExerciseCalendarDemo {
         -2: [
             ExerciseCalendarEvent(
                 name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 18 * 60, durationMinutes: 60, color: .defaultGreen
+                startMinutes: 18 * 60, durationMinutes: 60, color: .defaultSkyBlueCyan
             ),
         ],
         0: [
             ExerciseCalendarEvent(
                 name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 11 * 60, durationMinutes: 60, color: .defaultGreen
+                startMinutes: 11 * 60, durationMinutes: 60, color: .defaultSkyBlueCyan
             ),
             ExerciseCalendarEvent(
                 name: "Push Pull Split", detail: "1hr 30min", detailIcon: "stopwatch",
@@ -117,7 +117,7 @@ enum ExerciseCalendarDemo {
         3: [
             ExerciseCalendarEvent(
                 name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 20 * 60 + 30, durationMinutes: 30, color: .defaultGreen
+                startMinutes: 20 * 60 + 30, durationMinutes: 30, color: .defaultSkyBlueCyan
             ),
         ],
     ]

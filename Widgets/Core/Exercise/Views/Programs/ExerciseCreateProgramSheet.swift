@@ -831,12 +831,12 @@ struct ExerciseProgramBackground: View {
             width: 3,
             height: 3,
             points: [
-                .init(0, 0), .init(0.5, 0), .init(1, 0),
-                .init(0, 0.5), .init(0.6, 0.4), .init(1, 0.5),
+                .init(0, 0), .init(0.8, 0), .init(1, 0),
+                .init(0, 0.8), .init(0.85, 0.65), .init(1, 0.5),
                 .init(0, 1), .init(0.4, 1), .init(1, 1),
             ],
             colors: [
-                .defaultSkyBlue.opacity(.veryLowOpacity), .defaultLighthouseBlue,
+                .defaultSkyBlue.opacity(.mediumOpacity), .defaultLighthouseBlue,
                 .defaultSkyBlue.opacity(.minimalOpacity),
                 .defaultLighthouseBlue, .defaultSkyBlue.opacity(.semiLowOpacity), .defaultLighthouseBlue,
                 .defaultSkyBlue.opacity(.minimalOpacity), .defaultLighthouseBlue,

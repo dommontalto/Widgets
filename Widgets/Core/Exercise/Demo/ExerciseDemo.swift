@@ -111,7 +111,7 @@ struct ExerciseIntervalSegment: Identifiable {
             switch self {
             case .warmup: .defaultYellow
             case .work: .defaultSkyBlueCyan
-            case .walk: .defaultGreen
+            case .walk: .defaultSkyBlueCyan
             case .rest: .defaultGreen
             }
         }

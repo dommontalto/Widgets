@@ -43,13 +43,7 @@ struct ExerciseCalendarWidgetEmpty: View {
         VStack(spacing: .spacing3x) {
             sportIcon
 
-            BrightText(
-                "Plan your sessions with programs",
-                size: .subheading2,
-                color: .defaultSlateBlue,
-                weight: .regular
-            )
-            .multilineTextAlignment(.center)
+            BrightText("Program", size: .huge205, color: .defaultSlateBlue)
 
             BrightPillButton(
                 "Create",

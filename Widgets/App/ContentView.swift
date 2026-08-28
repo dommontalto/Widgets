@@ -41,7 +41,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
                     widgetLabel("ExerciseCalendarWidgetEmpty")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Program") {
+                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Program") {
                         ExerciseCalendarWidgetEmpty {
                             showingProgram = true
                         }
@@ -50,7 +50,7 @@ struct ContentView: View {
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseCalendarWidget")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseCalendarV5), title: "Calendar") {
+                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Program") {
                         ExerciseCalendarWidget()
                     }
                         .padding(.top, .spacing2x)

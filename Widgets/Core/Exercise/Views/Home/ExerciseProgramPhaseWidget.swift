@@ -31,26 +31,6 @@ struct ExerciseProgramPhaseWidget: View {
             row("Block") { blockBar }
             dashedDivider
             row("Sessions") { sessionBar }
-
-            VStack(alignment: .leading, spacing: .spacing2x) {
-                Image(systemName: "sparkles")
-                    .font(.standard(size: .standout3, weight: .light))
-                    .foregroundStyle(Color.textColor)
-
-                BrightText(status.note, size: .body2, color: .semiLightTextColor)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    ForEach(status.bullets, id: \.self) { bullet in
-                        HStack(alignment: .top, spacing: .spacing1x) {
-                            BrightText("\u{2022}", size: .body3, color: .semiLightTextColor)
-                            BrightText(bullet, size: .body3, color: .semiLightTextColor)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-            }
-            .padding(.top, .spacing2x)
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
