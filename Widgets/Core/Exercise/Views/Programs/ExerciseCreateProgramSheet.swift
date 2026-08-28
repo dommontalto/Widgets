@@ -421,15 +421,14 @@ struct ExerciseCreateProgramSheet: View {
             }
             .animation(.brightSnappy, value: periods)
         }
-        .confirmationDialog(
-            "Delete this program?",
-            isPresented: $showingDeleteProgram,
-            titleVisibility: .visible
-        ) {
-            Button("Delete program", role: .destructive) {
+        .alert("Delete this program?", isPresented: $showingDeleteProgram) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
                 dismiss()
             }
             .tint(.defaultRed)
+        } message: {
+            Text("Are you sure you want to delete this program?")
         }
     }
 
@@ -845,7 +844,7 @@ struct ExerciseCreateProgramSheet: View {
             "figure.rower", "figure.core.training", "figure.cooldown",
             "figure.golf", "figure.climbing",
         ]
-        static let sportSwapEvery: TimeInterval = 3
+        static let sportSwapEvery: TimeInterval = 1.5
 
         static let guidedName = "My Program"
 
