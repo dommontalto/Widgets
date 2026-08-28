@@ -5,8 +5,6 @@
 //  Created by Dom Montalto on 21/8/2026.
 //
 
-// DONT PORT THIS FILE TO IOS YET
-
 import SwiftUI
 
 nonisolated struct ExerciseChatMessage: Identifiable, Equatable {
@@ -21,6 +19,17 @@ nonisolated struct ExerciseChatMessage: Identifiable, Equatable {
     let id = UUID()
     let kind: Kind
     let text: String
+}
+
+// A starter prompt paired with the glyph for the sport it asks about.
+nonisolated struct ExerciseChatExample {
+    let symbol: String
+    let prompt: String
+
+    init(_ symbol: String, _ prompt: String) {
+        self.symbol = symbol
+        self.prompt = prompt
+    }
 }
 
 nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
@@ -50,6 +59,7 @@ struct ExerciseChatView: View {
     @State private var replyIndex = 0
     @State private var hasConfirmed = false
     @State private var replyTask: Task<Void, Never>?
+    @State private var promptIndex = 0
     @FocusState private var isTyping: Bool
 
     var body: some View {
@@ -82,6 +92,49 @@ struct ExerciseChatView: View {
         }
         .defaultScrollAnchor(.bottom)
         .defaultScrollAnchor(.bottom, for: .sizeChanges)
+        // The scroll view collapses to its content while the thread is empty,
+        // so the overlay only lands full width once the frame is spelled out.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .topLeading) {
+            if messages.isEmpty {
+                emptyState
+                    .padding(.spacing3x)
+            }
+        }
+    }
+
+    // MARK: - Empty state
+
+    // Before anything is sent the coach shows what it can do: an example
+    // prompt under the glyph for the sport it asks about, cycling together and
+    // fading away with the first message.
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: .spacing4x) {
+            Image(systemName: Constants.examples[promptIndex].symbol)
+                .font(.system(size: Constants.sportIconSize, weight: .light))
+                .foregroundStyle(Color.defaultSlateBlue)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(height: Constants.sportIconSize)
+
+            BrightText(Constants.examples[promptIndex].prompt, size: .body1, color: .lightTextColor)
+                .lineSpacing(.lineSpacingMedium)
+                .multilineTextAlignment(.leading)
+                .contentTransition(.opacity)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .transition(.opacity)
+        .task {
+            while true {
+                do {
+                    try await Task.sleep(for: .seconds(Constants.exampleSwapEvery))
+                } catch {
+                    return
+                }
+                withAnimation(.brightEaseInOut) {
+                    promptIndex = (promptIndex + 1) % Constants.examples.count
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -260,6 +313,22 @@ struct ExerciseChatView: View {
         // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
         // preset rate.
         static let orbSpeed: Double = 1.2
+
+        static let sportIconSize: CGFloat = 64
+        static let exampleSwapEvery: TimeInterval = 5
+
+        static let examples = [
+            ExerciseChatExample("figure.run", "Get me from the couch to a 5K in eight weeks."),
+            ExerciseChatExample("stopwatch", "Build a half marathon plan around three runs a week."),
+            ExerciseChatExample("calendar", "Plan my strength around Tuesday, Thursday and Saturday."),
+            ExerciseChatExample("figure.strengthtraining.traditional", "Help me squat 100kg by Christmas."),
+            ExerciseChatExample("figure.skiing.downhill", "Six weeks of ski prep for my legs and core."),
+            ExerciseChatExample("bandage.fill", "My left shoulder is cranky, so plan around it."),
+            ExerciseChatExample("figure.walk", "Ease me back into running after two months off."),
+            ExerciseChatExample("figure.pool.swim", "Two gym sessions and one swim, every week."),
+            ExerciseChatExample("figure.hiking", "Get me strong enough for the Tongariro Crossing."),
+            ExerciseChatExample("chart.xyaxis.line", "Keep my base through the off-season without burning out."),
+        ]
 
         // The interval lines are designed to sit on one line, so they shrink
         // a touch rather than wrap.

@@ -1,5 +1,5 @@
 //
-//  BrightSheetScrim.swift
+//  ExerciseProgramGradient.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 28/8/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct BrightSheetScrim: View {
+struct ExerciseProgramGradient: View {
     var body: some View {
         LinearGradient(
             stops: [
@@ -29,6 +29,6 @@ struct BrightSheetScrim: View {
 #Preview {
     ZStack {
         Color.defaultSkyBlue.ignoresSafeArea()
-        BrightSheetScrim()
+        ExerciseProgramGradient()
     }
 }
