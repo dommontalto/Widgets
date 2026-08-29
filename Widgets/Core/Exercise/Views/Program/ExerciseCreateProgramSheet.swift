@@ -8,32 +8,58 @@
 import SwiftUI
 
 enum ExerciseProgramRoute: Hashable {
-    case sessions(creates: Bool)
+    case sessions(creates: Bool, block: UUID? = nil)
 }
 
 nonisolated struct ExerciseTrainingBlock: Identifiable, Equatable {
     let id: UUID
     var name: String
-    // Unset until the block is given a length, which is what the periods screen
-    // shows as a dashed total.
-    var weeks: Int?
+    // A block is a week long until its own planner says otherwise.
+    var weeks: Int
 
-    init(id: UUID = UUID(), name: String, weeks: Int? = nil) {
+    init(id: UUID = UUID(), name: String, weeks: Int = 1) {
         self.id = id
         self.name = name
         self.weeks = weeks
     }
 }
 
+nonisolated struct ExercisePeriodHandover: Identifiable {
+    let id: UUID
+    let stopping: ExerciseTrainingPeriod
+}
+
+nonisolated enum ExercisePeriodState {
+    case upcoming
+    case running
+    case finished
+}
+
+nonisolated enum ExerciseBlockStatus {
+    case upcoming
+    case inProgress
+    case done
+}
+
 nonisolated struct ExerciseTrainingPeriod: Identifiable, Equatable {
     let id: UUID
     var name: String
     var blocks: [ExerciseTrainingBlock]
+    var isStarted: Bool
+    var completedWeeks: Int
 
-    init(id: UUID = UUID(), name: String = "", blocks: [ExerciseTrainingBlock]) {
+    init(
+        id: UUID = UUID(),
+        name: String = "",
+        blocks: [ExerciseTrainingBlock],
+        isStarted: Bool = false,
+        completedWeeks: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.blocks = blocks
+        self.isStarted = isStarted
+        self.completedWeeks = completedWeeks
     }
 
     static var empty: Self {
@@ -41,7 +67,37 @@ nonisolated struct ExerciseTrainingPeriod: Identifiable, Equatable {
     }
 
     var totalWeeks: Int {
-        blocks.compactMap(\.weeks).reduce(0, +)
+        blocks.map(\.weeks).reduce(0, +)
+    }
+
+    var fractionComplete: CGFloat {
+        guard totalWeeks > 0 else { return 0 }
+        return min(1, CGFloat(completedWeeks) / CGFloat(totalWeeks))
+    }
+
+    var percentComplete: Int {
+        Int((fractionComplete * 100).rounded())
+    }
+
+    var isFinished: Bool {
+        totalWeeks > 0 && completedWeeks >= totalWeeks
+    }
+
+    // Where the weeks done so far land tells each block whether it is behind,
+    // under way, or still ahead.
+    func status(of block: ExerciseTrainingBlock, isRunning: Bool) -> ExerciseBlockStatus {
+        guard isRunning else { return .upcoming }
+
+        var start = 0
+        for item in blocks {
+            let length = item.weeks
+            if item.id == block.id {
+                if completedWeeks >= start + length, length > 0 { return .done }
+                return completedWeeks >= start ? .inProgress : .upcoming
+            }
+            start += length
+        }
+        return .upcoming
     }
 }
 
@@ -63,13 +119,30 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var sportIndex = 0
 
-    @State private var name = ""
+    @State private var name: String
 
     @State private var template: Template?
 
     @State private var weeks = Constants.defaultWeeks
 
     @State private var nameNudge = 0
+
+    @State private var periodNudge = 0
+
+    // The period whose name field is being pointed at, and the card the list
+    // should bring into view.
+    @State private var nudgedPeriod: UUID?
+
+    @State private var scrollTarget: UUID?
+
+    // Bumped whenever a period is started or finished, so the change is felt.
+    @State private var periodTick = 0
+
+    // Set while the athlete is being asked about jumping ahead of a period that
+    // is part way through.
+    @State private var pendingStart: ExercisePeriodHandover?
+
+    @State private var isAtBottom = true
 
     @State private var periods: [ExerciseTrainingPeriod]
 
@@ -86,9 +159,12 @@ struct ExerciseCreateProgramSheet: View {
         self.startsAtBlocks = startsAtBlocks
         _step = State(initialValue: startsAtBlocks ? .periods : .intro)
         _path = State(initialValue: NavigationPath())
-        let seed = [ExerciseTrainingPeriod.empty]
+        // Editing opens on the program that already exists; creating starts from
+        // the one empty block the first step fills in.
+        let seed = startsAtBlocks ? Constants.guidedPeriods : [ExerciseTrainingPeriod.empty]
         _periods = State(initialValue: seed)
-        initialName = ""
+        _name = State(initialValue: startsAtBlocks ? Constants.guidedName : "")
+        initialName = startsAtBlocks ? Constants.guidedName : ""
         initialPeriods = seed
     }
 
@@ -110,6 +186,7 @@ struct ExerciseCreateProgramSheet: View {
                             .buttonStyle(.borderedProminent)
                             .tint(canAdvance ? .defaultSkyBlue : .defaultMainGrey)
                             .id(canAdvance)
+                            .transition(.opacity.combined(with: .scale))
                     }
                 }
             },
@@ -144,10 +221,12 @@ struct ExerciseCreateProgramSheet: View {
     @ViewBuilder
     private func destination(for route: ExerciseProgramRoute) -> some View {
         switch route {
-        case let .sessions(creates):
+        case let .sessions(creates, block):
             ExerciseAddSessionsSheet(
                 isCreating: creates,
                 startsEmpty: chosenStyle == .custom,
+                title: block.map(sessionsTitle),
+                blockLength: block.map(blockLength),
                 onDone: creates ? { dismiss() } : nil
             )
         }
@@ -313,7 +392,7 @@ struct ExerciseCreateProgramSheet: View {
         VStack(spacing: .spacing3x) {
             twoToneTitle(blue: "Template", plain: "style")
                 .padding(.top, .spacing6x)
-                .padding(.bottom, .spacing2x)
+                .padding(.vertical, .spacing3x)
 
             ForEach(Template.allCases) { option in
                 templateCard(option)
@@ -411,6 +490,7 @@ struct ExerciseCreateProgramSheet: View {
                     ForEach($periods) { $period in
                         periodCard($period)
                             .id(period.id)
+                            .transition(.opacity.combined(with: .scale))
                     }
                 }
                 .padding(.horizontal, .spacing3x)
@@ -420,6 +500,38 @@ struct ExerciseCreateProgramSheet: View {
                 planActions(scroller)
             }
             .animation(.brightSnappy, value: periods)
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.containerSize.height
+                    >= geometry.contentSize.height - Constants.bottomSlack
+            } action: { _, atBottom in
+                isAtBottom = atBottom
+            }
+            .onChange(of: scrollTarget) { _, target in
+                guard let target else { return }
+                withAnimation(.brightSnappy) { scroller.scrollTo(target, anchor: .center) }
+                scrollTarget = nil
+            }
+        }
+        .alert(
+            "Start this period?",
+            isPresented: Binding(
+                get: { pendingStart != nil },
+                set: { if !$0 { pendingStart = nil } }
+            ),
+            presenting: pendingStart
+        ) { handover in
+            Button("Start") {
+                if let period = periods.first(where: { $0.id == handover.id }) {
+                    start(period)
+                }
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: { handover in
+            Text(
+                "\(handover.stopping.name) will stop at "
+                    + "\(handover.stopping.completedWeeks) of \(handover.stopping.totalWeeks) weeks."
+            )
         }
         .alert("Delete this program?", isPresented: $showingDeleteProgram) {
             Button("Cancel", role: .cancel) {}
@@ -453,24 +565,66 @@ struct ExerciseCreateProgramSheet: View {
 
     private func addPeriodButton(_ scroller: ScrollViewProxy) -> some View {
         BrightRoundButton(systemImage: "plus", size: .finalBossLarge) {
-            let period = ExerciseTrainingPeriod.empty
+            var period = ExerciseTrainingPeriod.empty
+            period.name = "Training Period \(periods.count + 1)"
             withAnimation(.brightSnappy) {
                 periods.append(period)
-                scroller.scrollTo(period.id, anchor: .bottom)
+            }
+            // Already at the end of the list, the new card lands in view on its
+            // own; anywhere else it has to be brought there.
+            if !isAtBottom {
+                scrollTarget = period.id
             }
         }
     }
 
     private func periodCard(_ period: Binding<ExerciseTrainingPeriod>) -> some View {
-        VStack(spacing: .spacing2x) {
+        VStack(spacing: .spacing4x) {
             periodHeader(period)
+
+            progressRow(period.wrappedValue)
+
+            BrightDivider()
 
             blockList(period)
 
-            totalRow(period)
+            HStack(spacing: .spacing0x) {
+                Spacer(minLength: .spacing0x)
+
+                BrightRoundButton(systemImage: "plus") {
+                    addBlock(to: period)
+                }
+            }
         }
         .padding(.spacing3x)
         .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
+        .brightHaptic(trigger: periodTick) { _, _ in .success }
+    }
+
+    // The weeks done against the weeks planned, with the same figure as a ring.
+    private func progressRow(_ period: ExerciseTrainingPeriod) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+            BrightText("\(period.completedWeeks)", size: .giant)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            BrightText("/\(period.totalWeeks) weeks", size: .standout4, color: .lightTextColor)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            Spacer(minLength: .spacing2x)
+
+            progressRing(period)
+                // Sits the ring on the weeks label's centre rather than on the
+                // baseline the two numbers share.
+                .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + .spacing1x }
+        }
+        .animation(.brightSnappy, value: period.completedWeeks)
+        .animation(.brightSnappy, value: period.totalWeeks)
+        // The ring, not the tall number, sets the row's height, so the card's
+        // own spacing lands as an even gap above and below it.
+        .frame(height: Constants.ringDiameter)
+        .padding(.bottom, .spacing105x)
     }
 
     // A `List` rather than a plain stack so the rows take `swipeActions`; it
@@ -481,7 +635,7 @@ struct ExerciseCreateProgramSheet: View {
 
         return List {
             ForEach(period.blocks) { $block in
-                blockRow($block)
+                blockRow($block, in: period.wrappedValue, isRunning: state(of: period.wrappedValue) != .upcoming)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -509,22 +663,40 @@ struct ExerciseCreateProgramSheet: View {
 
     private func periodHeader(_ period: Binding<ExerciseTrainingPeriod>) -> some View {
         HStack(spacing: .spacing105x) {
-            Image(systemName: Template.periodise.symbol)
+            Image(systemName: state(of: period.wrappedValue) == .upcoming ? "circle.hexagonpath" : "circle.hexagonpath.fill")
+                .contentTransition(.symbolEffect(.replace))
                 .font(.system(size: Constants.promptIconSize, weight: .light))
-                .foregroundStyle(Color.defaultBrightGreen)
+                .foregroundStyle(Color.semiLightTextColor)
 
             TextField("Training period name", text: period.name)
-                .font(.standard(size: .subheading, weight: .light))
+                .font(.standard(size: .body1, weight: .light))
                 .foregroundStyle(Color.textColor)
+                .brightWiggle(trigger: nudgedPeriod == period.wrappedValue.id ? periodNudge : 0)
 
             Menu {
-                Button("Add block", systemImage: "plus") {
-                    addBlock(to: period)
+                switch state(of: period.wrappedValue) {
+                case .upcoming:
+                    Button("Start period", systemImage: "play.circle") {
+                        askToStart(period.wrappedValue)
+                    }
+                case .running:
+                    Button("Restart period", systemImage: "arrow.counterclockwise") {
+                        period.wrappedValue.completedWeeks = 0
+                    }
+                    // Ending a period is finishing it, so the next one picks up.
+                    Button("End period", systemImage: "stop.circle") {
+                        period.wrappedValue.isStarted = true
+                        period.wrappedValue.completedWeeks = period.wrappedValue.totalWeeks
+                        periodTick += 1
+                    }
+                case .finished:
+                    Button("Restart period", systemImage: "arrow.counterclockwise") {
+                        period.wrappedValue.isStarted = true
+                        period.wrappedValue.completedWeeks = 0
+                    }
                 }
 
-                Divider()
-
-                Button("Remove period", systemImage: "trash", role: .destructive) {
+                Button("Delete period", systemImage: "trash", role: .destructive) {
                     remove(period.wrappedValue)
                 }
                 .tint(.defaultRed)
@@ -536,26 +708,103 @@ struct ExerciseCreateProgramSheet: View {
         }
     }
 
-    private func blockRow(_ block: Binding<ExerciseTrainingBlock>) -> some View {
-        Button {
-            path.append(ExerciseProgramRoute.sessions(creates: false))
-        } label: {
-            HStack(spacing: .spacing2x) {
-                BrightText(block.wrappedValue.name, size: .body1)
-                    .monospacedDigit()
+    // Only one period is ever the current one, so starting a later one stops the
+    // one running now — stops, not completes: its weeks stay as they were done.
+    private func askToStart(_ period: ExerciseTrainingPeriod) {
+        guard let running = periods.first(where: { state(of: $0) == .running }),
+              running.id != period.id,
+              running.completedWeeks > 0 else {
+            start(period)
+            return
+        }
 
-                Spacer(minLength: .spacing0x)
+        pendingStart = ExercisePeriodHandover(id: period.id, stopping: running)
+    }
 
-                if let weeks = block.wrappedValue.weeks {
-                    BrightText(weeksLabel(weeks), size: .body1, color: .lightTextColor)
-                        .monospacedDigit()
+    private func start(_ period: ExerciseTrainingPeriod) {
+        withAnimation(.brightSnappy) {
+            for index in periods.indices {
+                if periods[index].id == period.id {
+                    periods[index].isStarted = true
+                } else if !periods[index].isFinished {
+                    periods[index].isStarted = false
                 }
+            }
+        }
+        periodTick += 1
+    }
+
+    // A program runs in order, so the period after a finished one picks up by
+    // itself; starting one by hand only matters at the front of the program or
+    // when the athlete jumps ahead.
+    private func state(of period: ExerciseTrainingPeriod) -> ExercisePeriodState {
+        if period.isFinished { return .finished }
+
+        if period.isStarted { return .running }
+
+        guard !period.blocks.isEmpty,
+              let index = periods.firstIndex(where: { $0.id == period.id }),
+              index > 0,
+              periods[..<index].allSatisfy(\.isFinished) else { return .upcoming }
+
+        return .running
+    }
+
+    private func sessionsTitle(_ id: UUID) -> String {
+        for period in periods {
+            guard let block = period.blocks.first(where: { $0.id == id }) else { continue }
+            return period.name.isEmpty ? block.name : "\(period.name) - \(block.name)"
+        }
+        return ""
+    }
+
+    private func blockLength(_ id: UUID) -> Binding<Int> {
+        Binding(
+            get: {
+                periods.lazy.compactMap { $0.blocks.first { $0.id == id } }.first?.weeks ?? 1
+            },
+            set: { weeks in
+                for period in periods.indices {
+                    guard let block = periods[period].blocks.firstIndex(where: { $0.id == id }) else { continue }
+                    periods[period].blocks[block].weeks = weeks
+                }
+            }
+        )
+    }
+
+    private func blockRow(
+        _ block: Binding<ExerciseTrainingBlock>,
+        in period: ExerciseTrainingPeriod,
+        isRunning: Bool
+    ) -> some View {
+        Button {
+            path.append(ExerciseProgramRoute.sessions(creates: false, block: block.wrappedValue.id))
+        } label: {
+            HStack(spacing: .spacing0x) {
+                BrightText(block.wrappedValue.name, size: .body2, color: .semiLightTextColor)
+                    .frame(width: Constants.blockNameWidth, alignment: .leading)
+                    .padding(.leading, .spacing2x)
+
+                Rectangle()
+                    .fill(Color.textColor.opacity(.ultraLowOpacity))
+                    .frame(width: Constants.hairline)
+
+                BrightText(weeksLabel(block.wrappedValue.weeks), size: .body2, color: .semiLightTextColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.brightSnappy, value: block.wrappedValue.weeks)
+                    .padding(.leading, .spacing2x)
+
+                Spacer(minLength: .spacing2x)
+
+                blockStatus(period.status(of: block.wrappedValue, isRunning: isRunning))
+                    .animation(.brightSnappy, value: period.status(of: block.wrappedValue, isRunning: isRunning))
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: FontSizes.body1.rawValue, weight: .medium))
                     .foregroundStyle(Color.lightTextColor)
+                    .padding(.horizontal, .spacing2x)
             }
-            .padding(.horizontal, .spacing2x)
             .frame(maxWidth: .infinity)
             .frame(height: Constants.blockRowHeight)
             .background(
@@ -567,31 +816,48 @@ struct ExerciseCreateProgramSheet: View {
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
+    private func blockStatus(_ status: ExerciseBlockStatus) -> some View {
+        switch status {
+        case .done:
+            BrightTick(isTicked: true)
+                .allowsHitTesting(false)
+                .transition(.opacity.combined(with: .scale))
+        case .inProgress:
+            BrightStatus(status: "In Progress")
+                .transition(.opacity.combined(with: .scale))
+        case .upcoming:
+            EmptyView()
+        }
+    }
+
     private func removeBlock(_ block: ExerciseTrainingBlock, from period: Binding<ExerciseTrainingPeriod>) {
         withAnimation(.brightSnappy) {
             period.wrappedValue.blocks.removeAll { $0.id == block.id }
         }
     }
 
-    private func totalRow(_ period: Binding<ExerciseTrainingPeriod>) -> some View {
-        let total = period.wrappedValue.totalWeeks
-
-        return HStack(spacing: .spacing105x) {
-            Image(systemName: "sum")
-                .font(.system(size: Constants.promptIconSize, weight: .light))
-                .foregroundStyle(Color.defaultSkyBlue)
-
-            BrightText("Total:", size: .body1)
-
-            BrightText(total == 0 ? "– weeks" : weeksLabel(total), size: .body1, color: .lightTextColor)
+    // Starting, restarting or ending a period sweeps the ring rather than
+    // snapping it.
+    private func progressRing(_ period: ExerciseTrainingPeriod) -> some View {
+        ZStack {
+            BrightText("\(period.percentComplete)%", size: .subheading1)
                 .monospacedDigit()
+                .contentTransition(.numericText())
 
-            Spacer(minLength: .spacing0x)
+            Circle()
+                .stroke(Color.defaultPurple.opacity(.minimalOpacity), lineWidth: Constants.ringWidth)
 
-            BrightRoundButton(systemImage: "plus") {
-                addBlock(to: period)
-            }
+            Circle()
+                .trim(from: 0, to: period.fractionComplete)
+                .stroke(
+                    Color.defaultPurple,
+                    style: StrokeStyle(lineWidth: Constants.ringWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
         }
+        .frame(width: Constants.ringDiameter, height: Constants.ringDiameter)
+        .animation(.brightSnappy, value: period.fractionComplete)
     }
 
     // MARK: - Shared pieces
@@ -648,6 +914,15 @@ struct ExerciseCreateProgramSheet: View {
         case .weeks:
             go(to: .periods)
         case .periods:
+            // A period with no name has nothing to show on the calendar, so the
+            // flow stops on it rather than saving it blank.
+            if let unnamed = periods.first(where: { $0.name.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                isTyping = false
+                nudgedPeriod = unnamed.id
+                periodNudge += 1
+                scrollTarget = unnamed.id
+                return
+            }
             dismiss()
         }
     }
@@ -672,7 +947,10 @@ struct ExerciseCreateProgramSheet: View {
     // New blocks start at the length picked on the ruler, so the period's total
     // means something the moment one is added.
     private func addBlock(to period: Binding<ExerciseTrainingPeriod>) {
-        let next = period.wrappedValue.blocks.count + 1
+        // Numbering restarts in every period, so it only has to dodge the names
+        // this card already holds.
+        let taken = period.wrappedValue.blocks.compactMap { Int($0.name.dropFirst("Block ".count)) }
+        let next = (taken.max() ?? 0) + 1
         withAnimation(.brightSnappy) {
             period.wrappedValue.blocks.append(ExerciseTrainingBlock(name: "Block \(next)", weeks: weeks))
         }
@@ -850,16 +1128,31 @@ struct ExerciseCreateProgramSheet: View {
 
         static var guidedPeriods: [ExerciseTrainingPeriod] {
             [
-                ExerciseTrainingPeriod(name: "Foundation", blocks: [
-                    ExerciseTrainingBlock(name: "Block 1", weeks: 4),
-                    ExerciseTrainingBlock(name: "Block 2", weeks: 4),
-                ]),
+                ExerciseTrainingPeriod(
+                    name: "Foundation",
+                    blocks: [
+                        ExerciseTrainingBlock(name: "Block 1", weeks: 4),
+                        ExerciseTrainingBlock(name: "Block 2", weeks: 6),
+                        ExerciseTrainingBlock(name: "Block 3", weeks: 3),
+                    ],
+                    isStarted: true,
+                    completedWeeks: 7
+                ),
                 ExerciseTrainingPeriod(name: "Build", blocks: [
-                    ExerciseTrainingBlock(name: "Block 3", weeks: 3),
-                    ExerciseTrainingBlock(name: "Block 4", weeks: 3),
+                    ExerciseTrainingBlock(name: "Block 1", weeks: 5),
+                    ExerciseTrainingBlock(name: "Block 2", weeks: 2),
+                    ExerciseTrainingBlock(name: "Block 3", weeks: 4),
                 ]),
                 ExerciseTrainingPeriod(name: "Peak", blocks: [
-                    ExerciseTrainingBlock(name: "Block 5", weeks: 2),
+                    ExerciseTrainingBlock(name: "Block 1", weeks: 3),
+                    ExerciseTrainingBlock(name: "Block 2", weeks: 1),
+                ]),
+                ExerciseTrainingPeriod(name: "Taper", blocks: [
+                    ExerciseTrainingBlock(name: "Block 1", weeks: 2),
+                    ExerciseTrainingBlock(name: "Block 2", weeks: 5),
+                ]),
+                ExerciseTrainingPeriod(name: "Recovery", blocks: [
+                    ExerciseTrainingBlock(name: "Block 1", weeks: 1),
                 ]),
             ]
         }
@@ -869,6 +1162,11 @@ struct ExerciseCreateProgramSheet: View {
         // so the ruler's edge-fade mask never clips the numbers.
         static let rulerHeight: CGFloat = 60
         static let blockRowHeight = ExerciseSetRow.Constants.rowHeight
+        static let blockNameWidth: CGFloat = 54
+        static let ringDiameter: CGFloat = 58
+        static let ringWidth: CGFloat = 10
+        static let bottomSlack: CGFloat = 24
+        static let hairline: CGFloat = 0.5
         static let styleIconSize: CGFloat = 50
         static let styleCardAspect: CGFloat = 1.25
         static let blurbWidth: CGFloat = 300

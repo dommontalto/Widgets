@@ -202,6 +202,11 @@ struct ExerciseCreateSessionSheet: View {
         }
     }
 
+    private func canSuperset(_ exercise: String) -> Bool {
+        !builder.isCardio(exercise)
+            && builder.added.filter { !builder.isCardio($0) }.count > 1
+    }
+
     private func cardioCard(_ exercise: String) -> some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             cardHeader(exercise)
@@ -239,8 +244,9 @@ struct ExerciseCreateSessionSheet: View {
             Spacer(minLength: .spacing0x)
 
             Menu {
-                // Only lifts pair into supersets; a run or a sport is its own leg.
-                if !builder.isCardio(exercise) {
+                // Only lifts pair into supersets; a run or a sport is its own leg,
+                // and one lift on its own has nothing to pair with.
+                if canSuperset(exercise) {
                     Button("Supersets", systemImage: "link") {
                         isEditingSupersets = true
                     }

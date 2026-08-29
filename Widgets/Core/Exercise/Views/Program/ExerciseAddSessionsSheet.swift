@@ -31,7 +31,7 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
         switch kind {
         case .strength: .defaultPurple
         case .run, .cycle: .defaultSkyBlue
-        case .rest: .defaultSkyBlue
+        case .rest: .defaultGreen
         }
     }
 
@@ -47,6 +47,11 @@ nonisolated struct ExercisePlanDay: Identifiable {
     var id: String { name }
 }
 
+nonisolated struct ExercisePlanWeek: Identifiable {
+    let id = UUID()
+    var days: [ExercisePlanDay]
+}
+
 struct ExerciseAddSessionsSheet: View {
     // Set when this week finishes the whole flow: the button reads Create and
     // `onDone` closes the presenting sheet. Unset, it says Save and pops back.
@@ -55,28 +60,56 @@ struct ExerciseAddSessionsSheet: View {
     // arrives with one already filled in.
     let startsEmpty: Bool
     let onDone: (() -> Void)?
+    // Which block this week belongs to, as its period names it.
+    let title: String
+    // The block this week plans for, so its row and the period's total carry the
+    // length picked here.
+    let blockLength: Binding<Int>?
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var days: [ExercisePlanDay]
-
-    @State private var repeatsWeekly = false
+    @State private var weeks: [ExercisePlanWeek]
+    @State private var selectedWeekID: UUID
+    @State private var isUneven = false
+    @State private var length: Int
 
     private let initialSessions: [[ExercisePlannedSession]]
 
-    init(isCreating: Bool = false, startsEmpty: Bool = false, onDone: (() -> Void)? = nil) {
+    init(
+        isCreating: Bool = false,
+        startsEmpty: Bool = false,
+        title: String? = nil,
+        blockLength: Binding<Int>? = nil,
+        onDone: (() -> Void)? = nil
+    ) {
         self.isCreating = isCreating
         self.startsEmpty = startsEmpty
+        self.title = title.map { $0.isEmpty ? "Add Sessions" : $0 } ?? "Add Sessions"
+        self.blockLength = blockLength
         self.onDone = onDone
-        let week = startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week
-        _days = State(initialValue: week)
-        initialSessions = week.map(\.sessions)
+        _length = State(initialValue: blockLength?.wrappedValue ?? 1)
+        let week = ExercisePlanWeek(days: startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week)
+        _weeks = State(initialValue: [week])
+        _selectedWeekID = State(initialValue: week.id)
+        initialSessions = week.days.map(\.sessions)
     }
 
     // Saving is offered only once the week differs from the one it opened with;
     // creating always is, since the flow has to be finishable.
     private var hasChanges: Bool {
-        repeatsWeekly || days.map(\.sessions) != initialSessions
+        length > 1 || isUneven || days.map(\.sessions) != initialSessions
+    }
+
+    private var showsDone: Bool {
+        isCreating || hasChanges
+    }
+
+    private var selectedIndex: Int {
+        weeks.firstIndex { $0.id == selectedWeekID } ?? 0
+    }
+
+    private var days: [ExercisePlanDay] {
+        weeks[selectedIndex].days
     }
 
     var body: some View {
@@ -86,11 +119,11 @@ struct ExerciseAddSessionsSheet: View {
             backgroundColor: .defaultSheetBackground,
             toolbar: {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Add Sessions", file: #file)
+                    ExerciseInlineTitle(title: title, file: #file)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    if isCreating || hasChanges {
+                    if showsDone {
                         Button(isCreating ? "Create" : "Save") {
                             if let onDone {
                                 onDone()
@@ -100,6 +133,7 @@ struct ExerciseAddSessionsSheet: View {
                         }
                             .buttonStyle(.borderedProminent)
                             .tint(.defaultSkyBlue)
+                            .transition(.opacity.combined(with: .scale))
                     }
                 }
             },
@@ -111,6 +145,11 @@ struct ExerciseAddSessionsSheet: View {
                             .padding(.horizontal, .spacing3x)
                             .padding(.bottom, .spacing3x)
 
+                        if isUneven {
+                            weekTags
+                                .padding(.bottom, .spacing3x)
+                        }
+
                         week
                             .padding(.horizontal, .spacing3x)
                             .background(Color.defaultCards.padding(.bottom, -Constants.backgroundBleed))
@@ -119,54 +158,151 @@ struct ExerciseAddSessionsSheet: View {
             }
         )
         .animation(.brightSnappy, value: days.map(\.sessions))
+        .animation(.brightSnappy, value: isUneven)
+        .animation(.brightSnappy, value: length)
+        .animation(.brightSnappy, value: weeks.count)
     }
 
     // MARK: - Week
 
     private var repeatRow: some View {
         HStack(spacing: .spacing105x) {
-            BrightRoundButton(
-                systemImage: "repeat",
-                size: .large,
-                color: repeatsWeekly ? .defaultGreen : nil
-            ) {
-                repeatsWeekly.toggle()
-            }
+            if length > 1 {
+                BrightRoundButton(
+                    systemImage: isUneven ? "repeat" : "arrow.clockwise",
+                    size: .large
+                ) {
+                    toggleUneven()
+                }
 
-            BrightText("Repeat weekly", size: .body1, color: .semiLightTextColor)
-                .padding(.leading, .spacing05x)
+                BrightText(isUneven ? "Uneven week" : "Repeat weekly", size: .body1, color: .semiLightTextColor)
+                    .padding(.leading, .spacing05x)
+            }
 
             Spacer()
 
-            Menu {
-                Button("Undo changes", systemImage: "arrow.counterclockwise") {
-                    days = startsEmpty ? ExerciseDemoPlanner.emptyWeek : ExerciseDemoPlanner.week
+            BrightText("Length:", size: .body1, color: .semiLightTextColor)
+
+            lengthMenu
+        }
+    }
+
+    private var lengthMenu: some View {
+        Menu {
+            Picker("Length", selection: lengthSelection) {
+                ForEach(1...Constants.maxWeeks, id: \.self) { count in
+                    Text(Self.lengthTitle(count)).tag(count)
+                }
+            }
+            .pickerStyle(.inline)
+        } label: {
+            BrightText(Self.lengthTitle(length), size: .body1)
+                .padding(.horizontal, .spacing2x)
+                .frame(height: .spacing5x)
+                .contentShape(.capsule)
+        }
+        .modifier(GlassEffect(shape: .capsule))
+    }
+
+    private var weekTags: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: .spacing1x) {
+                ForEach(Array(weeks.enumerated()), id: \.element.id) { index, week in
+                    weekTag(week, at: index)
                 }
 
-                Divider()
-
-                Button("Clear week", systemImage: "eraser.line.dashed") {
-                    days = ExerciseDemoPlanner.emptyWeek
+                if weeks.count < length {
+                    BrightRoundButton(systemImage: "plus", size: .small) {
+                        addWeek()
+                    }
                 }
-                Button("Delete week", systemImage: "trash", role: .destructive) {
-                    days = ExerciseDemoPlanner.emptyWeek
-                    dismiss()
+            }
+            .padding(.horizontal, .spacing3x)
+        }
+        .scrollClipDisabled()
+    }
+
+    // Week A and Week B are what makes the fortnight uneven, so only the weeks
+    // added after them can be pressed and held to delete.
+    @ViewBuilder
+    private func weekTag(_ week: ExercisePlanWeek, at index: Int) -> some View {
+        let tag = BrightTag(title: Self.weekName(index), isSelected: week.id == selectedWeekID) {
+            selectedWeekID = week.id
+        }
+
+        if index < Constants.fixedWeeks {
+            tag
+        } else {
+            tag.contextMenu {
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    remove(week)
                 }
                 .tint(.defaultRed)
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: FontSizes.subheading2.rawValue, weight: .medium))
-                    .foregroundStyle(Color.textColor)
-                    .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-                    .contentShape(Circle())
             }
-            .modifier(GlassEffect())
+        }
+    }
+
+    private static func weekName(_ index: Int) -> String {
+        "Week \(String(UnicodeScalar(UInt8(65 + index))))"
+    }
+
+    // An uneven fortnight needs two weeks to be uneven between, so turning it on
+    // brings Week B with it.
+    private func toggleUneven() {
+        isUneven.toggle()
+        if isUneven {
+            if weeks.count < Constants.fixedWeeks {
+                addWeek()
+            }
+        } else {
+            // An even week is Week A repeated, so that is the one left on screen.
+            selectedWeekID = weeks[0].id
+        }
+    }
+
+    private var lengthSelection: Binding<Int> {
+        Binding(
+            get: { length },
+            set: { setLength($0) }
+        )
+    }
+
+    private static func lengthTitle(_ count: Int) -> String {
+        count == 1 ? "1 week" : "\(count) weeks"
+    }
+
+    // A shorter block can't hold the weeks already written, so it drops the ones
+    // past its end. A longer one only makes room; the weeks are added by hand.
+    private func setLength(_ count: Int) {
+        length = count
+        blockLength?.wrappedValue = count
+        if count == 1 {
+            isUneven = false
+        }
+        if weeks.count > count {
+            weeks.removeLast(weeks.count - count)
+            if !weeks.contains(where: { $0.id == selectedWeekID }) {
+                selectedWeekID = weeks[0].id
+            }
+        }
+    }
+
+    private func addWeek() {
+        let week = ExercisePlanWeek(days: ExerciseDemoPlanner.emptyWeek)
+        weeks.append(week)
+        selectedWeekID = week.id
+    }
+
+    private func remove(_ week: ExercisePlanWeek) {
+        weeks.removeAll { $0.id == week.id }
+        if !weeks.contains(where: { $0.id == selectedWeekID }) {
+            selectedWeekID = weeks[0].id
         }
     }
 
     private var week: some View {
         VStack(spacing: .spacing0x) {
-            ForEach($days) { $day in
+            ForEach($weeks[selectedIndex].days) { $day in
                 dayRow($day)
                     .padding(.vertical, .spacing2x)
 
@@ -183,8 +319,14 @@ struct ExerciseAddSessionsSheet: View {
             dayChip(day.wrappedValue.name)
 
             VStack(spacing: .spacing1x) {
-                ForEach(day.wrappedValue.sessions) { session in
-                    sessionCard(session, in: day)
+                if day.wrappedValue.sessions.isEmpty {
+                    // A day with nothing on it is a rest day, so it says so
+                    // rather than sitting blank; adding a session takes it back.
+                    restCard
+                } else {
+                    ForEach(day.wrappedValue.sessions) { session in
+                        sessionCard(session, in: day)
+                    }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -267,9 +409,22 @@ struct ExerciseAddSessionsSheet: View {
         }
     }
 
+    private var restCard: some View {
+        HStack(spacing: .spacing105x) {
+            BrightText("Rest Day", size: .body2, color: .defaultGreen, weight: .regular)
+
+            Spacer(minLength: .spacing0x)
+        }
+        .padding(.horizontal, .spacing105x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: Constants.cardHeight)
+        .background(restBackground)
+        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius14, style: .continuous))
+    }
+
     private var restBackground: some View {
         DiagonalStripesShape(spacing: Constants.stripeSpacing)
-            .stroke(Color.defaultSkyBlue.opacity(.minimalOpacity), lineWidth: Constants.stripeWidth)
+            .stroke(Color.defaultGreen.opacity(.minimalOpacity), lineWidth: Constants.stripeWidth)
     }
 
     // MARK: - Bottom bar
@@ -293,6 +448,8 @@ struct ExerciseAddSessionsSheet: View {
         static let stripeSpacing: CGFloat = 9
         static let stripeWidth: CGFloat = 3
         static let hairline: CGFloat = 0.5
+        static let fixedWeeks = 2
+        static let maxWeeks = 6
         static let backgroundBleed: CGFloat = 1000
     }
 }

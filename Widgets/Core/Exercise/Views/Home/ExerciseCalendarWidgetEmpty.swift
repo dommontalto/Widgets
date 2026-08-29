@@ -35,7 +35,7 @@ struct ExerciseCalendarWidgetEmpty: View {
 
             BrightPillButton(
                 "Create",
-                textColor: .defaultBlack,
+                textColor: .textColor,
                 buttonSize: .large,
                 isClear: true,
                 onTapCallback: onCreate

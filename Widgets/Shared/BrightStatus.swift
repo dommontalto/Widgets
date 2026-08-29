@@ -94,6 +94,8 @@ struct BrightStatus: View {
             Color.defaultRed
         case "STANDARD":
             Color.defaultBlue
+        case "IN PROGRESS":
+            Color.defaultSkyBlue
         case "AVG ZONE 1":
             Color.defaultBlue
         case "AVG ZONE 3":

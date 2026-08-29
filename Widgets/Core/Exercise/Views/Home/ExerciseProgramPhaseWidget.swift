@@ -52,13 +52,13 @@ struct ExerciseProgramPhaseWidget: View {
                     cornerRadii: .init(bottomTrailing: .cornerRadius10, topTrailing: .cornerRadius10),
                     style: .continuous
                 )
-                .fill(Color.defaultGreen)
+                .fill(Color.defaultPurple)
                 .frame(width: proxy.size.width * status.macroProgress)
 
                 BrightText(status.macroLabel, size: .body3)
                     .frame(maxWidth: .infinity)
             }
-            .background(Color.defaultGreen.opacity(.veryMinimalOpacity))
+            .background(Color.defaultPurple.opacity(.veryMinimalOpacity))
             .clipShape(RoundedRectangle(cornerRadius: .cornerRadius10, style: .continuous))
         }
         .frame(height: barHeight)

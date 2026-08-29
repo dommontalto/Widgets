@@ -121,9 +121,9 @@ struct ExerciseCardioPlanEditor: View {
 
     private var goalBadge: some View {
         Menu {
-            ForEach(ExerciseCardioGoal.allCases) { option in
-                Button(option.title, systemImage: option.symbol) {
-                    plan.goal = option
+            Picker("Primary goal", selection: $plan.goal) {
+                ForEach(ExerciseCardioGoal.allCases) { option in
+                    Label(option.title, systemImage: option.symbol).tag(option)
                 }
             }
         } label: {
@@ -157,9 +157,9 @@ struct ExerciseCardioPlanEditor: View {
     private var secondaryBadge: some View {
         if plan.secondaryOptions.count > 1 {
             Menu {
-                ForEach(plan.secondaryOptions) { option in
-                    Button(option.title, systemImage: option.symbol) {
-                        plan.secondary = option
+                Picker("Target", selection: $plan.secondary) {
+                    ForEach(plan.secondaryOptions) { option in
+                        Label(option.title, systemImage: option.symbol).tag(option)
                     }
                 }
             } label: {
@@ -452,7 +452,7 @@ struct ExerciseCardioPlanEditor: View {
                 }
         }
         .frame(width: Constants.badgeSize, height: Constants.badgeSize)
-        .clipShape(.rect(cornerRadius: .cornerRadius14))
+        .clipShape(.rect(cornerRadius: .cornerRadius9))
         .id(plan.route?.coordinates.count ?? 0)
     }
 
@@ -535,12 +535,16 @@ struct ExerciseIntervalRow: View {
     @ScaledMetric(relativeTo: .body) private var badgeSize = Constants.badgeSize
     @ScaledMetric(relativeTo: .body) private var pillWidth = Constants.pillWidth
 
+    private var phaseSelection: Binding<ExerciseIntervalPhase> {
+        Binding(get: { phase }, set: { onPickPhase($0) })
+    }
+
     var body: some View {
         HStack(spacing: .spacing2x) {
             Menu {
-                ForEach(ExerciseIntervalPhase.allCases) { option in
-                    Button(option.title, systemImage: option.symbol) {
-                        onPickPhase(option)
+                Picker("Phase", selection: phaseSelection) {
+                    ForEach(ExerciseIntervalPhase.allCases) { option in
+                        Label(option.title, systemImage: option.symbol).tag(option)
                     }
                 }
             } label: {
