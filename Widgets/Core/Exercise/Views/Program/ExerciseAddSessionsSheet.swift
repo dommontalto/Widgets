@@ -220,6 +220,9 @@ struct ExerciseAddSessionsSheet: View {
                 ) {
                     toggleUneven()
                 }
+                // The glyph swaps in place rather than being cut for another.
+                .contentTransition(.symbolEffect(.replace))
+                .animation(.brightSnappy, value: isUneven)
 
                 BrightText(isUneven ? "Uneven week" : "Repeat weekly", size: .body1, color: .semiLightTextColor)
                     .padding(.leading, .spacing05x)

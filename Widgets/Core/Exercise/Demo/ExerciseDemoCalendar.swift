@@ -9,8 +9,6 @@ import SwiftUI
 
 struct ExerciseCalendarSession {
     let name: String
-    let time: String
-    let duration: String
     let color: Color
     let symbols: [String]
 }
@@ -30,7 +28,6 @@ struct ExerciseCalendarEvent: Identifiable {
 // only ever show sessions My Sessions holds.
 private struct ExerciseScheduledSession {
     let name: String
-    let time: String
     let startMinutes: Int
     let durationMinutes: Int
 
@@ -45,8 +42,6 @@ enum ExerciseCalendarDemo {
 
         return ExerciseCalendarSession(
             name: session.name,
-            time: scheduled.time,
-            duration: durationLabel(scheduled.durationMinutes),
             color: color(of: session),
             symbols: symbols(of: session)
         )
@@ -116,30 +111,25 @@ enum ExerciseCalendarDemo {
     private static let scheduleByOffset: [Int: [ExerciseScheduledSession]] = [
         -2: [
             ExerciseScheduledSession(
-                name: "Quick 5K", time: "6:30 - 7:00 AM",
-                startMinutes: 6 * 60 + 30, durationMinutes: 30
+                name: "Quick 5K", startMinutes: 6 * 60 + 30, durationMinutes: 30
             ),
         ],
         0: [
             ExerciseScheduledSession(
-                name: "Push & run", time: "6:00 - 7:30 PM",
-                startMinutes: 18 * 60, durationMinutes: 90
+                name: "Push & run", startMinutes: 18 * 60, durationMinutes: 90
             ),
             ExerciseScheduledSession(
-                name: "Quick Pull", time: "8:00 - 9:00 PM",
-                startMinutes: 20 * 60, durationMinutes: 60
+                name: "Quick Pull", startMinutes: 20 * 60, durationMinutes: 60
             ),
         ],
         1: [
             ExerciseScheduledSession(
-                name: "Quick Push", time: "6:30 - 7:30 AM",
-                startMinutes: 6 * 60 + 30, durationMinutes: 60
+                name: "Quick Push", startMinutes: 6 * 60 + 30, durationMinutes: 60
             ),
         ],
         3: [
             ExerciseScheduledSession(
-                name: "Quick 10K", time: "8:30 - 9:30 PM",
-                startMinutes: 20 * 60 + 30, durationMinutes: 60
+                name: "Quick 10K", startMinutes: 20 * 60 + 30, durationMinutes: 60
             ),
         ],
     ]
