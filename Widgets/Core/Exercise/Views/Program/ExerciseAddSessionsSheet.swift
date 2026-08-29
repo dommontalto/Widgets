@@ -89,6 +89,9 @@ struct ExerciseAddSessionsSheet: View {
 
     @State private var isShowingEvenWarning = false
 
+    // The shorter length waiting on an answer, since taking it drops weeks.
+    @State private var pendingLength: Int?
+
     private let initialSessions: [[ExercisePlannedSession]]
 
     init(
@@ -181,7 +184,24 @@ struct ExerciseAddSessionsSheet: View {
 
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("\(droppedWeeks) will be deleted and Week A will repeat.")
+            Text("\(droppedWeeks(keeping: 1)) will be deleted and Week A will repeat.")
+        }
+        .alert(
+            "Shorten to \(Self.lengthTitle(pendingLength ?? 1))?",
+            isPresented: Binding(
+                get: { pendingLength != nil },
+                set: { if !$0 { pendingLength = nil } }
+            ),
+            presenting: pendingLength
+        ) { count in
+            Button("Delete", role: .destructive) {
+                withAnimation(.brightSnappy) { applyLength(count) }
+            }
+            .tint(.defaultRed)
+
+            Button("Cancel", role: .cancel) {}
+        } message: { count in
+            Text("\(droppedWeeks(keeping: count)) will be deleted.")
         }
         .animation(.brightSnappy, value: days.map(\.sessions))
         .animation(.brightSnappy, value: isUneven)
@@ -302,8 +322,8 @@ struct ExerciseAddSessionsSheet: View {
         }
     }
 
-    private var droppedWeeks: String {
-        let names = weeks.indices.dropFirst().map(Self.weekName)
+    private func droppedWeeks(keeping kept: Int) -> String {
+        let names = weeks.indices.dropFirst(kept).map(Self.weekName)
         guard names.count > 1 else { return names.first ?? "" }
         return names.dropLast().joined(separator: ", ") + " and " + (names.last ?? "")
     }
@@ -322,6 +342,17 @@ struct ExerciseAddSessionsSheet: View {
     // A shorter block can't hold the weeks already written, so it drops the ones
     // past its end. A longer one only makes room; the weeks are added by hand.
     private func setLength(_ count: Int) {
+        // A shorter block can't hold the weeks already written, so it asks
+        // before dropping the ones past its end.
+        guard count >= weeks.count else {
+            pendingLength = count
+            return
+        }
+
+        applyLength(count)
+    }
+
+    private func applyLength(_ count: Int) {
         length = count
         blockLength?.wrappedValue = count
         if count == 1 {
@@ -330,7 +361,7 @@ struct ExerciseAddSessionsSheet: View {
         if weeks.count > count {
             weeks.removeLast(weeks.count - count)
             if !weeks.contains(where: { $0.id == selectedWeekID }) {
-                selectedWeekID = weeks[0].id
+                selectedWeekID = weeks[count - 1].id
             }
         }
     }
