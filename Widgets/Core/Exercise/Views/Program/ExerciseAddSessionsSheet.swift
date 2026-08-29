@@ -87,6 +87,8 @@ struct ExerciseAddSessionsSheet: View {
     @State private var isUneven = false
     @State private var length: Int
 
+    @State private var isShowingEvenWarning = false
+
     private let initialSessions: [[ExercisePlannedSession]]
 
     init(
@@ -171,6 +173,16 @@ struct ExerciseAddSessionsSheet: View {
                 }
             }
         )
+        .alert("Repeat one week?", isPresented: $isShowingEvenWarning) {
+            Button("Delete", role: .destructive) {
+                makeEven()
+            }
+            .tint(.defaultRed)
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\(droppedWeeks) will be deleted and Week A will repeat.")
+        }
         .animation(.brightSnappy, value: days.map(\.sessions))
         .animation(.brightSnappy, value: isUneven)
         .animation(.brightSnappy, value: length)
@@ -263,15 +275,37 @@ struct ExerciseAddSessionsSheet: View {
     // An uneven fortnight needs two weeks to be uneven between, so turning it on
     // brings Week B with it.
     private func toggleUneven() {
-        isUneven.toggle()
-        if isUneven {
+        guard isUneven else {
+            isUneven = true
+            // The tags appearing is the feedback; the week on screen stays put.
             if weeks.count < Constants.fixedWeeks {
-                addWeek()
+                appendWeek()
             }
-        } else {
-            // An even week is Week A repeated, so that is the one left on screen.
-            selectedWeekID = weeks[0].id
+            return
         }
+
+        // An even week is Week A repeated, so the rest have to go — and that is
+        // the one moment the week on screen changes by itself.
+        guard weeks.count > 1 else {
+            isUneven = false
+            return
+        }
+
+        isShowingEvenWarning = true
+    }
+
+    private func makeEven() {
+        withAnimation(.brightSnappy) {
+            weeks = [weeks[0]]
+            selectedWeekID = weeks[0].id
+            isUneven = false
+        }
+    }
+
+    private var droppedWeeks: String {
+        let names = weeks.indices.dropFirst().map(Self.weekName)
+        guard names.count > 1 else { return names.first ?? "" }
+        return names.dropLast().joined(separator: ", ") + " and " + (names.last ?? "")
     }
 
     private var lengthSelection: Binding<Int> {
@@ -302,15 +336,24 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     private func addWeek() {
+        selectedWeekID = appendWeek().id
+    }
+
+    @discardableResult
+    private func appendWeek() -> ExercisePlanWeek {
         let week = ExercisePlanWeek(days: ExerciseDemoPlanner.emptyWeek)
         weeks.append(week)
-        selectedWeekID = week.id
+        return week
     }
 
     private func remove(_ week: ExercisePlanWeek) {
-        weeks.removeAll { $0.id == week.id }
+        guard let index = weeks.firstIndex(where: { $0.id == week.id }) else { return }
+
+        weeks.remove(at: index)
+        // Deleting the week on screen falls back to the one before it rather
+        // than all the way to Week A.
         if !weeks.contains(where: { $0.id == selectedWeekID }) {
-            selectedWeekID = weeks[0].id
+            selectedWeekID = weeks[max(0, index - 1)].id
         }
     }
 

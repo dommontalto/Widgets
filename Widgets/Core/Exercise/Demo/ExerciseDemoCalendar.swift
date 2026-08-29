@@ -25,28 +25,86 @@ struct ExerciseCalendarEvent: Identifiable {
     let color: Color
 }
 
+// When a saved session is on. Everything else about it — its name, what it
+// holds and how it reads — comes from the session itself, so the calendar can
+// only ever show sessions My Sessions holds.
+private struct ExerciseScheduledSession {
+    let name: String
+    let time: String
+    let startMinutes: Int
+    let durationMinutes: Int
+
+    var session: ExerciseQuickSession? {
+        ExerciseDemoSessions.all.first { $0.name == name }
+    }
+}
+
 enum ExerciseCalendarDemo {
     static func session(on date: Date) -> ExerciseCalendarSession? {
-        sessionsByOffset[offset(of: date)]
+        guard let scheduled = schedule(on: date).first, let session = scheduled.session else { return nil }
+
+        return ExerciseCalendarSession(
+            name: session.name,
+            time: scheduled.time,
+            duration: durationLabel(scheduled.durationMinutes),
+            color: color(of: session),
+            symbols: symbols(of: session)
+        )
     }
 
     static func events(on date: Date) -> [ExerciseCalendarEvent] {
-        eventsByOffset[offset(of: date)] ?? []
+        schedule(on: date).compactMap { scheduled in
+            guard let session = scheduled.session else { return nil }
+
+            return ExerciseCalendarEvent(
+                name: session.name,
+                detail: durationLabel(scheduled.durationMinutes),
+                detailIcon: "stopwatch",
+                startMinutes: scheduled.startMinutes,
+                durationMinutes: scheduled.durationMinutes,
+                color: color(of: session)
+            )
+        }
     }
 
     // The calendar dot mirrors the heatmap palette: purple for strength-only
     // days, cardio blue for cardio-only, and their gradient when a day holds
-    // both.
+    // both — a session carrying lifts and a run counts as both on its own.
     static func dotStyle(on date: Date) -> AnyShapeStyle? {
-        let colors = events(on: date).map(\.color)
-        guard !colors.isEmpty else { return nil }
+        let sessions = schedule(on: date).compactMap(\.session)
+        guard !sessions.isEmpty else { return nil }
 
-        let hasStrength = colors.contains(.defaultPurple)
-        let hasCardio = colors.contains(.defaultSkyBlueCyan)
+        let hasStrength = sessions.contains { !$0.strengthItems.isEmpty }
+        let hasCardio = sessions.contains { !$0.cardioItems.isEmpty }
         if hasStrength, hasCardio { return AnyShapeStyle(ExerciseDayType.bothGradient) }
         if hasStrength { return AnyShapeStyle(Color.defaultPurple) }
         if hasCardio { return AnyShapeStyle(Color.defaultSkyBlueCyan) }
         return nil
+    }
+
+    private static func color(of session: ExerciseQuickSession) -> Color {
+        session.strengthItems.isEmpty ? .defaultSkyBlueCyan : .defaultPurple
+    }
+
+    // One chip per discipline the session holds, in the order it runs them.
+    private static func symbols(of session: ExerciseQuickSession) -> [String] {
+        var symbols: [String] = []
+        for item in session.items {
+            let symbol = ExerciseDemoLibrary.type(of: item.exerciseName).symbol
+            if !symbols.contains(symbol) { symbols.append(symbol) }
+        }
+        return symbols
+    }
+
+    private static func durationLabel(_ minutes: Int) -> String {
+        let hours = minutes / 60
+        let rest = minutes % 60
+        if hours == 0 { return "\(rest)min" }
+        return rest == 0 ? "\(hours)hr" : "\(hours)hr \(rest)min"
+    }
+
+    private static func schedule(on date: Date) -> [ExerciseScheduledSession] {
+        scheduleByOffset[offset(of: date)] ?? []
     }
 
     private static func offset(of date: Date) -> Int {
@@ -55,76 +113,33 @@ enum ExerciseCalendarDemo {
         return calendar.dateComponents([.day], from: today, to: calendar.startOfDay(for: date)).day ?? 0
     }
 
-    private static let sessionsByOffset: [Int: ExerciseCalendarSession] = [
-        -2: ExerciseCalendarSession(
-            name: "Soccer",
-            time: "6:00 - 7:00 PM",
-            duration: "1hr",
-            color: .defaultSkyBlueCyan,
-            symbols: ["figure.indoor.soccer"]
-        ),
-        0: ExerciseCalendarSession(
-            name: "Gym & Cardio session",
-            time: "6:00 - 7:00 PM",
-            duration: "1hr 30min",
-            color: .defaultPurple,
-            symbols: ["figure.strengthtraining.traditional", "figure.run"]
-        ),
-        1: ExerciseCalendarSession(
-            name: "5K run",
-            time: "6:30 - 7:00 AM",
-            duration: "30min",
-            color: .defaultSkyBlueCyan,
-            symbols: ["figure.run"]
-        ),
-        3: ExerciseCalendarSession(
-            name: "Soccer",
-            time: "8:30 - 9:00 PM",
-            duration: "30min",
-            color: .defaultSkyBlueCyan,
-            symbols: ["figure.indoor.soccer"]
-        ),
-    ]
-
-    private static let eventsByOffset: [Int: [ExerciseCalendarEvent]] = [
+    private static let scheduleByOffset: [Int: [ExerciseScheduledSession]] = [
         -2: [
-            ExerciseCalendarEvent(
-                name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 18 * 60, durationMinutes: 60, color: .defaultSkyBlueCyan
+            ExerciseScheduledSession(
+                name: "Quick 5K", time: "6:30 - 7:00 AM",
+                startMinutes: 6 * 60 + 30, durationMinutes: 30
             ),
         ],
         0: [
-            ExerciseCalendarEvent(
-                name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 11 * 60, durationMinutes: 60, color: .defaultSkyBlueCyan
+            ExerciseScheduledSession(
+                name: "Push & run", time: "6:00 - 7:30 PM",
+                startMinutes: 18 * 60, durationMinutes: 90
             ),
-            ExerciseCalendarEvent(
-                name: "Push Pull Split", detail: "1hr 30min", detailIcon: "stopwatch",
-                startMinutes: 13 * 60, durationMinutes: 60, color: .defaultPurple
-            ),
-            ExerciseCalendarEvent(
-                name: "Push Pull Split", detail: "1hr 30min", detailIcon: "stopwatch",
-                startMinutes: 15 * 60, durationMinutes: 27, color: .defaultPurple
-            ),
-            ExerciseCalendarEvent(
-                name: "Warmdown Walk", detail: "Free walk", detailIcon: nil,
-                startMinutes: 15 * 60 + 30, durationMinutes: 25, color: .defaultSkyBlueCyan
-            ),
-            ExerciseCalendarEvent(
-                name: "5K run", detail: "40 Mins", detailIcon: "stopwatch",
-                startMinutes: 17 * 60, durationMinutes: 60, color: .defaultSkyBlueCyan
+            ExerciseScheduledSession(
+                name: "Quick Pull", time: "8:00 - 9:00 PM",
+                startMinutes: 20 * 60, durationMinutes: 60
             ),
         ],
         1: [
-            ExerciseCalendarEvent(
-                name: "5K run", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 6 * 60 + 30, durationMinutes: 30, color: .defaultSkyBlueCyan
+            ExerciseScheduledSession(
+                name: "Quick Push", time: "6:30 - 7:30 AM",
+                startMinutes: 6 * 60 + 30, durationMinutes: 60
             ),
         ],
         3: [
-            ExerciseCalendarEvent(
-                name: "Soccer", detail: "30 Mins", detailIcon: "stopwatch",
-                startMinutes: 20 * 60 + 30, durationMinutes: 30, color: .defaultSkyBlueCyan
+            ExerciseScheduledSession(
+                name: "Quick 10K", time: "8:30 - 9:30 PM",
+                startMinutes: 20 * 60 + 30, durationMinutes: 60
             ),
         ],
     ]
