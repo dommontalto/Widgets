@@ -56,6 +56,13 @@ enum ExerciseCalendarDemo {
     }
 
     private static let sessionsByOffset: [Int: ExerciseCalendarSession] = [
+        -2: ExerciseCalendarSession(
+            name: "Soccer",
+            time: "6:00 - 7:00 PM",
+            duration: "1hr",
+            color: .defaultSkyBlueCyan,
+            symbols: ["figure.indoor.soccer"]
+        ),
         0: ExerciseCalendarSession(
             name: "Gym & Cardio session",
             time: "6:00 - 7:00 PM",

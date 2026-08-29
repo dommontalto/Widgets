@@ -342,7 +342,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
         static let traceWidth: CGFloat = .spacing7x
         static let traceHeight: CGFloat = .spacing3x
         static let tick: TimeInterval = 1
-        static let valueSize: FontSizes = .giant
+        static let valueSize: FontSizes = .huge
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15
         static let longExtension: TimeInterval = 30

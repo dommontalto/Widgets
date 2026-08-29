@@ -202,6 +202,12 @@ struct ExerciseLiveStrengthMenu: View {
                         .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
                         .contentTransition(.symbolEffect(.replace))
                         .padding(.trailing, .spacing1x)
+                } else if index < currentIndex {
+                    // The row itself takes the tap; the tick only reports that
+                    // the exercise is behind the run.
+                    BrightTick(isTicked: true)
+                        .allowsHitTesting(false)
+                        .padding(.trailing, .spacing1x)
                 }
             }
             .padding(.spacing2x)

@@ -108,18 +108,15 @@ struct ExerciseCalendarWidget: View {
 
     private var emptyCard: some View {
         HStack(spacing: .spacing105x) {
-            RoundedRectangle(cornerRadius: 1, style: .continuous)
-                .fill(Color.defaultGreen)
-                .frame(width: 2, height: 35)
+            BrightText("Rest day", size: .body2, color: .defaultGreen, weight: .regular)
 
-            BrightText("No sessions", size: .body2, color: .defaultGreen, weight: .regular)
+            Spacer(minLength: .spacing0x)
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.defaultGreen.opacity(.ultraLowOpacity),
-            in: RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous)
-        )
+        .frame(height: Constants.restCardHeight)
+        .background(ExerciseRestBackground())
+        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous))
     }
 
     private func chip(_ symbol: String) -> some View {
@@ -135,6 +132,7 @@ struct ExerciseCalendarWidget: View {
 
     enum Constants {
         static let chipSize: CGFloat = 36
+        static let restCardHeight: CGFloat = 53
         // Where the mixed card's gradient lands fully on blue.
         static let cardBlueStop: Double = 0.55
     }

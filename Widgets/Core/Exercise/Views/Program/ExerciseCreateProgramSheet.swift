@@ -529,8 +529,8 @@ struct ExerciseCreateProgramSheet: View {
             Button("Cancel", role: .cancel) {}
         } message: { handover in
             Text(
-                "\(handover.stopping.name) will stop at "
-                    + "\(handover.stopping.completedWeeks) of \(handover.stopping.totalWeeks) weeks."
+                "\(handover.stopping.name) will be marked complete at all "
+                    + "\(handover.stopping.totalWeeks) weeks."
             )
         }
         .alert("Delete this program?", isPresented: $showingDeleteProgram) {
@@ -713,7 +713,7 @@ struct ExerciseCreateProgramSheet: View {
     private func askToStart(_ period: ExerciseTrainingPeriod) {
         guard let running = periods.first(where: { state(of: $0) == .running }),
               running.id != period.id,
-              running.completedWeeks > 0 else {
+              !running.isFinished else {
             start(period)
             return
         }
@@ -722,11 +722,18 @@ struct ExerciseCreateProgramSheet: View {
     }
 
     private func start(_ period: ExerciseTrainingPeriod) {
+        guard let target = periods.firstIndex(where: { $0.id == period.id }) else { return }
+
         withAnimation(.brightSnappy) {
             for index in periods.indices {
-                if periods[index].id == period.id {
+                if index == target {
                     periods[index].isStarted = true
-                } else if !periods[index].isFinished {
+                } else if index < target {
+                    // Jumping ahead closes off everything behind it: the ring
+                    // fills, the weeks read whole and every block ticks.
+                    periods[index].isStarted = true
+                    periods[index].completedWeeks = periods[index].totalWeeks
+                } else {
                     periods[index].isStarted = false
                 }
             }

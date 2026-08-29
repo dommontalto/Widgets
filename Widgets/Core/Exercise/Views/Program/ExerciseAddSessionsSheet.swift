@@ -10,8 +10,9 @@ import SwiftUI
 nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
     enum Kind {
         case strength
-        case run
-        case cycle
+        case cardio
+        // Lifts and a run in the one session, which is what earns the gradient.
+        case mixed
         case rest
     }
 
@@ -19,24 +20,37 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
     let title: String
     let subtitle: String
     let kind: Kind
+    // The menu's icon: whatever the session opens with.
+    let symbol: String
 
-    init(id: UUID = UUID(), title: String, subtitle: String, kind: Kind) {
+    init(id: UUID = UUID(), title: String, subtitle: String, kind: Kind, symbol: String? = nil) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.kind = kind
+        self.symbol = symbol ?? kind.symbol
     }
 
     var accentColor: Color {
         switch kind {
-        case .strength: .defaultPurple
-        case .run, .cycle: .defaultSkyBlue
+        case .strength, .mixed: .defaultPurple
+        case .cardio: .defaultSkyBlueCyan
         case .rest: .defaultGreen
         }
     }
 
     var duplicated: ExercisePlannedSession {
-        ExercisePlannedSession(title: title, subtitle: subtitle, kind: kind)
+        ExercisePlannedSession(title: title, subtitle: subtitle, kind: kind, symbol: symbol)
+    }
+}
+
+extension ExercisePlannedSession.Kind {
+    var symbol: String {
+        switch self {
+        case .strength, .mixed: ExerciseCategory.gym.symbol
+        case .cardio: ExerciseCategory.cardio.symbol
+        case .rest: "moon.zzz"
+        }
     }
 }
 
@@ -350,7 +364,7 @@ struct ExerciseAddSessionsSheet: View {
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
         Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
-                Button(template.title, systemImage: templateSymbol(template.kind)) {
+                Button(template.title, systemImage: template.symbol) {
                     add(template, to: day)
                 }
             }
@@ -374,18 +388,26 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     private func sessionCard(_ session: ExercisePlannedSession, in day: Binding<ExercisePlanDay>) -> some View {
-        HStack(spacing: .spacing105x) {
+        let isMixed = session.kind == .mixed
+
+        return HStack(spacing: .spacing105x) {
             if session.kind == .rest {
                 BrightText(session.title, size: .body2, color: session.accentColor, weight: .regular)
             } else {
                 RoundedRectangle(cornerRadius: 1, style: .continuous)
-                    .fill(session.accentColor)
+                    .fill(isMixed
+                        ? AnyShapeStyle(ExerciseDayType.bothGradient)
+                        : AnyShapeStyle(session.accentColor))
                     .frame(width: Constants.accentLineWidth, height: Constants.accentLineHeight)
 
-                VStack(alignment: .leading, spacing: .spacing025x) {
-                    BrightText(session.title, size: .body2, color: session.accentColor, weight: .regular)
-                    BrightText(session.subtitle, size: .body2, color: session.accentColor)
-                }
+                sessionBody(session)
+                    .overlay {
+                        if isMixed {
+                            Self.cardGradient
+                                .mask(sessionBody(session))
+                                .allowsHitTesting(false)
+                        }
+                    }
             }
 
             Spacer(minLength: .spacing0x)
@@ -396,6 +418,8 @@ struct ExerciseAddSessionsSheet: View {
         .background {
             if session.kind == .rest {
                 restBackground
+            } else if isMixed {
+                Self.cardGradient.opacity(.ultraLowOpacity)
             } else {
                 session.accentColor.opacity(.ultraLowOpacity)
             }
@@ -422,50 +446,43 @@ struct ExerciseAddSessionsSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: .cornerRadius14, style: .continuous))
     }
 
+    private func sessionBody(_ session: ExercisePlannedSession) -> some View {
+        VStack(alignment: .leading, spacing: .spacing025x) {
+            BrightText(session.title, size: .body2, color: session.accentColor, weight: .regular)
+            BrightText(session.subtitle, size: .body2, color: session.accentColor)
+        }
+    }
+
+    // Reaches blue by mid-card: a swatch spread would stay purple across a card
+    // this wide.
+    private static let cardGradient = LinearGradient(
+        stops: [
+            .init(color: .defaultPurple, location: 0),
+            .init(color: .defaultSkyBlueCyan, location: Constants.blueStop),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     private var restBackground: some View {
-        DiagonalStripesShape(spacing: Constants.stripeSpacing)
-            .stroke(Color.defaultGreen.opacity(.minimalOpacity), lineWidth: Constants.stripeWidth)
+        ExerciseRestBackground()
     }
 
     // MARK: - Bottom bar
 
     // MARK: - Derived state
 
-    private func templateSymbol(_ kind: ExercisePlannedSession.Kind) -> String {
-        switch kind {
-        case .strength: ExerciseCategory.gym.symbol
-        case .run, .cycle: ExerciseCategory.cardio.symbol
-        case .rest: "moon.zzz"
-        }
-    }
-
     private enum Constants {
         static let cardHeight: CGFloat = 53
+        static let blueStop: Double = 0.55
         static let dayChipWidth: CGFloat = 50
         static let accentLineWidth: CGFloat = 2
         static let accentLineHeight: CGFloat = 35
         static let plusIconSize: CGFloat = 22
-        static let stripeSpacing: CGFloat = 9
-        static let stripeWidth: CGFloat = 3
         static let hairline: CGFloat = 0.5
         static let fixedWeeks = 2
         static let maxWeeks = 6
         static let backgroundBleed: CGFloat = 1000
-    }
-}
-
-private struct DiagonalStripesShape: Shape {
-    let spacing: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        var x = rect.minX - rect.height
-        while x < rect.maxX {
-            path.move(to: CGPoint(x: x, y: rect.maxY))
-            path.addLine(to: CGPoint(x: x + rect.height, y: rect.minY))
-            x += spacing
-        }
-        return path
     }
 }
 
