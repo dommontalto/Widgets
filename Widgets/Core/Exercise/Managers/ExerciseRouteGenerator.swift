@@ -12,7 +12,7 @@ nonisolated enum ExerciseRouteGenerator {
     // Each leg is one MKDirections request over the walking network. Legs that
     // route far longer than their crow-flies span have dipped into a side
     // street and doubled back — those waypoints drop out and the next leg
-    // bridges the gap. The final leg keeps its endpoint regardless.
+    // bridges the gap. The final legt keeps its endpoint regardless.
     static func route(through waypoints: [CLLocationCoordinate2D]) async -> ExercisePlannedRoute? {
         guard waypoints.count >= 2 else { return nil }
 
