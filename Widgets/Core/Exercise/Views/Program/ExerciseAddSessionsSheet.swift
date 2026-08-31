@@ -89,6 +89,8 @@ struct ExerciseAddSessionsSheet: View {
 
     @State private var isShowingEvenWarning = false
 
+    @State private var startDate = ExerciseStartDateRow.nextMonday
+
     // The shorter length waiting on an answer, since taking it drops weeks.
     @State private var pendingLength: Int?
 
@@ -163,6 +165,15 @@ struct ExerciseAddSessionsSheet: View {
                             .padding(.top, .spacing1x)
                             .padding(.horizontal, .spacing3x)
                             .padding(.bottom, .spacing3x)
+
+                        // Only the single-block flow finishes here, so this
+                        // screen has to ask when the program starts; the
+                        // periodised flows answer that on the periods screen.
+                        if isCreating {
+                            ExerciseStartDateRow(startDate: $startDate)
+                                .padding(.horizontal, .spacing3x)
+                                .padding(.bottom, .spacing3x)
+                        }
 
                         if isUneven {
                             weekTags

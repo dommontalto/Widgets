@@ -11,16 +11,32 @@ enum ExerciseProgramRoute: Hashable {
     case sessions(creates: Bool, block: UUID? = nil)
 }
 
+nonisolated enum ExerciseBlockKind {
+    case normal
+    case deload
+    case rest
+}
+
 nonisolated struct ExerciseTrainingBlock: Identifiable, Equatable {
     let id: UUID
     var name: String
     // A block is a week long until its own planner says otherwise.
     var weeks: Int
+    var kind: ExerciseBlockKind
+    var deloadsFrom: UUID?
 
-    init(id: UUID = UUID(), name: String, weeks: Int = 1) {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        weeks: Int = 1,
+        kind: ExerciseBlockKind = .normal,
+        deloadsFrom: UUID? = nil
+    ) {
         self.id = id
         self.name = name
         self.weeks = weeks
+        self.kind = kind
+        self.deloadsFrom = deloadsFrom
     }
 }
 
@@ -102,8 +118,8 @@ nonisolated struct ExerciseTrainingPeriod: Identifiable, Equatable {
 }
 
 // Builds a program in one sheet: an intro, a guided-or-custom fork, the template
-// style and — when the template periodises — how many weeks it runs and the
-// training periods it splits into, before pushing a block's week to the planner.
+// style and — when the template periodises — the training periods it splits
+// into, before pushing a block's week to the planner.
 struct ExerciseCreateProgramSheet: View {
     // Entered from the calendar's edit button: the flow opens on the plan
     // itself, so the blocks screen is the root and the week sits on top of it.
@@ -123,7 +139,7 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var template: Template?
 
-    @State private var weeks = Constants.defaultWeeks
+    // @State private var weeks = Constants.defaultWeeks
 
     @State private var nameNudge = 0
 
@@ -152,8 +168,11 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var showingDeleteProgram = false
 
+    @State private var startDate: Date
+
     private let initialName: String
     private let initialPeriods: [ExerciseTrainingPeriod]
+    private let initialStartDate: Date
 
     init(startsAtBlocks: Bool = false) {
         self.startsAtBlocks = startsAtBlocks
@@ -166,6 +185,11 @@ struct ExerciseCreateProgramSheet: View {
         _name = State(initialValue: startsAtBlocks ? Constants.guidedName : "")
         initialName = startsAtBlocks ? Constants.guidedName : ""
         initialPeriods = seed
+        // A new program starts on the coming Monday until told otherwise; the
+        // one being edited has been running since its completed weeks began.
+        let start = startsAtBlocks ? Constants.runningStartDate : ExerciseStartDateRow.nextMonday
+        _startDate = State(initialValue: start)
+        initialStartDate = start
     }
 
     var body: some View {
@@ -242,7 +266,7 @@ struct ExerciseCreateProgramSheet: View {
         case .goals: chatStep.transition(slide)
         case .name: nameField.transition(slide)
         case .template: templatePicker.transition(slide)
-        case .weeks: lengthPicker.transition(slide)
+        // case .weeks: lengthPicker.transition(slide)
         case .periods: periodList.transition(slide)
         }
     }
@@ -440,32 +464,32 @@ struct ExerciseCreateProgramSheet: View {
 
     // MARK: Length
 
-    private var lengthPicker: some View {
-        VStack(spacing: .spacing0x) {
-            Spacer(minLength: .spacing0x)
-
-            BrightText("\(weeks)", size: .enormous, color: .defaultSlateBlue)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .animation(.brightSnappy, value: weeks)
-
-            BrightText(weeks == 1 ? "week" : "weeks", size: .standout1, color: .defaultSlateBlue)
-
-            blurb("How long do you want your program to be?")
-                .padding(.top, .spacing4x)
-
-            Spacer(minLength: .spacing0x)
-
-            BrightPicker(
-                value: $weeks,
-                range: Constants.weekRange,
-                majorEvery: Constants.weekMajorEvery,
-                showsLabels: true
-            )
-            .frame(height: Constants.rulerHeight)
-            .padding(.bottom, .spacing3x)
-        }
-    }
+    // private var lengthPicker: some View {
+    //     VStack(spacing: .spacing0x) {
+    //         Spacer(minLength: .spacing0x)
+    //
+    //         BrightText("\(weeks)", size: .enormous, color: .defaultSlateBlue)
+    //             .monospacedDigit()
+    //             .contentTransition(.numericText())
+    //             .animation(.brightSnappy, value: weeks)
+    //
+    //         BrightText(weeks == 1 ? "week" : "weeks", size: .standout1, color: .defaultSlateBlue)
+    //
+    //         blurb("How long do you want your program to be?")
+    //             .padding(.top, .spacing4x)
+    //
+    //         Spacer(minLength: .spacing0x)
+    //
+    //         BrightPicker(
+    //             value: $weeks,
+    //             range: Constants.weekRange,
+    //             majorEvery: Constants.weekMajorEvery,
+    //             showsLabels: true
+    //         )
+    //         .frame(height: Constants.rulerHeight)
+    //         .padding(.bottom, .spacing3x)
+    //     }
+    // }
 
     // MARK: Training periods
 
@@ -486,6 +510,8 @@ struct ExerciseCreateProgramSheet: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+
+                    ExerciseStartDateRow(startDate: $startDate, allowsPast: startsAtBlocks)
 
                     ForEach($periods) { $period in
                         periodCard($period)
@@ -591,9 +617,7 @@ struct ExerciseCreateProgramSheet: View {
             HStack(spacing: .spacing0x) {
                 Spacer(minLength: .spacing0x)
 
-                BrightRoundButton(systemImage: "plus") {
-                    addBlock(to: period)
-                }
+                addBlockMenu(period)
             }
         }
         .padding(.spacing3x)
@@ -674,25 +698,29 @@ struct ExerciseCreateProgramSheet: View {
                 .brightWiggle(trigger: nudgedPeriod == period.wrappedValue.id ? periodNudge : 0)
 
             Menu {
-                switch state(of: period.wrappedValue) {
-                case .upcoming:
-                    Button("Start period", systemImage: "play.circle") {
-                        askToStart(period.wrappedValue)
-                    }
-                case .running:
-                    Button("Restart period", systemImage: "arrow.counterclockwise") {
-                        period.wrappedValue.completedWeeks = 0
-                    }
-                    // Ending a period is finishing it, so the next one picks up.
-                    Button("End period", systemImage: "stop.circle") {
-                        period.wrappedValue.isStarted = true
-                        period.wrappedValue.completedWeeks = period.wrappedValue.totalWeeks
-                        periodTick += 1
-                    }
-                case .finished:
-                    Button("Restart period", systemImage: "arrow.counterclockwise") {
-                        period.wrappedValue.isStarted = true
-                        period.wrappedValue.completedWeeks = 0
+                // Lifecycle controls only mean something once the program
+                // exists; creating shows structure alone.
+                if startsAtBlocks {
+                    switch state(of: period.wrappedValue) {
+                    case .upcoming:
+                        Button("Start period", systemImage: "play.circle") {
+                            askToStart(period.wrappedValue)
+                        }
+                    case .running:
+                        Button("Restart period", systemImage: "arrow.counterclockwise") {
+                            period.wrappedValue.completedWeeks = 0
+                        }
+                        // Ending a period is finishing it, so the next one picks up.
+                        Button("End period", systemImage: "stop.circle") {
+                            period.wrappedValue.isStarted = true
+                            period.wrappedValue.completedWeeks = period.wrappedValue.totalWeeks
+                            periodTick += 1
+                        }
+                    case .finished:
+                        Button("Restart period", systemImage: "arrow.counterclockwise") {
+                            period.wrappedValue.isStarted = true
+                            period.wrappedValue.completedWeeks = 0
+                        }
                     }
                 }
 
@@ -779,48 +807,104 @@ struct ExerciseCreateProgramSheet: View {
         )
     }
 
+    private func addBlockMenu(_ period: Binding<ExerciseTrainingPeriod>) -> some View {
+        Menu {
+            Button("Block", systemImage: "square.stack") {
+                addBlock(to: period)
+            }
+
+            Button("Deload", systemImage: "arrow.down.right.circle") {
+                addDeloadBlock(to: period)
+            }
+            .disabled(deloadSource(period.wrappedValue) == nil)
+
+            Button("Rest", systemImage: "moon.zzz") {
+                addRestBlock(to: period)
+            }
+        } label: {
+            BrightRoundButton(systemImage: "plus")
+                .allowsHitTesting(false)
+        }
+    }
+
+    // A rest week holds no sessions, so its row stays put and swaps the arrow
+    // for the length picker the athlete would otherwise never reach.
+    @ViewBuilder
     private func blockRow(
         _ block: Binding<ExerciseTrainingBlock>,
         in period: ExerciseTrainingPeriod,
         isRunning: Bool
     ) -> some View {
-        Button {
-            path.append(ExerciseProgramRoute.sessions(creates: false, block: block.wrappedValue.id))
-        } label: {
-            HStack(spacing: .spacing0x) {
-                BrightText(block.wrappedValue.name, size: .body2, color: .semiLightTextColor)
-                    .frame(width: Constants.blockNameWidth, alignment: .leading)
-                    .padding(.leading, .spacing2x)
+        if block.wrappedValue.kind == .rest {
+            blockRowLabel(block, in: period, isRunning: isRunning)
+        } else {
+            Button {
+                path.append(ExerciseProgramRoute.sessions(creates: false, block: block.wrappedValue.id))
+            } label: {
+                blockRowLabel(block, in: period, isRunning: isRunning)
+            }
+            .buttonStyle(.plain)
+        }
+    }
 
-                Rectangle()
-                    .fill(Color.textColor.opacity(.ultraLowOpacity))
-                    .frame(width: Constants.hairline)
+    private func blockRowLabel(
+        _ block: Binding<ExerciseTrainingBlock>,
+        in period: ExerciseTrainingPeriod,
+        isRunning: Bool
+    ) -> some View {
+        HStack(spacing: .spacing0x) {
+            BrightText(block.wrappedValue.name, size: .body2, color: .semiLightTextColor)
+                .frame(width: Constants.blockNameWidth, alignment: .leading)
+                .padding(.leading, .spacing2x)
 
-                BrightText(weeksLabel(block.wrappedValue.weeks), size: .body2, color: .semiLightTextColor)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.brightSnappy, value: block.wrappedValue.weeks)
-                    .padding(.leading, .spacing2x)
+            Rectangle()
+                .fill(Color.textColor.opacity(.ultraLowOpacity))
+                .frame(width: Constants.hairline)
 
-                Spacer(minLength: .spacing2x)
+            BrightText(weeksLabel(block.wrappedValue.weeks), size: .body2, color: .semiLightTextColor)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.brightSnappy, value: block.wrappedValue.weeks)
+                .padding(.leading, .spacing2x)
 
-                blockStatus(period.status(of: block.wrappedValue, isRunning: isRunning))
-                    .animation(.brightSnappy, value: period.status(of: block.wrappedValue, isRunning: isRunning))
+            Spacer(minLength: .spacing2x)
 
+            blockStatus(period.status(of: block.wrappedValue, isRunning: isRunning))
+                .animation(.brightSnappy, value: period.status(of: block.wrappedValue, isRunning: isRunning))
+
+            if block.wrappedValue.kind == .rest {
+                restLengthMenu(block)
+            } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: FontSizes.body1.rawValue, weight: .medium))
                     .foregroundStyle(Color.lightTextColor)
                     .padding(.horizontal, .spacing2x)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: Constants.blockRowHeight)
-            .background(
-                Color.exerciseRowTint,
-                in: RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
-            )
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .frame(height: Constants.blockRowHeight)
+        .background(
+            Color.exerciseRowTint,
+            in: RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
+        )
+        .contentShape(Rectangle())
+    }
+
+    private func restLengthMenu(_ block: Binding<ExerciseTrainingBlock>) -> some View {
+        Menu {
+            ForEach(Constants.restWeekOptions, id: \.self) { count in
+                Button(weeksLabel(count)) {
+                    block.wrappedValue.weeks = count
+                }
+            }
+        } label: {
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: FontSizes.body3.rawValue, weight: .medium))
+                .foregroundStyle(Color.lightTextColor)
+                .padding(.horizontal, .spacing2x)
+                .frame(height: Constants.blockRowHeight)
+                .contentShape(Rectangle())
+        }
     }
 
     @ViewBuilder
@@ -911,15 +995,15 @@ struct ExerciseCreateProgramSheet: View {
             go(to: .template)
         case .template:
             if template == .periodise {
-                go(to: .weeks)
+                go(to: .periods)
             } else {
                 // A single block skips the periods list and plans its week
                 // directly.
                 isTyping = false
                 path.append(ExerciseProgramRoute.sessions(creates: true))
             }
-        case .weeks:
-            go(to: .periods)
+        // case .weeks:
+        //     go(to: .periods)
         case .periods:
             // A period with no name has nothing to show on the calendar, so the
             // flow stops on it rather than saving it blank.
@@ -944,23 +1028,64 @@ struct ExerciseCreateProgramSheet: View {
             go(to: .style, backwards: true)
         case .template:
             go(to: .name, backwards: true)
-        case .weeks:
-            go(to: .template, backwards: true)
+        // case .weeks:
+        //     go(to: .template, backwards: true)
         case .periods:
-            go(to: chosenStyle == .guided ? .goals : .weeks, backwards: true)
+            go(to: chosenStyle == .guided ? .goals : .template, backwards: true)
         }
     }
 
-    // New blocks start at the length picked on the ruler, so the period's total
-    // means something the moment one is added.
     private func addBlock(to period: Binding<ExerciseTrainingPeriod>) {
-        // Numbering restarts in every period, so it only has to dodge the names
-        // this card already holds.
-        let taken = period.wrappedValue.blocks.compactMap { Int($0.name.dropFirst("Block ".count)) }
-        let next = (taken.max() ?? 0) + 1
+        append(ExerciseTrainingBlock(name: nextName("Block", in: period.wrappedValue)), to: period)
+    }
+
+    // A deload steps down from a block, so it skips back over any rest or
+    // deload sitting between it and the last real one.
+    private func addDeloadBlock(to period: Binding<ExerciseTrainingPeriod>) {
+        guard let source = deloadSource(period.wrappedValue) else { return }
+
+        append(
+            ExerciseTrainingBlock(
+                name: deloadName(for: source),
+                kind: .deload,
+                deloadsFrom: source.id
+            ),
+            to: period
+        )
+    }
+
+    private func deloadSource(_ period: ExerciseTrainingPeriod) -> ExerciseTrainingBlock? {
+        period.blocks.last { $0.kind == .normal }
+    }
+
+    // The number names the block being deloaded, not the deload's own place in
+    // the period, so a deload after Block 3 reads "Deload 3".
+    private func deloadName(for source: ExerciseTrainingBlock) -> String {
+        guard let number = Int(source.name.dropFirst("Block ".count)) else { return "Deload" }
+        return "Deload \(number)"
+    }
+
+    private func addRestBlock(to period: Binding<ExerciseTrainingPeriod>) {
+        append(
+            ExerciseTrainingBlock(name: nextName("Rest", in: period.wrappedValue), kind: .rest),
+            to: period
+        )
+    }
+
+    private func append(_ block: ExerciseTrainingBlock, to period: Binding<ExerciseTrainingPeriod>) {
         withAnimation(.brightSnappy) {
-            period.wrappedValue.blocks.append(ExerciseTrainingBlock(name: "Block \(next)", weeks: weeks))
+            period.wrappedValue.blocks.append(block)
         }
+    }
+
+    // Numbering restarts in every period, so it only has to dodge the names
+    // this card already holds.
+    private func nextName(_ prefix: String, in period: ExerciseTrainingPeriod) -> String {
+        let taken = period.blocks.compactMap { block -> Int? in
+            guard block.name.hasPrefix("\(prefix) ") else { return nil }
+            return Int(block.name.dropFirst(prefix.count + 1))
+        }
+        return "\(prefix) \((taken.max() ?? 0) + 1)"
     }
 
     private func remove(_ period: ExerciseTrainingPeriod) {
@@ -998,12 +1123,11 @@ struct ExerciseCreateProgramSheet: View {
         ProgramStyle(rawValue: stylePage ?? 0) ?? .guided
     }
 
-    // The blocks screen keeps its action in the toolbar, and the length step
-    // offers its skip there; every other step advances from the full-width
-    // button at the foot.
+    // The blocks screen keeps its action in the toolbar; every other step
+    // advances from the full-width button at the foot.
     private var trailingTitle: String? {
         switch step {
-        case .weeks: "Skip"
+        // case .weeks: "Skip"
         // Editing an existing plan only offers the action once the plan differs
         // from the one it opened with.
         case .periods: startsAtBlocks ? (hasPlanChanges ? "Update" : nil) : "Create"
@@ -1012,13 +1136,13 @@ struct ExerciseCreateProgramSheet: View {
     }
 
     private var hasPlanChanges: Bool {
-        name != initialName || periods != initialPeriods
+        name != initialName || periods != initialPeriods || !startDate.isSameDay(as: initialStartDate)
     }
 
     private var ctaTitle: String? {
         switch step {
         case .intro: "Create program"
-        case .style, .name, .template, .weeks: "Next"
+        case .style, .name, .template: "Next"
         // The chat's confirm advances the guided step, so its input bar owns
         // the foot of that screen.
         case .goals, .periods: nil
@@ -1027,7 +1151,7 @@ struct ExerciseCreateProgramSheet: View {
 
     private var canAdvance: Bool {
         switch step {
-        case .intro, .style, .weeks, .periods: true
+        case .intro, .style, .periods: true
         // The guided path can move on without goals typed; the custom path can't
         // save a program with no name.
         case .goals: true
@@ -1044,7 +1168,10 @@ struct ExerciseCreateProgramSheet: View {
         case goals
         case name
         case template
-        case weeks
+        // Dropped: a program's length is the sum of the blocks built on the
+        // periods screen, so asking for it up front was redundant — the ruler's
+        // value only leaked in as every new block's default length.
+        // case weeks
         case periods
 
         // The blue wash carries the builder's hero screens. The periods screen is
@@ -1133,6 +1260,12 @@ struct ExerciseCreateProgramSheet: View {
 
         static let guidedName = "My Program"
 
+        // The demo program opened for editing is seven weeks in, so its start
+        // sits that many Mondays back.
+        static var runningStartDate: Date {
+            Calendar.current.date(byAdding: .weekOfYear, value: -7, to: ExerciseStartDateRow.nextMonday) ?? .now
+        }
+
         static var guidedPeriods: [ExerciseTrainingPeriod] {
             [
                 ExerciseTrainingPeriod(
@@ -1169,7 +1302,8 @@ struct ExerciseCreateProgramSheet: View {
         // so the ruler's edge-fade mask never clips the numbers.
         static let rulerHeight: CGFloat = 60
         static let blockRowHeight = ExerciseSetRow.Constants.rowHeight
-        static let blockNameWidth: CGFloat = 54
+        static let restWeekOptions = [1, 2]
+        static let blockNameWidth: CGFloat = .spacing12x
         static let ringDiameter: CGFloat = 58
         static let ringWidth: CGFloat = 10
         static let bottomSlack: CGFloat = 24
