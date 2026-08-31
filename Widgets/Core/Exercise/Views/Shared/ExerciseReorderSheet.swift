@@ -117,7 +117,7 @@ struct ExerciseReorderSheet: View {
     private func thumbnail(for exercise: ExerciseActiveExercise) -> some View {
         if let definition = ExerciseDemoLibrary.exercise(named: exercise.name) {
             Image(systemName: definition.symbol)
-                .font(.standard(size: .standout4, weight: .light))
+                .font(.standard(size: .standout3, weight: .light))
                 .foregroundStyle(Color.lightTextColor)
                 .frame(width: ExerciseLibraryRow.Constants.thumbnailWidth)
         } else {

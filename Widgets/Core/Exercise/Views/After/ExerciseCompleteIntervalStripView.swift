@@ -40,7 +40,7 @@ struct ExerciseCompleteIntervalStripView: View {
             }
 
             if let selected {
-                BrightText(selected.title, size: .standout4, weight: .regular)
+                BrightText(selected.title, size: .standout3, weight: .regular)
                     .contentTransition(.numericText())
                     .animation(.brightSnappy, value: selected.title)
             }

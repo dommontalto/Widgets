@@ -138,7 +138,7 @@ struct ExercisePreCardioSheet: View {
                 .foregroundStyle(Color.textColor)
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(title, size: .standout4, scaleTextSize: 0.7)
+                BrightText(title, size: .standout3, scaleTextSize: 0.7)
                     .lineLimit(1)
 
                 BrightText(startLabel, size: .body1, color: .semiLightTextColor)
@@ -171,7 +171,7 @@ struct ExercisePreCardioSheet: View {
     private func targetCard(_ target: Target) -> some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: target.symbol)
-                .font(.standard(size: .standout4, weight: .regular))
+                .font(.standard(size: .standout3, weight: .regular))
                 .foregroundStyle(target.tint)
                 .frame(width: Constants.iconWidth)
 
@@ -195,7 +195,7 @@ struct ExercisePreCardioSheet: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing2x) {
                 Image(systemName: "increase.quotelevel")
-                    .font(.standard(size: .standout4, weight: .regular))
+                    .font(.standard(size: .standout3, weight: .regular))
                     .foregroundStyle(Color.defaultPurple)
                     .frame(width: Constants.iconWidth)
 

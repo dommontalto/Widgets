@@ -49,7 +49,7 @@ struct ExerciseLibraryRow: View {
 
     private var thumbnail: some View {
         Image(systemName: exercise.symbol)
-            .font(.standard(size: .standout4, weight: .light))
+            .font(.standard(size: .standout3, weight: .light))
             .foregroundStyle(Color.lightTextColor)
             .frame(width: Constants.thumbnailWidth)
     }

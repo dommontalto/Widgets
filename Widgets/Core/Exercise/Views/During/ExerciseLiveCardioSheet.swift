@@ -278,7 +278,7 @@ struct ExerciseLiveCardioSheet: View {
     }
 
     private var zoneChip: some View {
-        BrightText(session.heartRateZone, size: .standout28, color: .defaultRed)
+        BrightText(session.heartRateZone, size: .standout2, color: .defaultRed)
             .padding(.horizontal, .spacing105x)
             .padding(.vertical, .spacing2x)
             .overlay {

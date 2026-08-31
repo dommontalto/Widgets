@@ -14,46 +14,54 @@ struct ExerciseStartDateRow: View {
     // Editing may hold a start already in the past; a new program can only
     // begin today or later.
     var allowsPast = false
+    // A started program's date is a fact, not a choice: the row goes static.
+    var isStarted = false
 
     @State private var showingPicker = false
 
     var body: some View {
-        Menu {
-            Button("Today", systemImage: "sun.max") {
-                startDate = Calendar.current.startOfDay(for: .now)
+        if isStarted {
+            row(title: "Started", showsChevron: false)
+        } else {
+            Menu {
+                Button("Today", systemImage: "sun.max") {
+                    startDate = Calendar.current.startOfDay(for: .now)
+                }
+
+                Button("Next Monday", systemImage: "arrow.right.to.line") {
+                    startDate = Self.nextMonday
+                }
+
+                Button("Pick a date…", systemImage: "calendar") {
+                    showingPicker = true
+                }
+            } label: {
+                row(title: "Starts", showsChevron: true)
+                    .contentShape(Rectangle())
             }
-
-            Button("Next Monday", systemImage: "arrow.right.to.line") {
-                startDate = Self.nextMonday
+            .buttonStyle(.plain)
+            .brightHaptic(.light, trigger: startDate)
+            .brightMiniSheet(isPresented: $showingPicker) {
+                picker
             }
+        }
+    }
 
-            Button("Pick a date…", systemImage: "calendar") {
-                showingPicker = true
-            }
-        } label: {
-            HStack(spacing: .spacing1x) {
-                BrightText(
-                    allowsPast && startDate < .now ? "Started" : "Starts",
-                    size: .body2,
-                    color: .semiLightTextColor
-                )
+    private func row(title: String, showsChevron: Bool) -> some View {
+        HStack(spacing: .spacing1x) {
+            BrightText(title, size: .body2, color: .semiLightTextColor)
 
-                Spacer(minLength: .spacing2x)
+            Spacer(minLength: .spacing2x)
 
-                BrightText(label, size: .body2, weight: .regular)
-                    .contentTransition(.numericText())
-                    .animation(.brightSnappy, value: startDate)
+            BrightText(label, size: .body2, weight: .regular)
+                .contentTransition(.numericText())
+                .animation(.brightSnappy, value: startDate)
 
+            if showsChevron {
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: FontSizes.body4.rawValue, weight: .medium))
                     .foregroundStyle(Color.lightTextColor)
             }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: startDate)
-        .brightMiniSheet(isPresented: $showingPicker) {
-            picker
         }
     }
 

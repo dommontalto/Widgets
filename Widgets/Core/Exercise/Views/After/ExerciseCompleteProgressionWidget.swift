@@ -55,11 +55,11 @@ struct ExerciseCompleteProgressionWidget: View {
     private var change: some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: "arrow.up")
-                .font(.standard(size: .standout4, weight: .light))
+                .font(.standard(size: .standout3, weight: .light))
                 .foregroundStyle(progression.direction.color)
                 .rotationEffect(progression.direction.rotation)
 
-            BrightText(progression.change, size: .standout4, color: .semiLightTextColor)
+            BrightText(progression.change, size: .standout3, color: .semiLightTextColor)
                 .monospacedDigit()
         }
     }

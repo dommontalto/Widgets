@@ -14,7 +14,9 @@ struct BrightCalendar<Trailing: View>: View {
     var dotStyle: (Date) -> AnyShapeStyle?
     @ViewBuilder var trailing: Trailing
 
-    @State private var scrolledID: Date?
+    @State private var position: ScrollPosition
+    @State private var containerWidth: CGFloat = 0
+    @State private var scrollSyncedDate: Date?
 
     private let calendar = Calendar.current
     private let days: [Date]
@@ -29,7 +31,12 @@ struct BrightCalendar<Trailing: View>: View {
         self.backgroundColor = backgroundColor
         self.dotStyle = dotStyle
         self.trailing = trailing()
-        _scrolledID = State(initialValue: Self.anchorDate(for: selectedDate.wrappedValue))
+        _position = State(
+            initialValue: ScrollPosition(
+                id: Self.anchorDate(for: selectedDate.wrappedValue),
+                anchor: .leading
+            )
+        )
 
         let calendar = Calendar.current
         let today = Date()
@@ -91,9 +98,7 @@ struct BrightCalendar<Trailing: View>: View {
                 ) {
                     BrightHaptic.light.play()
                     withAnimation(.brightSnappy) {
-                        let today = calendar.startOfDay(for: Date())
-                        selectedDate = today
-                        scrolledID = Self.anchorDate(for: today)
+                        selectedDate = calendar.startOfDay(for: Date())
                     }
                 }
                 .transition(.opacity.animation(.brightEaseInOut))
@@ -117,40 +122,57 @@ struct BrightCalendar<Trailing: View>: View {
                             BrightHaptic.light.play()
                             withAnimation(.brightSnappy) {
                                 selectedDate = tappedDate
-                                scrolledID = Self.anchorDate(for: tappedDate)
                             }
                         }
                     )
-                    .containerRelativeFrame(.horizontal) { length, _ in
-                        (length - .spacing3x * 2 - Constants.circleSize) / 6
-                    }
+                    .frame(width: cellWidth)
                     .id(date)
                 }
             }
             .scrollTargetLayout()
         }
         .scrollTargetBehavior(.viewAligned)
-        .scrollPosition(id: $scrolledID, anchor: .leading)
-        .onChange(of: scrolledID) { _, newID in
-            if let newID {
-                let candidate = Self.selectedDate(forAnchor: newID)
-                if !candidate.isSameDay(as: selectedDate) {
-                    BrightHaptic.light.play()
-                    withAnimation(.brightSnappy) {
-                        selectedDate = candidate
-                    }
+        .scrollPosition($position, anchor: .leading)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { containerWidth = $0 }
+        .onChange(of: containerWidth) { _, _ in scrollToSelection() }
+        .onAppear { scrollToSelection() }
+        .onChange(of: position.viewID(type: Date.self)) { _, newID in
+            guard let newID else { return }
+            let candidate = Self.selectedDate(forAnchor: newID)
+            if !candidate.isSameDay(as: selectedDate) {
+                BrightHaptic.light.play()
+                scrollSyncedDate = candidate
+                withAnimation(.brightSnappy) {
+                    selectedDate = candidate
                 }
             }
         }
         .onChange(of: selectedDate) { _, newDate in
-            let anchor = Self.anchorDate(for: newDate)
-            if scrolledID != anchor {
-                withAnimation(.brightSnappy) {
-                    scrolledID = anchor
-                }
+            guard scrollSyncedDate?.isSameDay(as: newDate) != true else {
+                scrollSyncedDate = nil
+                return
             }
+            scrollToSelection(animated: true)
         }
         .frame(height: Constants.calendarHeight)
+    }
+
+    private var cellWidth: CGFloat {
+        max(0, (containerWidth - .spacing3x * 2 - Constants.circleSize) / 6)
+    }
+
+    private func scrollToSelection(animated: Bool = false) {
+        guard containerWidth > 0, let first = days.first else { return }
+
+        let anchor = Self.anchorDate(for: selectedDate)
+        guard let day = calendar.dateComponents([.day], from: first, to: anchor).day else { return }
+
+        let x = CGFloat(min(max(day, 0), days.count - 1)) * cellWidth
+        if animated {
+            withAnimation(.brightSnappy) { position.scrollTo(x: x) }
+        } else {
+            position.scrollTo(x: x)
+        }
     }
 
     private static func anchorDate(for date: Date) -> Date {

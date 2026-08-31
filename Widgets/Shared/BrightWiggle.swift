@@ -34,7 +34,7 @@ private enum Constants {
     @Previewable @State var trigger = 0
 
     VStack(spacing: .spacing4x) {
-        BrightText("Session name", size: .standout28)
+        BrightText("Session name", size: .standout2)
             .brightWiggle(trigger: trigger)
 
         Button("Wiggle") { trigger += 1 }

@@ -30,12 +30,8 @@ enum FontSizes: CGFloat {
     case heading = 20
     // Smallest standout font size 22.
     case standout3 = 22
-    // Fourth largest standout font size 24.
-    case standout4 = 24
-    // Third largest standout font size 26.
+    // Second largest standout font size 26.
     case standout2 = 26
-    // Second largest standout font size 28.
-    case standout28 = 28
     // Largest standout font size 30.
     case standout1 = 30
     // More third huge font size 32.

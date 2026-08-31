@@ -11,6 +11,9 @@ nonisolated struct ExerciseChatMessage: Identifiable, Equatable {
     enum Kind: Equatable {
         case user
         case assistant
+        // A clarifying question with quick-reply chips; tapping one answers
+        // for the user, and typing works just the same.
+        case questions
         // The canned program reply: intro text followed by the week cards
         // and the generate prompt.
         case program
@@ -19,6 +22,7 @@ nonisolated struct ExerciseChatMessage: Identifiable, Equatable {
     let id = UUID()
     let kind: Kind
     let text: String
+    var options: [String] = []
 }
 
 // A starter prompt paired with the glyph for the sport it asks about.
@@ -46,9 +50,10 @@ nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
 
 // A demo chat with the AI coach: what you type lands as an iMessage-style
 // bubble, the assistant "thinks" for a beat, then a canned reply slides in.
-// The first reply is the program response — plain text, the week cards and
-// a confirm button, per the Figma prompt-program screens. Embedded as the
-// guided step of the program builder, which supplies the wash behind it.
+// The first reply asks a clarifying question with quick-reply chips; the
+// second is the program response — plain text, the week cards and a confirm
+// button, per the Figma prompt-program screens. Embedded as the guided step
+// of the program builder, which supplies the wash behind it.
 struct ExerciseChatView: View {
     // Called when the proposed program is confirmed — the builder advances.
     var onConfirm: () -> Void = {}
@@ -145,6 +150,8 @@ struct ExerciseChatView: View {
                 userBubble(message)
             case .assistant:
                 assistantText(message.text)
+            case .questions:
+                questionResponse(message)
             case .program:
                 programResponse(message)
             }
@@ -174,10 +181,53 @@ struct ExerciseChatView: View {
     }
 
     private func assistantText(_ text: String) -> some View {
-        BrightText(text, size: .body2)
+        BrightText(text, size: .body1)
             .lineSpacing(.lineSpacingMedium)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Clarifying questions
+
+    // The question reads like any coach message; the chips underneath make
+    // answering two taps, and they leave once the answer is in.
+    private func questionResponse(_ message: ExerciseChatMessage) -> some View {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            assistantText(message.text)
+
+            if !message.options.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: .spacing1x) {
+                        ForEach(message.options, id: \.self) { option in
+                            chip(option) { answer(option, to: message) }
+                        }
+                    }
+                }
+                .scrollClipDisabled()
+                .transition(.opacity)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func chip(_ title: String, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            BrightText(title, size: .body2)
+                .padding(.horizontal, .spacing2x)
+                .frame(height: .spacing5x)
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .modifier(GlassEffect(shape: .capsule))
+    }
+
+    private func answer(_ option: String, to message: ExerciseChatMessage) {
+        guard let index = messages.firstIndex(where: { $0.id == message.id }) else { return }
+
+        withAnimation(.brightSnappy) {
+            messages[index].options = []
+        }
+        deliver(option)
     }
 
     private var thinkingIndicator: some View {
@@ -233,7 +283,7 @@ struct ExerciseChatView: View {
     @ViewBuilder
     private func weekEntry(_ entry: ExerciseChatProgramWeek.Entry, isLast: Bool) -> some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
-            BrightText(entry.count, size: .standout4, weight: .regular)
+            BrightText(entry.count, size: .standout3, weight: .regular)
                 .monospacedDigit()
 
             BrightText(entry.detail, size: .body2, color: .lightTextColor, scaleTextSize: Constants.detailScale)
@@ -265,6 +315,10 @@ struct ExerciseChatView: View {
         guard !text.isEmpty else { return }
 
         draft = ""
+        deliver(text)
+    }
+
+    private func deliver(_ text: String) {
         withAnimation(.brightSnappy) {
             messages.append(ExerciseChatMessage(kind: .user, text: text))
             isThinking = true
@@ -273,6 +327,8 @@ struct ExerciseChatView: View {
         replyTask = Task { await reply() }
     }
 
+    // The first reply asks the one thing the goal alone can't answer, the
+    // second proposes the program, and everything after is chatter.
     private func reply() async {
         do {
             try await Task.sleep(for: .seconds(Double.random(in: Constants.thinkingRange)))
@@ -280,12 +336,19 @@ struct ExerciseChatView: View {
             return
         }
 
-        let message: ExerciseChatMessage = if replyIndex == 0 {
+        let message: ExerciseChatMessage = switch replyIndex {
+        case 0:
+            ExerciseChatMessage(
+                kind: .questions,
+                text: Constants.questionIntro,
+                options: Constants.questionOptions
+            )
+        case 1:
             ExerciseChatMessage(kind: .program, text: Constants.programIntro)
-        } else {
+        default:
             ExerciseChatMessage(
                 kind: .assistant,
-                text: Constants.replies[(replyIndex - 1) % Constants.replies.count]
+                text: Constants.replies[(replyIndex - 2) % Constants.replies.count]
             )
         }
         replyIndex += 1
@@ -333,6 +396,11 @@ struct ExerciseChatView: View {
         // The interval lines are designed to sit on one line, so they shrink
         // a touch rather than wrap.
         static let detailScale: CGFloat = 0.85
+
+        static let questionIntro = "Happy to build that — one thing first: how many days "
+            + "a week can you realistically train?"
+
+        static let questionOptions = ["2 days", "3 days", "4 days", "5 days"]
 
         static let programIntro = "8-Week Couch to 5K Program Schedule: 3 runs per week, "
             + "with at least 1 rest day between runs. Effort: Keep all running at an easy, "

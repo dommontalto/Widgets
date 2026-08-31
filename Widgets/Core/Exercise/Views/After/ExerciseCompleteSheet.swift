@@ -167,7 +167,7 @@ struct ExerciseCompleteSheet: View {
                     SwipePage(title: $0.title, systemImage: $0.systemImage)
                 },
                 fakeLargeTitle: summary.title ?? "",
-                titleSize: .standout4,
+                titleSize: .standout3,
                 titleWeight: .regular,
                 titleSubtitle: AnyView(subtitle),
                 pillFollowMaxShift: Constants.pillFollowMaxShift,

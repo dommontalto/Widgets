@@ -135,7 +135,7 @@ struct ExerciseCompleteExertionWidget: View {
             ?? ExerciseDemoLibrary.type(of: exercise).symbol
 
         return Image(systemName: symbol)
-            .font(.standard(size: .standout4, weight: .light))
+            .font(.standard(size: .standout3, weight: .light))
             .foregroundStyle(Color.lightTextColor)
             .frame(width: Constants.thumbWidth)
     }

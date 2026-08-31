@@ -88,7 +88,7 @@ struct ExerciseLiveStrengthMenu: View {
     private func sectionLabel(_ title: String, symbol: String, color: Color) -> some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: symbol)
-                .font(.standard(size: .standout4, weight: .regular))
+                .font(.standard(size: .standout3, weight: .regular))
                 .foregroundStyle(color)
                 .contentTransition(.symbolEffect(.replace))
 
@@ -106,7 +106,7 @@ struct ExerciseLiveStrengthMenu: View {
 
             transportButton(
                 pauseDate == nil ? "pause" : "play",
-                glyph: .standout28,
+                glyph: .standout2,
                 action: onTogglePause
             )
             .contentTransition(.symbolEffect(.replace))
@@ -142,7 +142,7 @@ struct ExerciseLiveStrengthMenu: View {
                 Button("Reorder", systemImage: "arrow.up.arrow.down", action: onReorder)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.standard(size: .standout4, weight: .light))
+                    .font(.standard(size: .standout3, weight: .light))
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
@@ -198,7 +198,7 @@ struct ExerciseLiveStrengthMenu: View {
 
                 if index == currentIndex {
                     Image(systemName: isPaused ? "pause" : "play")
-                        .font(.standard(size: .standout4, weight: .regular))
+                        .font(.standard(size: .standout3, weight: .regular))
                         .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
                         .contentTransition(.symbolEffect(.replace))
                         .padding(.trailing, .spacing1x)
@@ -222,7 +222,7 @@ struct ExerciseLiveStrengthMenu: View {
     private func thumbnail(for exercise: ExerciseActiveExercise) -> some View {
         if let definition = ExerciseDemoLibrary.exercise(named: exercise.name) {
             Image(systemName: definition.symbol)
-                .font(.standard(size: .standout4, weight: .light))
+                .font(.standard(size: .standout3, weight: .light))
                 .foregroundStyle(Color.lightTextColor)
                 .frame(width: ExerciseLibraryRow.Constants.thumbnailWidth)
         } else {

@@ -304,7 +304,7 @@ extension ExerciseCompletePerformanceGraphWidget {
                 BrightText(title, size: .body4)
 
                 HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
-                    BrightText(readout.value, size: .standout4, color: color)
+                    BrightText(readout.value, size: .standout3, color: color)
                         .monospacedDigit()
                         .contentTransition(.numericText())
                         .animation(.brightEaseInOut, value: readout.value)

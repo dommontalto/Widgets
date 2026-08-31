@@ -14,7 +14,7 @@ struct ExerciseLiveCardioSplits: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            BrightText("KM SPLITS", size: .standout4, color: .semiLightTextColor)
+            BrightText("KM SPLITS", size: .standout3, color: .semiLightTextColor)
                 .padding(.horizontal, .spacing4x)
 
             if splits.isEmpty {

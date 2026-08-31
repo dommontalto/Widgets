@@ -159,7 +159,7 @@ struct ExerciseCreateSessionSheet: View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             TextField("Session name", text: $name)
                 .focused($isTyping)
-                .font(.standard(size: .standout28, weight: .regular))
+                .font(.standard(size: .standout2, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .brightWiggle(trigger: nameNudge)
 
@@ -263,7 +263,7 @@ struct ExerciseCreateSessionSheet: View {
                 .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.standard(size: .standout4, weight: .light))
+                    .font(.standard(size: .standout3, weight: .light))
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }

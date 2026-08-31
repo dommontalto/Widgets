@@ -140,7 +140,7 @@ struct ExercisePreStrengthSheet: View {
                 .font(.standard(size: .huge2, weight: .light))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(session.name, size: .standout4, scaleTextSize: 0.7)
+            BrightText(session.name, size: .standout3, scaleTextSize: 0.7)
                 .lineLimit(1)
         }
     }
@@ -235,7 +235,7 @@ struct ExercisePreStrengthSheet: View {
     private func thumbnail(for item: ExerciseTemplateItem) -> some View {
         if let exercise = ExerciseDemoLibrary.exercise(named: item.exerciseName) {
             Image(systemName: exercise.symbol)
-                .font(.standard(size: .standout4, weight: .light))
+                .font(.standard(size: .standout3, weight: .light))
                 .foregroundStyle(Color.lightTextColor)
                 .frame(width: Constants.thumbnailWidth)
         } else {

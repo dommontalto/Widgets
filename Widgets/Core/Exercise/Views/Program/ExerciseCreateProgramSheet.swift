@@ -500,18 +500,22 @@ struct ExerciseCreateProgramSheet: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: .spacing3x) {
                     TextField("", text: $name)
-                        .font(.standard(size: .huge205, weight: .light))
+                        .font(.standard(size: .standout2, weight: .light))
                         .foregroundStyle(Color.textColor)
                         .submitLabel(.done)
                         .overlay(alignment: .leading) {
                             if name.isEmpty {
-                                BrightText("Program Name", size: .huge205, color: .lightTextColor)
+                                BrightText("Program Name", size: .standout2, color: .lightTextColor)
                                     .allowsHitTesting(false)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    ExerciseStartDateRow(startDate: $startDate, allowsPast: startsAtBlocks)
+                    ExerciseStartDateRow(
+                        startDate: $startDate,
+                        allowsPast: startsAtBlocks,
+                        isStarted: periods.contains(where: \.isStarted)
+                    )
 
                     ForEach($periods) { $period in
                         periodCard($period)
@@ -525,7 +529,6 @@ struct ExerciseCreateProgramSheet: View {
             .safeAreaInset(edge: .bottom) {
                 planActions(scroller)
             }
-            .animation(.brightSnappy, value: periods)
             .onScrollGeometryChange(for: Bool.self) { geometry in
                 geometry.contentOffset.y + geometry.containerSize.height
                     >= geometry.contentSize.height - Constants.bottomSlack
@@ -632,7 +635,7 @@ struct ExerciseCreateProgramSheet: View {
                 .monospacedDigit()
                 .contentTransition(.numericText())
 
-            BrightText("/\(period.totalWeeks) weeks", size: .standout4, color: .lightTextColor)
+            BrightText("/\(period.totalWeeks) weeks", size: .standout3, color: .lightTextColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
 
@@ -730,7 +733,7 @@ struct ExerciseCreateProgramSheet: View {
                 .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.standard(size: .standout4, weight: .light))
+                    .font(.standard(size: .standout3, weight: .light))
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
@@ -751,6 +754,10 @@ struct ExerciseCreateProgramSheet: View {
 
     private func start(_ period: ExerciseTrainingPeriod) {
         guard let target = periods.firstIndex(where: { $0.id == period.id }) else { return }
+
+        // Starting now supersedes a start still scheduled ahead.
+        let today = Calendar.current.startOfDay(for: .now)
+        if startDate > today { startDate = today }
 
         withAnimation(.brightSnappy) {
             for index in periods.indices {
@@ -813,10 +820,13 @@ struct ExerciseCreateProgramSheet: View {
                 addBlock(to: period)
             }
 
-            Button("Deload", systemImage: "arrow.down.right.circle") {
-                addDeloadBlock(to: period)
+            // A deload steps down from a block, so without one there is
+            // nothing to offer.
+            if deloadSource(period.wrappedValue) != nil {
+                Button("Deload", systemImage: "arrow.down.right.circle") {
+                    addDeloadBlock(to: period)
+                }
             }
-            .disabled(deloadSource(period.wrappedValue) == nil)
 
             Button("Rest", systemImage: "moon.zzz") {
                 addRestBlock(to: period)

@@ -75,7 +75,7 @@ struct ExercisePersonalRecordsWidget: View {
 
             Spacer(minLength: .spacing2x)
 
-            BrightText(record.value, size: .standout4, weight: .regular)
+            BrightText(record.value, size: .standout3, weight: .regular)
                 .monospacedDigit()
         }
         .padding(.vertical, .spacing2x)
