@@ -14,8 +14,11 @@ struct ExerciseCardioPlanEditor: View {
     @Binding var plan: ExerciseCardioPlan
 
     @State private var isShowingRouteMap = false
+    @State private var isPickingPace = false
     @State private var isShowingRegeneratePrompt = false
     @State private var autoGeneratesOnOpen = false
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var isTyping: FocusState<Bool>.Binding
 
@@ -27,7 +30,7 @@ struct ExerciseCardioPlanEditor: View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             section("Primary goal") {
                 if plan.goal == .zone {
-                    zoneCard
+                    zoneCard(badge: goalBadge, title: plan.goal.title)
                 } else {
                     primaryRow
                 }
@@ -38,7 +41,11 @@ struct ExerciseCardioPlanEditor: View {
             // needs the distance or pace it's run at.
             if plan.goal.hasSecondarySection {
                 section("Optional") {
-                    secondaryRow
+                    if plan.secondary == .zone {
+                        zoneCard(badge: secondaryBadge, title: plan.secondary.title)
+                    } else {
+                        secondaryRow
+                    }
 
                     if plan.hasIntervals {
                         intervalsCard
@@ -64,7 +71,11 @@ struct ExerciseCardioPlanEditor: View {
                 autoGeneratesOnOpen: autoGeneratesOnOpen
             )
         }
+        .brightMiniSheet(isPresented: $isPickingPace) {
+            ExercisePacePicker(pace: $plan.pace) { isPickingPace = false }
+        }
         .animation(.brightSnappy, value: plan.goal)
+        .animation(.brightSnappy, value: plan.secondary)
         .onChange(of: plan.goal) { _, _ in
             if !plan.secondaryOptions.contains(plan.secondary) {
                 plan.secondary = plan.secondaryOptions[0]
@@ -140,13 +151,13 @@ struct ExerciseCardioPlanEditor: View {
         row(badge: secondaryBadge, title: secondaryTitle) {
             switch plan.secondary {
             case .pace:
-                valueField(text: $plan.pace, placeholder: "0’00", unit: nil, keyboard: .numbersAndPunctuation)
+                paceField
             case .distance:
                 valueField(text: $plan.distance, placeholder: "0", unit: plan.secondary.unit, keyboard: .decimalPad)
             case .duration:
                 valueField(text: $plan.duration, placeholder: "0", unit: plan.secondary.unit, keyboard: .numberPad)
             case .zone:
-                zoneMenu
+                EmptyView()
             }
         }
     }
@@ -177,25 +188,24 @@ struct ExerciseCardioPlanEditor: View {
         plan.secondary == .pace && plan.secondaryOptions.count == 1 ? "Target Pace" : plan.secondary.title
     }
 
-    private var zoneMenu: some View {
-        Menu {
-            Picker("Zone", selection: $plan.zone) {
-                ForEach(ExerciseHeartZone.allCases) { option in
-                    Text(option.title.capitalized).tag(option)
-                }
-            }
+    private var paceField: some View {
+        Button {
+            isPickingPace = true
         } label: {
-            BrightText("Z\(plan.zone.rawValue)", size: .standout2, color: plan.zone.color, weight: .light)
+            BrightText(plan.pace.isEmpty ? "0’00”" : plan.pace, size: .standout2, weight: .light)
                 .contentTransition(.numericText())
+                .opacity(plan.pace.isEmpty ? .semiLowOpacity : .opaque)
+                .contentShape(.rect)
         }
-        .brightHaptic(.light, trigger: plan.zone)
+        .buttonStyle(.plain)
+        .brightHaptic(.light, trigger: isPickingPace)
     }
 
     // MARK: - Zone
 
-    private var zoneCard: some View {
+    private func zoneCard(badge: some View, title: String) -> some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            rowContent(badge: goalBadge, title: plan.goal.title) {
+            rowContent(badge: badge, title: title) {
                 EmptyView()
             }
             .padding(.bottom, .spacing2x)
@@ -400,7 +410,7 @@ struct ExerciseCardioPlanEditor: View {
         }
         // The toggle takes its own taps; everywhere else opens the map.
         .contentShape(.rect)
-        .onTapGesture { isShowingRouteMap = true }
+        .onTapGesture { openRouteMap() }
     }
 
     private var isRouteStale: Bool {
@@ -430,12 +440,19 @@ struct ExerciseCardioPlanEditor: View {
             get: { plan.isRouteOn },
             set: { isOn in
                 if isOn {
-                    isShowingRouteMap = true
+                    openRouteMap()
                 } else {
                     plan.route = nil
                 }
             }
         )
+    }
+
+    // Nothing drawn yet and a distance to aim at is all the generator needs, so
+    // the map opens already building rather than waiting for a tap.
+    private func openRouteMap() {
+        autoGeneratesOnOpen = plan.route == nil && (Double(plan.distance) ?? 0) > 0
+        isShowingRouteMap = true
     }
 
     private var routeThumbnail: some View {
@@ -453,7 +470,7 @@ struct ExerciseCardioPlanEditor: View {
         }
         .frame(width: Constants.badgeSize, height: Constants.badgeSize)
         .clipShape(.rect(cornerRadius: .cornerRadius9))
-        .id(plan.route?.coordinates.count ?? 0)
+        .id("\(plan.route?.coordinates.count ?? 0)-\(colorScheme)")
     }
 
     // A static Mapbox shot centred on the saved route — or, before one exists,
@@ -464,7 +481,7 @@ struct ExerciseCardioPlanEditor: View {
 
         guard let route = plan.route, route.coordinates.count >= 2 else {
             return URL(
-                string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
+                string: "https://api.mapbox.com/styles/v1/mapbox/\(thumbnailStyle)/static/"
                     + "151.2006,-33.8769,12,0/60x60@2x?access_token=\(token)&logo=false&attribution=false"
             )
         }
@@ -472,10 +489,14 @@ struct ExerciseCardioPlanEditor: View {
         let path = Self.encodedPolyline(Self.downsampled(route.coordinates))
         guard let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { return nil }
         return URL(
-            string: "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/"
+            string: "https://api.mapbox.com/styles/v1/mapbox/\(thumbnailStyle)/static/"
                 + "path-3+ff4cc9(\(encodedPath))/auto/60x60@2x"
                 + "?padding=6&access_token=\(token)&logo=false&attribution=false"
         )
+    }
+
+    private var thumbnailStyle: String {
+        colorScheme == .dark ? "dark-v11" : "streets-v12"
     }
 
     private static func downsampled(_ coordinates: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {

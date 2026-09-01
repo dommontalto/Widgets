@@ -27,6 +27,7 @@ struct ExerciseCreateSessionSheet: View {
     @Environment(ExerciseBuilder.self) private var builder
 
     @FocusState private var isTyping: Bool
+    @FocusState private var isNamingSession: Bool
 
     @State private var name: String
 
@@ -122,7 +123,7 @@ struct ExerciseCreateSessionSheet: View {
             }
         }
         .sheet(isPresented: $isEditingSupersets) {
-            ExerciseSupersetSheet(exercises: builder.draftExercises) { edited in
+            ExerciseSupersetSheet(exercises: builder.supersetCandidates) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
                 reanchorSelection()
             }
@@ -150,6 +151,7 @@ struct ExerciseCreateSessionSheet: View {
             // signature is the untouched session.
             if baselineDraft == nil { baselineDraft = draftSignature }
             if selected == nil { selected = builder.added.first }
+            if name.isEmpty { isNamingSession = true }
         }
     }
 
@@ -158,7 +160,7 @@ struct ExerciseCreateSessionSheet: View {
     private var nameField: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             TextField("Session name", text: $name)
-                .focused($isTyping)
+                .focused($isNamingSession)
                 .font(.standard(size: .standout2, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .brightWiggle(trigger: nameNudge)

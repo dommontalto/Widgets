@@ -14,9 +14,7 @@ struct BrightCalendar<Trailing: View>: View {
     var dotStyle: (Date) -> AnyShapeStyle?
     @ViewBuilder var trailing: Trailing
 
-    @State private var position: ScrollPosition
-    @State private var containerWidth: CGFloat = 0
-    @State private var scrollSyncedDate: Date?
+    @State private var scrolledDay: Date?
 
     private let calendar = Calendar.current
     private let days: [Date]
@@ -31,25 +29,14 @@ struct BrightCalendar<Trailing: View>: View {
         self.backgroundColor = backgroundColor
         self.dotStyle = dotStyle
         self.trailing = trailing()
-        _position = State(
-            initialValue: ScrollPosition(
-                id: Self.anchorDate(for: selectedDate.wrappedValue),
-                anchor: .leading
-            )
-        )
 
         let calendar = Calendar.current
-        let today = Date()
-        let start = calendar.date(byAdding: .day, value: -365, to: today)!
-        let end = calendar.date(byAdding: .day, value: 365, to: today)!
-
-        var dates: [Date] = []
-        var current = start
-        while current <= end {
-            dates.append(calendar.startOfDay(for: current))
-            current = calendar.date(byAdding: .day, value: 1, to: current)!
+        let today = calendar.startOfDay(for: Date())
+        let dates = (-Constants.dayRange...Constants.dayRange).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: today)
         }
         days = dates
+        _scrolledDay = State(initialValue: calendar.startOfDay(for: selectedDate.wrappedValue))
     }
 
     var body: some View {
@@ -61,6 +48,14 @@ struct BrightCalendar<Trailing: View>: View {
         }
         .padding(.bottom, .spacing1x)
         .background(backgroundColor)
+    }
+
+    private var pickedDate: Binding<Date> {
+        Binding {
+            selectedDate
+        } set: {
+            selectedDate = calendar.startOfDay(for: $0)
+        }
     }
 
     private var headerView: some View {
@@ -78,7 +73,7 @@ struct BrightCalendar<Trailing: View>: View {
             .overlay {
                 DatePicker(
                     "",
-                    selection: $selectedDate,
+                    selection: pickedDate,
                     displayedComponents: .date
                 )
                 .tint(.textColor)
@@ -125,76 +120,29 @@ struct BrightCalendar<Trailing: View>: View {
                             }
                         }
                     )
-                    .frame(width: cellWidth)
-                    .id(date)
+                    .containerRelativeFrame(.horizontal, count: Constants.visibleDays, span: 1, spacing: .spacing0x)
                 }
             }
             .scrollTargetLayout()
         }
         .scrollTargetBehavior(.viewAligned)
-        .scrollPosition($position, anchor: .leading)
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { containerWidth = $0 }
-        .onChange(of: containerWidth) { _, _ in scrollToSelection() }
-        .onAppear { scrollToSelection() }
-        .onChange(of: position.viewID(type: Date.self)) { _, newID in
-            guard let newID else { return }
-            let candidate = Self.selectedDate(forAnchor: newID)
-            if !candidate.isSameDay(as: selectedDate) {
-                BrightHaptic.light.play()
-                scrollSyncedDate = candidate
-                withAnimation(.brightSnappy) {
-                    selectedDate = candidate
-                }
-            }
+        .defaultScrollAnchor(.center)
+        .scrollPosition(id: $scrolledDay, anchor: .center)
+        .onChange(of: scrolledDay) { _, day in
+            guard let day, !day.isSameDay(as: selectedDate) else { return }
+            BrightHaptic.light.play()
+            withAnimation(.brightSnappy) { selectedDate = day }
         }
-        .onChange(of: selectedDate) { _, newDate in
-            guard scrollSyncedDate?.isSameDay(as: newDate) != true else {
-                scrollSyncedDate = nil
-                return
-            }
-            scrollToSelection(animated: true)
-        }
+        .onChange(of: selectedDate) { scrollToSelection() }
+        .task { scrollToSelection() }
         .frame(height: Constants.calendarHeight)
     }
 
-    private var cellWidth: CGFloat {
-        max(0, (containerWidth - .spacing3x * 2 - Constants.circleSize) / 6)
+    private func scrollToSelection() {
+        let day = calendar.startOfDay(for: selectedDate)
+        guard day != scrolledDay else { return }
+        withAnimation(.brightSnappy) { scrolledDay = day }
     }
-
-    private func scrollToSelection(animated: Bool = false) {
-        guard containerWidth > 0, let first = days.first else { return }
-
-        let anchor = Self.anchorDate(for: selectedDate)
-        guard let day = calendar.dateComponents([.day], from: first, to: anchor).day else { return }
-
-        let x = CGFloat(min(max(day, 0), days.count - 1)) * cellWidth
-        if animated {
-            withAnimation(.brightSnappy) { position.scrollTo(x: x) }
-        } else {
-            position.scrollTo(x: x)
-        }
-    }
-
-    private static func anchorDate(for date: Date) -> Date {
-        let calendar = Calendar.current
-        let shifted = calendar.date(byAdding: .day, value: -Constants.selectedSlotIndex, to: date) ?? date
-        return calendar.startOfDay(for: shifted)
-    }
-
-    private static func selectedDate(forAnchor anchor: Date) -> Date {
-        let calendar = Calendar.current
-        let shifted = calendar.date(byAdding: .day, value: Constants.selectedSlotIndex, to: anchor) ?? anchor
-        return calendar.startOfDay(for: shifted)
-    }
-
-}
-
-private enum Constants {
-    static let circleSize: CGFloat = 30
-    static let calendarHeight: CGFloat = 80
-    static let selectedSlotIndex = 3
-    static let iconSize: CGFloat = 24
-    static let dotSize: CGFloat = 6
 }
 
 extension BrightCalendar where Trailing == EmptyView {
@@ -210,6 +158,15 @@ extension BrightCalendar where Trailing == EmptyView {
             trailing: { EmptyView() }
         )
     }
+}
+
+private enum Constants {
+    static let circleSize: CGFloat = 30
+    static let calendarHeight: CGFloat = 80
+    static let dayRange = 365
+    static let visibleDays = 7
+    static let iconSize: CGFloat = 24
+    static let dotSize: CGFloat = 6
 }
 
 private struct DayCell: View {

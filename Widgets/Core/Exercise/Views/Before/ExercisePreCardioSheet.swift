@@ -249,20 +249,22 @@ struct ExercisePreCardioSheet: View {
     private var controls: some View {
         HStack(spacing: .spacing2x) {
             Menu {
-                Button("Duplicate", systemImage: "plus.square.on.square") {
-                    withAnimation(.brightSnappy) { builder.duplicate(session) }
+                // The menu opens upward from the foot of the sheet, so it is
+                // declared bottom-up to land Delete at the bottom.
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    builder.delete(session)
+                    close()
                 }
+                .tint(.defaultRed)
 
                 Button("Edit", systemImage: "pencil") {
                     builder.loadDraft(from: session)
                     isEditing = true
                 }
 
-                Button("Delete", systemImage: "trash", role: .destructive) {
-                    builder.delete(session)
-                    close()
+                Button("Duplicate", systemImage: "plus.square.on.square") {
+                    withAnimation(.brightSnappy) { builder.duplicate(session) }
                 }
-                .tint(.defaultRed)
             } label: {
                 BrightRoundButton(systemImage: "ellipsis", size: .finalBossLarge)
                     .allowsHitTesting(false)

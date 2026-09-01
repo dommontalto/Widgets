@@ -48,7 +48,6 @@ struct ExerciseRouteGeneratorSheet: View {
     @State private var isGenerating = false
     @State private var isAwaitingGenerateFix = false
     @State private var undoStack: [Snapshot] = []
-    @State private var redoStack: [Snapshot] = []
     @State private var placeCompleter = PlaceSearchCompleter()
     @State private var isSearching = false
     @State private var searchText = ""
@@ -294,8 +293,12 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private var topBar: some View {
         HStack(spacing: .spacing2x) {
-            mapButton("xmark") {
-                close()
+            mapButton("magnifyingglass") {
+                if isSearching {
+                    closeSearch()
+                } else {
+                    withAnimation(.brightSnappy) { isSearching = true }
+                }
             }
 
             if isSearching {
@@ -311,12 +314,15 @@ struct ExerciseRouteGeneratorSheet: View {
                 Spacer(minLength: .spacing2x)
             }
 
-            mapButton("magnifyingglass") {
-                if isSearching {
-                    closeSearch()
-                } else {
-                    withAnimation(.brightSnappy) { isSearching = true }
-                }
+            // The route is already on the draft, so confirming is just the
+            // way out of the map.
+            BrightPillButton(
+                "Confirm",
+                color: .defaultSkyBlue,
+                textColor: .defaultWhite,
+                buttonSize: .large
+            ) {
+                close()
             }
         }
         .padding(.horizontal, .spacing3x)
@@ -375,7 +381,7 @@ struct ExerciseRouteGeneratorSheet: View {
     private var bottomControls: some View {
         VStack(spacing: .spacing2x) {
             HStack(alignment: .bottom) {
-                undoRedo
+                undoButton
 
                 Spacer()
 
@@ -387,13 +393,13 @@ struct ExerciseRouteGeneratorSheet: View {
                 if !isGenerating {
                     HStack(spacing: .spacing2x) {
                         if route != nil {
-                            BrightPillButton("Clear Route", systemImage: "xmark") {
+                            BrightPillButton("Clear", systemImage: "mappin.slash") {
                                 clearRoute()
                             }
                         }
 
                         if targetMetres > 0 {
-                            BrightPillButton("Generate", systemImage: "sparkles") {
+                            BrightPillButton("Regenerate", systemImage: "sparkles") {
                                 generateFromTarget()
                             }
                         }
@@ -417,15 +423,9 @@ struct ExerciseRouteGeneratorSheet: View {
         }
     }
 
-    private var undoRedo: some View {
-        HStack(spacing: .spacing2x) {
-            mapButton("arrow.uturn.left", isEnabled: !undoStack.isEmpty && !isGenerating) {
-                undo()
-            }
-
-            mapButton("arrow.uturn.forward", isEnabled: !redoStack.isEmpty && !isGenerating) {
-                redo()
-            }
+    private var undoButton: some View {
+        mapButton("arrow.uturn.left", isEnabled: !undoStack.isEmpty && !isGenerating) {
+            undo()
         }
     }
 
@@ -730,18 +730,10 @@ struct ExerciseRouteGeneratorSheet: View {
 
     private func pushUndo() {
         undoStack.append(currentSnapshot)
-        redoStack = []
     }
 
     private func undo() {
         guard let snapshot = undoStack.popLast() else { return }
-        redoStack.append(currentSnapshot)
-        apply(snapshot)
-    }
-
-    private func redo() {
-        guard let snapshot = redoStack.popLast() else { return }
-        undoStack.append(currentSnapshot)
         apply(snapshot)
     }
 

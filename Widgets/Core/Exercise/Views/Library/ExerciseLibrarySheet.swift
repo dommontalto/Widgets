@@ -34,7 +34,7 @@ struct ExerciseLibrarySheet: View {
             backgroundColor: .defaultSheetBackground,
             toolbar: {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: title, file: #file)
+                    ExerciseInlineTitle(title: "Exercises", file: #file)
                 }
 
                 if showCloseButton {
@@ -121,10 +121,6 @@ struct ExerciseLibrarySheet: View {
 
     private var activeCategory: ExerciseCategory {
         selectedCategory ?? category
-    }
-
-    private var title: String {
-        "\(activeCategory.displayName) Exercises"
     }
 
     private var filtered: [ExerciseDefinition] {

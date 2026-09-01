@@ -129,12 +129,14 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .tint(.primary)
                 } label: {
                     Label("Start session", systemImage: "play.fill")
                         .labelStyle(.iconOnly)
                 } primaryAction: {
                     showingSession = true
                 }
+                .tint(.defaultGreen)
             }
         }
         .sheet(isPresented: $showingSession) {

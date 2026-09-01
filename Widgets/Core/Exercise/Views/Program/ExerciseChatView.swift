@@ -55,17 +55,18 @@ nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
 // button, per the Figma prompt-program screens. Embedded as the guided step
 // of the program builder, which supplies the wash behind it.
 struct ExerciseChatView: View {
-    // Called when the proposed program is confirmed — the builder advances.
-    var onConfirm: () -> Void = {}
+    var isTyping: FocusState<Bool>.Binding
+
+    // Raised once a program has been proposed, so the builder can offer its
+    // create action in the toolbar.
+    @Binding var hasPlan: Bool
 
     @State private var messages = [ExerciseChatMessage]()
     @State private var draft = ""
     @State private var isThinking = false
     @State private var replyIndex = 0
-    @State private var hasConfirmed = false
     @State private var replyTask: Task<Void, Never>?
     @State private var promptIndex = 0
-    @FocusState private var isTyping: Bool
 
     var body: some View {
         thread
@@ -77,30 +78,44 @@ struct ExerciseChatView: View {
             // gap — rather than stacking the sheet's bottom insets under it.
             .ignoresSafeArea(.container, edges: .bottom)
             .brightHaptic(.light, trigger: messages.count)
+            .onAppear { isTyping.wrappedValue = true }
             .onDisappear { replyTask?.cancel() }
     }
 
     // MARK: - Thread
 
     private var thread: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: .spacing3x) {
-                ForEach(messages) { message in
-                    row(for: message)
-                }
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: .spacing3x) {
+                    ForEach(messages) { message in
+                        row(for: message)
+                            .id(message.id)
+                    }
 
-                if isThinking {
-                    thinkingIndicator
+                    if isThinking {
+                        thinkingIndicator
+                            .id(Constants.thinkingID)
+                    }
                 }
+                .padding(.spacing3x)
             }
-            .padding(.spacing3x)
+            .defaultScrollAnchor(.bottom)
+            // A plan is read from its top, so only plain replies follow the
+            // thread down to the bottom.
+            .onChange(of: messages) { _, messages in
+                guard let last = messages.last, last.kind != .program else { return }
+                withAnimation(.brightSnappy) { proxy.scrollTo(last.id, anchor: .bottom) }
+            }
+            .onChange(of: isThinking) { _, isThinking in
+                guard isThinking else { return }
+                withAnimation(.brightSnappy) { proxy.scrollTo(Constants.thinkingID, anchor: .bottom) }
+            }
         }
-        .defaultScrollAnchor(.bottom)
-        .defaultScrollAnchor(.bottom, for: .sizeChanges)
         // The scroll view collapses to its content while the thread is empty,
         // so the overlay only lands full width once the frame is spelled out.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topLeading) {
+        .overlay {
             if messages.isEmpty {
                 emptyState
                     .padding(.spacing3x)
@@ -114,19 +129,22 @@ struct ExerciseChatView: View {
     // prompt under the glyph for the sport it asks about, cycling together and
     // fading away with the first message.
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: .spacing4x) {
+        VStack(spacing: .spacing4x) {
             Image(systemName: Constants.examples[promptIndex].symbol)
                 .font(.system(size: Constants.sportIconSize, weight: .light))
                 .foregroundStyle(Color.defaultSlateBlue)
                 .contentTransition(.symbolEffect(.replace))
                 .frame(height: Constants.sportIconSize)
 
+            BrightText("Guided Program", size: .huge205, color: .defaultSlateBlue)
+                .multilineTextAlignment(.center)
+
             BrightText(Constants.examples[promptIndex].prompt, size: .body1, color: .lightTextColor)
                 .lineSpacing(.lineSpacingMedium)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(.center)
                 .contentTransition(.opacity)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .transition(.opacity)
         .task {
             while true {
@@ -173,7 +191,6 @@ struct ExerciseChatView: View {
                 .modifier(GlassEffect(
                     shape: .roundedRect,
                     cornerRadius: .cardCornerRadius,
-                    tint: .defaultWhite.opacity(.veryMinimalOpacity),
                     interactive: false
                 ))
                 .shadow(color: .black.opacity(.ultraLowOpacity), radius: 15)
@@ -244,28 +261,13 @@ struct ExerciseChatView: View {
                 .padding(.bottom, .spacing105x)
 
             ForEach(Constants.programWeeks) { week in
-                weekCard(week)
+                weekSection(week)
             }
 
-            if !hasConfirmed {
-                BrightText(Constants.programQuestion, size: .body2, color: .semiLightTextColor)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, .spacing4x)
-
-                BrightPillButton(
-                    "Confirm",
-                    color: .defaultSkyBlue,
-                    textColor: .defaultWhite,
-                    buttonSize: .large
-                ) {
-                    confirm()
-                }
-                .padding(.top, .spacing1x)
-            }
         }
     }
 
-    private func weekCard(_ week: ExerciseChatProgramWeek) -> some View {
+    private func weekSection(_ week: ExerciseChatProgramWeek) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText(week.name, size: .body2, color: .semiLightTextColor)
 
@@ -276,8 +278,6 @@ struct ExerciseChatView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.spacing3x)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
     @ViewBuilder
@@ -301,7 +301,8 @@ struct ExerciseChatView: View {
         BrightPromptInputBar(
             text: $draft,
             isBusy: isThinking,
-            isFocused: $isTyping,
+            isFocused: isTyping,
+            showsPlaceholder: messages.isEmpty,
             onSend: send,
             onStop: stopThinking
         )
@@ -356,12 +357,8 @@ struct ExerciseChatView: View {
         withAnimation(.brightSnappy) {
             isThinking = false
             messages.append(message)
+            hasPlan = messages.contains { $0.kind == .program }
         }
-    }
-
-    private func confirm() {
-        withAnimation(.brightSnappy) { hasConfirmed = true }
-        onConfirm()
     }
 
     private func stopThinking() {
@@ -371,6 +368,7 @@ struct ExerciseChatView: View {
     }
 
     private enum Constants {
+        static let thinkingID = "thinking"
         static let thinkingRange = 4.5...6.5
         static let orbSize: CGFloat = 64
         // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
@@ -378,7 +376,7 @@ struct ExerciseChatView: View {
         static let orbSpeed: Double = 1.2
 
         static let sportIconSize: CGFloat = 64
-        static let exampleSwapEvery: TimeInterval = 5
+        static let exampleSwapEvery: TimeInterval = 3
 
         static let examples = [
             ExerciseChatExample("figure.run", "Get me from the couch to a 5K in eight weeks."),
@@ -406,8 +404,6 @@ struct ExerciseChatView: View {
             + "with at least 1 rest day between runs. Effort: Keep all running at an easy, "
             + "conversational pace. Walking recoveries should be relaxed."
 
-        static let programQuestion = "Would you like to proceed with this program?"
-
         static let runDetail = "5 min walk → 1 min run / 2 min walk × 8 → 5 min walk"
 
         static let programWeeks = [
@@ -430,7 +426,16 @@ struct ExerciseChatView: View {
     }
 }
 
+private struct ExerciseChatViewPreview: View {
+    @FocusState private var isTyping: Bool
+    @State private var hasPlan = false
+
+    var body: some View {
+        ExerciseChatView(isTyping: $isTyping, hasPlan: $hasPlan)
+            .background { ExerciseProgramBackground() }
+    }
+}
+
 #Preview {
-    ExerciseChatView()
-        .background { ExerciseProgramBackground() }
+    ExerciseChatViewPreview()
 }

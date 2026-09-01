@@ -12,6 +12,9 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     let isBusy: Bool
     var isFocused: FocusState<Bool>.Binding
     var showsModelPicker: Bool
+    // The prompt only introduces an empty thread; after that the field
+    // stands on its own.
+    var showsPlaceholder = true
     var onSend: () -> Void
     var onStop: () -> Void
     @ViewBuilder var modelPicker: ModelPicker
@@ -47,7 +50,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
 
     private var field: some View {
         ZStack(alignment: .topLeading) {
-            if text.isEmpty {
+            if text.isEmpty, showsPlaceholder {
                 BrightText("What would you like me to do?", size: .subheading2, color: .lightTextColor)
                     .allowsHitTesting(false)
             }
@@ -100,6 +103,7 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
         isBusy: Bool,
         isFocused: FocusState<Bool>.Binding,
         showsModelPicker: Bool = false,
+        showsPlaceholder: Bool = true,
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void
     ) {
@@ -108,6 +112,7 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
             isBusy: isBusy,
             isFocused: isFocused,
             showsModelPicker: showsModelPicker,
+            showsPlaceholder: showsPlaceholder,
             onSend: onSend,
             onStop: onStop
         ) {

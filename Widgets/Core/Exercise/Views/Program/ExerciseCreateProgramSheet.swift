@@ -131,6 +131,11 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var step: Step
 
+    @State private var hasProposedPlan = false
+
+    // The plan's sessions are built after the proposal is confirmed.
+    @State private var isMaterialising = false
+
     @State private var stylePage: Int? = ProgramStyle.guided.rawValue
 
     @State private var sportIndex = 0
@@ -205,7 +210,12 @@ struct ExerciseCreateProgramSheet: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    if let trailingTitle {
+                    // Building the plan's sessions takes over the action's
+                    // place, so the wait reads where the tap landed.
+                    if isMaterialising {
+                        BrightSolvingOrb(size: Constants.toolbarOrbSize, speed: Constants.toolbarOrbSpeed)
+                            .transition(.opacity.combined(with: .scale))
+                    } else if let trailingTitle {
                         Button(trailingTitle, action: advance)
                             .buttonStyle(.borderedProminent)
                             .tint(canAdvance ? .defaultSkyBlue : .defaultMainGrey)
@@ -240,6 +250,8 @@ struct ExerciseCreateProgramSheet: View {
                     }
             }
         )
+        .animation(.brightSnappy, value: hasProposedPlan)
+        .animation(.brightSnappy, value: isMaterialising)
     }
 
     @ViewBuilder
@@ -371,10 +383,7 @@ struct ExerciseCreateProgramSheet: View {
     // The guided fork talks to the coach: describe the goals, get the proposed
     // weeks back, and the chat's own confirm carries the flow to the blocks.
     private var chatStep: some View {
-        ExerciseChatView {
-            seedGuidedPlan()
-            go(to: .periods)
-        }
+        ExerciseChatView(isTyping: $isTyping, hasPlan: $hasProposedPlan)
     }
 
     // MARK: Custom — program name
@@ -999,8 +1008,7 @@ struct ExerciseCreateProgramSheet: View {
         // The guided path skips the template fork: describing goals leads
         // straight to the blocks, arriving with the plan already decided.
         case .goals:
-            seedGuidedPlan()
-            go(to: .periods)
+            materialisePlan()
         case .name:
             go(to: .template)
         case .template:
@@ -1103,13 +1111,34 @@ struct ExerciseCreateProgramSheet: View {
     }
 
     private func go(to next: Step, backwards: Bool = false) {
+        let wasTyping = isTyping
         isTyping = false
         insertionEdge = backwards ? .leading : .trailing
-        withAnimation(.brightSnappy) { step = next }
+
+        guard wasTyping else {
+            withAnimation(.brightSnappy) { step = next }
+            return
+        }
+
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.keyboardSettle))
+            withAnimation(.brightSnappy) { step = next }
+        }
     }
 
     // Stands in for what the AI would build from the goals. Only replaces an
     // untouched plan, so edits survive a trip back to the goals step.
+    private func materialisePlan() {
+        isTyping = false
+        withAnimation(.brightSnappy) { isMaterialising = true }
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.materialiseFor))
+            withAnimation(.brightSnappy) { isMaterialising = false }
+            seedGuidedPlan()
+            go(to: .periods)
+        }
+    }
+
     private func seedGuidedPlan() {
         if name.isEmpty { name = Constants.guidedName }
 
@@ -1137,6 +1166,9 @@ struct ExerciseCreateProgramSheet: View {
     // advances from the full-width button at the foot.
     private var trailingTitle: String? {
         switch step {
+        // The proposed plan is confirmed from the toolbar, so the thread stays
+        // a thread.
+        case .goals: hasProposedPlan ? "Create" : nil
         // case .weeks: "Skip"
         // Editing an existing plan only offers the action once the plan differs
         // from the one it opened with.
@@ -1253,6 +1285,12 @@ struct ExerciseCreateProgramSheet: View {
     }
 
     private enum Constants {
+        // The keyboard's own dismissal animation, so a step change waits it out
+        // rather than transitioning through it.
+        static let keyboardSettle: TimeInterval = 0.25
+        static let materialiseFor: TimeInterval = 4
+        static let toolbarOrbSize: CGFloat = 28
+        static let toolbarOrbSpeed: Double = 1.2
         static let defaultWeeks = 6
         static let weekRange = 1 ... 52
         static let weekMajorEvery = 5

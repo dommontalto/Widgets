@@ -259,10 +259,17 @@ final class ExerciseBuilder {
         }
     }
 
+    // Only lifts pair up, so a run or a sport never reaches the superset sheet.
+    var supersetCandidates: [ExerciseActiveExercise] {
+        draftExercises.filter { !isCardio($0.name) }
+    }
+
     // Takes the sheet's result back: the order it left them in, and which of
-    // them it grouped.
+    // them it grouped. Anything the sheet never saw holds its own slot.
     func applySupersets(_ exercises: [ExerciseActiveExercise]) {
-        added = exercises.map(\.name)
+        let edited = Set(exercises.map(\.name))
+        var queue = exercises.map(\.name)
+        added = added.map { edited.contains($0) ? queue.removeFirst() : $0 }
         supersets = exercises.reduce(into: [:]) { map, exercise in
             if let group = exercise.supersetID { map[exercise.name] = group }
         }

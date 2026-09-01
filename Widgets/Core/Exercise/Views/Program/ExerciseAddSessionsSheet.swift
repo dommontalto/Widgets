@@ -67,7 +67,7 @@ nonisolated struct ExercisePlanWeek: Identifiable {
 }
 
 struct ExerciseAddSessionsSheet: View {
-    // Set when this week finishes the whole flow: the button reads Create and
+    // Set when this week finishes the whole flow: the button reads Confirm and
     // `onDone` closes the presenting sheet. Unset, it says Save and pops back.
     let isCreating: Bool
     // The custom flow plans its week from scratch; only the guided flow
@@ -145,7 +145,7 @@ struct ExerciseAddSessionsSheet: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     if showsDone {
-                        Button(isCreating ? "Create" : "Save") {
+                        Button(isCreating ? "Confirm" : "Save") {
                             if let onDone {
                                 onDone()
                             } else {

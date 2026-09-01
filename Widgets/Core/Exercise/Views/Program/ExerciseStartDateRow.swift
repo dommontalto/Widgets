@@ -49,9 +49,9 @@ struct ExerciseStartDateRow: View {
 
     private func row(title: String, showsChevron: Bool) -> some View {
         HStack(spacing: .spacing1x) {
-            BrightText(title, size: .body2, color: .semiLightTextColor)
-
             Spacer(minLength: .spacing2x)
+
+            BrightText(title, size: .body2, color: .semiLightTextColor)
 
             BrightText(label, size: .body2, weight: .regular)
                 .contentTransition(.numericText())
