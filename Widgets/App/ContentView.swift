@@ -56,8 +56,13 @@ struct ContentView: View {
     }
 
     // Resign first so the keyboard glides down with its system animation —
-    // tearing the focused field out with the view snaps it away instead.
+    // tearing the focused field out with the view snaps it away instead. With
+    // no keyboard up there is nothing to wait for.
     private func closeLighthouse() {
+        guard lighthouseTyping else {
+            withAnimation(.brightBouncy) { showingLighthouse = false }
+            return
+        }
         UIApplication.shared.sendAction(
             #selector(UIResponder.resignFirstResponder),
             to: nil,
