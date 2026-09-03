@@ -46,6 +46,7 @@ struct LighthouseChatView: View {
         .background {
             LighthouseChatBackground()
                 .opacity(messages.isEmpty ? 0 : 1)
+                .allowsHitTesting(!messages.isEmpty)
                 .animation(.brightEaseInOut, value: messages.isEmpty)
         }
         .onDisappear { replyTask?.cancel() }

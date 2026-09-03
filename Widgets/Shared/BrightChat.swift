@@ -162,6 +162,9 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         // A tap anywhere off the card puts the keyboard away.
         .contentShape(.rect)
         .onTapGesture { isTyping.wrappedValue = false }
+        // With nothing drawn the thread is invisible, so it shouldn't stand
+        // between the finger and whatever the chat is floating over.
+        .allowsHitTesting(!messages.isEmpty || emptyState != nil)
     }
 
     // MARK: - Empty state

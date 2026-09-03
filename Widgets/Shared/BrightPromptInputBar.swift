@@ -56,7 +56,6 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         .onTapGesture { isFocused.wrappedValue = true }
         .modifier(GlassEffect(shape: .roundedRect, cornerRadius: Constants.cornerRadius))
         .geometryGroup()
-        .animation(.brightEaseInOut, value: text.count)
     }
 
     private var field: some View {
@@ -76,6 +75,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 .brightWiggle(trigger: nudge)
         }
         .padding(.vertical, .spacing105x)
+        .padding(.leading, .spacing1x)
     }
 
     private var sendOrStopButton: some View {

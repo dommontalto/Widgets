@@ -70,7 +70,7 @@ struct ContentView: View {
                         ExerciseCalendarWidgetEmpty(
                             onCreate: { showingProgram = true },
                             onGuided: { showingGuidedProgram = true },
-                            onLighthouse: { withAnimation(.brightBouncy) { showingLighthouse = true } }
+                            onLighthouse: { withAnimation(.brightSnappy) { showingLighthouse = true } }
                         )
                     }
                         .padding(.top, .spacing2x)
