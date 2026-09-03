@@ -63,7 +63,7 @@ struct ExerciseHistoryWidget: View {
     // standing in for its rest days.
     private var key: some View {
         FlowLayout(spacing: .spacing2x) {
-            keyItem("Strength", fill: Color.defaultPurple)
+            keyItem("Strength", fill: Color.defaultPurplePink)
             keyItem("Cardio", fill: Color.defaultSkyBlueCyan)
             keyItem("Both", fill: ExerciseDayType.bothGradient)
             keyItem("Apple Health", fill: Color.defaultRed)

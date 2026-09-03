@@ -72,13 +72,13 @@ enum ExerciseCalendarDemo {
         let hasStrength = sessions.contains { !$0.strengthItems.isEmpty }
         let hasCardio = sessions.contains { !$0.cardioItems.isEmpty }
         if hasStrength, hasCardio { return AnyShapeStyle(ExerciseDayType.bothGradient) }
-        if hasStrength { return AnyShapeStyle(Color.defaultPurple) }
+        if hasStrength { return AnyShapeStyle(Color.defaultPurplePink) }
         if hasCardio { return AnyShapeStyle(Color.defaultSkyBlueCyan) }
         return nil
     }
 
     private static func color(of session: ExerciseQuickSession) -> Color {
-        session.strengthItems.isEmpty ? .defaultSkyBlueCyan : .defaultPurple
+        session.strengthItems.isEmpty ? .defaultSkyBlueCyan : .defaultPurplePink
     }
 
     // One chip per discipline the session holds, in the order it runs them.

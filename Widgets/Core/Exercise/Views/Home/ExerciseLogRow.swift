@@ -11,7 +11,7 @@ extension ExerciseDayType {
     // A both day blends its two ingredients — strength's purple falling into
     // cardio's blue, purple leading.
     static let bothGradient = LinearGradient(
-        colors: [.defaultPurple, .defaultSkyBlueCyan],
+        colors: [.defaultPurplePink, .defaultSkyBlueCyan],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -26,7 +26,7 @@ extension ExerciseLoggedSession {
         return switch type {
         case .cardio: AnyShapeStyle(Color.defaultSkyBlueCyan)
         case .both: AnyShapeStyle(ExerciseDayType.bothGradient)
-        case .strength: AnyShapeStyle(Color.defaultPurple)
+        case .strength: AnyShapeStyle(Color.defaultPurplePink)
         case .rest: AnyShapeStyle(Color.defaultGreen)
         }
     }

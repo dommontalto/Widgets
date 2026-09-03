@@ -417,7 +417,7 @@ extension ExerciseDemoComplete {
             title: "Distance",
             value: "5.5 KM"
         ),
-        .init(icon: .system("timer", tint: .defaultPurple), title: "Pace", value: "5\u{2019}23"),
+        .init(icon: .system("timer", tint: .defaultPurplePink), title: "Pace", value: "5\u{2019}23"),
         .init(icon: .asset(ImageNames.heartPulseRedV5), title: "AVG HR", value: "154 BPM"),
         .init(icon: .asset(ImageNames.altitudeGainV5), title: "Altitude gain", value: "96 M"),
     ]
@@ -507,7 +507,7 @@ extension ExerciseDemoComplete {
                 title: "Distance",
                 value: distance
             ),
-            .init(icon: .system("timer", tint: .defaultPurple), title: "Pace", value: pace),
+            .init(icon: .system("timer", tint: .defaultPurplePink), title: "Pace", value: pace),
         ]
     }
 }

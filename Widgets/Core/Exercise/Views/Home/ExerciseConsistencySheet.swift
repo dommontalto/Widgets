@@ -31,13 +31,13 @@ enum ExerciseConsistencyMode: Int, CaseIterable {
     var keyItems: [(title: String, fill: AnyShapeStyle)] {
         switch self {
         case .strength:
-            [("Strength", AnyShapeStyle(Color.defaultPurple)),
+            [("Strength", AnyShapeStyle(Color.defaultPurplePink)),
              ("Rest", AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity)))]
         case .cardio:
             [("Cardio", AnyShapeStyle(Color.defaultSkyBlueCyan)),
              ("Rest", AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity)))]
         case .combined:
-            [("Strength", AnyShapeStyle(Color.defaultPurple)),
+            [("Strength", AnyShapeStyle(Color.defaultPurplePink)),
              ("Cardio", AnyShapeStyle(Color.defaultSkyBlueCyan)),
              ("Both", AnyShapeStyle(ExerciseDayType.bothGradient)),
              ("Rest", AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity)))]
@@ -49,7 +49,7 @@ enum ExerciseConsistencyMode: Int, CaseIterable {
         switch self {
         case .strength:
             return type == .strength || type == .both
-                ? AnyShapeStyle(Color.defaultPurple)
+                ? AnyShapeStyle(Color.defaultPurplePink)
                 : AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))
         case .cardio:
             return type == .cardio || type == .both
@@ -57,7 +57,7 @@ enum ExerciseConsistencyMode: Int, CaseIterable {
                 : AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))
         case .combined:
             switch type {
-            case .strength: return AnyShapeStyle(Color.defaultPurple)
+            case .strength: return AnyShapeStyle(Color.defaultPurplePink)
             case .cardio: return AnyShapeStyle(Color.defaultSkyBlueCyan)
             case .both: return AnyShapeStyle(ExerciseDayType.bothGradient)
             case .rest: return AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))

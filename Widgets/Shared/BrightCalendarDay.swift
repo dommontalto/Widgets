@@ -21,22 +21,51 @@ struct BrightCalendarDay: View {
     @Binding var selectedDate: Date
     var backgroundColor: Color = .defaultBackground
     var dotStyle: (Date) -> AnyShapeStyle? = { _ in nil }
-    var events: [BrightCalendarDayEvent] = []
+    var isWeekly: Bool = false
+    var events: (Date) -> [BrightCalendarDayEvent] = { _ in [] }
     var onEventTap: ((BrightCalendarDayEvent) -> Void)? = nil
+    var onEventDelete: ((BrightCalendarDayEvent) -> Void)? = nil
 
-    @State private var topHour: Int?
-    @State private var calendarShadowProgress: CGFloat = 0
+    @State private var timelinePosition = ScrollPosition()
+    @State private var pagedDay: Date?
+    @State private var edgeProgress: CGFloat = 0
 
     private let calendar = Calendar.current
+    private let pageDays: [Date]
+
+    init(
+        selectedDate: Binding<Date>,
+        backgroundColor: Color = .defaultBackground,
+        dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
+        isWeekly: Bool = false,
+        events: @escaping (Date) -> [BrightCalendarDayEvent] = { _ in [] },
+        onEventTap: ((BrightCalendarDayEvent) -> Void)? = nil,
+        onEventDelete: ((BrightCalendarDayEvent) -> Void)? = nil
+    ) {
+        _selectedDate = selectedDate
+        self.backgroundColor = backgroundColor
+        self.dotStyle = dotStyle
+        self.isWeekly = isWeekly
+        self.events = events
+        self.onEventTap = onEventTap
+        self.onEventDelete = onEventDelete
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        pageDays = (-Constants.dayRange...Constants.dayRange).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: today)
+        }
+        _pagedDay = State(initialValue: calendar.startOfDay(for: selectedDate.wrappedValue))
+    }
 
     var body: some View {
         VStack(spacing: .spacing0x) {
             BrightCalendar(
                 selectedDate: $selectedDate,
                 backgroundColor: backgroundColor,
+                isWeekly: isWeekly,
                 dotStyle: dotStyle
             )
-            .brightCalendarDropShadow(progress: calendarShadowProgress)
+            .brightCalendarEdge(progress: edgeProgress)
             .zIndex(1)
 
             timeline
@@ -45,26 +74,68 @@ struct BrightCalendarDay: View {
 
     private var timeline: some View {
         ScrollView(showsIndicators: false) {
-            TimelineHourGrid()
-                .equatable()
-                .overlay(alignment: .top) {
-                    eventsOverlay
-                }
-                .padding(.leading, .spacing3x)
-                .padding(.top, .spacing4x)
+            pager
         }
-        .scrollPosition(id: $topHour, anchor: .top)
-        .onAppear { retargetScroll() }
+        .scrollPosition($timelinePosition)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
         } action: { _, offset in
-            calendarShadowProgress = BrightCalendarDropShadow.progress(forOffset: offset)
+            let progress = BrightCalendarEdge.progress(forOffset: offset)
+            guard progress != edgeProgress else { return }
+            edgeProgress = progress
+        }
+        .task {
+            retargetScroll()
+            syncPage()
         }
     }
 
-    private var eventsOverlay: some View {
-        ZStack(alignment: .top) {
-            ForEach(eventClusters) { cluster in
+    private var pager: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: .spacing0x) {
+                ForEach(pageDays, id: \.self) { day in
+                    page(for: day)
+                        .containerRelativeFrame(.horizontal)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $pagedDay, anchor: .center)
+        .frame(height: Constants.timelineHeight + Constants.topInset)
+        .onChange(of: pagedDay) { _, day in
+            guard let day, !day.isSameDay(as: selectedDate) else { return }
+            BrightHaptic.light.play()
+            withAnimation(.brightSnappy) { selectedDate = day }
+        }
+        .onChange(of: selectedDate) { syncPage() }
+    }
+
+    private func page(for day: Date) -> some View {
+        TimelineHourGrid()
+            .equatable()
+            .overlay(alignment: .top) {
+                eventsOverlay(for: day)
+            }
+            .padding(.leading, .spacing3x)
+            .padding(.top, Constants.topInset)
+    }
+
+    private func syncPage() {
+        let day = calendar.startOfDay(for: selectedDate)
+        guard day != pagedDay else { return }
+        let isAdjacent = abs(calendar.dateComponents([.day], from: pagedDay ?? day, to: day).day ?? 0) <= 1
+        if isAdjacent {
+            withAnimation(.brightSnappy) { pagedDay = day }
+        } else {
+            pagedDay = day
+        }
+    }
+
+    private func eventsOverlay(for day: Date) -> some View {
+        let dayEvents = events(day)
+        return ZStack(alignment: .top) {
+            ForEach(eventClusters(of: dayEvents)) { cluster in
                 clusterView(cluster)
                     .padding(.leading, Constants.gutterWidth)
                     .padding(.trailing, .spacing1x)
@@ -73,13 +144,12 @@ struct BrightCalendarDay: View {
                     .transition(.blurReplace)
             }
 
-            if calendar.isDateInToday(selectedDate) {
+            if calendar.isDateInToday(day) {
                 nowIndicator
             }
         }
         .frame(maxWidth: .infinity, alignment: .top)
-        .animation(.brightEaseInOut, value: events)
-        .animation(.brightEaseInOut, value: selectedDate)
+        .animation(.brightEaseInOut, value: dayEvents)
     }
 
     private func clusterView(_ cluster: EventCluster) -> some View {
@@ -97,14 +167,27 @@ struct BrightCalendarDay: View {
         }
     }
 
-    private func eventView(_ event: BrightCalendarDayEvent) -> some View {
-        Button {
+    @ViewBuilder private func eventView(_ event: BrightCalendarDayEvent) -> some View {
+        let button = Button {
             onEventTap?(event)
         } label: {
             eventLabel(event)
         }
         .buttonStyle(EventButtonStyle())
-        .allowsHitTesting(onEventTap != nil)
+        .allowsHitTesting(onEventTap != nil || onEventDelete != nil)
+
+        if let onEventDelete {
+            button.contextMenu {
+                Button(role: .destructive) {
+                    onEventDelete(event)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(.defaultRed)
+            }
+        } else {
+            button
+        }
     }
 
     @ViewBuilder private func eventLabel(_ event: BrightCalendarDayEvent) -> some View {
@@ -179,8 +262,8 @@ struct BrightCalendarDay: View {
         }
     }
 
-    private var eventClusters: [EventCluster] {
-        let sorted = events.sorted { ($0.startMinutes, $0.id) < ($1.startMinutes, $1.id) }
+    private func eventClusters(of dayEvents: [BrightCalendarDayEvent]) -> [EventCluster] {
+        let sorted = dayEvents.sorted { ($0.startMinutes, $0.id) < ($1.startMinutes, $1.id) }
         var clusters: [EventCluster] = []
         var columns: [[BrightCalendarDayEvent]] = []
         var clusterStart = 0
@@ -217,13 +300,14 @@ struct BrightCalendarDay: View {
     }
 
     private func retargetScroll() {
-        if calendar.isDateInToday(selectedDate) {
-            topHour = max(Constants.startHour, calendar.component(.hour, from: Date()) - 1)
-        } else if let firstStart = events.map(\.startMinutes).min() {
-            topHour = max(Constants.startHour, firstStart / 60 - 1)
+        let hour: Int = if calendar.isDateInToday(selectedDate) {
+            max(Constants.startHour, calendar.component(.hour, from: Date()) - 1)
+        } else if let firstStart = events(selectedDate).map(\.startMinutes).min() {
+            max(Constants.startHour, firstStart / 60 - 1)
         } else {
-            topHour = Constants.emptyDayTopHour
+            Constants.emptyDayTopHour
         }
+        timelinePosition.scrollTo(y: CGFloat(hour - Constants.startHour) * Constants.hourHeight + Constants.topInset)
     }
 
     private func effectiveDuration(of event: BrightCalendarDayEvent) -> Int {
@@ -251,9 +335,11 @@ struct BrightCalendarDay: View {
         static let startHour = 0
         static let endHour = 23
         static let hourHeight: CGFloat = 65
+        static let timelineHeight: CGFloat = CGFloat(endHour - startHour + 1) * hourHeight
         static let gutterWidth: CGFloat = 66
         static let hourLabelWidth: CGFloat = 21
         static let hourLabelOffset: CGFloat = 9
+        static let topInset: CGFloat = .spacing4x
         static let barHeight: CGFloat = 35
         static let compactBarHeight: CGFloat = 16
         static let compactThresholdMinutes = 45
@@ -262,6 +348,7 @@ struct BrightCalendarDay: View {
         static let nowPillWidth: CGFloat = 48
         static let nowPillHeight: CGFloat = 28
         static let nowLineHeight: CGFloat = 1.5
+        static let dayRange = 365
     }
 }
 
@@ -282,10 +369,8 @@ private struct TimelineHourGrid: View, Equatable {
             ForEach(Constants.startHour...Constants.endHour, id: \.self) { hour in
                 hourRow(hour)
                     .frame(height: Constants.hourHeight, alignment: .top)
-                    .id(hour)
             }
         }
-        .scrollTargetLayout()
     }
 
     private func hourRow(_ hour: Int) -> some View {
@@ -313,7 +398,8 @@ private struct TimelineHourGrid: View, Equatable {
     @Previewable @State var selectedDate = Calendar.current.startOfDay(for: Date())
     BrightCalendarDay(
         selectedDate: $selectedDate,
-        events: [
+        isWeekly: true,
+        events: { _ in [
             BrightCalendarDayEvent(
                 id: "breakfast",
                 name: "Breakfast",
@@ -350,8 +436,9 @@ private struct TimelineHourGrid: View, Equatable {
                 durationMinutes: 90,
                 color: .defaultPurple
             ),
-        ],
-        onEventTap: { _ in }
+        ] },
+        onEventTap: { _ in },
+        onEventDelete: { _ in }
     )
     .background(Color.defaultBackground.ignoresSafeArea())
 }

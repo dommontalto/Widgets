@@ -11,6 +11,8 @@ import SwiftUI
 // prompt in place of the day's sessions.
 struct ExerciseCalendarWidgetEmpty: View {
     var onCreate: () -> Void = {}
+    var onGuided: () -> Void = {}
+    var onLighthouse: () -> Void = {}
 
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var sportIndex = 0
@@ -40,6 +42,24 @@ struct ExerciseCalendarWidgetEmpty: View {
                 isClear: true,
                 onTapCallback: onCreate
             )
+
+            HStack(spacing: .spacing2x) {
+                BrightPillButton(
+                    "Guided",
+                    systemImage: "hand.wave",
+                    textColor: .textColor,
+                    isClear: true,
+                    onTapCallback: onGuided
+                )
+
+                BrightPillButton(
+                    "Lighthouse",
+                    systemImage: "sparkles",
+                    textColor: .textColor,
+                    isClear: true,
+                    onTapCallback: onLighthouse
+                )
+            }
         }
         .padding(.top, .spacing6x)
         .padding(.bottom, .spacing4x)

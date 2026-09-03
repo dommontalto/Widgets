@@ -12,58 +12,70 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     let isBusy: Bool
     var isFocused: FocusState<Bool>.Binding
     var showsModelPicker: Bool
-    // The prompt only introduces an empty thread; after that the field
-    // stands on its own.
-    var showsPlaceholder = true
     var onSend: () -> Void
     var onStop: () -> Void
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
 
+    init(
+        text: Binding<String>,
+        isBusy: Bool,
+        isFocused: FocusState<Bool>.Binding,
+        showsModelPicker: Bool,
+        onSend: @escaping () -> Void,
+        onStop: @escaping () -> Void,
+        @ViewBuilder modelPicker: () -> ModelPicker
+    ) {
+        _text = text
+        self.isBusy = isBusy
+        self.isFocused = isFocused
+        self.showsModelPicker = showsModelPicker
+        self.onSend = onSend
+        self.onStop = onStop
+        self.modelPicker = modelPicker()
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing0x) {
-            field
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-
-            HStack(alignment: .center, spacing: .spacing2x) {
-                if showsModelPicker {
-                    modelPicker
-                }
-
-                Spacer(minLength: .spacing0x)
-
-                sendOrStopButton
+        HStack(alignment: .bottom, spacing: .spacing2x) {
+            if showsModelPicker {
+                modelPicker
+                    .frame(height: BrightButtonSizes.large.rawValue)
             }
-            .animation(.brightBouncy, value: isBusy)
+
+            field
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: BrightButtonSizes.large.rawValue)
+
+            sendOrStopButton
         }
-        .padding(.spacing3x)
+        .animation(.brightBouncy, value: isBusy)
+        .padding(.spacing2x)
         .frame(maxWidth: .infinity)
-        .frame(height: Constants.barHeight, alignment: .bottom)
         .contentShape(.rect)
         .onTapGesture { isFocused.wrappedValue = true }
-        .modifier(GlassEffect(shape: .unevenRoundedRect(
-            top: Constants.topCorner,
-            bottom: Constants.bottomCorner
-        )))
+        .modifier(GlassEffect(shape: .roundedRect, cornerRadius: Constants.cornerRadius))
+        .geometryGroup()
+        .animation(.brightEaseInOut, value: text.count)
     }
 
     private var field: some View {
-        ZStack(alignment: .topLeading) {
-            if text.isEmpty, showsPlaceholder {
-                BrightText("What would you like me to do?", size: .subheading2, color: .lightTextColor)
+        ZStack(alignment: .leading) {
+            if text.isEmpty {
+                BrightText("Ask Lighthouse", size: .subheading2, color: .lightTextColor)
+                    .lineLimit(1)
                     .allowsHitTesting(false)
             }
 
             TextField("", text: $text, axis: .vertical)
                 .font(.standard(size: .subheading2, weight: .light))
                 .foregroundStyle(Color.textColor)
-                .lineLimit(1 ... 3)
+                .lineLimit(1 ... Constants.maxLines)
                 .focused(isFocused)
-                .submitLabel(.send)
+                .submitLabel(.return)
                 .brightWiggle(trigger: nudge)
-                .onSubmit(send)
         }
+        .padding(.vertical, .spacing105x)
     }
 
     private var sendOrStopButton: some View {
@@ -90,11 +102,9 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     }
 }
 
-// Outside the struct: a generic type cannot hold static stored properties.
 private enum Constants {
-    static let barHeight: CGFloat = 120
-    static let topCorner: CGFloat = 36
-    static let bottomCorner: CGFloat = 44
+    static let cornerRadius: CGFloat = (BrightButtonSizes.large.rawValue + .spacing2x * 2) / 2
+    static let maxLines = 8
 }
 
 extension BrightPromptInputBar where ModelPicker == EmptyView {
@@ -103,7 +113,6 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
         isBusy: Bool,
         isFocused: FocusState<Bool>.Binding,
         showsModelPicker: Bool = false,
-        showsPlaceholder: Bool = true,
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void
     ) {
@@ -112,7 +121,6 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
             isBusy: isBusy,
             isFocused: isFocused,
             showsModelPicker: showsModelPicker,
-            showsPlaceholder: showsPlaceholder,
             onSend: onSend,
             onStop: onStop
         ) {

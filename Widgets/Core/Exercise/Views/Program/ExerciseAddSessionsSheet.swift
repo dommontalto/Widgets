@@ -33,7 +33,7 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
 
     var accentColor: Color {
         switch kind {
-        case .strength, .mixed: .defaultPurple
+        case .strength, .mixed: .defaultPurplePink
         case .cardio: .defaultSkyBlueCyan
         case .rest: .defaultGreen
         }
@@ -545,7 +545,7 @@ struct ExerciseAddSessionsSheet: View {
     // this wide.
     private static let cardGradient = LinearGradient(
         stops: [
-            .init(color: .defaultPurple, location: 0),
+            .init(color: .defaultPurplePink, location: 0),
             .init(color: .defaultSkyBlueCyan, location: Constants.blueStop),
         ],
         startPoint: .topLeading,

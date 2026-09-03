@@ -96,7 +96,7 @@ nonisolated enum ExerciseCategory: String, CaseIterable, Identifiable {
     var tint: Color {
         switch self {
         case .cardio, .sports: .defaultSkyBlue
-        case .gym, .bodyweight: .defaultPurple
+        case .gym, .bodyweight: .defaultPurplePink
         }
     }
 }

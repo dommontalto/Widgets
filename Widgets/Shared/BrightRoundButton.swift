@@ -23,6 +23,7 @@ struct BrightRoundButton: View {
     let imageRotation: Angle
     let imageOffset: CGSize
     let haptic: BrightHaptic?
+    let tinted: Bool
     let onTapCallback: (() -> Void)?
 
     @State private var tapTick = 0
@@ -40,6 +41,7 @@ struct BrightRoundButton: View {
         imageRotation: Angle = .zero,
         imageOffset: CGSize = .zero,
         haptic: BrightHaptic? = .light,
+        tinted: Bool = false,
         onTapCallback: (() -> Void)? = nil
     ) {
         self.imageSource = .system(systemImage)
@@ -50,6 +52,7 @@ struct BrightRoundButton: View {
         self.imageRotation = imageRotation
         self.imageOffset = imageOffset
         self.haptic = haptic
+        self.tinted = tinted
         self.onTapCallback = onTapCallback
     }
 
@@ -70,6 +73,7 @@ struct BrightRoundButton: View {
         self.imageRotation = imageRotation
         self.imageOffset = .zero
         self.haptic = haptic
+        self.tinted = false
         self.onTapCallback = onTapCallback
     }
 
@@ -88,6 +92,7 @@ struct BrightRoundButton: View {
         self.imageRotation = .zero
         self.imageOffset = .zero
         self.haptic = .light
+        self.tinted = false
         self.onTapCallback = onTapCallback
     }
 
@@ -96,10 +101,10 @@ struct BrightRoundButton: View {
         onTapCallback?()
     }
 
-    // At `.extraLarge` a passed colour reads as a tint rather than a fill: the
-    // glyph takes the colour at full strength over a 30% wash of it.
+    // A primary or `tinted` button reads a passed colour as a tint rather than
+    // a fill: the glyph takes the colour at full strength over a 30% wash of it.
     private var isTinted: Bool {
-        size.isPrimary && color != nil
+        (size.isPrimary || tinted) && color != nil
     }
 
     private var resolvedImageColor: Color {
@@ -125,21 +130,21 @@ struct BrightRoundButton: View {
         switch imageSource {
         case .system(let name):
             Image(systemName: name)
-                .font(.system(size: size.rawValue * 0.5, weight: .medium))
+                .font(.system(size: size.glyphSize, weight: .medium))
                 .scaledToFit()
         case .asset(let name):
             Image(name)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
-                .frame(width: size.rawValue * 0.5, height: size.rawValue * 0.5)
+                .frame(width: size.glyphSize, height: size.glyphSize)
         case .text(let title):
             BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor, weight: .regular)
         }
     }
 
     private var resolvedHaptic: BrightHaptic? {
-        size.isPrimary ? haptic : nil
+        size.isPrimary || tinted ? haptic : nil
     }
 
     var body: some View {

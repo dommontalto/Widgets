@@ -175,13 +175,15 @@ struct ExerciseCreateProgramSheet: View {
 
     @State private var startDate: Date
 
+    private let startsGuided: Bool
     private let initialName: String
     private let initialPeriods: [ExerciseTrainingPeriod]
     private let initialStartDate: Date
 
-    init(startsAtBlocks: Bool = false) {
+    init(startsAtBlocks: Bool = false, startsGuided: Bool = false) {
         self.startsAtBlocks = startsAtBlocks
-        _step = State(initialValue: startsAtBlocks ? .periods : .intro)
+        self.startsGuided = startsGuided
+        _step = State(initialValue: startsAtBlocks ? .periods : startsGuided ? .goals : .intro)
         _path = State(initialValue: NavigationPath())
         // Editing opens on the program that already exists; creating starts from
         // the one empty block the first step fills in.
@@ -956,12 +958,12 @@ struct ExerciseCreateProgramSheet: View {
                 .contentTransition(.numericText())
 
             Circle()
-                .stroke(Color.defaultPurple.opacity(.minimalOpacity), lineWidth: Constants.ringWidth)
+                .stroke(Color.defaultPurplePink.opacity(.minimalOpacity), lineWidth: Constants.ringWidth)
 
             Circle()
                 .trim(from: 0, to: period.fractionComplete)
                 .stroke(
-                    Color.defaultPurple,
+                    Color.defaultPurplePink,
                     style: StrokeStyle(lineWidth: Constants.ringWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
@@ -1155,7 +1157,8 @@ struct ExerciseCreateProgramSheet: View {
     }
 
     private var rootStep: Step {
-        startsAtBlocks ? .periods : .intro
+        if startsAtBlocks { return .periods }
+        return startsGuided ? .goals : .intro
     }
 
     private var chosenStyle: ProgramStyle {

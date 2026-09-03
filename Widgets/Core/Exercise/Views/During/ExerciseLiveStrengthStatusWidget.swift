@@ -120,18 +120,15 @@ struct ExerciseLiveStrengthStatusWidget: View {
 
     // Skipping a set sits beside the tick and takes the screen's own blue;
     // skipping the rest is the primary button, so it stays green.
-    private func tint(for control: Control) -> Color? {
-        control == .skip && !isResting ? .defaultSkyBlueCyan : control.tint
-    }
-
     private func control(_ control: Control) -> some View {
         BrightRoundButton(
             systemImage: control.symbol,
-            size: .extraLarge,
-            color: tint(for: control),
+            size: .large,
+            color: control.tint,
             imageRotation: .zero,
             imageOffset: control.imageOffset,
             haptic: control.haptic,
+            tinted: true,
             onTapCallback: action(for: control)
         )
         .contentTransition(.symbolEffect(.replace))
@@ -165,7 +162,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
             switch self {
             case .rpe: .defaultPink
             case .failedSet: .defaultRed
-            case .skip: .defaultGreen
+            case .skip: .defaultSkyBlueCyan
             case .complete, .start: .defaultGreen
             case .extendRest: nil
             }
@@ -302,7 +299,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
 
         case let .resting(_, until):
             let remaining = max(0, until.timeIntervalSince(date))
-            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .defaultGreen)
+            return (countdown(remaining), remaining <= Constants.urgentRemaining ? .defaultRed : .defaultSkyBlueCyan)
 
         case .allSetsComplete:
             return ("Finish", .textColor)

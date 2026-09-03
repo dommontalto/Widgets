@@ -28,12 +28,10 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     // only variant whose blobs carry different hues.
     case brand
     // Single-hue takes on `brand`, shaded per blob so the ring still reads as a
-    // sweep. The raw value keys the spec's palettes, which predate the rename.
-    case defaultOrange = "orange"
-    case defaultBlue
+    // sweep. The raw value keys the spec's palettes.
+    case defaultOrange
     case defaultSkyBlue
     case defaultCyan
-    case defaultGreen
     // Adaptive pick with no palette of its own: the beam resolves it against
     // its theme — `defaultSkyBlue` over light, `defaultCyan` over dark —
     // because the spec's palettes are fixed CSS colours.
@@ -42,7 +40,7 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     // The offerable variants: sky blue and cyan exist only as the palettes
     // `skyBlueCyan` resolves to, so they stay out of the list.
     public static var allCases: [BeamColorVariant] {
-        [.brand, .defaultOrange, .defaultBlue, .defaultGreen, .skyBlueCyan]
+        [.brand, .defaultOrange, .skyBlueCyan]
     }
 
     // Every blob shares one hue, so a hue shift doesn't sweep the ring through
@@ -50,7 +48,7 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     // the brand hue.
     var isSingleHue: Bool {
         switch self {
-        case .defaultOrange, .defaultBlue, .defaultSkyBlue, .defaultCyan, .defaultGreen, .skyBlueCyan: true
+        case .defaultOrange, .defaultSkyBlue, .defaultCyan, .skyBlueCyan: true
         case .brand: false
         }
     }

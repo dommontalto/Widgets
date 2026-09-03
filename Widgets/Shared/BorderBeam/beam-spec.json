@@ -16,8 +16,7 @@
     ],
     "colorVariants": [
       "brand",
-      "orange",
-      "defaultBlue"
+      "defaultOrange"
     ],
     "themes": [
       "dark",
@@ -216,7 +215,7 @@
           "secondary": "rgb(0, 238, 255)"
         }
       },
-      "orange": {
+      "defaultOrange": {
         "border": [
           {
             "color": "rgb(237, 75, 42)",
@@ -271,63 +270,6 @@
         "spikeLt": {
           "primary": "rgb(219, 70, 39)",
           "secondary": "rgb(251, 80, 44)"
-        }
-      },
-      "defaultBlue": {
-        "border": [
-          {
-            "color": "rgb(73, 100, 238)",
-            "pos": "33% -7.4%",
-            "size": "70px 40px"
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "pos": "12% -5%",
-            "size": "60px 35px"
-          },
-          {
-            "color": "rgb(85, 112, 255)",
-            "pos": "2.1% 68.3%",
-            "size": "40px 70px"
-          },
-          {
-            "color": "rgb(83, 111, 255)",
-            "pos": "2.1% 68.3%",
-            "size": "20px 35px"
-          },
-          {
-            "color": "rgb(72, 97, 234)",
-            "pos": "74.4% 100%",
-            "size": "180px 32px"
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "pos": "55% 100%",
-            "size": "85px 26px"
-          },
-          {
-            "color": "rgb(82, 110, 255)",
-            "pos": "93.9% 0%",
-            "size": "74px 32px"
-          },
-          {
-            "color": "rgb(73, 100, 239)",
-            "pos": "100% 27.1%",
-            "size": "26px 42px"
-          },
-          {
-            "color": "rgb(70, 96, 231)",
-            "pos": "100% 27.1%",
-            "size": "52px 48px"
-          }
-        ],
-        "spike": {
-          "primary": "rgb(74, 100, 241)",
-          "secondary": "rgba(84, 112, 255, 0.98)"
-        },
-        "spikeLt": {
-          "primary": "rgb(67, 92, 221)",
-          "secondary": "rgb(78, 106, 251)"
         }
       },
       "defaultCyan": {
@@ -385,63 +327,6 @@
         "spikeLt": {
           "primary": "rgb(34, 176, 186)",
           "secondary": "rgb(6, 229, 245)"
-        }
-      },
-      "defaultGreen": {
-        "border": [
-          {
-            "color": "rgb(20, 217, 93)",
-            "pos": "33% -7.4%",
-            "size": "70px 40px"
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "pos": "12% -5%",
-            "size": "60px 35px"
-          },
-          {
-            "color": "rgb(4, 255, 98)",
-            "pos": "2.1% 68.3%",
-            "size": "40px 70px"
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "pos": "2.1% 68.3%",
-            "size": "20px 35px"
-          },
-          {
-            "color": "rgb(24, 209, 94)",
-            "pos": "74.4% 100%",
-            "size": "180px 32px"
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "pos": "55% 100%",
-            "size": "85px 26px"
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "pos": "93.9% 0%",
-            "size": "74px 32px"
-          },
-          {
-            "color": "rgb(19, 218, 92)",
-            "pos": "100% 27.1%",
-            "size": "26px 42px"
-          },
-          {
-            "color": "rgb(26, 203, 92)",
-            "pos": "100% 27.1%",
-            "size": "52px 48px"
-          }
-        ],
-        "spike": {
-          "primary": "rgb(17, 223, 95)",
-          "secondary": "rgba(3, 255, 96, 0.98)"
-        },
-        "spikeLt": {
-          "primary": "rgb(34, 186, 90)",
-          "secondary": "rgb(6, 245, 95)"
         }
       },
       "defaultSkyBlue": {
@@ -589,7 +474,7 @@
           }
         ]
       },
-      "orange": {
+      "defaultOrange": {
         "border": [
           {
             "color": "rgb(255, 87, 48)",
@@ -670,92 +555,6 @@
           },
           {
             "color": "rgba(237, 75, 42, 0.3)",
-            "pos": "100% 27%",
-            "size": "11px 12px"
-          }
-        ]
-      },
-      "defaultBlue": {
-        "border": [
-          {
-            "color": "rgb(85, 112, 255)",
-            "pos": "2% 68%",
-            "size": "9px 18px"
-          },
-          {
-            "color": "rgb(83, 111, 255)",
-            "pos": "2% 68%",
-            "size": "4px 8px"
-          },
-          {
-            "color": "rgb(82, 110, 255)",
-            "pos": "72% -3%",
-            "size": "59px 9px"
-          },
-          {
-            "color": "rgb(72, 97, 234)",
-            "pos": "74% 100%",
-            "size": "42px 7px"
-          },
-          {
-            "color": "rgb(73, 100, 239)",
-            "pos": "100% 27%",
-            "size": "10px 17px"
-          },
-          {
-            "color": "rgb(70, 96, 231)",
-            "pos": "100% 27%",
-            "size": "10px 18px"
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "pos": "100% 27%",
-            "size": "5px 10px"
-          },
-          {
-            "color": "rgb(73, 100, 238)",
-            "pos": "100% 27%",
-            "size": "11px 12px"
-          }
-        ],
-        "inner": [
-          {
-            "color": "rgba(85, 112, 255, 0.5)",
-            "pos": "2% 68%",
-            "size": "9px 18px"
-          },
-          {
-            "color": "rgba(83, 111, 255, 0.45)",
-            "pos": "2% 68%",
-            "size": "4px 8px"
-          },
-          {
-            "color": "rgba(82, 110, 255, 0.35)",
-            "pos": "72% -3%",
-            "size": "59px 9px"
-          },
-          {
-            "color": "rgba(72, 97, 234, 0.35)",
-            "pos": "74% 100%",
-            "size": "42px 7px"
-          },
-          {
-            "color": "rgba(73, 100, 239, 0.3)",
-            "pos": "100% 27%",
-            "size": "10px 17px"
-          },
-          {
-            "color": "rgba(70, 96, 231, 0.4)",
-            "pos": "100% 27%",
-            "size": "10px 18px"
-          },
-          {
-            "color": "rgba(80, 108, 255, 0.3)",
-            "pos": "100% 27%",
-            "size": "5px 10px"
-          },
-          {
-            "color": "rgba(73, 100, 238, 0.3)",
             "pos": "100% 27%",
             "size": "11px 12px"
           }
@@ -842,92 +641,6 @@
           },
           {
             "color": "rgba(20, 204, 217, 0.3)",
-            "pos": "100% 27%",
-            "size": "11px 12px"
-          }
-        ]
-      },
-      "defaultGreen": {
-        "border": [
-          {
-            "color": "rgb(4, 255, 98)",
-            "pos": "2% 68%",
-            "size": "9px 18px"
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "pos": "2% 68%",
-            "size": "4px 8px"
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "pos": "72% -3%",
-            "size": "59px 9px"
-          },
-          {
-            "color": "rgb(24, 209, 94)",
-            "pos": "74% 100%",
-            "size": "42px 7px"
-          },
-          {
-            "color": "rgb(19, 218, 92)",
-            "pos": "100% 27%",
-            "size": "10px 17px"
-          },
-          {
-            "color": "rgb(26, 203, 92)",
-            "pos": "100% 27%",
-            "size": "10px 18px"
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "pos": "100% 27%",
-            "size": "5px 10px"
-          },
-          {
-            "color": "rgb(20, 217, 93)",
-            "pos": "100% 27%",
-            "size": "11px 12px"
-          }
-        ],
-        "inner": [
-          {
-            "color": "rgba(4, 255, 98, 0.5)",
-            "pos": "2% 68%",
-            "size": "9px 18px"
-          },
-          {
-            "color": "rgba(2, 255, 95, 0.45)",
-            "pos": "2% 68%",
-            "size": "4px 8px"
-          },
-          {
-            "color": "rgba(2, 255, 95, 0.35)",
-            "pos": "72% -3%",
-            "size": "59px 9px"
-          },
-          {
-            "color": "rgba(24, 209, 94, 0.35)",
-            "pos": "74% 100%",
-            "size": "42px 7px"
-          },
-          {
-            "color": "rgba(19, 218, 92, 0.3)",
-            "pos": "100% 27%",
-            "size": "10px 17px"
-          },
-          {
-            "color": "rgba(26, 203, 92, 0.4)",
-            "pos": "100% 27%",
-            "size": "10px 18px"
-          },
-          {
-            "color": "rgba(0, 255, 95, 0.3)",
-            "pos": "100% 27%",
-            "size": "5px 10px"
-          },
-          {
-            "color": "rgba(20, 217, 93, 0.3)",
             "pos": "100% 27%",
             "size": "11px 12px"
           }
@@ -1153,7 +866,7 @@
           }
         ]
       },
-      "orange": {
+      "defaultOrange": {
         "dark": [
           {
             "color": "rgb(237, 75, 42)",
@@ -1278,138 +991,6 @@
           },
           {
             "color": "rgb(238, 76, 42)",
-            "sizeW": 30,
-            "sizeH": 30,
-            "offsetX": -110,
-            "offsetY": -1
-          }
-        ]
-      },
-      "defaultBlue": {
-        "dark": [
-          {
-            "color": "rgb(73, 100, 238)",
-            "sizeW": 36,
-            "sizeH": 36,
-            "offsetX": 0,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(84, 112, 255)",
-            "sizeW": 30,
-            "sizeH": 32,
-            "offsetX": 39,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(85, 112, 255)",
-            "sizeW": 33,
-            "sizeH": 28,
-            "offsetX": -36,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(70, 96, 231)",
-            "sizeW": 29,
-            "sizeH": 34,
-            "offsetX": -54,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(86, 113, 255)",
-            "sizeW": 27,
-            "sizeH": 30,
-            "offsetX": 51,
-            "offsetY": -1
-          },
-          {
-            "color": "rgb(72, 97, 234)",
-            "sizeW": 36,
-            "sizeH": 24,
-            "offsetX": 21,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "sizeW": 30,
-            "sizeH": 22,
-            "offsetX": -21,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(73, 100, 239)",
-            "sizeW": 25,
-            "sizeH": 28,
-            "offsetX": 66,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(83, 111, 255)",
-            "sizeW": 23,
-            "sizeH": 30,
-            "offsetX": -66,
-            "offsetY": -1
-          }
-        ],
-        "light": [
-          {
-            "color": "rgb(73, 100, 238)",
-            "sizeW": 45,
-            "sizeH": 36,
-            "offsetX": 0,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "sizeW": 35,
-            "sizeH": 32,
-            "offsetX": 65,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(85, 112, 255)",
-            "sizeW": 40,
-            "sizeH": 28,
-            "offsetX": -60,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(70, 96, 231)",
-            "sizeW": 35,
-            "sizeH": 34,
-            "offsetX": -90,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(83, 111, 255)",
-            "sizeW": 38,
-            "sizeH": 30,
-            "offsetX": 85,
-            "offsetY": -1
-          },
-          {
-            "color": "rgb(72, 97, 234)",
-            "sizeW": 50,
-            "sizeH": 24,
-            "offsetX": 35,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(80, 108, 255)",
-            "sizeW": 40,
-            "sizeH": 22,
-            "offsetX": -35,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(82, 110, 255)",
-            "sizeW": 35,
-            "sizeH": 28,
-            "offsetX": 110,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(73, 100, 239)",
             "sizeW": 30,
             "sizeH": 30,
             "offsetX": -110,
@@ -1542,138 +1123,6 @@
           },
           {
             "color": "rgb(19, 206, 218)",
-            "sizeW": 30,
-            "sizeH": 30,
-            "offsetX": -110,
-            "offsetY": -1
-          }
-        ]
-      },
-      "defaultGreen": {
-        "dark": [
-          {
-            "color": "rgb(20, 217, 93)",
-            "sizeW": 36,
-            "sizeH": 36,
-            "offsetX": 0,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(3, 255, 96)",
-            "sizeW": 30,
-            "sizeH": 32,
-            "offsetX": 39,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(4, 255, 98)",
-            "sizeW": 33,
-            "sizeH": 28,
-            "offsetX": -36,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(26, 203, 92)",
-            "sizeW": 29,
-            "sizeH": 34,
-            "offsetX": -54,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(5, 255, 98)",
-            "sizeW": 27,
-            "sizeH": 30,
-            "offsetX": 51,
-            "offsetY": -1
-          },
-          {
-            "color": "rgb(24, 209, 94)",
-            "sizeW": 36,
-            "sizeH": 24,
-            "offsetX": 21,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "sizeW": 30,
-            "sizeH": 22,
-            "offsetX": -21,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(19, 218, 92)",
-            "sizeW": 25,
-            "sizeH": 28,
-            "offsetX": 66,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "sizeW": 23,
-            "sizeH": 30,
-            "offsetX": -66,
-            "offsetY": -1
-          }
-        ],
-        "light": [
-          {
-            "color": "rgb(20, 217, 93)",
-            "sizeW": 45,
-            "sizeH": 36,
-            "offsetX": 0,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "sizeW": 35,
-            "sizeH": 32,
-            "offsetX": 65,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(4, 255, 98)",
-            "sizeW": 40,
-            "sizeH": 28,
-            "offsetX": -60,
-            "offsetY": 2
-          },
-          {
-            "color": "rgb(26, 203, 92)",
-            "sizeW": 35,
-            "sizeH": 34,
-            "offsetX": -90,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "sizeW": 38,
-            "sizeH": 30,
-            "offsetX": 85,
-            "offsetY": -1
-          },
-          {
-            "color": "rgb(24, 209, 94)",
-            "sizeW": 50,
-            "sizeH": 24,
-            "offsetX": 35,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(0, 255, 95)",
-            "sizeW": 40,
-            "sizeH": 22,
-            "offsetX": -35,
-            "offsetY": 0
-          },
-          {
-            "color": "rgb(2, 255, 95)",
-            "sizeW": 35,
-            "sizeH": 28,
-            "offsetX": 110,
-            "offsetY": 1
-          },
-          {
-            "color": "rgb(19, 218, 92)",
             "sizeW": 30,
             "sizeH": 30,
             "offsetX": -110,
@@ -1880,7 +1329,7 @@
           "offsetY": -1
         }
       ],
-      "orange": [
+      "defaultOrange": [
         {
           "color": "rgba(237, 75, 42, 0.48)",
           "sizeW": 33,
@@ -1939,71 +1388,6 @@
         },
         {
           "color": "rgba(255, 85, 47, 0.52)",
-          "sizeW": 18,
-          "sizeH": 26,
-          "offsetX": -66,
-          "offsetY": -1
-        }
-      ],
-      "defaultBlue": [
-        {
-          "color": "rgba(73, 100, 238, 0.48)",
-          "sizeW": 33,
-          "sizeH": 30,
-          "offsetX": 0,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(84, 112, 255, 0.42)",
-          "sizeW": 24,
-          "sizeH": 26,
-          "offsetX": 39,
-          "offsetY": -3
-        },
-        {
-          "color": "rgba(85, 112, 255, 0.48)",
-          "sizeW": 27,
-          "sizeH": 24,
-          "offsetX": -36,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(70, 96, 231, 0.42)",
-          "sizeW": 23,
-          "sizeH": 28,
-          "offsetX": -54,
-          "offsetY": -2
-        },
-        {
-          "color": "rgba(86, 113, 255, 0.50)",
-          "sizeW": 24,
-          "sizeH": 24,
-          "offsetX": 51,
-          "offsetY": -1
-        },
-        {
-          "color": "rgba(72, 97, 234, 0.45)",
-          "sizeW": 30,
-          "sizeH": 20,
-          "offsetX": 21,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(80, 108, 255, 0.40)",
-          "sizeW": 25,
-          "sizeH": 18,
-          "offsetX": -21,
-          "offsetY": -2
-        },
-        {
-          "color": "rgba(73, 100, 239, 0.45)",
-          "sizeW": 21,
-          "sizeH": 24,
-          "offsetX": 66,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(83, 111, 255, 0.52)",
           "sizeW": 18,
           "sizeH": 26,
           "offsetX": -66,
@@ -2069,71 +1453,6 @@
         },
         {
           "color": "rgba(2, 239, 255, 0.52)",
-          "sizeW": 18,
-          "sizeH": 26,
-          "offsetX": -66,
-          "offsetY": -1
-        }
-      ],
-      "defaultGreen": [
-        {
-          "color": "rgba(20, 217, 93, 0.48)",
-          "sizeW": 33,
-          "sizeH": 30,
-          "offsetX": 0,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(3, 255, 96, 0.42)",
-          "sizeW": 24,
-          "sizeH": 26,
-          "offsetX": 39,
-          "offsetY": -3
-        },
-        {
-          "color": "rgba(4, 255, 98, 0.48)",
-          "sizeW": 27,
-          "sizeH": 24,
-          "offsetX": -36,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(26, 203, 92, 0.42)",
-          "sizeW": 23,
-          "sizeH": 28,
-          "offsetX": -54,
-          "offsetY": -2
-        },
-        {
-          "color": "rgba(5, 255, 98, 0.50)",
-          "sizeW": 24,
-          "sizeH": 24,
-          "offsetX": 51,
-          "offsetY": -1
-        },
-        {
-          "color": "rgba(24, 209, 94, 0.45)",
-          "sizeW": 30,
-          "sizeH": 20,
-          "offsetX": 21,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(0, 255, 95, 0.40)",
-          "sizeW": 25,
-          "sizeH": 18,
-          "offsetX": -21,
-          "offsetY": -2
-        },
-        {
-          "color": "rgba(19, 218, 92, 0.45)",
-          "sizeW": 21,
-          "sizeH": 24,
-          "offsetX": 66,
-          "offsetY": 0
-        },
-        {
-          "color": "rgba(2, 255, 95, 0.52)",
           "sizeW": 18,
           "sizeH": 26,
           "offsetX": -66,
@@ -2257,7 +1576,7 @@
           ]
         }
       },
-      "orange": {
+      "defaultOrange": {
         "dark": {
           "spikes": [
             {
@@ -2303,56 +1622,6 @@
             {
               "color1": "rgb(234, 74, 41)",
               "color2": "rgba(234, 74, 41, 0.78)"
-            }
-          ]
-        }
-      },
-      "defaultBlue": {
-        "dark": {
-          "spikes": [
-            {
-              "color1": "rgb(72, 97, 234)",
-              "color2": "rgba(72, 97, 234, 1)"
-            },
-            {
-              "color1": "rgba(87, 114, 255, 0.59)",
-              "color2": "rgba(87, 114, 255, 0.29)"
-            },
-            {
-              "color1": "rgb(85, 112, 255)",
-              "color2": "rgba(85, 112, 255, 1)"
-            },
-            {
-              "color1": "rgba(72, 99, 238, 0.91)",
-              "color2": "rgba(72, 99, 238, 0.45)"
-            },
-            {
-              "color1": "rgb(80, 108, 255)",
-              "color2": "rgba(80, 108, 255, 1)"
-            }
-          ]
-        },
-        "light": {
-          "spikes": [
-            {
-              "color1": "rgb(66, 91, 221)",
-              "color2": "rgba(66, 91, 221, 0.8)"
-            },
-            {
-              "color1": "rgba(81, 109, 255, 0.7)",
-              "color2": "rgba(81, 109, 255, 0.46)"
-            },
-            {
-              "color1": "rgb(80, 108, 254)",
-              "color2": "rgba(80, 108, 254, 0.82)"
-            },
-            {
-              "color1": "rgb(67, 92, 222)",
-              "color2": "rgba(67, 92, 222, 0.7)"
-            },
-            {
-              "color1": "rgb(72, 98, 236)",
-              "color2": "rgba(72, 98, 236, 0.78)"
             }
           ]
         }
@@ -2403,56 +1672,6 @@
             {
               "color1": "rgb(22, 199, 212)",
               "color2": "rgba(22, 199, 212, 0.78)"
-            }
-          ]
-        }
-      },
-      "defaultGreen": {
-        "dark": {
-          "spikes": [
-            {
-              "color1": "rgb(24, 209, 94)",
-              "color2": "rgba(24, 209, 94, 1)"
-            },
-            {
-              "color1": "rgba(5, 255, 97, 0.59)",
-              "color2": "rgba(5, 255, 97, 0.29)"
-            },
-            {
-              "color1": "rgb(4, 255, 98)",
-              "color2": "rgba(4, 255, 98, 1)"
-            },
-            {
-              "color1": "rgba(20, 216, 93, 0.91)",
-              "color2": "rgba(20, 216, 93, 0.45)"
-            },
-            {
-              "color1": "rgb(0, 255, 95)",
-              "color2": "rgba(0, 255, 95, 1)"
-            }
-          ]
-        },
-        "light": {
-          "spikes": [
-            {
-              "color1": "rgb(33, 185, 89)",
-              "color2": "rgba(33, 185, 89, 0.8)"
-            },
-            {
-              "color1": "rgba(1, 255, 96, 0.7)",
-              "color2": "rgba(1, 255, 96, 0.46)"
-            },
-            {
-              "color1": "rgb(1, 253, 95)",
-              "color2": "rgba(1, 253, 95, 0.82)"
-            },
-            {
-              "color1": "rgb(33, 187, 90)",
-              "color2": "rgba(33, 187, 90, 0.7)"
-            },
-            {
-              "color1": "rgb(22, 212, 93)",
-              "color2": "rgba(22, 212, 93, 0.78)"
             }
           ]
         }

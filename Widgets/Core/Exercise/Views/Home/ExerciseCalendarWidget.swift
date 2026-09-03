@@ -84,7 +84,7 @@ struct ExerciseCalendarWidget: View {
     private var cardGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: .defaultPurple, location: 0),
+                .init(color: .defaultPurplePink, location: 0),
                 .init(color: .defaultSkyBlueCyan, location: Constants.cardBlueStop),
             ],
             startPoint: .topLeading,

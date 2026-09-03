@@ -14,7 +14,7 @@ struct ExerciseSplitBar: View {
     var body: some View {
         VStack(spacing: .spacing105x) {
             HStack(spacing: .spacing0x) {
-                percentLabel(strengthPercent, color: .defaultPurple)
+                percentLabel(strengthPercent, color: .defaultPurplePink)
                     .frame(maxWidth: .infinity)
                 percentLabel(cardioPercent, color: .defaultSkyBlue)
                     .frame(maxWidth: .infinity)
@@ -35,7 +35,7 @@ struct ExerciseSplitBar: View {
             let inset: CGFloat = .spacing05x
             let trackWidth = max(0, proxy.size.width - inset * 2 - Constants.notchWidth - inset * 2)
             HStack(spacing: inset) {
-                segment("Strength", color: .defaultPurple, width: width(of: strengthPercent, in: trackWidth))
+                segment("Strength", color: .defaultPurplePink, width: width(of: strengthPercent, in: trackWidth))
                 RoundedRectangle(cornerRadius: 1, style: .continuous)
                     .fill(Color.textColor)
                     .frame(width: Constants.notchWidth, height: 21)
@@ -81,7 +81,7 @@ struct ExerciseSplitRow: View {
                 let track = max(0, proxy.size.width - .spacing05x)
                 HStack(spacing: .spacing05x) {
                     Capsule()
-                        .fill(Color.defaultPurple.opacity(.veryMinimalOpacity))
+                        .fill(Color.defaultPurplePink.opacity(.veryMinimalOpacity))
                         .frame(width: width(of: split.strengthFraction, in: track))
                     Capsule()
                         .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))

@@ -13,7 +13,7 @@ import SwiftUI
 // `BrightScreenEdgeBeam`/`BorderBeam` and the beam spec.
 
 struct BeamConfig {
-    var colorVariant: BeamColorVariant = .defaultBlue
+    var colorVariant: BeamColorVariant = .skyBlueCyan
     var size: BeamSize = .md
     var isActive = true
     // The sliders need concrete numbers, so the spec's resolved md/dark values
@@ -198,10 +198,8 @@ extension BeamColorVariant: Identifiable {
         switch self {
         case .brand: "Brand"
         case .defaultOrange: "Orange"
-        case .defaultBlue: "Blue"
         case .defaultSkyBlue: "Sky Blue"
         case .defaultCyan: "Cyan"
-        case .defaultGreen: "Green"
         case .skyBlueCyan: "Sky Blue / Cyan"
         }
     }

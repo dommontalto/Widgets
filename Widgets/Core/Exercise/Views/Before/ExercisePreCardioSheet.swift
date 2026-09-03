@@ -196,7 +196,7 @@ struct ExercisePreCardioSheet: View {
             HStack(spacing: .spacing2x) {
                 Image(systemName: "increase.quotelevel")
                     .font(.standard(size: .standout3, weight: .regular))
-                    .foregroundStyle(Color.defaultPurple)
+                    .foregroundStyle(Color.defaultPurplePink)
                     .frame(width: Constants.iconWidth)
 
                 BrightText("Intervals", size: .body1, weight: .regular)

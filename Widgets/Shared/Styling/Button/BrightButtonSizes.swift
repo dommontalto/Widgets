@@ -15,8 +15,6 @@ enum BrightButtonSizes: CGFloat {
     case medium = 36
     // Forced by iOS to use for toolbars
     case large = 44
-    // Round button size 48pt — the primary control on live/session screens.
-    case extraLarge = 48
     // Round button size 62pt — the largest, for a screen's single hero control.
     case finalBossLarge = 62
 
@@ -24,13 +22,17 @@ enum BrightButtonSizes: CGFloat {
         switch self {
         case .small: .body1
         case .medium, .large: .subheading1
-        case .extraLarge, .finalBossLarge: .standout2
+        case .finalBossLarge: .standout2
         }
     }
 
-    // The sizes that carry a screen's main action: they tint a passed colour
-    // rather than filling with it, and give haptic feedback by default.
+    // The size that carries a screen's hero action: it tints a passed colour
+    // rather than filling with it, and gives haptic feedback by default.
     var isPrimary: Bool {
-        self == .extraLarge || self == .finalBossLarge
+        self == .finalBossLarge
+    }
+
+    var glyphSize: CGFloat {
+        self == .large ? FontSizes.subheading2.rawValue : rawValue * 0.5
     }
 }

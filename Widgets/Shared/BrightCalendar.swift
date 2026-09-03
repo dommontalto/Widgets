@@ -12,31 +12,46 @@ struct BrightCalendar<Trailing: View>: View {
     var backgroundColor: Color
     // Nil for no dot; a day with sessions styles its dot by what they are.
     var dotStyle: (Date) -> AnyShapeStyle?
+    var isWeekly: Bool
     @ViewBuilder var trailing: Trailing
 
     @State private var scrolledDay: Date?
+    @State private var scrolledWeek: Date?
 
     private let calendar = Calendar.current
     private let days: [Date]
+    private let weeks: [Date]
 
     init(
         selectedDate: Binding<Date>,
         backgroundColor: Color = .defaultBackground,
+        isWeekly: Bool = false,
         dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
         @ViewBuilder trailing: () -> Trailing
     ) {
         _selectedDate = selectedDate
         self.backgroundColor = backgroundColor
+        self.isWeekly = isWeekly
         self.dotStyle = dotStyle
         self.trailing = trailing()
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let dates = (-Constants.dayRange...Constants.dayRange).compactMap {
+        days = (-Constants.dayRange...Constants.dayRange).compactMap {
             calendar.date(byAdding: .day, value: $0, to: today)
         }
-        days = dates
+        let currentWeek = Self.weekStart(of: today)
+        weeks = (-Constants.weekRange...Constants.weekRange).compactMap {
+            calendar.date(byAdding: .weekOfYear, value: $0, to: currentWeek)
+        }
         _scrolledDay = State(initialValue: calendar.startOfDay(for: selectedDate.wrappedValue))
+        _scrolledWeek = State(initialValue: Self.weekStart(of: selectedDate.wrappedValue))
+    }
+
+    private static func weekStart(of date: Date) -> Date {
+        var calendar = Calendar.current
+        calendar.firstWeekday = Constants.mondayIndex
+        return calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
     }
 
     var body: some View {
@@ -105,22 +120,20 @@ struct BrightCalendar<Trailing: View>: View {
         .animation(.brightEaseInOut, value: selectedDate.isToday)
     }
 
-    private var calendarView: some View {
+    @ViewBuilder private var calendarView: some View {
+        if isWeekly {
+            weekStrip
+        } else {
+            dayStrip
+        }
+    }
+
+    private var dayStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: .spacing0x) {
                 ForEach(days, id: \.self) { date in
-                    DayCell(
-                        date: date,
-                        isSelected: date.isSameDay(as: selectedDate),
-                        dotStyle: dotStyle(date),
-                        onTap: { tappedDate in
-                            BrightHaptic.light.play()
-                            withAnimation(.brightSnappy) {
-                                selectedDate = tappedDate
-                            }
-                        }
-                    )
-                    .containerRelativeFrame(.horizontal, count: Constants.visibleDays, span: 1, spacing: .spacing0x)
+                    dayCell(date)
+                        .containerRelativeFrame(.horizontal, count: Constants.visibleDays, span: 1, spacing: .spacing0x)
                 }
             }
             .scrollTargetLayout()
@@ -138,10 +151,58 @@ struct BrightCalendar<Trailing: View>: View {
         .frame(height: Constants.calendarHeight)
     }
 
+    private var weekStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: .spacing0x) {
+                ForEach(weeks, id: \.self) { week in
+                    HStack(spacing: .spacing0x) {
+                        ForEach(daysOfWeek(startingAt: week), id: \.self) { date in
+                            dayCell(date)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, .spacing2x)
+                    .containerRelativeFrame(.horizontal)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $scrolledWeek, anchor: .center)
+        .onChange(of: selectedDate) { scrollToSelection() }
+        .task { scrollToSelection() }
+        .frame(height: Constants.calendarHeight)
+    }
+
+    private func dayCell(_ date: Date) -> some View {
+        DayCell(
+            date: date,
+            isSelected: date.isSameDay(as: selectedDate),
+            dotStyle: dotStyle(date),
+            isWeekly: isWeekly,
+            onTap: { tappedDate in
+                BrightHaptic.light.play()
+                withAnimation(.brightSnappy) {
+                    selectedDate = tappedDate
+                }
+            }
+        )
+    }
+
+    private func daysOfWeek(startingAt week: Date) -> [Date] {
+        (0..<Constants.daysInWeek).compactMap { calendar.date(byAdding: .day, value: $0, to: week) }
+    }
+
     private func scrollToSelection() {
-        let day = calendar.startOfDay(for: selectedDate)
-        guard day != scrolledDay else { return }
-        withAnimation(.brightSnappy) { scrolledDay = day }
+        if isWeekly {
+            let week = Self.weekStart(of: selectedDate)
+            guard week != scrolledWeek else { return }
+            withAnimation(.brightSnappy) { scrolledWeek = week }
+        } else {
+            let day = calendar.startOfDay(for: selectedDate)
+            guard day != scrolledDay else { return }
+            withAnimation(.brightSnappy) { scrolledDay = day }
+        }
     }
 }
 
@@ -149,11 +210,13 @@ extension BrightCalendar where Trailing == EmptyView {
     init(
         selectedDate: Binding<Date>,
         backgroundColor: Color = .defaultBackground,
+        isWeekly: Bool = false,
         dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil }
     ) {
         self.init(
             selectedDate: selectedDate,
             backgroundColor: backgroundColor,
+            isWeekly: isWeekly,
             dotStyle: dotStyle,
             trailing: { EmptyView() }
         )
@@ -164,15 +227,21 @@ private enum Constants {
     static let circleSize: CGFloat = 30
     static let calendarHeight: CGFloat = 80
     static let dayRange = 365
+    static let weekRange = 52
+    static let daysInWeek = 7
+    static let mondayIndex = 2
     static let visibleDays = 7
     static let iconSize: CGFloat = 24
     static let dotSize: CGFloat = 6
+    static let circleScale: CGFloat = 1
+    static let circleRestScale: CGFloat = 0.4
 }
 
 private struct DayCell: View {
     let date: Date
     let isSelected: Bool
     let dotStyle: AnyShapeStyle?
+    let isWeekly: Bool
     let onTap: (Date) -> Void
 
     var body: some View {
@@ -187,12 +256,18 @@ private struct DayCell: View {
             VStack(spacing: .spacing105x) {
                 ZStack {
                     Circle()
-                        .strokeBorder(Color.textColor, lineWidth: 1)
+                        .fill(isSelected ? Color.textColor : .clear)
                         .frame(width: Constants.circleSize, height: Constants.circleSize)
+                        .scaleEffect(isSelected ? Constants.circleScale : Constants.circleRestScale)
 
-                    BrightText(date.formatted(.brightDay), size: .body3, weight: .regular)
+                    BrightText(
+                        date.formatted(.brightDay),
+                        size: .body3,
+                        color: isSelected ? .defaultBlackWhite : .textColor,
+                        weight: .regular
+                    )
+                    .opacity(isSelected ? .opaque : .minimalOpacity)
                 }
-                .opacity(isSelected ? .opaque : .minimalOpacity)
 
                 Circle()
                     .fill(dotStyle ?? AnyShapeStyle(Color.clear))
@@ -200,8 +275,8 @@ private struct DayCell: View {
             }
         }
         .animation(.brightBouncy, value: isSelected)
-        .padding(.leading, .spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, isWeekly ? .spacing0x : .spacing3x)
+        .frame(maxWidth: .infinity, alignment: isWeekly ? .center : .leading)
         .contentShape(Rectangle())
         .onTapGesture { onTap(date) }
     }

@@ -10,6 +10,9 @@ import SwiftUI
 struct ContentView: View {
     @State private var showingSession = false
     @State private var showingProgram = false
+    @State private var showingGuidedProgram = false
+    @State private var showingLighthouse = false
+    @State private var lighthouseThinking = false
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -25,10 +28,33 @@ struct ContentView: View {
             content
         }
         .environment(builder)
+        .overlay(alignment: .bottom) {
+            if showingLighthouse {
+                LighthouseChatView(isThinking: $lighthouseThinking, onDismiss: closeLighthouse)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .overlay {
+            if lighthouseThinking {
+                BrightScreenEdgeBeam(colorVariant: .skyBlueCyan)
+                    .transition(.identity)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if showingLighthouse {
+                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
+                    .padding(.leading, .spacing3x)
+                    .transition(.opacity)
+            }
+        }
     }
 
     private var sessions: [ExerciseQuickSession] {
         builder.saved
+    }
+
+    private func closeLighthouse() {
+        withAnimation(.brightBouncy) { showingLighthouse = false }
     }
 
     private func start(_ session: ExerciseQuickSession) {
@@ -41,9 +67,11 @@ struct ContentView: View {
                 section("Exercise") {
                     widgetLabel("ExerciseCalendarWidgetEmpty")
                     ExerciseWidgetSection(icon: .symbol("checklist"), title: "Program") {
-                        ExerciseCalendarWidgetEmpty {
-                            showingProgram = true
-                        }
+                        ExerciseCalendarWidgetEmpty(
+                            onCreate: { showingProgram = true },
+                            onGuided: { showingGuidedProgram = true },
+                            onLighthouse: { withAnimation(.brightBouncy) { showingLighthouse = true } }
+                        )
                     }
                         .padding(.top, .spacing2x)
                         .padding(.bottom, .spacing3x)
@@ -144,6 +172,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingProgram) {
             ExerciseCreateProgramSheet()
+        }
+        .sheet(isPresented: $showingGuidedProgram) {
+            ExerciseCreateProgramSheet(startsGuided: true)
         }
         .sheet(isPresented: $showingRecordSession) {
             ExerciseCompleteSheet(

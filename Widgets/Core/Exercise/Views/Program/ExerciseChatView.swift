@@ -7,34 +7,15 @@
 
 import SwiftUI
 
-nonisolated struct ExerciseChatMessage: Identifiable, Equatable {
-    enum Kind: Equatable {
-        case user
-        case assistant
-        // A clarifying question with quick-reply chips; tapping one answers
-        // for the user, and typing works just the same.
-        case questions
-        // The canned program reply: intro text followed by the week cards
-        // and the generate prompt.
-        case program
-    }
-
-    let id = UUID()
-    let kind: Kind
-    let text: String
-    var options: [String] = []
+nonisolated enum ExerciseChatPayload: Equatable {
+    // A clarifying question with quick-reply chips; tapping one answers for
+    // the user, and typing works just the same.
+    case questions([String])
+    // The canned program reply: the week cards under the intro text.
+    case program([ExerciseChatProgramWeek])
 }
 
-// A starter prompt paired with the glyph for the sport it asks about.
-nonisolated struct ExerciseChatExample {
-    let symbol: String
-    let prompt: String
-
-    init(_ symbol: String, _ prompt: String) {
-        self.symbol = symbol
-        self.prompt = prompt
-    }
-}
+typealias ExerciseChatMessage = BrightChatMessage<ExerciseChatPayload>
 
 nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
     nonisolated struct Entry: Identifiable, Equatable {
@@ -48,12 +29,11 @@ nonisolated struct ExerciseChatProgramWeek: Identifiable, Equatable {
     let entries: [Entry]
 }
 
-// A demo chat with the AI coach: what you type lands as an iMessage-style
-// bubble, the assistant "thinks" for a beat, then a canned reply slides in.
-// The first reply asks a clarifying question with quick-reply chips; the
-// second is the program response — plain text, the week cards and a confirm
-// button, per the Figma prompt-program screens. Embedded as the guided step
-// of the program builder, which supplies the wash behind it.
+// A demo chat with the AI coach: `BrightChat` supplies the thread, the empty
+// state and the input bar; this view adds the quick-reply chips and the week
+// cards as the reply designs. The first reply asks a clarifying question, the
+// second proposes the program. Embedded as the guided step of the program
+// builder, which supplies the wash behind it.
 struct ExerciseChatView: View {
     var isTyping: FocusState<Bool>.Binding
 
@@ -62,138 +42,34 @@ struct ExerciseChatView: View {
     @Binding var hasPlan: Bool
 
     @State private var messages = [ExerciseChatMessage]()
-    @State private var draft = ""
     @State private var isThinking = false
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
-    @State private var promptIndex = 0
 
     var body: some View {
-        thread
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
-                inputBar
-            }
-            // The input bar hugs the true bottom edge — its own padding is the
-            // gap — rather than stacking the sheet's bottom insets under it.
-            .ignoresSafeArea(.container, edges: .bottom)
-            .brightHaptic(.light, trigger: messages.count)
-            .onAppear { isTyping.wrappedValue = true }
-            .onDisappear { replyTask?.cancel() }
-    }
-
-    // MARK: - Thread
-
-    private var thread: some View {
-        ScrollViewReader { proxy in
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: .spacing3x) {
-                    ForEach(messages) { message in
-                        row(for: message)
-                            .id(message.id)
-                    }
-
-                    if isThinking {
-                        thinkingIndicator
-                            .id(Constants.thinkingID)
-                    }
-                }
-                .padding(.spacing3x)
-            }
-            .defaultScrollAnchor(.bottom)
-            // A plan is read from its top, so only plain replies follow the
-            // thread down to the bottom.
-            .onChange(of: messages) { _, messages in
-                guard let last = messages.last, last.kind != .program else { return }
-                withAnimation(.brightSnappy) { proxy.scrollTo(last.id, anchor: .bottom) }
-            }
-            .onChange(of: isThinking) { _, isThinking in
-                guard isThinking else { return }
-                withAnimation(.brightSnappy) { proxy.scrollTo(Constants.thinkingID, anchor: .bottom) }
-            }
+        BrightChat(
+            messages: messages,
+            isThinking: isThinking,
+            isBusy: isThinking,
+            isTyping: isTyping,
+            emptyState: BrightChatEmptyState(title: "Guided Program", examples: Constants.examples),
+            onSend: deliver,
+            onStop: stopThinking
+        ) { message in
+            response(message)
         }
-        // The scroll view collapses to its content while the thread is empty,
-        // so the overlay only lands full width once the frame is spelled out.
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay {
-            if messages.isEmpty {
-                emptyState
-                    .padding(.spacing3x)
-            }
-        }
-    }
-
-    // MARK: - Empty state
-
-    // Before anything is sent the coach shows what it can do: an example
-    // prompt under the glyph for the sport it asks about, cycling together and
-    // fading away with the first message.
-    private var emptyState: some View {
-        VStack(spacing: .spacing4x) {
-            Image(systemName: Constants.examples[promptIndex].symbol)
-                .font(.system(size: Constants.sportIconSize, weight: .light))
-                .foregroundStyle(Color.defaultSlateBlue)
-                .contentTransition(.symbolEffect(.replace))
-                .frame(height: Constants.sportIconSize)
-
-            BrightText("Guided Program", size: .huge205, color: .defaultSlateBlue)
-                .multilineTextAlignment(.center)
-
-            BrightText(Constants.examples[promptIndex].prompt, size: .body1, color: .lightTextColor)
-                .lineSpacing(.lineSpacingMedium)
-                .multilineTextAlignment(.center)
-                .contentTransition(.opacity)
-        }
-        .frame(maxWidth: .infinity)
-        .transition(.opacity)
-        .task {
-            while true {
-                do {
-                    try await Task.sleep(for: .seconds(Constants.exampleSwapEvery))
-                } catch {
-                    return
-                }
-                withAnimation(.brightEaseInOut) {
-                    promptIndex = (promptIndex + 1) % Constants.examples.count
-                }
-            }
-        }
+        .onDisappear { replyTask?.cancel() }
     }
 
     @ViewBuilder
-    private func row(for message: ExerciseChatMessage) -> some View {
-        Group {
-            switch message.kind {
-            case .user:
-                userBubble(message)
-            case .assistant:
-                assistantText(message.text)
-            case .questions:
-                questionResponse(message)
-            case .program:
-                programResponse(message)
-            }
-        }
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-
-    // Only what you send sits in a bubble — the coach answers straight onto
-    // the wash.
-    private func userBubble(_ message: ExerciseChatMessage) -> some View {
-        HStack(spacing: .spacing0x) {
-            Spacer(minLength: .spacing8x)
-
-            BrightText(message.text, size: .body1)
-                .lineSpacing(.lineSpacingMedium)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, .spacing3x)
-                .padding(.vertical, .spacing2x)
-                .modifier(GlassEffect(
-                    shape: .roundedRect,
-                    cornerRadius: .cardCornerRadius,
-                    interactive: false
-                ))
-                .shadow(color: .black.opacity(.ultraLowOpacity), radius: 15)
+    private func response(_ message: ExerciseChatMessage) -> some View {
+        switch message.payload {
+        case let .questions(options):
+            questionResponse(message, options: options)
+        case let .program(weeks):
+            programResponse(message, weeks: weeks)
+        case nil:
+            assistantText(message.text)
         }
     }
 
@@ -208,14 +84,14 @@ struct ExerciseChatView: View {
 
     // The question reads like any coach message; the chips underneath make
     // answering two taps, and they leave once the answer is in.
-    private func questionResponse(_ message: ExerciseChatMessage) -> some View {
+    private func questionResponse(_ message: ExerciseChatMessage, options: [String]) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             assistantText(message.text)
 
-            if !message.options.isEmpty {
+            if !options.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: .spacing1x) {
-                        ForEach(message.options, id: \.self) { option in
+                        ForEach(options, id: \.self) { option in
                             chip(option) { answer(option, to: message) }
                         }
                     }
@@ -242,28 +118,21 @@ struct ExerciseChatView: View {
         guard let index = messages.firstIndex(where: { $0.id == message.id }) else { return }
 
         withAnimation(.brightSnappy) {
-            messages[index].options = []
+            messages[index].payload = .questions([])
         }
         deliver(option)
     }
 
-    private var thinkingIndicator: some View {
-        BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .transition(.opacity)
-    }
-
     // MARK: - Program response
 
-    private func programResponse(_ message: ExerciseChatMessage) -> some View {
+    private func programResponse(_ message: ExerciseChatMessage, weeks: [ExerciseChatProgramWeek]) -> some View {
         VStack(spacing: .spacing2x) {
             assistantText(message.text)
                 .padding(.bottom, .spacing105x)
 
-            ForEach(Constants.programWeeks) { week in
+            ForEach(weeks) { week in
                 weekSection(week)
             }
-
         }
     }
 
@@ -295,29 +164,7 @@ struct ExerciseChatView: View {
         }
     }
 
-    // MARK: - Input
-
-    private var inputBar: some View {
-        BrightPromptInputBar(
-            text: $draft,
-            isBusy: isThinking,
-            isFocused: isTyping,
-            showsPlaceholder: messages.isEmpty,
-            onSend: send,
-            onStop: stopThinking
-        )
-        .padding(.spacing3x)
-    }
-
     // MARK: - Fake replies
-
-    private func send() {
-        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-
-        draft = ""
-        deliver(text)
-    }
 
     private func deliver(_ text: String) {
         withAnimation(.brightSnappy) {
@@ -340,12 +187,16 @@ struct ExerciseChatView: View {
         let message: ExerciseChatMessage = switch replyIndex {
         case 0:
             ExerciseChatMessage(
-                kind: .questions,
+                kind: .response,
                 text: Constants.questionIntro,
-                options: Constants.questionOptions
+                payload: .questions(Constants.questionOptions)
             )
         case 1:
-            ExerciseChatMessage(kind: .program, text: Constants.programIntro)
+            ExerciseChatMessage(
+                kind: .response,
+                text: Constants.programIntro,
+                payload: .program(Constants.programWeeks)
+            )
         default:
             ExerciseChatMessage(
                 kind: .assistant,
@@ -357,7 +208,9 @@ struct ExerciseChatView: View {
         withAnimation(.brightSnappy) {
             isThinking = false
             messages.append(message)
-            hasPlan = messages.contains { $0.kind == .program }
+            hasPlan = messages.contains { message in
+                if case .program = message.payload { true } else { false }
+            }
         }
     }
 
@@ -368,27 +221,19 @@ struct ExerciseChatView: View {
     }
 
     private enum Constants {
-        static let thinkingID = "thinking"
         static let thinkingRange = 4.5...6.5
-        static let orbSize: CGFloat = 64
-        // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
-        // preset rate.
-        static let orbSpeed: Double = 1.2
-
-        static let sportIconSize: CGFloat = 64
-        static let exampleSwapEvery: TimeInterval = 3
 
         static let examples = [
-            ExerciseChatExample("figure.run", "Get me from the couch to a 5K in eight weeks."),
-            ExerciseChatExample("stopwatch", "Build a half marathon plan around three runs a week."),
-            ExerciseChatExample("calendar", "Plan my strength around Tuesday, Thursday and Saturday."),
-            ExerciseChatExample("figure.strengthtraining.traditional", "Help me squat 100kg by Christmas."),
-            ExerciseChatExample("figure.skiing.downhill", "Six weeks of ski prep for my legs and core."),
-            ExerciseChatExample("bandage.fill", "My left shoulder is cranky, so plan around it."),
-            ExerciseChatExample("figure.walk", "Ease me back into running after two months off."),
-            ExerciseChatExample("figure.pool.swim", "Two gym sessions and one swim, every week."),
-            ExerciseChatExample("figure.hiking", "Get me strong enough for the Tongariro Crossing."),
-            ExerciseChatExample("chart.xyaxis.line", "Keep my base through the off-season without burning out."),
+            BrightChatExample("figure.run", "Get me from the couch to a 5K in eight weeks."),
+            BrightChatExample("stopwatch", "Build a half marathon plan around three runs a week."),
+            BrightChatExample("calendar", "Plan my strength around Tuesday, Thursday and Saturday."),
+            BrightChatExample("figure.strengthtraining.traditional", "Help me squat 100kg by Christmas."),
+            BrightChatExample("figure.skiing.downhill", "Six weeks of ski prep for my legs and core."),
+            BrightChatExample("bandage.fill", "My left shoulder is cranky, so plan around it."),
+            BrightChatExample("figure.walk", "Ease me back into running after two months off."),
+            BrightChatExample("figure.pool.swim", "Two gym sessions and one swim, every week."),
+            BrightChatExample("figure.hiking", "Get me strong enough for the Tongariro Crossing."),
+            BrightChatExample("chart.xyaxis.line", "Keep my base through the off-season without burning out."),
         ]
 
         // The interval lines are designed to sit on one line, so they shrink

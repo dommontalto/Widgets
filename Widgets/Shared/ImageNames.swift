@@ -11,6 +11,7 @@ nonisolated class ImageNames {
 
     // MARK: - Genome
 
+    static let lighthouseCirclePlusV5     = "Lighthouse/lighthouse_circle_plus_v5"
     static let genomeRecoveryExerciseV5    = "Genome/Icons/genome_recovery_exercise_v5"
     static let genomeCognitiveMentalV5     = "Genome/Icons/genome_cognitive_mental_v5"
     static let genomeLongevityV5           = "Genome/Icons/genome_longevity_v5"
