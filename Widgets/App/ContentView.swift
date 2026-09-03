@@ -160,6 +160,10 @@ struct ContentView: View {
             }
             .padding(.spacing3x)
         }
+        // With Lighthouse open the screen still scrolls, so a drag here pulls
+        // the keyboard down with it and a tap anywhere puts it away.
+        .scrollDismissesKeyboard(.interactively)
+        .simultaneousGesture(TapGesture().onEnded { lighthouseTyping = false })
         .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
