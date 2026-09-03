@@ -51,22 +51,11 @@ struct GlassEffect: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
-            switch shape {
-            case .capsule:
-                content
-                    .glassEffect(glassStyle, in: .capsule)
-                    .id(colorScheme)
-            case .circle:
-                content
-                    .glassEffect(glassStyle, in: .circle)
-                    .id(colorScheme)
-            case .roundedRect:
-                content
-                    .glassEffect(glassStyle, in: .rect(cornerRadius: cornerRadius))
-                    .id(colorScheme)
-            case .unevenRoundedRect, .cornerRadii:
-                content
-                    .glassEffect(glassStyle, in: unevenRect)
+            // The glass sits on its own layer, re-identified when the scheme
+            // flips so it repaints, while the content keeps its identity — a
+            // text field inside would otherwise lose focus on the switch.
+            content.background {
+                glassLayer
                     .id(colorScheme)
             }
         } else if isClear {
@@ -82,6 +71,20 @@ struct GlassEffect: ViewModifier {
             case .unevenRoundedRect, .cornerRadii:
                 content.background(.ultraThinMaterial, in: unevenRect)
             }
+        }
+    }
+
+    @available(iOS 26.0, *)
+    @ViewBuilder private var glassLayer: some View {
+        switch shape {
+        case .capsule:
+            Color.clear.glassEffect(glassStyle, in: .capsule)
+        case .circle:
+            Color.clear.glassEffect(glassStyle, in: .circle)
+        case .roundedRect:
+            Color.clear.glassEffect(glassStyle, in: .rect(cornerRadius: cornerRadius))
+        case .unevenRoundedRect, .cornerRadii:
+            Color.clear.glassEffect(glassStyle, in: unevenRect)
         }
     }
 }

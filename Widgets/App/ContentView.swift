@@ -55,7 +55,7 @@ struct ContentView: View {
         .overlay(alignment: .topLeading) {
             if showingLighthouse {
                 BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
-                    .padding(.leading, .spacing2x)
+                    .padding(.leading, .spacing205x)
                     .opacity(lighthouseClosing ? 0 : 1)
                     .transition(.asymmetric(insertion: .opacity, removal: .identity))
             }

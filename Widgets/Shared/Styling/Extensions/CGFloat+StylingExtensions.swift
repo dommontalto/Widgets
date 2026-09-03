@@ -31,6 +31,9 @@ nonisolated extension CGFloat {
     // 12pt spacing.
     static var spacing2x: CGFloat = base * 2
 
+    // 15pt spacing.
+    static var spacing205x: CGFloat = base * 2 + base / 2
+
     // 18pt spacing.
     static var spacing3x: CGFloat = base * 3
 
