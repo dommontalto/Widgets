@@ -75,7 +75,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 .brightWiggle(trigger: nudge)
         }
         .padding(.vertical, .spacing105x)
-        .padding(.leading, .spacing1x)
+        .padding(.leading, showsModelPicker ? .spacing0x : .spacing1x)
     }
 
     private var sendOrStopButton: some View {

@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "lighthouse_grok_wallpaper_v5.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "lighthouse_grok_wallpaper_v5@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "lighthouse_grok_wallpaper_v5@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

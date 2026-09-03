@@ -13,6 +13,8 @@ typealias LighthouseChatMessage = BrightChatMessage<Never>
 // suggestion chips above the input, and canned replies after a beat.
 struct LighthouseChatView: View {
     @Binding var isThinking: Bool
+    @Binding var selectedModel: LighthouseModel
+    @Binding var showingModelSelector: Bool
     var isTyping: FocusState<Bool>.Binding
     let onDismiss: () -> Void
 
@@ -36,10 +38,10 @@ struct LighthouseChatView: View {
             ),
             onSend: send,
             onStop: stopThinking,
-            onSwipeDismiss: onDismiss
-        ) { _ in
-            EmptyView()
-        }
+            onSwipeDismiss: onDismiss,
+            response: { _ in EmptyView() },
+            modelPicker: { modelPickerButton }
+        )
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing9x)
         }
@@ -50,6 +52,17 @@ struct LighthouseChatView: View {
                 .animation(.brightEaseInOut, value: messages.isEmpty)
         }
         .onDisappear { replyTask?.cancel() }
+    }
+
+    private var modelPickerButton: some View {
+        Button {
+            guard !isThinking else { return }
+            withAnimation(.brightBouncy) { showingModelSelector = true }
+        } label: {
+            Image(selectedModel.tierImageName)
+                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+                .contentShape(Circle())
+        }
     }
 
     private func send(_ text: String) {
@@ -106,11 +119,19 @@ struct LighthouseChatBackground: View {
 
 #Preview {
     @Previewable @State var isThinking = false
+    @Previewable @State var selectedModel = LighthouseModel.chatGPT
+    @Previewable @State var showingModelSelector = false
     @Previewable @FocusState var isTyping: Bool
 
     Color.defaultBackground
         .ignoresSafeArea()
         .overlay(alignment: .bottom) {
-            LighthouseChatView(isThinking: $isThinking, isTyping: $isTyping, onDismiss: {})
+            LighthouseChatView(
+                isThinking: $isThinking,
+                selectedModel: $selectedModel,
+                showingModelSelector: $showingModelSelector,
+                isTyping: $isTyping,
+                onDismiss: {}
+            )
         }
 }

@@ -12,6 +12,14 @@ nonisolated class ImageNames {
     // MARK: - Genome
 
     static let lighthouseCirclePlusV5     = "Lighthouse/lighthouse_circle_plus_v5"
+    static let lighthouseGptTierV5        = "Lighthouse/lighthouse_gpt_tier_v5"
+    static let lighthouseGeminiTierV5     = "Lighthouse/lighthouse_gemini_tier_v5"
+    static let lighthouseClaudeTierV5     = "Lighthouse/lighthouse_claude_tier_v5"
+    static let lighthouseGrokTierV5       = "Lighthouse/lighthouse_grok_tier_v5"
+    static let lighthouseGptWallpaperV5   = "Lighthouse/lighthouse_gpt_wallpaper_v5"
+    static let lighthouseGeminiWallpaperV5 = "Lighthouse/lighthouse_gemini_wallpaper_v5"
+    static let lighthouseClaudeWallpaperV5 = "Lighthouse/lighthouse_claude_wallpaper_v5"
+    static let lighthouseGrokWallpaperV5  = "Lighthouse/lighthouse_grok_wallpaper_v5"
     static let genomeRecoveryExerciseV5    = "Genome/Icons/genome_recovery_exercise_v5"
     static let genomeCognitiveMentalV5     = "Genome/Icons/genome_cognitive_mental_v5"
     static let genomeLongevityV5           = "Genome/Icons/genome_longevity_v5"

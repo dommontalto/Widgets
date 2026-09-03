@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
     @State private var lighthouseThinking = false
+    @State private var lighthouseModel = LighthouseModel.chatGPT
+    @State private var showingModelSelector = false
     @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
@@ -32,8 +34,15 @@ struct ContentView: View {
         .ignoresSafeArea(.keyboard)
         .overlay(alignment: .bottom) {
             if showingLighthouse {
-                LighthouseChatView(isThinking: $lighthouseThinking, isTyping: $lighthouseTyping, onDismiss: closeLighthouse)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                LighthouseChatView(
+                    isThinking: $lighthouseThinking,
+                    selectedModel: $lighthouseModel,
+                    showingModelSelector: $showingModelSelector,
+                    isTyping: $lighthouseTyping,
+                    onDismiss: closeLighthouse
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .allowsHitTesting(!showingModelSelector)
             }
         }
         .overlay {
@@ -47,6 +56,21 @@ struct ContentView: View {
                 BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
                     .padding(.leading, .spacing205x)
                     .transition(.opacity)
+            }
+        }
+        // The picker sits in front of the input bar and the close button so
+        // nothing shows through it.
+        .overlay {
+            if showingModelSelector {
+                ZStack {
+                    LighthouseModelSelectorBackground()
+                    LighthouseModelSelectorView(currentModel: lighthouseModel) { model in
+                        lighthouseModel = model
+                    } onDismiss: {
+                        withAnimation(.brightBouncy) { showingModelSelector = false }
+                    }
+                }
+                .transition(.opacity)
             }
         }
     }
