@@ -300,7 +300,6 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             .padding(.horizontal, .spacing3x)
             .padding(.bottom, .spacing3x)
         }
-        .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
     }
