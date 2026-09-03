@@ -60,8 +60,11 @@ struct LighthouseChatView: View {
             withAnimation(.brightBouncy) { showingModelSelector = true }
         } label: {
             Image(selectedModel.tierImageName)
-                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-                .contentShape(Circle())
+                .frame(height: BrightButtonSizes.large.rawValue)
+                .padding(.leading, .spacing1x)
+                // The glyph is narrow, so the target reaches past it without
+                // widening the gap to the field.
+                .contentShape(Rectangle().inset(by: -.spacing2x))
         }
     }
 

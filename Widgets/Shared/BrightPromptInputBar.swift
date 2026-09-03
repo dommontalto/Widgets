@@ -64,6 +64,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 BrightText("Ask Lighthouse", size: .subheading2, color: .lightTextColor)
                     .lineLimit(1)
                     .allowsHitTesting(false)
+                    .brightWiggle(trigger: nudge)
             }
 
             TextField("", text: $text, axis: .vertical)
@@ -72,7 +73,6 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 .lineLimit(1 ... Constants.maxLines)
                 .focused(isFocused)
                 .submitLabel(.return)
-                .brightWiggle(trigger: nudge)
         }
         .padding(.vertical, .spacing105x)
         .padding(.leading, showsModelPicker ? .spacing0x : .spacing1x)

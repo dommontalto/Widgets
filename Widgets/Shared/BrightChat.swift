@@ -465,9 +465,14 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        draft = ""
         withAnimation(.brightSnappy) {
             onSend(text)
+        }
+        // Clearing in the same turn as the tap can land while the field is
+        // still committing pending input, leaving typed text on screen over an
+        // empty draft; the next turn lets it settle first.
+        Task { @MainActor in
+            draft = ""
         }
     }
 }
