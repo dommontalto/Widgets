@@ -81,7 +81,9 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     private var sendOrStopButton: some View {
         BrightRoundButton(
             systemImage: isBusy ? "stop.fill" : "arrow.up",
-            size: .large
+            size: .large,
+            color: .textColor,
+            imageColor: .defaultBlackWhite
         ) {
             if isBusy {
                 onStop()
