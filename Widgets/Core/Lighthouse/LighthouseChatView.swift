@@ -13,20 +13,20 @@ typealias LighthouseChatMessage = BrightChatMessage<Never>
 // suggestion chips above the input, and canned replies after a beat.
 struct LighthouseChatView: View {
     @Binding var isThinking: Bool
+    var isTyping: FocusState<Bool>.Binding
     let onDismiss: () -> Void
 
     @State private var messages = [LighthouseChatMessage]()
     @State private var customPrompts = [String]()
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
-    @FocusState private var isTyping: Bool
 
     var body: some View {
         BrightChat(
             messages: messages,
             isThinking: isThinking,
             isBusy: isThinking,
-            isTyping: $isTyping,
+            isTyping: isTyping,
             suggestions: BrightChatSuggestions(
                 prompts: Constants.prompts,
                 custom: customPrompts,
@@ -106,10 +106,11 @@ struct LighthouseChatBackground: View {
 
 #Preview {
     @Previewable @State var isThinking = false
+    @Previewable @FocusState var isTyping: Bool
 
     Color.defaultBackground
         .ignoresSafeArea()
         .overlay(alignment: .bottom) {
-            LighthouseChatView(isThinking: $isThinking, onDismiss: {})
+            LighthouseChatView(isThinking: $isThinking, isTyping: $isTyping, onDismiss: {})
         }
 }

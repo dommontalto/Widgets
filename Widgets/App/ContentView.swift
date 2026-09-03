@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
     @State private var lighthouseThinking = false
+    @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -30,7 +31,7 @@ struct ContentView: View {
         .environment(builder)
         .overlay(alignment: .bottom) {
             if showingLighthouse {
-                LighthouseChatView(isThinking: $lighthouseThinking, onDismiss: closeLighthouse)
+                LighthouseChatView(isThinking: $lighthouseThinking, isTyping: $lighthouseTyping, onDismiss: closeLighthouse)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -53,8 +54,18 @@ struct ContentView: View {
         builder.saved
     }
 
+    // The keyboard goes first, so the chat slides out over a settled screen
+    // rather than racing the keyboard down.
     private func closeLighthouse() {
-        withAnimation(.brightBouncy) { showingLighthouse = false }
+        guard lighthouseTyping else {
+            withAnimation(.brightBouncy) { showingLighthouse = false }
+            return
+        }
+        lighthouseTyping = false
+        Task {
+            try? await Task.sleep(for: Constants.keyboardDismissDelay)
+            withAnimation(.brightBouncy) { showingLighthouse = false }
+        }
     }
 
     private func start(_ session: ExerciseQuickSession) {
@@ -286,6 +297,7 @@ struct ContentView: View {
 
     private enum Constants {
         static let beamCardHeight: CGFloat = 68
+        static let keyboardDismissDelay: Duration = .milliseconds(250)
     }
 }
 
