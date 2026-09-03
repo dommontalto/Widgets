@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var showingLighthouse = false
     @State private var lighthouseThinking = false
     @FocusState private var lighthouseTyping: Bool
+    @State private var lighthouseClosing = false
+    @State private var lighthouseHeight: CGFloat = 0
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -32,7 +34,16 @@ struct ContentView: View {
         .overlay(alignment: .bottom) {
             if showingLighthouse {
                 LighthouseChatView(isThinking: $lighthouseThinking, isTyping: $lighthouseTyping, onDismiss: closeLighthouse)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { lighthouseHeight = $0 }
+                    .offset(y: lighthouseClosing ? lighthouseHeight : 0)
+                    .opacity(lighthouseClosing ? 0 : 1)
+                    // The chat's UIKit-backed pieces vanish the moment the view is
+                    // removed, so the exit is driven by hand and the view goes
+                    // once it has finished.
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .identity
+                    ))
             }
         }
         .overlay {
@@ -45,7 +56,8 @@ struct ContentView: View {
             if showingLighthouse {
                 BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
                     .padding(.leading, .spacing3x)
-                    .transition(.opacity)
+                    .opacity(lighthouseClosing ? 0 : 1)
+                    .transition(.asymmetric(insertion: .opacity, removal: .identity))
             }
         }
     }
@@ -57,14 +69,14 @@ struct ContentView: View {
     // The keyboard goes first, so the chat slides out over a settled screen
     // rather than racing the keyboard down.
     private func closeLighthouse() {
-        guard lighthouseTyping else {
-            withAnimation(.brightBouncy) { showingLighthouse = false }
-            return
-        }
+        guard !lighthouseClosing else { return }
+        let keyboardDelay = lighthouseTyping ? Constants.keyboardDismissDelay : .zero
         lighthouseTyping = false
+        withAnimation(.brightSnappy.delay(keyboardDelay)) { lighthouseClosing = true }
         Task {
-            try? await Task.sleep(for: Constants.keyboardDismissDelay)
-            withAnimation(.brightBouncy) { showingLighthouse = false }
+            try? await Task.sleep(for: .seconds(keyboardDelay + Constants.closeDuration))
+            showingLighthouse = false
+            lighthouseClosing = false
         }
     }
 
@@ -297,7 +309,8 @@ struct ContentView: View {
 
     private enum Constants {
         static let beamCardHeight: CGFloat = 68
-        static let keyboardDismissDelay: Duration = .milliseconds(250)
+        static let keyboardDismissDelay: TimeInterval = 0.25
+        static let closeDuration: TimeInterval = 0.25
     }
 }
 
