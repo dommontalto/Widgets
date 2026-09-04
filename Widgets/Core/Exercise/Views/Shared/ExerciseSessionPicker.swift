@@ -7,17 +7,17 @@
 
 import SwiftUI
 
-// One tag per exercise in the draft, in the order they were added. The tag
-// that's lit decides what the create screen shows below it — sets for a lift,
-// a cardio plan for a run or a sport.
+// One tag for every lift in the draft and one per run or sport, in the order
+// they were added. The tag that's lit decides what the create screen shows
+// below it — a stack of set cards, or a cardio plan.
 struct ExerciseSessionPicker: View {
     let exercises: [String]
 
     @Binding var selection: String?
 
-    // A superset pill carries the whole block's name while keeping its
-    // leader's id.
     var title: (String) -> String = { $0 }
+
+    var symbol: (String) -> String? = { _ in nil }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -26,7 +26,7 @@ struct ExerciseSessionPicker: View {
                     ForEach(exercises, id: \.self) { exercise in
                         BrightTag(
                             title: title(exercise),
-                            systemImage: ExerciseDemoLibrary.glyph(for: exercise).symbol,
+                            systemImage: symbol(exercise),
                             isSelected: exercise == selection
                         ) {
                             selection = exercise
@@ -53,10 +53,10 @@ struct ExerciseSessionPicker: View {
 }
 
 #Preview {
-    @Previewable @State var selection: String? = "Bench Press"
+    @Previewable @State var selection: String? = "Gym & Bodyweight"
 
     ExerciseSessionPicker(
-        exercises: ["Bench Press", "Pull Up", "Outdoor Run", "Football"],
+        exercises: ["Gym & Bodyweight", "Outdoor Run", "Football"],
         selection: $selection
     )
 }

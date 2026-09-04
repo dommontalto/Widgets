@@ -12,6 +12,7 @@ struct BrightCalendar<Trailing: View>: View {
     var backgroundColor: Color
     // Nil for no dot; a day with sessions styles its dot by what they are.
     var dotStyle: (Date) -> AnyShapeStyle?
+    var selectionColor: Color
     var isWeekly: Bool
     @ViewBuilder var trailing: Trailing
 
@@ -27,12 +28,14 @@ struct BrightCalendar<Trailing: View>: View {
         backgroundColor: Color = .defaultBackground,
         isWeekly: Bool = false,
         dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
+        selectionColor: Color = .defaultGreen,
         @ViewBuilder trailing: () -> Trailing
     ) {
         _selectedDate = selectedDate
         self.backgroundColor = backgroundColor
         self.isWeekly = isWeekly
         self.dotStyle = dotStyle
+        self.selectionColor = selectionColor
         self.trailing = trailing()
 
         let calendar = Calendar.current
@@ -141,6 +144,7 @@ struct BrightCalendar<Trailing: View>: View {
         .scrollTargetBehavior(.viewAligned)
         .defaultScrollAnchor(.center)
         .scrollPosition(id: $scrolledDay, anchor: .center)
+        .padding(.horizontal, .spacing2x)
         .onChange(of: scrolledDay) { _, day in
             guard let day, !day.isSameDay(as: selectedDate) else { return }
             BrightHaptic.light.play()
@@ -179,7 +183,7 @@ struct BrightCalendar<Trailing: View>: View {
             date: date,
             isSelected: date.isSameDay(as: selectedDate),
             dotStyle: dotStyle(date),
-            isWeekly: isWeekly,
+            selectionColor: selectionColor,
             onTap: { tappedDate in
                 BrightHaptic.light.play()
                 withAnimation(.brightSnappy) {
@@ -211,20 +215,23 @@ extension BrightCalendar where Trailing == EmptyView {
         selectedDate: Binding<Date>,
         backgroundColor: Color = .defaultBackground,
         isWeekly: Bool = false,
-        dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil }
+        dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
+        selectionColor: Color = .defaultGreen
     ) {
         self.init(
             selectedDate: selectedDate,
             backgroundColor: backgroundColor,
             isWeekly: isWeekly,
             dotStyle: dotStyle,
+            selectionColor: selectionColor,
             trailing: { EmptyView() }
         )
     }
 }
 
 private enum Constants {
-    static let circleSize: CGFloat = 30
+    static let pillWidth: CGFloat = 44
+    static let pillLineWidth: CGFloat = 1.5
     static let calendarHeight: CGFloat = 80
     static let dayRange = 365
     static let weekRange = 52
@@ -233,50 +240,42 @@ private enum Constants {
     static let visibleDays = 7
     static let iconSize: CGFloat = 24
     static let dotSize: CGFloat = 6
-    static let circleScale: CGFloat = 1
-    static let circleRestScale: CGFloat = 0.4
+    static let pillRestScale: CGFloat = 0.8
 }
 
 private struct DayCell: View {
     let date: Date
     let isSelected: Bool
     let dotStyle: AnyShapeStyle?
-    let isWeekly: Bool
+    let selectionColor: Color
     let onTap: (Date) -> Void
 
     var body: some View {
-        VStack(spacing: .spacing2x) {
-            BrightText(
-                date.formatted(.brightWeekdayInitial),
-                size: .subheading1,
-                weight: isSelected ? .medium : .regular
-            )
-            .opacity(isSelected ? .opaque : .minimalOpacity)
+        VStack(spacing: .spacing1x) {
+            BrightText(date.formatted(.brightDay), size: .subheading, weight: .regular)
+                .opacity(isSelected ? .opaque : .minimalOpacity)
 
-            VStack(spacing: .spacing105x) {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? Color.textColor : .clear)
-                        .frame(width: Constants.circleSize, height: Constants.circleSize)
-                        .scaleEffect(isSelected ? Constants.circleScale : Constants.circleRestScale)
+            Circle()
+                .fill(dotStyle ?? AnyShapeStyle(Color.clear))
+                .frame(width: Constants.dotSize, height: Constants.dotSize)
 
-                    BrightText(
-                        date.formatted(.brightDay),
-                        size: .body3,
-                        color: isSelected ? .defaultBlackWhite : .textColor,
-                        weight: .regular
-                    )
-                    .opacity(isSelected ? .opaque : .minimalOpacity)
-                }
-
-                Circle()
-                    .fill(dotStyle ?? AnyShapeStyle(Color.clear))
-                    .frame(width: Constants.dotSize, height: Constants.dotSize)
+            BrightText(date.formatted(.brightWeekdayInitial), size: .body1, weight: .regular)
+                .opacity(isSelected ? .opaque : .minimalOpacity)
+        }
+        .padding(.vertical, .spacing1x)
+        .frame(width: Constants.pillWidth)
+        .background {
+            ZStack {
+                Capsule()
+                    .fill(selectionColor.opacity(.ultraLowOpacity))
+                Capsule()
+                    .strokeBorder(selectionColor, lineWidth: Constants.pillLineWidth)
             }
+            .scaleEffect(isSelected ? 1 : Constants.pillRestScale)
+            .opacity(isSelected ? .opaque : 0)
         }
         .animation(.brightBouncy, value: isSelected)
-        .padding(.leading, isWeekly ? .spacing0x : .spacing3x)
-        .frame(maxWidth: .infinity, alignment: isWeekly ? .center : .leading)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { onTap(date) }
     }

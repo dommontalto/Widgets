@@ -72,8 +72,7 @@ struct ExerciseSetDraft: Identifiable, Hashable {
     var rest: String
 }
 
-// Where a session records, decided once at its first setup screen. The watch
-// option is part 3, with the watch app.
+// Where a session records, decided once at its first setup screen.
 enum ExerciseSessionSource: String, CaseIterable, Identifiable {
     case phone
     case phoneAndWatch
@@ -102,7 +101,14 @@ final class ExerciseBuilder {
     // Where the session records, chosen once and shown on every leg's setup
     // screen. Each leg reads it as it starts, so a mid-session change applies
     // from the next leg.
-    var source: ExerciseSessionSource = .phone
+    var source: ExerciseSessionSource = ExerciseDemoDevices.isWatchReachable ? .phoneAndWatch : .phone
+    // Which Health device to read heart rate from when the watch is not in
+    // the session.
+    var heartRateDeviceId: String? = ExerciseDemoDevices.pairedWatch.id
+    // The watch records in the background and shows a compact screen rather
+    // than taking over the wrist.
+    var wakesWatchQuietly = false
+    var remembersSource = true
 
     // Which exercises are supersetted together, keyed by name. Exercises sharing
     // an ID run as one block.
@@ -299,27 +305,41 @@ final class ExerciseBuilder {
         }
     }
 
-    // The exercises the pill at `id` stands for: its whole superset block, or
-    // just itself. A group needs two members to count as one.
-    func groupMembers(for exercise: String) -> [String] {
-        guard let group = supersets[exercise] else { return [exercise] }
-        let members = added.filter { supersets[$0] == group }
-        return members.count > 1 ? members : [exercise]
-    }
-
-    // One entry per picker pill: supersetted exercises collapse into their
-    // first member.
-    var groupLeaders: [String] {
-        var seen: Set<UUID> = []
-        return added.filter { exercise in
-            guard let group = supersets[exercise], groupMembers(for: exercise).count > 1 else { return true }
-            return seen.insert(group).inserted
+    // Every lift shares one pill; each run or sport gets its own.
+    var pages: [String] {
+        added.reduce(into: []) { pages, exercise in
+            let page = self.page(for: exercise)
+            if !pages.contains(page) { pages.append(page) }
         }
     }
 
-    func groupTitle(for exercise: String) -> String {
-        groupMembers(for: exercise).joined(separator: " & ")
+    func page(for exercise: String) -> String {
+        isCardio(exercise) ? exercise : ExerciseBuilder.strengthPage
     }
+
+    func pageMembers(for page: String) -> [String] {
+        page == ExerciseBuilder.strengthPage ? added.filter { !isCardio($0) } : [page]
+    }
+
+    func pageTitle(for page: String) -> String {
+        guard page == ExerciseBuilder.strengthPage else { return page }
+        return strengthCategories.count == 1
+            ? strengthCategories[0].displayName
+            : "Gym & Bodyweight"
+    }
+
+    func pageSymbol(for page: String) -> String? {
+        guard page == ExerciseBuilder.strengthPage, strengthCategories.count == 1 else { return nil }
+        return strengthCategories[0].symbol
+    }
+
+    private var strengthCategories: [ExerciseCategory] {
+        [ExerciseCategory.gym, .bodyweight].filter { category in
+            added.contains { ExerciseDemoLibrary.type(of: $0) == category }
+        }
+    }
+
+    static let strengthPage = "bright.strength-page"
 
     func planBinding(for exercise: String) -> Binding<ExerciseCardioPlan> {
         Binding(

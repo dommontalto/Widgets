@@ -15,9 +15,8 @@ private struct ExerciseProgressionTarget: Identifiable {
     let id: String
 }
 
-// One screen for whatever the session holds. The picker under the name walks
-// through the exercises added to it, and each one brings its own editor: sets
-// for a lift, a cardio plan for a run or a sport.
+// One screen for whatever the session holds. The picker under the name gives
+// every lift one shared page of set cards, and each run or sport its own plan.
 struct ExerciseCreateSessionSheet: View {
     // The saved session being edited, or nil when building a new one.
     let editing: ExerciseQuickSession?
@@ -90,9 +89,10 @@ struct ExerciseCreateSessionSheet: View {
                             .padding(.horizontal, .spacing3x)
 
                         ExerciseSessionPicker(
-                            exercises: builder.groupLeaders,
+                            exercises: builder.pages,
                             selection: $selected,
-                            title: { builder.groupTitle(for: $0) }
+                            title: { builder.pageTitle(for: $0) },
+                            symbol: { builder.pageSymbol(for: $0) }
                         )
 
                         editor
@@ -113,7 +113,7 @@ struct ExerciseCreateSessionSheet: View {
                     included: Set(builder.added)
                 ) { replacement in
                     builder.replace(target.id, with: replacement.name)
-                    selected = replacement.name
+                    selected = builder.page(for: replacement.name)
                 }
             }
         }
@@ -125,13 +125,11 @@ struct ExerciseCreateSessionSheet: View {
         .sheet(isPresented: $isEditingSupersets) {
             ExerciseSupersetSheet(exercises: builder.supersetCandidates) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
-                reanchorSelection()
             }
         }
         .sheet(isPresented: $isReordering) {
             ExerciseReorderSheet(exercises: builder.draftExercises) { edited in
                 withAnimation(.brightSnappy) { builder.applySupersets(edited) }
-                reanchorSelection()
             }
         }
         .sheet(isPresented: $isAddingExercise) {
@@ -142,7 +140,7 @@ struct ExerciseCreateSessionSheet: View {
                     included: Set(builder.added)
                 ) { exercise in
                     withAnimation(.brightSnappy) { builder.add(exercise.name) }
-                    selected = exercise.name
+                    selected = builder.page(for: exercise.name)
                 }
             }
         }
@@ -150,7 +148,7 @@ struct ExerciseCreateSessionSheet: View {
             // The builder is already loaded by the time we arrive, so the first
             // signature is the untouched session.
             if baselineDraft == nil { baselineDraft = draftSignature }
-            if selected == nil { selected = builder.added.first }
+            if selected == nil { selected = builder.pages.first }
             if name.isEmpty { isNamingSession = true }
         }
     }
@@ -169,22 +167,13 @@ struct ExerciseCreateSessionSheet: View {
         }
     }
 
-    // A regroup can fold the selected pill's exercise into a block led by
-    // another, so the selection follows it to its leader.
-    private func reanchorSelection() {
-        guard let selected else { return }
-        self.selected = builder.groupLeaders.first { builder.groupMembers(for: $0).contains(selected) }
-            ?? builder.added.first
-    }
-
     // MARK: - Editor
 
     @ViewBuilder
     private var editor: some View {
-        if let selected, builder.isAdded(selected) {
-            // A superset pill stands for its whole block, stacked on one screen.
+        if let selected, builder.pages.contains(selected) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                ForEach(builder.groupMembers(for: selected), id: \.self) { member in
+                ForEach(builder.pageMembers(for: selected), id: \.self) { member in
                     if builder.isCardio(member) {
                         cardioCard(member)
                     } else {
@@ -238,7 +227,7 @@ struct ExerciseCreateSessionSheet: View {
 
     private func cardHeader(_ exercise: String) -> some View {
         HStack(spacing: .spacing2x) {
-            if showsCardTitle(for: exercise) {
+            if !builder.isCardio(exercise) {
                 BrightText(exercise, size: .subheading2, weight: .regular)
                     .lineLimit(1)
             }
@@ -269,14 +258,6 @@ struct ExerciseCreateSessionSheet: View {
                     .foregroundStyle(Color.semiLightTextColor)
             }
         }
-    }
-
-    // A superset stacks several lifts on the one screen, so each card needs
-    // naming. A lone lift already has the picker's pill above it, and a run or
-    // a sport is always alone on its screen.
-    private func showsCardTitle(for exercise: String) -> Bool {
-        guard !builder.isCardio(exercise), let selected, builder.isAdded(selected) else { return false }
-        return builder.groupMembers(for: selected).count > 1
     }
 
     private var addExerciseButton: some View {
@@ -355,13 +336,14 @@ struct ExerciseCreateSessionSheet: View {
 
     // MARK: - Actions
 
-    // The picker moves on to whatever sat next to the exercise that left, so the
+    // The picker moves on to whatever sat next to the page that emptied, so the
     // screen below it never goes blank while the session still holds something.
     private func remove(_ exercise: String) {
-        let index = builder.added.firstIndex(of: exercise) ?? 0
+        let pages = builder.pages
+        let index = pages.firstIndex(of: builder.page(for: exercise)) ?? 0
         withAnimation(.brightSnappy) { builder.remove(exercise) }
-        guard selected == exercise else { return }
-        selected = builder.added.indices.contains(index) ? builder.added[index] : builder.added.last
+        guard let selected, !builder.pages.contains(selected) else { return }
+        self.selected = builder.pages.indices.contains(index) ? builder.pages[index] : builder.pages.last
     }
 
     private func save() {
