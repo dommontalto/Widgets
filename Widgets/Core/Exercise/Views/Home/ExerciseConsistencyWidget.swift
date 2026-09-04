@@ -12,7 +12,6 @@ struct ExerciseConsistencyWidget: View {
 
     private let cellSpacing: CGFloat = .spacing05x
 
-    private let cellCornerRadius: CGFloat = 4
 
     private let dayLabelWidth: CGFloat = 14
 
@@ -110,7 +109,7 @@ struct ExerciseConsistencyWidget: View {
                     ForEach(visibleMonths[monthIndex].columns.indices, id: \.self) { columnIndex in
                         VStack(spacing: cellSpacing) {
                             ForEach(0..<7, id: \.self) { row in
-                                RoundedRectangle(cornerRadius: cellCornerRadius, style: .continuous)
+                                Circle()
                                     .fill(page.fill(for: visibleMonths[monthIndex].columns[columnIndex][row]))
                                     .frame(width: cellSize, height: cellSize)
                             }
@@ -131,7 +130,7 @@ struct ExerciseConsistencyWidget: View {
 
     private func legendItem(_ title: String, fill: some ShapeStyle) -> some View {
         HStack(spacing: .spacing1x) {
-            RoundedRectangle(cornerRadius: cellCornerRadius, style: .continuous)
+            Circle()
                 .fill(fill)
                 .frame(width: 12, height: 12)
             BrightText(title, size: .body3, color: .lightTextColor)
