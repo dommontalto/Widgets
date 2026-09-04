@@ -18,7 +18,7 @@ struct ExerciseCalendarWidget: View {
                 backgroundColor: .clear,
                 dotStyle: { ExerciseCalendarDemo.dotStyle(on: $0) }
             ) {
-                BrightPillButton("Edit", buttonSize: .small) {
+                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward", size: .small) {
                     showingPlan = true
                 }
             }

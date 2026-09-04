@@ -137,7 +137,7 @@ struct ExerciseConsistencySheet: View {
                 ForEach(month.columns.indices, id: \.self) { column in
                     VStack(spacing: Constants.cellSpacing) {
                         ForEach(0..<7, id: \.self) { row in
-                            RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+                            Circle()
                                 .fill(mode.fill(for: month.columns[column][row]))
                                 .frame(width: cellSize, height: cellSize)
                         }
@@ -152,7 +152,7 @@ struct ExerciseConsistencySheet: View {
         FlowLayout(spacing: .spacing2x) {
             ForEach(mode.keyItems, id: \.title) { item in
                 HStack(spacing: .spacing1x) {
-                    RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+                    Circle()
                         .fill(item.fill)
                         .frame(width: Constants.keySwatchSize, height: Constants.keySwatchSize)
 

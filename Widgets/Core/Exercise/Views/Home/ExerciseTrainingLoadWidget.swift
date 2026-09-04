@@ -22,7 +22,7 @@ struct ExerciseTrainingLoadWidget: View {
 
                 Spacer()
 
-                BrightPillButton("See More", buttonSize: .small) {
+                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward", size: .small) {
                     showingYear = true
                 }
             }

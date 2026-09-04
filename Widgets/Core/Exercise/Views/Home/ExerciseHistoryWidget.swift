@@ -53,7 +53,7 @@ struct ExerciseHistoryWidget: View {
 
             Spacer()
 
-            BrightPillButton("See More", buttonSize: .small) {
+            BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward", size: .small) {
                 showingAllLogs = true
             }
         }
@@ -72,7 +72,7 @@ struct ExerciseHistoryWidget: View {
 
     private func keyItem(_ title: String, fill: some ShapeStyle) -> some View {
         HStack(spacing: .spacing1x) {
-            RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+            Circle()
                 .fill(fill)
                 .frame(width: Constants.keySwatchSize, height: Constants.keySwatchSize)
 

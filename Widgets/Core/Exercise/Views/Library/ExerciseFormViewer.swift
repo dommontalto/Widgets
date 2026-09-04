@@ -34,7 +34,7 @@ struct ExerciseFormViewer: View {
             .overlay(alignment: .topTrailing) {
                 if let onOpen {
                     BrightRoundButton(
-                        systemImage: "arrow.up.left.and.arrow.down.right",
+                        systemImage: "arrow.down.backward.and.arrow.up.forward",
                         size: .medium,
                         onTapCallback: onOpen
                     )

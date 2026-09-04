@@ -41,9 +41,9 @@ struct ExerciseLogRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: .spacing105x) {
-                // The same square the consistency heatmap draws, so a log entry
+                // The same dot the consistency heatmap draws, so a log entry
                 // and its cell on the grid read as the same thing.
-                RoundedRectangle(cornerRadius: .cornerRadius4, style: .continuous)
+                Circle()
                     .fill(session.logStyle)
                     .frame(width: Constants.swatchSize, height: Constants.swatchSize)
                     .frame(width: Constants.iconWidth)
