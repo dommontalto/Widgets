@@ -29,6 +29,7 @@ struct ExercisePreCardioSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isEditing = false
+    @State private var isChoosingSource = false
 
     private var item: ExerciseTemplateItem? {
         guard case let .cardio(index)? = session.legs[safe: leg] else {
@@ -54,8 +55,11 @@ struct ExercisePreCardioSheet: View {
 
     var body: some View {
         page
+            .navigationDestination(isPresented: $isChoosingSource) {
+                ExerciseSourceView()
+            }
             .navigationDestination(isPresented: $isEditing) {
-                ExerciseCreateSessionSheet(editing: session) { isEditing = false }
+                ExerciseCreateSessionSheet(editing: session, chrome: chrome) { isEditing = false }
             }
     }
 
@@ -147,23 +151,11 @@ struct ExercisePreCardioSheet: View {
     }
 
     private var sourceMenu: some View {
-        Menu {
-            Picker("Start session on", selection: Bindable(builder).source) {
-                Label(ExerciseSessionSource.phone.title, systemImage: "iphone")
-                    .tag(ExerciseSessionSource.phone)
-            }
-
-            Button {
-            } label: {
-                Label(ExerciseSessionSource.phoneAndWatch.title, systemImage: "applewatch")
-            }
-            .disabled(true)
+        Button {
+            isChoosingSource = true
         } label: {
-            // The Menu owns the tap, so the glyphs are label only.
             ExerciseDeviceGlyphs(symbols: builder.source.symbols)
-                .allowsHitTesting(false)
         }
-        .brightHaptic(.light, trigger: builder.source)
     }
 
     // MARK: - Targets

@@ -63,8 +63,12 @@ struct ExerciseCreateSessionSheet: View {
 
     @ScaledMetric(relativeTo: .body) private var fieldGap = ExerciseSetRow.Constants.fieldGap
 
-    init(editing: ExerciseQuickSession? = nil, onSave: @escaping () -> Void) {
+    // Full-screen when pushed from a live session's setup, a sheet otherwise.
+    let chrome: ExercisePageChrome
+
+    init(editing: ExerciseQuickSession? = nil, chrome: ExercisePageChrome = .sheet, onSave: @escaping () -> Void) {
         self.editing = editing
+        self.chrome = chrome
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? "")
     }
@@ -73,7 +77,7 @@ struct ExerciseCreateSessionSheet: View {
         BrightPageView(
             scrollableTitle: false,
             horizontalPadding: .spacing0x,
-            backgroundColor: .defaultSheetBackground,
+            backgroundColor: chrome == .sheet ? .defaultSheetBackground : .defaultBackground,
             toolbar: {
                 ToolbarItem(placement: .principal) {
                     ExerciseInlineTitle(title: title, file: #file)
@@ -241,7 +245,7 @@ struct ExerciseCreateSessionSheet: View {
         }
         .padding(.vertical, .spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(CardModifier(color: chrome == .sheet ? .defaultSheetModalCards : .defaultCards))
     }
 
     private func cardHeader(_ exercise: String) -> some View {

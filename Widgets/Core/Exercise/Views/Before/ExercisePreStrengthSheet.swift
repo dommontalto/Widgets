@@ -34,8 +34,11 @@ struct ExercisePreStrengthSheet: View {
 
     var body: some View {
         page
+            .navigationDestination(isPresented: $isChoosingSource) {
+                ExerciseSourceView()
+            }
             .navigationDestination(isPresented: $isEditing) {
-                ExerciseCreateSessionSheet(editing: session) { isEditing = false }
+                ExerciseCreateSessionSheet(editing: session, chrome: chrome) { isEditing = false }
             }
             .navigationDestination(item: $openedExerciseName) { name in
                 if let exercise = ExerciseDemoLibrary.exercise(named: name) {
@@ -92,9 +95,6 @@ struct ExercisePreStrengthSheet: View {
             isChoosingSource = true
         } label: {
             ExerciseDeviceGlyphs(symbols: builder.source.symbols)
-        }
-        .sheet(isPresented: $isChoosingSource) {
-            ExerciseSourceSheet()
         }
     }
 

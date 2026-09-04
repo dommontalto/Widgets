@@ -53,7 +53,7 @@ struct ExerciseHistoryWidget: View {
 
             Spacer()
 
-            BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward", size: .small) {
+            BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {
                 showingAllLogs = true
             }
         }

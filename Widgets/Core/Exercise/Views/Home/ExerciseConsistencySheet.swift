@@ -44,25 +44,31 @@ enum ExerciseConsistencyMode: Int, CaseIterable {
         }
     }
 
+    // A cell's fill is always a gradient, so switching mode interpolates between
+    // two gradients instead of crossing from a colour to one, which flashes black.
     func fill(for type: ExerciseDayType?) -> AnyShapeStyle {
-        guard let type else { return AnyShapeStyle(Color.clear) }
+        guard let type else { return Self.solid(.clear) }
         switch self {
         case .strength:
             return type == .strength || type == .both
-                ? AnyShapeStyle(Color.defaultPurplePink)
-                : AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))
+                ? Self.solid(.defaultPurplePink)
+                : Self.solid(.textColor.opacity(.ultraLowOpacity))
         case .cardio:
             return type == .cardio || type == .both
-                ? AnyShapeStyle(Color.defaultSkyBlueCyan)
-                : AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))
+                ? Self.solid(.defaultSkyBlueCyan)
+                : Self.solid(.textColor.opacity(.ultraLowOpacity))
         case .combined:
             switch type {
-            case .strength: return AnyShapeStyle(Color.defaultPurplePink)
-            case .cardio: return AnyShapeStyle(Color.defaultSkyBlueCyan)
+            case .strength: return Self.solid(.defaultPurplePink)
+            case .cardio: return Self.solid(.defaultSkyBlueCyan)
             case .both: return AnyShapeStyle(ExerciseDayType.bothGradient)
-            case .rest: return AnyShapeStyle(Color.textColor.opacity(.ultraLowOpacity))
+            case .rest: return Self.solid(.textColor.opacity(.ultraLowOpacity))
             }
         }
+    }
+
+    private static func solid(_ color: Color) -> AnyShapeStyle {
+        AnyShapeStyle(LinearGradient(colors: [color, color], startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }
 
@@ -118,9 +124,15 @@ struct ExerciseConsistencySheet: View {
     private var grid: some View {
         VStack(alignment: .leading, spacing: .spacing4x) {
             ForEach(monthRows.indices, id: \.self) { row in
-                HStack(alignment: .top, spacing: Constants.columnGap) {
+                let cellSize = cellSize(for: monthRows[row])
+                // One empty column's worth, so months always read as separate.
+                HStack(alignment: .top, spacing: cellSize + Constants.cellSpacing) {
                     ForEach(monthRows[row].indices, id: \.self) { column in
-                        monthTile(monthRows[row][column])
+                        monthTile(
+                            monthRows[row][column],
+                            cellSize: cellSize,
+                            waveOffset: row * Constants.weekdays
+                        )
                     }
                 }
             }
@@ -129,7 +141,7 @@ struct ExerciseConsistencySheet: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { gridWidth = $0 }
     }
 
-    private func monthTile(_ month: ExerciseMonthData) -> some View {
+    private func monthTile(_ month: ExerciseMonthData, cellSize: CGFloat, waveOffset: Int) -> some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             BrightText(month.name, size: .body1, color: .semiLightTextColor)
 
@@ -140,12 +152,15 @@ struct ExerciseConsistencySheet: View {
                             Circle()
                                 .fill(mode.fill(for: month.columns[column][row]))
                                 .frame(width: cellSize, height: cellSize)
+                                .animation(
+                                    .brightEaseInOut.delay(Double(waveOffset + row) * Constants.waveStep),
+                                    value: mode
+                                )
                         }
                     }
                 }
             }
         }
-        .frame(width: tileWidth, alignment: .leading)
     }
 
     private var key: some View {
@@ -170,24 +185,20 @@ struct ExerciseConsistencySheet: View {
         }
     }
 
-    private var tileWidth: CGFloat {
-        guard gridWidth > 0 else { return 0 }
-        let gaps = CGFloat(Constants.columnsPerRow - 1) * Constants.columnGap
-        return (gridWidth - gaps) / CGFloat(Constants.columnsPerRow)
-    }
-
-    // Every month is sized for six week columns, so a five-column February's
-    // cells still match the rest of the grid.
-    private var cellSize: CGFloat {
-        guard tileWidth > 0 else { return 12 }
-        let gaps = CGFloat(Constants.maxWeekColumns - 1) * Constants.cellSpacing
-        return (tileWidth - gaps) / CGFloat(Constants.maxWeekColumns)
+    // Each row of months runs edge to edge, so its cells are sized from the
+    // week columns that row actually holds plus one spacer column per gap.
+    private func cellSize(for months: [ExerciseMonthData]) -> CGFloat {
+        guard gridWidth > 0 else { return 12 }
+        let columns = months.reduce(0) { $0 + $1.columns.count } + months.count - 1
+        guard columns > 0 else { return 12 }
+        let gaps = CGFloat(columns - 1) * Constants.cellSpacing
+        return (gridWidth - gaps) / CGFloat(columns)
     }
 
     private enum Constants {
         static let columnsPerRow = 3
-        static let maxWeekColumns = 6
-        static let columnGap: CGFloat = .spacing2x
+        static let weekdays = 7
+        static let waveStep: Double = 0.02
         static let cellSpacing: CGFloat = .spacing05x
         static let keySwatchSize: CGFloat = 12
     }
