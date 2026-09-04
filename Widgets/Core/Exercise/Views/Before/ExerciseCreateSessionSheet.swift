@@ -11,6 +11,10 @@ private struct ExerciseSwapTarget: Identifiable {
     let id: String
 }
 
+private struct ExerciseLinkTarget: Identifiable {
+    let id: String
+}
+
 private struct ExerciseProgressionTarget: Identifiable {
     let id: String
 }
@@ -42,7 +46,7 @@ struct ExerciseCreateSessionSheet: View {
 
     @State private var isAddingExercise = false
 
-    @State private var isEditingSupersets = false
+    @State private var linkTarget: ExerciseLinkTarget?
 
     @State private var isReordering = false
 
@@ -122,9 +126,19 @@ struct ExerciseCreateSessionSheet: View {
                 progressions[target.id] = applied
             }
         }
-        .sheet(isPresented: $isEditingSupersets) {
-            ExerciseSupersetSheet(exercises: builder.supersetCandidates) { edited in
-                withAnimation(.brightSnappy) { builder.applySupersets(edited) }
+        .sheet(item: $linkTarget) { target in
+            ExerciseSupersetLinkSheet(
+                anchor: ExerciseSupersetCandidate(id: target.id, name: target.id),
+                candidates: builder.linkCandidates(for: target.id),
+                partner: builder.partner(of: target.id)
+            ) { partner in
+                withAnimation(.brightSnappy) {
+                    if let partner {
+                        builder.link(target.id, with: partner)
+                    } else {
+                        builder.unlink(target.id)
+                    }
+                }
             }
         }
         .sheet(isPresented: $isReordering) {
@@ -172,12 +186,17 @@ struct ExerciseCreateSessionSheet: View {
     @ViewBuilder
     private var editor: some View {
         if let selected, builder.pages.contains(selected) {
+            let members = builder.pageMembers(for: selected)
             VStack(alignment: .leading, spacing: .spacing3x) {
-                ForEach(builder.pageMembers(for: selected), id: \.self) { member in
+                ForEach(Array(members.enumerated()), id: \.element) { index, member in
                     if builder.isCardio(member) {
                         cardioCard(member)
                     } else {
                         exerciseCard(member)
+                    }
+
+                    if let next = members[safe: index + 1], builder.partner(of: member) == next {
+                        supersetConnector(member)
                     }
                 }
             }
@@ -237,11 +256,6 @@ struct ExerciseCreateSessionSheet: View {
             Menu {
                 // Only lifts pair into supersets; a run or a sport is its own leg,
                 // and one lift on its own has nothing to pair with.
-                if canSuperset(exercise) {
-                    Button("Supersets", systemImage: "link") {
-                        isEditingSupersets = true
-                    }
-                }
                 Button("Reorder", systemImage: "arrow.up.arrow.down") {
                     isReordering = true
                 }
@@ -278,10 +292,44 @@ struct ExerciseCreateSessionSheet: View {
 
             Spacer(minLength: .spacing2x)
 
+            if canSuperset(exercise), builder.partner(of: exercise) == nil {
+                BrightRoundButton(systemImage: "link") {
+                    linkTarget = ExerciseLinkTarget(id: exercise)
+                }
+            }
+
             BrightRoundButton(systemImage: "plus") {
                 withAnimation(.brightSnappy) { builder.addSet(to: exercise) }
             }
         }
+    }
+
+    // Joins a pair of cards through the gap between them, in line with where
+    // the footer's link button sits on an unpaired card.
+    private func supersetConnector(_ exercise: String) -> some View {
+        HStack(spacing: .spacing0x) {
+            Spacer(minLength: .spacing0x)
+
+            ZStack {
+                Rectangle()
+                    .fill(Color.defaultPink)
+                    .frame(width: Constants.connectorWidth)
+                    .padding(.vertical, -.spacing3x)
+
+                Menu {
+                    Button("Unlink", systemImage: "link.badge.minus", role: .destructive) {
+                        withAnimation(.brightSnappy) { builder.unlink(exercise) }
+                    }
+                    .tint(.defaultRed)
+                } label: {
+                    BrightRoundButton(systemImage: "link", color: .defaultPink, imageColor: .white)
+                        .allowsHitTesting(false)
+                }
+            }
+            .frame(width: Constants.linkButtonSize)
+            .padding(.trailing, Constants.linkColumnTrailing)
+        }
+        .frame(height: .spacing6x)
     }
 
     private var columnHeaders: some View {
@@ -402,6 +450,9 @@ struct ExerciseCreateSessionSheet: View {
 
     private enum Constants {
         static let columnTitles = ["Weights", "Reps", "Rest"]
+        static let connectorWidth: CGFloat = 1.5
+        static let linkButtonSize: CGFloat = BrightButtonSizes.medium.rawValue
+        static let linkColumnTrailing: CGFloat = linkButtonSize + .spacing2x + .spacing3x
     }
 }
 

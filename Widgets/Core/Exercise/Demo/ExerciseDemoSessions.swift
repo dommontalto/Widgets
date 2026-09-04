@@ -213,7 +213,8 @@ enum ExerciseDemoSessions {
                     ExerciseTemplateSet(weight: "15", reps: "12", kind: .working(1)),
                     ExerciseTemplateSet(weight: "17.5", reps: "12", kind: .working(2)),
                     ExerciseTemplateSet(weight: "17.5", reps: "12", kind: .working(3)),
-                ]
+                ],
+                supersetGroup: 1
             ),
             ExerciseTemplateItem(
                 exerciseName: "Tricep Pushdown",
@@ -223,7 +224,8 @@ enum ExerciseDemoSessions {
                     ExerciseTemplateSet(weight: "22.5", reps: "12", kind: .working(1)),
                     ExerciseTemplateSet(weight: "25", reps: "12", kind: .working(2)),
                     ExerciseTemplateSet(weight: "25", reps: "12", kind: .dropSet),
-                ]
+                ],
+                supersetGroup: 1
             ),
         ]
     )

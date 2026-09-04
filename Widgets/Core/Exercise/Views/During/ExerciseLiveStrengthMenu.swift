@@ -25,7 +25,9 @@ struct ExerciseLiveStrengthMenu: View {
     var onScrub: (TimeInterval) -> Void
     var onScrubEnd: () -> Void
     var onAdvance: () -> Void
-    var onEditSupersets: () -> Void
+    // Handed the exercise whose link button was tapped.
+    var onLink: (ExerciseActiveExercise) -> Void
+    var onUnlink: (ExerciseActiveExercise) -> Void
     var onReorder: () -> Void
     var onCancel: () -> Void
     var onEnd: () -> Void
@@ -138,7 +140,6 @@ struct ExerciseLiveStrengthMenu: View {
             sectionLabel("Playlist", symbol: "text.append", color: .defaultPink)
 
             Menu {
-                Button("Supersets", systemImage: "link", action: onEditSupersets)
                 Button("Reorder", systemImage: "arrow.up.arrow.down", action: onReorder)
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -148,34 +149,49 @@ struct ExerciseLiveStrengthMenu: View {
         }
     }
 
-    // A `List` so the rows can carry the same insets and spacing as the rest of
-    // the feature; it can't scroll itself inside the menu's scroll view, so it
-    // states its own height.
     private var playlist: some View {
-        List {
+        VStack(spacing: .spacing2x) {
             ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
                 playlistRow(exercise, at: index)
-                    .listRowInsets(EdgeInsets(
-                        top: .spacing0x,
-                        leading: .spacing3x,
-                        bottom: .spacing0x,
-                        trailing: .spacing3x
-                    ))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+
+                if let next = exercises[safe: index + 1], isPaired(exercise, with: next) {
+                    supersetConnector(exercise)
+                }
             }
         }
-        .listStyle(.plain)
-        .listRowSpacing(.spacing2x)
-        .scrollContentBackground(.hidden)
-        .scrollDisabled(true)
-        .contentMargins(.vertical, .spacing0x, for: .scrollContent)
-        .environment(\.defaultMinListRowHeight, Constants.playlistRowHeight)
-        .frame(height: playlistHeight)
+        .padding(.horizontal, .spacing3x)
     }
 
-    private var playlistHeight: CGFloat {
-        CGFloat(exercises.count) * (Constants.playlistRowHeight + .spacing2x)
+    private func isPaired(_ exercise: ExerciseActiveExercise, with next: ExerciseActiveExercise) -> Bool {
+        exercise.supersetID != nil && exercise.supersetID == next.supersetID
+    }
+
+    // Joins a pair of cards through the gap between them, in line with where
+    // an unpaired row's link button sits. Tapping it offers to break the pair.
+    private func supersetConnector(_ exercise: ExerciseActiveExercise) -> some View {
+        HStack(spacing: .spacing0x) {
+            Spacer(minLength: .spacing0x)
+
+            ZStack {
+                Rectangle()
+                    .fill(Color.defaultPink)
+                    .frame(width: Constants.connectorWidth)
+                    .padding(.vertical, -.spacing2x)
+
+                Menu {
+                    Button("Unlink", systemImage: "link.badge.minus", role: .destructive) {
+                        onUnlink(exercise)
+                    }
+                    .tint(.defaultRed)
+                } label: {
+                    BrightRoundButton(systemImage: "link", size: .small, color: .defaultPink, imageColor: .white)
+                        .allowsHitTesting(false)
+                }
+            }
+            .frame(width: BrightButtonSizes.small.rawValue)
+            .padding(.trailing, Constants.connectorTrailing)
+        }
+        .frame(height: .spacing5x)
     }
 
     private func playlistRow(_ exercise: ExerciseActiveExercise, at index: Int) -> some View {
@@ -196,19 +212,15 @@ struct ExerciseLiveStrengthMenu: View {
 
                 Spacer(minLength: .spacing2x)
 
-                if index == currentIndex {
-                    Image(systemName: isPaused ? "pause" : "play")
-                        .font(.standard(size: .standout3, weight: .regular))
-                        .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
-                        .contentTransition(.symbolEffect(.replace))
-                        .padding(.trailing, .spacing1x)
-                } else if index < currentIndex {
-                    // The row itself takes the tap; the tick only reports that
-                    // the exercise is behind the run.
-                    BrightTick(isTicked: true)
-                        .allowsHitTesting(false)
-                        .padding(.trailing, .spacing1x)
+                if exercises.count > 1, exercise.supersetID == nil {
+                    BrightRoundButton(systemImage: "link", size: .small) {
+                        onLink(exercise)
+                    }
                 }
+
+                statusIndicator(at: index)
+                    .frame(width: Constants.statusSlotWidth)
+                    .padding(.trailing, .spacing1x)
             }
             .padding(.spacing2x)
             .frame(maxWidth: .infinity, minHeight: Constants.playlistRowHeight, alignment: .leading)
@@ -216,6 +228,23 @@ struct ExerciseLiveStrengthMenu: View {
         }
         .buttonStyle(.plain)
         .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
+    }
+
+    // Every row reserves the tick's width here, so the link button lands in
+    // the same place whether the row is done, playing or still to come.
+    @ViewBuilder
+    private func statusIndicator(at index: Int) -> some View {
+        if index == currentIndex {
+            Image(systemName: isPaused ? "pause" : "play")
+                .font(.standard(size: .standout3, weight: .regular))
+                .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
+                .contentTransition(.symbolEffect(.replace))
+        } else if index < currentIndex {
+            BrightTick(isTicked: true)
+                .allowsHitTesting(false)
+        } else {
+            Color.clear
+        }
     }
 
     @ViewBuilder
@@ -257,5 +286,8 @@ struct ExerciseLiveStrengthMenu: View {
     private enum Constants {
         static let transportSize: CGFloat = 44
         static let playlistRowHeight = ExerciseLibraryRow.Constants.minHeight
+        static let statusSlotWidth: CGFloat = .spacing5x
+        static let connectorWidth: CGFloat = 1.5
+        static let connectorTrailing: CGFloat = .spacing2x + .spacing7x
     }
 }

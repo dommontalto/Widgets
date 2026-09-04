@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+private struct ExerciseLiveLinkTarget: Identifiable {
+    let id: UUID
+}
+
 struct ExerciseLiveStrengthSheet: View {
     var sessionName = "Gym session"
     var templateItems: [ExerciseTemplateItem]? = nil
@@ -42,7 +46,7 @@ struct ExerciseLiveStrengthSheet: View {
     @State private var isConfirmingDiscard = false
     @State private var isConfirmingFinish = false
     @State private var isShowingProgression = false
-    @State private var isEditingSupersets = false
+    @State private var linkTarget: ExerciseLiveLinkTarget?
 
     @State private var isReordering = false
     // Names the skip that was just tapped, in place of the clock, until its
@@ -122,7 +126,8 @@ struct ExerciseLiveStrengthSheet: View {
                 if (currentGroup.last ?? currentIndex) + 1 < exercises.count { showTransport("NEXT") }
                 advance()
             },
-            onEditSupersets: { isEditingSupersets = true },
+            onLink: { linkTarget = ExerciseLiveLinkTarget(id: $0.id) },
+            onUnlink: { link($0.id, with: nil) },
             onReorder: { isReordering = true },
             onCancel: { isConfirmingDiscard = true },
             onEnd: confirmFinish
@@ -249,8 +254,20 @@ struct ExerciseLiveStrengthSheet: View {
         } message: {
             Text("You still have some exercises to complete. Are you sure you want to finish your session?")
         }
-        .sheet(isPresented: $isEditingSupersets) {
-            ExerciseSupersetSheet(exercises: exercises, onSave: applyEdits)
+        .sheet(item: $linkTarget) { target in
+            if let anchor = exercises.first(where: { $0.id == target.id }) {
+                ExerciseSupersetLinkSheet(
+                    anchor: ExerciseSupersetCandidate(id: anchor.id.uuidString, name: anchor.name),
+                    candidates: exercises
+                        .filter { $0.id != anchor.id }
+                        .map { ExerciseSupersetCandidate(id: $0.id.uuidString, name: $0.name) },
+                    partner: exercises
+                        .first { $0.id != anchor.id && $0.supersetID != nil && $0.supersetID == anchor.supersetID }?
+                        .id.uuidString
+                ) { partner in
+                    link(anchor.id, with: partner.flatMap(UUID.init(uuidString:)))
+                }
+            }
         }
         .sheet(isPresented: $isReordering) {
             ExerciseReorderSheet(exercises: exercises, onSave: applyEdits)
@@ -718,6 +735,29 @@ struct ExerciseLiveStrengthSheet: View {
     }
 
     // MARK: - Editing the run
+
+    // A superset holds two: linking drops both lifts out of whatever pair they
+    // were in, then seats the partner straight after the anchor. Nil breaks
+    // the anchor's pair.
+    private func link(_ anchorID: UUID, with partnerID: UUID?) {
+        var edited = exercises
+        func dissolve(_ group: UUID?) {
+            guard let group else { return }
+            for index in edited.indices where edited[index].supersetID == group {
+                edited[index].supersetID = nil
+            }
+        }
+        guard let anchorIndex = edited.firstIndex(where: { $0.id == anchorID }) else { return }
+        dissolve(edited[anchorIndex].supersetID)
+        if let partnerID, let partnerIndex = edited.firstIndex(where: { $0.id == partnerID }) {
+            dissolve(edited[partnerIndex].supersetID)
+            let group = UUID()
+            edited[anchorIndex].supersetID = group
+            edited[partnerIndex].supersetID = group
+            edited.move(fromOffsets: IndexSet(integer: partnerIndex), toOffset: anchorIndex + 1)
+        }
+        applyEdits(edited)
+    }
 
     // The run follows the exercise it was on, not the slot it used to sit in, so
     // the index is re-found rather than shuffled along with the new order.

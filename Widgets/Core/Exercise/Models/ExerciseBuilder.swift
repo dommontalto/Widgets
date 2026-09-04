@@ -265,9 +265,35 @@ final class ExerciseBuilder {
         }
     }
 
-    // Only lifts pair up, so a run or a sport never reaches the superset sheet.
-    var supersetCandidates: [ExerciseActiveExercise] {
-        draftExercises.filter { !isCardio($0.name) }
+    // Only lifts pair up, so a run or a sport never reaches the link sheet.
+    func linkCandidates(for exercise: String) -> [ExerciseSupersetCandidate] {
+        added
+            .filter { $0 != exercise && !isCardio($0) }
+            .map { ExerciseSupersetCandidate(id: $0, name: $0) }
+    }
+
+    func partner(of exercise: String) -> String? {
+        guard let group = supersets[exercise] else { return nil }
+        return added.first { $0 != exercise && supersets[$0] == group }
+    }
+
+    // A superset holds two: linking drops both lifts out of whatever pair they
+    // were in, then seats the partner straight after the anchor.
+    func link(_ exercise: String, with partner: String) {
+        unlink(exercise)
+        unlink(partner)
+        let group = UUID()
+        supersets[exercise] = group
+        supersets[partner] = group
+        guard let from = added.firstIndex(of: partner), let anchor = added.firstIndex(of: exercise) else { return }
+        added.move(fromOffsets: IndexSet(integer: from), toOffset: anchor + 1)
+    }
+
+    func unlink(_ exercise: String) {
+        guard let group = supersets[exercise] else { return }
+        for member in added where supersets[member] == group {
+            supersets[member] = nil
+        }
     }
 
     // Takes the sheet's result back: the order it left them in, and which of
@@ -382,6 +408,8 @@ final class ExerciseBuilder {
         added[index] = replacement
         sets[replacement] = sets[exercise]
         sets[exercise] = nil
+        supersets[replacement] = supersets[exercise]
+        supersets[exercise] = nil
     }
 
     // Warm-up and drop sets go back to working sets. A working set becomes a

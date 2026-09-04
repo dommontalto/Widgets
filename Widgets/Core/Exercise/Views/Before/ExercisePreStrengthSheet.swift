@@ -24,6 +24,7 @@ struct ExercisePreStrengthSheet: View {
 
     @State private var openedExerciseName: String?
     @State private var isEditing = false
+    @State private var isChoosingSource = false
 
     // The contiguous stretch of lifts this leg runs; the whole list when the
     // leg is out of range.
@@ -86,26 +87,15 @@ struct ExercisePreStrengthSheet: View {
         }
     }
 
-    // Where the session records, decided once at this first gate. The watch
-    // option is part 3, with the watch app — shown but not pickable.
     private var sourceMenu: some View {
-        Menu {
-            Picker("Start session on", selection: Bindable(builder).source) {
-                Label(ExerciseSessionSource.phone.title, systemImage: "iphone")
-                    .tag(ExerciseSessionSource.phone)
-            }
-
-            Button {
-            } label: {
-                Label(ExerciseSessionSource.phoneAndWatch.title, systemImage: "applewatch")
-            }
-            .disabled(true)
+        Button {
+            isChoosingSource = true
         } label: {
-            // The Menu owns the tap, so the glyphs are label only.
             ExerciseDeviceGlyphs(symbols: builder.source.symbols)
-                .allowsHitTesting(false)
         }
-        .brightHaptic(.light, trigger: builder.source)
+        .sheet(isPresented: $isChoosingSource) {
+            ExerciseSourceSheet()
+        }
     }
 
     private var content: some View {
@@ -195,15 +185,68 @@ struct ExercisePreStrengthSheet: View {
 
     private var exerciseRows: some View {
         VStack(spacing: .spacing2x) {
-            ForEach(blockItems) { item in
-                Button {
-                    openedExerciseName = item.exerciseName
-                } label: {
-                    exerciseRow(item)
+            ForEach(Array(exerciseBlocks.enumerated()), id: \.offset) { _, block in
+                VStack(spacing: .spacing0x) {
+                    ForEach(Array(block.enumerated()), id: \.element.id) { index, item in
+                        if index != 0 {
+                            supersetDivider
+                        }
+
+                        Button {
+                            openedExerciseName = item.exerciseName
+                        } label: {
+                            exerciseRow(item)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
+                .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
             }
         }
+    }
+
+    // Consecutive lifts sharing a superset group share one card.
+    private var exerciseBlocks: [[ExerciseTemplateItem]] {
+        blockItems.reduce(into: []) { blocks, item in
+            if let group = item.supersetGroup, let last = blocks.last?.last, last.supersetGroup == group {
+                blocks[blocks.count - 1].append(item)
+            } else {
+                blocks.append([item])
+            }
+        }
+    }
+
+    private var supersetDivider: some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: "link")
+                .font(.standard(size: .body1, weight: .light))
+                .foregroundStyle(Color.defaultBrightPink)
+                .frame(width: Constants.thumbnailWidth)
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(Color.defaultBrightPink)
+                        .frame(width: Constants.hairline, height: .spacing2x)
+                        .offset(y: -.spacing2x)
+                }
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Color.defaultBrightPink)
+                        .frame(width: Constants.hairline, height: .spacing2x)
+                        .offset(y: .spacing2x)
+                }
+
+            Rectangle()
+                .fill(Color.defaultBrightPink)
+                .frame(width: Constants.supersetTickWidth, height: Constants.hairline)
+
+            BrightText("Superset", size: .body3, color: .defaultBrightPink)
+                .fixedSize()
+
+            Rectangle()
+                .fill(Color.defaultBrightPink)
+                .frame(height: Constants.hairline)
+        }
+        .padding(.horizontal, .spacing2x)
     }
 
     // Mirrors ExerciseLibraryRow, with the set count where its add button sits.
@@ -228,7 +271,6 @@ struct ExercisePreStrengthSheet: View {
         }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity, minHeight: ExerciseLibraryRow.Constants.minHeight, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards, cornerRadius: .cornerRadius24))
     }
 
     @ViewBuilder
@@ -305,6 +347,8 @@ struct ExercisePreStrengthSheet: View {
         static let statColumnWidth: CGFloat = 110
         static let statDividerHeight: CGFloat = 58
         static let thumbnailWidth: CGFloat = 40
+        static let supersetTickWidth: CGFloat = .spacing4x
+        static let hairline: CGFloat = 1
         static let controlSize = BrightButtonSizes.finalBossLarge.rawValue
     }
 }
