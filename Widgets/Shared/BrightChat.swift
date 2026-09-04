@@ -21,11 +21,16 @@ nonisolated struct BrightChatMessage<Payload>: Identifiable, Equatable {
     let kind: Kind
     let text: String
     var payload: Payload?
+    // A reply that fills the screen — a full plan, or widgets in a Lighthouse
+    // answer — puts the keyboard away when it lands. A quick question with
+    // chips, like "2 days / 3 days", keeps it up so you can answer.
+    var dismissesKeyboard = false
 
-    init(kind: Kind, text: String, payload: Payload? = nil) {
+    init(kind: Kind, text: String, payload: Payload? = nil, dismissesKeyboard: Bool = false) {
         self.kind = kind
         self.text = text
         self.payload = payload
+        self.dismissesKeyboard = dismissesKeyboard
     }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -101,6 +106,9 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     @State private var dragStartedFocused = false
     // How far the card has been dragged down, so it follows the finger.
     @State private var dragOffset: CGFloat = 0
+    // A swipe that starts over the card must not end as a tap on a chip or
+    // a focus on the field.
+    @State private var isDismissDragging = false
 
     var body: some View {
         thread
@@ -142,7 +150,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             // A drawn response is read from its top, so only plain replies
             // follow the thread down to the bottom.
             .onChange(of: messages) { _, messages in
-                guard let last = messages.last, last.kind != .response else { return }
+                guard let last = messages.last else { return }
+                if last.dismissesKeyboard {
+                    isTyping.wrappedValue = false
+                }
+                guard last.kind != .response else { return }
                 withAnimation(.brightSnappy) { proxy.scrollTo(last.id, anchor: .bottom) }
             }
             .onChange(of: isThinking) { _, isThinking in
@@ -215,21 +227,24 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     // MARK: - Rows
 
+    // What you send rises into place; an answer condenses out of the orb's
+    // burst where it was thinking.
     @ViewBuilder
     private func row(for message: BrightChatMessage<Payload>) -> some View {
-        Group {
-            switch message.kind {
-            case .user:
-                userBubble(message)
-            case .assistant:
-                assistantText(message.text)
-            case .response:
-                response(message)
-            case .failure:
-                failureRow(message)
-            }
+        switch message.kind {
+        case .user:
+            userBubble(message)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        case .assistant:
+            assistantText(message.text)
+                .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
+        case .response:
+            response(message)
+                .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
+        case .failure:
+            failureRow(message)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     // Only what you send sits in a bubble — the answer lands straight on the
@@ -275,7 +290,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     private var thinkingIndicator: some View {
         BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .transition(.opacity)
+            .transition(.asymmetric(insertion: .opacity, removal: .brightBurstOut))
     }
 
     // MARK: - Input
@@ -300,6 +315,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             .padding(.horizontal, .spacing3x)
             .padding(.bottom, .spacing3x)
         }
+        .disabled(isDismissDragging)
         .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
@@ -313,6 +329,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                     return
                 }
                 guard onSwipeDismiss != nil, !dragStartedFocused, isDownward(value) else { return }
+                isDismissDragging = true
                 dragOffset = value.translation.height
             }
             .onEnded { value in
@@ -325,6 +342,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                     onSwipeDismiss?()
                 } else {
                     withAnimation(.brightBouncy) { dragOffset = 0 }
+                }
+                // The lift that ends the drag is still in flight, so the chips
+                // come back a turn later.
+                Task { @MainActor in
+                    isDismissDragging = false
                 }
             }
     }
