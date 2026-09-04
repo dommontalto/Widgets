@@ -144,6 +144,7 @@ struct BrightCalendar<Trailing: View>: View {
         .scrollTargetBehavior(.viewAligned)
         .defaultScrollAnchor(.center)
         .scrollPosition(id: $scrolledDay, anchor: .center)
+        .scrollClipDisabled()
         .padding(.horizontal, .spacing2x)
         .onChange(of: scrolledDay) { _, day in
             guard let day, !day.isSameDay(as: selectedDate) else { return }
