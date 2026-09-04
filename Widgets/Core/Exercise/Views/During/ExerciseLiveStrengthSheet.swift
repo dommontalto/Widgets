@@ -114,7 +114,7 @@ struct ExerciseLiveStrengthSheet: View {
             pauseDate: pauseDate,
             // The chip on the record says what the run is doing, and during a
             // rest that's the rest rather than the set waiting behind it.
-            blockName: isResting ? "Resting" : currentBlockName,
+            blockName: isResting ? "Resting" : currentSetName,
             onBack: {
                 if currentIndex > 0 { showTransport("PREV") }
                 goBack()
@@ -874,11 +874,15 @@ struct ExerciseLiveStrengthSheet: View {
 
     private var currentBlockName: String {
         guard let activeSet else { return "Finished" }
-        let name = "Set \(workingIndex(of: activeSet, in: currentExercise))"
-        let block = activeSet.isWarmup ? "Warmup" : name
         // A superset block names the member too, or the set number is ambiguous.
-        guard currentGroup.count > 1 else { return block }
-        return "\(currentExercise.name) \u{00B7} \(block)"
+        guard currentGroup.count > 1 else { return currentSetName }
+        return "\(currentExercise.name) \u{00B7} \(currentSetName)"
+    }
+
+    // The set on its own, for the disc's chip where the exercise is already named.
+    private var currentSetName: String {
+        guard let activeSet else { return "Finished" }
+        return activeSet.isWarmup ? "Warmup" : "Set \(workingIndex(of: activeSet, in: currentExercise))"
     }
 
     private var finishedSession: ExerciseLoggedSession {
