@@ -105,7 +105,7 @@ struct BrightCalendarDay: View {
         .frame(height: Constants.timelineHeight + Constants.topInset)
         .onChange(of: pagedDay) { _, day in
             guard let day, !day.isSameDay(as: selectedDate) else { return }
-            BrightHaptic.light.play()
+            BrightHaptic.soft.play()
             withAnimation(.brightSnappy) { selectedDate = day }
         }
         .onChange(of: selectedDate) { syncPage() }

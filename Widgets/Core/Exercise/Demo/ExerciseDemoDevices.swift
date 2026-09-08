@@ -11,6 +11,7 @@ import SwiftUI
 nonisolated struct ExerciseTrackingDevice: Identifiable, Hashable {
     enum Kind: Hashable {
         case watch
+        case airPods
         case strap
         case ring
         case sportsWatch
@@ -18,6 +19,7 @@ nonisolated struct ExerciseTrackingDevice: Identifiable, Hashable {
         var symbol: String {
             switch self {
             case .watch: "applewatch"
+            case .airPods: "airpods.pro"
             case .strap: "heart.text.square"
             case .ring: "circle.circle"
             case .sportsWatch: "watch.analog"
@@ -27,6 +29,7 @@ nonisolated struct ExerciseTrackingDevice: Identifiable, Hashable {
         var tint: Color {
             switch self {
             case .watch: .defaultPink
+            case .airPods: .defaultSkyBlueCyan
             case .strap: .defaultRed
             case .ring: .defaultBrightViolet
             case .sportsWatch: .defaultSkyBlue

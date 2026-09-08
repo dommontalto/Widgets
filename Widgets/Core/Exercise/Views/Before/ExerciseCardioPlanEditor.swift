@@ -249,7 +249,7 @@ struct ExerciseCardioPlanEditor: View {
     private var intervalsCard: some View {
         VStack(spacing: .spacing3x) {
             rowContent(
-                badge: badge(symbol: "increase.quotelevel", tint: .defaultPurplePink, isCircled: false),
+                badge: badge(symbol: "increase.quotelevel", tint: .defaultPink, isCircled: false),
                 title: "Intervals"
             ) {
                 Toggle("", isOn: $plan.isIntervalsOn)

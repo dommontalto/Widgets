@@ -130,7 +130,8 @@ struct BrightRoundButton: View {
         switch imageSource {
         case .system(let name):
             Image(systemName: name)
-                .font(.system(size: size.glyphSize, weight: .medium))
+                .font(glyphFont)
+                .imageScale(size == .large ? .large : .medium)
                 .scaledToFit()
         case .asset(let name):
             Image(name)
@@ -141,6 +142,10 @@ struct BrightRoundButton: View {
         case .text(let title):
             BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor, weight: .regular)
         }
+    }
+
+    private var glyphFont: Font {
+        size == .large ? .body.weight(.regular) : .system(size: size.glyphSize, weight: .medium)
     }
 
     private var resolvedHaptic: BrightHaptic? {

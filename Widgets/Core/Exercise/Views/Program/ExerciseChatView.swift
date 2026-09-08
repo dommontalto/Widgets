@@ -195,7 +195,8 @@ struct ExerciseChatView: View {
             ExerciseChatMessage(
                 kind: .response,
                 text: Constants.programIntro,
-                payload: .program(Constants.programWeeks)
+                payload: .program(Constants.programWeeks),
+                dismissesKeyboard: true
             )
         default:
             ExerciseChatMessage(

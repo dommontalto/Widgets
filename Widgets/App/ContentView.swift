@@ -109,27 +109,32 @@ struct ContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 section("Exercise") {
-                    widgetLabel("ExerciseCalendarWidgetEmpty")
-                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Program") {
-                        ExerciseCalendarWidgetEmpty(
-                            onCreate: { showingProgram = true },
-                            onGuided: { showingGuidedProgram = true },
-                            onLighthouse: { withAnimation(.brightSnappy) { showingLighthouse = true } }
-                        )
-                    }
+                    widgetLabel("ExerciseScoresWidget")
+                    ExerciseScoresWidget()
                         .padding(.top, .spacing2x)
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseCalendarWidget")
-                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Program") {
+                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Schedule") {
                         ExerciseCalendarWidget()
                     }
-                        .padding(.top, .spacing2x)
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseProgramPhaseWidget (empty)")
+                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
+                        ExerciseProgramPhaseWidget(onCreate: { showingProgram = true })
+                    }
                         .padding(.bottom, .spacing3x)
 
                     widgetLabel("ExerciseProgramPhaseWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
-                        ExerciseProgramPhaseWidget()
+                        ExerciseProgramPhaseWidget(phase: .demo)
+                    }
+                        .padding(.bottom, .spacing3x)
+
+                    widgetLabel("ExerciseTrainingLoadWidget")
+                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
+                        ExerciseTrainingLoadWidget()
                     }
                         .padding(.bottom, .spacing3x)
 
@@ -145,7 +150,10 @@ struct ContentView: View {
                         title: "Personal Records"
                     ) {
                         ExercisePersonalRecordsWidget(
-                            records: ExerciseDemoComplete.strength.records + ExerciseDemoComplete.cardio.records,
+                            records: Array(
+                                (ExerciseDemoComplete.strength.records + ExerciseDemoComplete.cardio.records)
+                                    .prefix(4)
+                            ),
                             cardColor: .defaultCards,
                             onSelectExercise: { openedExerciseName = $0 },
                             onSelectSession: { record in
@@ -156,19 +164,9 @@ struct ContentView: View {
                     }
                         .padding(.bottom, .spacing3x)
 
-                    widgetLabel("ExerciseScoresWidget")
-                    ExerciseScoresWidget()
-                        .padding(.bottom, .spacing3x)
-
                     widgetLabel("ExerciseConsistencyWidget")
                     ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Consistency") {
                         ExerciseConsistencyWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseTrainingLoadWidget")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
-                        ExerciseTrainingLoadWidget()
                     }
                         .padding(.bottom, .spacing3x)
 
@@ -187,11 +185,25 @@ struct ContentView: View {
         .simultaneousGesture(TapGesture().onEnded { lighthouseTyping = false })
         .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItemGroup(placement: .topBarLeading) {
                 Button {
                     showingBeam = true
                 } label: {
-                    Label("Show beam", systemImage: "sparkles")
+                    Label("Show beam", systemImage: "wand.and.stars")
+                        .labelStyle(.iconOnly)
+                }
+
+                Button {
+                    showingGuidedProgram = true
+                } label: {
+                    Label("Guided", systemImage: "hand.wave")
+                        .labelStyle(.iconOnly)
+                }
+
+                Button {
+                    withAnimation(.brightSnappy) { showingLighthouse = true }
+                } label: {
+                    Label("Lighthouse", systemImage: "sparkles")
                         .labelStyle(.iconOnly)
                 }
             }

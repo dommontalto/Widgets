@@ -24,7 +24,7 @@ enum ExerciseCompleteGraphMetric: CaseIterable {
     var color: Color {
         switch self {
         case .heartRate: .defaultRed
-        case .altitude: .defaultBlue
+        case .altitude: .defaultSkyBlue
         case .pace: .defaultGreen
         case .cadence: .defaultPink
         }
@@ -110,7 +110,7 @@ extension ExerciseCompletePerformanceGraphWidget {
         var specs: [MetricSpec] = []
 
         let heartValues = (data.heartData.data ?? []).map { Double($0.value ?? 0) }
-        if !heartValues.isEmpty {
+        if heartValues.count >= 2 {
             specs.append(
                 MetricSpec(
                     metric: .heartRate,
@@ -128,7 +128,7 @@ extension ExerciseCompletePerformanceGraphWidget {
             specs.append(
                 MetricSpec(
                     metric: .altitude,
-                    title: "Altitude",
+                    title: "Elevation",
                     unit: altitudeGain.unit ?? "M",
                     values: altitudeValues,
                     yTicks: data.altitudeData.yTicks,

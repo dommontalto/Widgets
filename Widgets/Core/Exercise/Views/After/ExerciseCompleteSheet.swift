@@ -24,8 +24,7 @@ enum ExerciseCompleteTab: Int, CaseIterable {
         case .summary:
             return true
         case .heart:
-            return (summary.hrAvg ?? 0) > 0
-                || summary.heartGraph != nil
+            return (summary.heartGraph?.data?.count ?? 0) >= 2
                 || summary.postSessionHeartGraph != nil
                 || summary.breakdown != nil
         case .performance:
@@ -337,7 +336,7 @@ struct ExerciseCompleteSheet: View {
 
     private var heartTab: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            if (summary.hrAvg ?? 0) > 0 || summary.heartGraph != nil {
+            if (summary.heartGraph?.data?.count ?? 0) >= 2 {
                 ExerciseCompleteHeartRateWidget(
                     hrAvg: summary.hrAvg ?? 0,
                     hrPeak: summary.hrPeak,

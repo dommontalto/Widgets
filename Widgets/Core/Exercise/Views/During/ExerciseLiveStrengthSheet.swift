@@ -503,6 +503,7 @@ struct ExerciseLiveStrengthSheet: View {
                 .listRowInsets(EdgeInsets(top: .spacing0x, leading: .spacing3x, bottom: .spacing0x, trailing: .spacing3x))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
+                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: .cornerRadius20))
                 .contextMenu {
                     if $set.wrappedValue.isTagged {
                         Button("Remove tags", systemImage: "tag.slash") {

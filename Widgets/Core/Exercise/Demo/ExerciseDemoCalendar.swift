@@ -7,10 +7,11 @@
 
 import SwiftUI
 
-struct ExerciseCalendarSession {
+struct ExerciseCalendarSession: Identifiable {
+    let id: String
     let name: String
-    let color: Color
-    let symbols: [String]
+    let subtitle: String
+    let categories: [ExerciseCategory]
 }
 
 struct ExerciseCalendarEvent: Identifiable {
@@ -37,14 +38,17 @@ private struct ExerciseScheduledSession {
 }
 
 enum ExerciseCalendarDemo {
-    static func session(on date: Date) -> ExerciseCalendarSession? {
-        guard let scheduled = schedule(on: date).first, let session = scheduled.session else { return nil }
+    static func sessions(on date: Date) -> [ExerciseCalendarSession] {
+        schedule(on: date).compactMap { scheduled in
+            guard let session = scheduled.session else { return nil }
 
-        return ExerciseCalendarSession(
-            name: session.name,
-            color: color(of: session),
-            symbols: symbols(of: session)
-        )
+            return ExerciseCalendarSession(
+                id: session.id,
+                name: session.name,
+                subtitle: session.subtitle,
+                categories: session.categories
+            )
+        }
     }
 
     static func events(on date: Date) -> [ExerciseCalendarEvent] {
@@ -72,23 +76,13 @@ enum ExerciseCalendarDemo {
         let hasStrength = sessions.contains { !$0.strengthItems.isEmpty }
         let hasCardio = sessions.contains { !$0.cardioItems.isEmpty }
         if hasStrength, hasCardio { return AnyShapeStyle(ExerciseDayType.bothGradient) }
-        if hasStrength { return AnyShapeStyle(Color.defaultPurplePink) }
+        if hasStrength { return AnyShapeStyle(Color.defaultPink) }
         if hasCardio { return AnyShapeStyle(Color.defaultSkyBlueCyan) }
         return nil
     }
 
     private static func color(of session: ExerciseQuickSession) -> Color {
-        session.strengthItems.isEmpty ? .defaultSkyBlueCyan : .defaultPurplePink
-    }
-
-    // One chip per discipline the session holds, in the order it runs them.
-    private static func symbols(of session: ExerciseQuickSession) -> [String] {
-        var symbols: [String] = []
-        for item in session.items {
-            let symbol = ExerciseDemoLibrary.type(of: item.exerciseName).symbol
-            if !symbols.contains(symbol) { symbols.append(symbol) }
-        }
-        return symbols
+        session.strengthItems.isEmpty ? .defaultSkyBlueCyan : .defaultPink
     }
 
     private static func durationLabel(_ minutes: Int) -> String {

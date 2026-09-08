@@ -33,7 +33,7 @@ nonisolated struct ExercisePlannedSession: Identifiable, Equatable {
 
     var accentColor: Color {
         switch kind {
-        case .strength, .mixed: .defaultPurplePink
+        case .strength, .mixed: .defaultPink
         case .cardio: .defaultSkyBlueCyan
         case .rest: .defaultGreen
         }
@@ -450,10 +450,22 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
-        Menu {
+        let isRestDay = day.wrappedValue.sessions.contains { $0.kind == .rest }
+
+        return Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
-                Button(template.title, systemImage: template.symbol) {
+                Button {
                     add(template, to: day)
+                } label: {
+                    Label {
+                        Text(template.title)
+                    } icon: {
+                        if template.kind == .rest, isRestDay {
+                            Image(systemName: "checkmark")
+                        } else {
+                            Image(systemName: template.symbol)
+                        }
+                    }
                 }
             }
         } label: {
@@ -545,7 +557,7 @@ struct ExerciseAddSessionsSheet: View {
     // this wide.
     private static let cardGradient = LinearGradient(
         stops: [
-            .init(color: .defaultPurplePink, location: 0),
+            .init(color: .defaultPink, location: 0),
             .init(color: .defaultSkyBlueCyan, location: Constants.blueStop),
         ],
         startPoint: .topLeading,

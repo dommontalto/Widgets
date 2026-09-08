@@ -12,10 +12,14 @@ import SwiftUI
 struct SwipePage {
     let title: String
     let systemImage: String?
+    // Rendered as a template, so an asset icon picks up the selected/unselected
+    // tint rather than keeping its own colours.
+    let image: String?
 
-    init(title: String, systemImage: String? = nil) {
+    init(title: String, systemImage: String? = nil, image: String? = nil) {
         self.title = title
         self.systemImage = systemImage
+        self.image = image
     }
 }
 
@@ -73,6 +77,8 @@ struct BrightSwipePageView<Content: View>: View {
     // stopping it just below the nav bar. Sheets sit lower than a full screen,
     // so they need a longer run than the default.
     let pillFollowMaxShift: CGFloat
+    // Hide it to give a page the full sheet, e.g. an expanded map.
+    let navigationBarVisibility: Visibility
     let showInlineTabs: Bool
     let disableHorizontalScroll: Bool
     // When `true` (default), the large title collapses into a small nav-bar
@@ -98,8 +104,6 @@ struct BrightSwipePageView<Content: View>: View {
     // Full-bleed page background. Defaults to `nil` (no background) so sheet
     // call sites keep their own; standalone screens pass `.defaultBackground`.
     let backgroundColor: Color?
-    // Hide it to give a page the full sheet, e.g. an expanded map.
-    let navigationBarVisibility: Visibility
     let onRefresh: (() async -> Void)?
     @Binding var selectedIndex: Int
     @ViewBuilder let content: (Int) -> Content
@@ -115,6 +119,7 @@ struct BrightSwipePageView<Content: View>: View {
         titleWeight: Font.Weight = .light,
         titleSubtitle: AnyView? = nil,
         pillFollowMaxShift: CGFloat = SwipePageConstants.pillFollowMaxShift,
+        navigationBarVisibility: Visibility = .visible,
         showInlineTabs: Bool = true,
         disableHorizontalScroll: Bool = false,
         collapsesTitleToToolbar: Bool = true,
@@ -125,7 +130,6 @@ struct BrightSwipePageView<Content: View>: View {
         verticalScrollDisabledPageIndex: Int? = nil,
         bottomSafeArea: Bool = true,
         backgroundColor: Color? = nil,
-        navigationBarVisibility: Visibility = .visible,
         onRefresh: (() async -> Void)? = nil,
         selectedIndex: Binding<Int>,
         @ViewBuilder content: @escaping (Int) -> Content
@@ -137,6 +141,7 @@ struct BrightSwipePageView<Content: View>: View {
         self.titleWeight = titleWeight
         self.titleSubtitle = titleSubtitle
         self.pillFollowMaxShift = pillFollowMaxShift
+        self.navigationBarVisibility = navigationBarVisibility
         self.showInlineTabs = showInlineTabs
         self.disableHorizontalScroll = disableHorizontalScroll
         self.collapsesTitleToToolbar = collapsesTitleToToolbar
@@ -147,7 +152,6 @@ struct BrightSwipePageView<Content: View>: View {
         self.verticalScrollDisabledPageIndex = verticalScrollDisabledPageIndex
         self.bottomSafeArea = bottomSafeArea
         self.backgroundColor = backgroundColor
-        self.navigationBarVisibility = navigationBarVisibility
         self.onRefresh = onRefresh
         _selectedIndex = selectedIndex
         // Start the scroll position at the selected page so the appear-time sync
@@ -288,6 +292,7 @@ struct BrightSwipePageView<Content: View>: View {
                 .modifier(OptionalScrollPosition(
                     position: i == scrollControlledPageIndex ? verticalScrollPosition : nil
                 ))
+                .modifier(PageScrollTracking { handlePageScroll(at: i, metrics: $0) })
             } else if showInlineTabs {
                 content(i)
                     .frame(maxHeight: .infinity)
@@ -299,25 +304,16 @@ struct BrightSwipePageView<Content: View>: View {
                     .frame(maxHeight: .infinity)
             }
         }
-        .onScrollGeometryChange(for: PageScrollMetrics.self) { geo in
-            PageScrollMetrics(
-                y: geo.contentOffset.y + geo.contentInsets.top,
-                maxY: max(
-                    0,
-                    geo.contentSize.height + geo.contentInsets.top
-                        + geo.contentInsets.bottom - geo.containerSize.height
-                )
-            )
-        } action: { _, new in
-            let newY = new.y
-            state.pageOpacities[i] = min(1, max(0, (newY - 2) / 5))
-            // Inline-title fade-in once the fake large title has scrolled out (~56pt).
-            state.pageTitleOpacities[i] = min(1, max(0, (newY - 56) / 10))
-            state.pageScrollY[i] = newY
-            onPageScroll?(i, newY, new.maxY)
-            if i == scrollPosition {
-                updateActiveOpacity()
-            }
+    }
+
+    private func handlePageScroll(at i: Int, metrics: PageScrollMetrics) {
+        let newY = metrics.y
+        state.pageOpacities[i] = min(1, max(0, (newY - 2) / 5))
+        state.pageTitleOpacities[i] = min(1, max(0, (newY - 56) / 10))
+        state.pageScrollY[i] = newY
+        onPageScroll?(i, newY, metrics.maxY)
+        if i == scrollPosition {
+            updateActiveOpacity()
         }
     }
 
@@ -400,6 +396,7 @@ struct BrightSwipePageView<Content: View>: View {
                 InlineTabPill(
                     title: pages[i].title,
                     systemImage: pages[i].systemImage,
+                    image: pages[i].image,
                     isSelected: (scrollPosition ?? selectedIndex) == i,
                     action: {
                         withAnimation(.brightBouncy) {
@@ -451,6 +448,26 @@ private struct OptionalScrollPosition: ViewModifier {
     }
 }
 
+private struct PageScrollTracking: ViewModifier {
+    let onChange: (PageScrollMetrics) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: PageScrollMetrics.self) { geo in
+                PageScrollMetrics(
+                    y: geo.contentOffset.y + geo.contentInsets.top,
+                    maxY: max(
+                        0,
+                        geo.contentSize.height + geo.contentInsets.top
+                            + geo.contentInsets.bottom - geo.containerSize.height
+                    )
+                )
+            } action: { _, new in
+                onChange(new)
+            }
+    }
+}
+
 private struct OptionalRefresh: ViewModifier {
     let action: (() async -> Void)?
 
@@ -468,6 +485,7 @@ private struct OptionalRefresh: ViewModifier {
 private struct InlineTabPill: View {
     let title: String
     let systemImage: String?
+    let image: String?
     let isSelected: Bool
     let action: () -> Void
 
@@ -484,14 +502,16 @@ private struct InlineTabPill: View {
                     Image(systemName: systemImage)
                         .font(.system(size: SwipePageConstants.pillIconSize, weight: .medium))
                         .foregroundStyle(isSelected ? Color.textColor : Color.lightTextColor)
+                } else if let image {
+                    Image(image)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: SwipePageConstants.pillIconSize, height: SwipePageConstants.pillIconSize)
+                        .foregroundStyle(isSelected ? Color.textColor : Color.lightTextColor)
                 }
 
-                BrightText(
-                    title,
-                    size: .body1,
-                    color: isSelected ? .textColor : .lightTextColor,
-                    weight: .light
-                )
+                BrightText(title, size: .body1, color: isSelected ? .textColor : .lightTextColor)
             }
             .padding(.horizontal, .spacing105x)
             .frame(height: SwipePageConstants.pillHeight)

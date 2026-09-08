@@ -11,7 +11,7 @@ extension ExerciseDayType {
     // A both day blends its two ingredients — strength's purple falling into
     // cardio's blue, purple leading.
     static let bothGradient = LinearGradient(
-        colors: [.defaultPurplePink, .defaultSkyBlueCyan],
+        colors: [.defaultPink, .defaultSkyBlueCyan],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -26,9 +26,32 @@ extension ExerciseLoggedSession {
         return switch type {
         case .cardio: AnyShapeStyle(Color.defaultSkyBlueCyan)
         case .both: AnyShapeStyle(ExerciseDayType.bothGradient)
-        case .strength: AnyShapeStyle(Color.defaultPurplePink)
+        case .strength: AnyShapeStyle(Color.defaultPink)
         case .rest: AnyShapeStyle(Color.defaultGreen)
         }
+    }
+}
+
+struct ExerciseLogDot: View {
+    let fill: AnyShapeStyle
+
+    init(_ fill: some ShapeStyle) {
+        self.fill = AnyShapeStyle(fill)
+    }
+
+    var body: some View {
+        Circle()
+            .fill(fill.opacity(.minimalOpacity))
+            .overlay {
+                Circle()
+                    .strokeBorder(fill.opacity(.lowOpacity), lineWidth: Constants.lineWidth)
+            }
+            .frame(width: Constants.size, height: Constants.size)
+    }
+
+    private enum Constants {
+        static let size: CGFloat = .spacing2x
+        static let lineWidth: CGFloat = 1.5
     }
 }
 
@@ -41,40 +64,21 @@ struct ExerciseLogRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: .spacing105x) {
-                // The same dot the consistency heatmap draws, so a log entry
-                // and its cell on the grid read as the same thing.
-                Circle()
-                    .fill(session.logStyle)
-                    .frame(width: Constants.swatchSize, height: Constants.swatchSize)
-                    .frame(width: Constants.iconWidth)
+                ExerciseLogDot(session.logStyle)
 
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(session.name, size: .body2, color: .semiLightTextColor, weight: .regular)
-                    BrightText(session.summary, size: .body3, color: .lightTextColor)
-                        .monospacedDigit()
-                }
+                BrightText(session.name, size: .body1, color: .semiLightTextColor, weight: .regular)
+                    .lineLimit(1)
 
                 Spacer(minLength: .spacing2x)
 
-                VStack(alignment: .trailing, spacing: .spacing05x) {
-                    BrightText(session.timestamp, size: .body3, color: .lightTextColor)
-                    Image(systemName: "chevron.right")
-                        .font(.standard(size: .body5, weight: .regular))
-                        .foregroundStyle(Color.lightTextColor)
-                }
+                BrightText(session.timestamp, size: .body1, color: .lightTextColor)
+                    .monospacedDigit()
             }
-            .padding(.top, isFirst ? .spacing0x : .spacing105x)
-            // The card's own padding closes the widget, so the last row's
-            // bottom breath would double it.
-            .padding(.bottom, isLast ? .spacing0x : .spacing105x)
+            .padding(.top, isFirst ? .spacing0x : .spacing2x)
+            .padding(.bottom, isLast ? .spacing0x : .spacing2x)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-    }
-
-    private enum Constants {
-        static let iconWidth: CGFloat = 28
-        static let swatchSize: CGFloat = 16
     }
 }
 

@@ -41,12 +41,6 @@ struct ExerciseLiveCardioSheet: View {
                 .ignoresSafeArea()
                 .onGeometryChange(for: CGFloat.self, of: \.safeAreaInsets.top) { topInset = $0 }
         }
-        // Full-screen cover, so the beam takes the display's own curve and rings
-        // every edge.
-        .overlay {
-            // Runs for the whole session; pausing puts it out, playing relights it.
-            BrightScreenEdgeBeam(isActive: !isPaused, colorVariant: .skyBlueCyan)
-        }
         // No nav bar: the pages run under it, and it would push every one of
         // them down by its own height.
         .toolbar(.hidden, for: .navigationBar)

@@ -232,7 +232,7 @@ Never call `UIImpactFeedbackGenerator` or `sensoryFeedback` directly — use
 `BrightHaptic` (`Shared/BrightHaptic.swift`):
 
 ```swift
-.brightHaptic(.light, trigger: selection)          // .light / .medium / .success
+.brightHaptic(.light, trigger: selection)          // .light / .medium / .impact / .success
 .brightHaptic(trigger: isDone) { _, done in         // pick per value
     done ? .success : .light
 }
@@ -278,6 +278,31 @@ space hittable, and glass applied outside the `Button` is decoration, not target
 Declare `.contentShape(Circle())` — or `Rectangle()` for square/pill labels.
 Same for full-width rows and `Menu` labels: put `.contentShape(Rectangle())` on
 the row's `HStack` so the gaps between text and trailing accessory still tap.
+
+---
+
+## Menus that pick state show a tick
+
+Any `Menu` whose items pick or reflect state marks the active one with a
+checkmark — never leave the current choice unmarked. Follow the Lighthouse tier
+selector (`BrightCarousel.tierMenu`): put the tick in the `Label`'s `icon:` slot,
+falling back to the row's own symbol when it isn't the active one.
+
+```swift
+Button {
+    select(option)
+} label: {
+    Label {
+        Text(option.title)
+    } icon: {
+        if option == selected {
+            Image(systemName: "checkmark")
+        } else {
+            Image(systemName: option.symbol)
+        }
+    }
+}
+```
 
 ---
 

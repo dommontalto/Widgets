@@ -111,6 +111,15 @@ struct ExerciseQuickSession: Identifiable {
     }
 
     static let maxGlyphs = 4
+
+    var categories: [ExerciseCategory] {
+        var categories: [ExerciseCategory] = []
+        for item in items {
+            let category = ExerciseDemoLibrary.type(of: item.exerciseName)
+            if !categories.contains(category) { categories.append(category) }
+        }
+        return categories
+    }
 }
 
 enum ExerciseDemoSessions {

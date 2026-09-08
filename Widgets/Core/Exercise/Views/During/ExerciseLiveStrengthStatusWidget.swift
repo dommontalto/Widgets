@@ -66,15 +66,14 @@ struct ExerciseLiveStrengthStatusWidget: View {
 
             // Aligned on the value rather than the whole stack, so the caption
             // sits above it without dragging it off the buttons' centre line.
-            HStack(alignment: .valueCentre, spacing: .spacing1x) {
+            HStack(alignment: .valueCentre, spacing: .spacing2x) {
                 VStack(alignment: .leading, spacing: .spacing1x) {
                     captionLabel
 
                     valueLabel
                         .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
                 }
-
-                Spacer(minLength: .spacing1x)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 controls
                     .alignmentGuide(.valueCentre) { $0[VerticalAlignment.center] }
@@ -232,7 +231,12 @@ struct ExerciseLiveStrengthStatusWidget: View {
                     .contentTransition(.symbolEffect(.replace))
                     .exerciseHeartRatePulse(bpm: showsSource ? nil : Double(rate))
 
-                BrightText(showsSource ? heartRateSource.rawValue : "\(rate) BPM", size: .body1, weight: .regular)
+                BrightText(
+                    showsSource ? heartRateSource.rawValue : "\(rate) BPM",
+                    size: .body1,
+                    color: showsSource ? .textColor : .defaultRed,
+                    weight: .regular
+                )
                     .contentTransition(.numericText())
 
                 if !showsSource {
@@ -278,7 +282,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
         TimelineView(.animation(minimumInterval: Constants.tick, paused: !isResting)) { context in
             let value = value(at: context.date)
 
-            BrightText(value.text, size: Constants.valueSize, color: value.color)
+            BrightText(value.text, size: Constants.valueSize, color: value.color, scaleTextSize: Constants.valueScale)
                 .monospacedDigit()
                 .lineLimit(1)
                 .contentTransition(.numericText())
@@ -339,6 +343,7 @@ struct ExerciseLiveStrengthStatusWidget: View {
         static let traceWidth: CGFloat = .spacing7x
         static let traceHeight: CGFloat = .spacing3x
         static let tick: TimeInterval = 1
+        static let valueScale: CGFloat = 0.6
         static let valueSize: FontSizes = .huge
         static let urgentRemaining: TimeInterval = 10
         static let shortExtension: TimeInterval = 15

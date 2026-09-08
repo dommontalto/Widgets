@@ -36,7 +36,7 @@ struct BrightPageIndicator: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { select(at: $0.location.x) }
         )
-        .brightHaptic(.light, trigger: activeIndex)
+        .brightHaptic(.soft, trigger: activeIndex)
         .modifier(GlassEffect())
     }
 

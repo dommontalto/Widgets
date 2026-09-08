@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-typealias LighthouseChatMessage = BrightChatMessage<Never>
+typealias LighthouseChatMessage = BrightChatMessage<[LighthouseStoryItem]>
 
 // A demo of Lighthouse as a chat: the shared thread over a frosted wash, the
 // suggestion chips above the input, and canned replies after a beat.
@@ -39,7 +39,9 @@ struct LighthouseChatView: View {
             onSend: send,
             onStop: stopThinking,
             onSwipeDismiss: onDismiss,
-            response: { _ in EmptyView() },
+            response: { message in
+                LighthouseChatResponse(text: message.text, items: message.payload ?? [])
+            },
             modelPicker: { modelPickerButton }
         )
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
@@ -82,11 +84,25 @@ struct LighthouseChatView: View {
         } catch {
             return
         }
-        let text = Constants.replies[replyIndex % Constants.replies.count]
+        // The first answer is the demo story with its widgets; later ones are
+        // plain text.
+        let message: LighthouseChatMessage = if replyIndex == 0 {
+            LighthouseChatMessage(
+                kind: .response,
+                text: LighthouseDemo.sleepPartOne,
+                payload: LighthouseDemo.sleepItems,
+                dismissesKeyboard: true
+            )
+        } else {
+            LighthouseChatMessage(
+                kind: .assistant,
+                text: Constants.replies[(replyIndex - 1) % Constants.replies.count]
+            )
+        }
         replyIndex += 1
         withAnimation(.brightSnappy) {
             isThinking = false
-            messages.append(LighthouseChatMessage(kind: .assistant, text: text))
+            messages.append(message)
         }
     }
 

@@ -2,12 +2,14 @@
 //  ThemeColor.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 1/7/2026.
+//  Created by Dom Montalto on 4/9/2026.
 //
 
 import SwiftUI
 
-class ThemeColor {
+// Semantic aliases over the palette, so a stage or metric keeps its colour
+// wherever it is drawn.
+enum ThemeColor {
     // Macros
     static let carbs: Color = .defaultBrightViolet
     static let carbsDash: Color = .defaultBrightViolet

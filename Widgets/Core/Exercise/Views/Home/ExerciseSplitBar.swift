@@ -14,7 +14,7 @@ struct ExerciseSplitBar: View {
     var body: some View {
         VStack(spacing: .spacing105x) {
             HStack(spacing: .spacing0x) {
-                percentLabel(strengthPercent, color: .defaultPurplePink)
+                percentLabel(strengthPercent, color: .defaultPink)
                     .frame(maxWidth: .infinity)
                 percentLabel(cardioPercent, color: .defaultSkyBlue)
                     .frame(maxWidth: .infinity)
@@ -35,7 +35,7 @@ struct ExerciseSplitBar: View {
             let inset: CGFloat = .spacing05x
             let trackWidth = max(0, proxy.size.width - inset * 2 - Constants.notchWidth - inset * 2)
             HStack(spacing: inset) {
-                segment("Strength", color: .defaultPurplePink, width: width(of: strengthPercent, in: trackWidth))
+                segment("Strength", color: .defaultPink, width: width(of: strengthPercent, in: trackWidth))
                 RoundedRectangle(cornerRadius: 1, style: .continuous)
                     .fill(Color.textColor)
                     .frame(width: Constants.notchWidth, height: 21)
@@ -64,9 +64,109 @@ struct ExerciseSplitBar: View {
     }
 
     private enum Constants {
-        static let barHeight: CGFloat = 35
+        static let barHeight: CGFloat = .spacing6x
         static let barCornerRadius: CGFloat = 13
         static let notchWidth: CGFloat = 2
+    }
+}
+
+struct ExerciseSplitPlot: View {
+    let strengthPercent: Int
+    let cardioPercent: Int
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let strengthWidth = pillWidth(width * fraction(of: strengthPercent), in: width)
+
+            VStack(spacing: .spacing0x) {
+                HStack(spacing: .spacing0x) {
+                    pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
+                        .frame(width: max(0, strengthWidth - .spacing1x))
+                        .padding(.leading, .spacing1x)
+                    Spacer(minLength: .spacing0x)
+                }
+                .frame(height: Constants.rowHeight)
+
+                HStack(spacing: .spacing0x) {
+                    Spacer(minLength: .spacing0x)
+                        .frame(width: max(0, min(strengthWidth, width - Constants.minPillWidth)))
+                    pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
+                        .padding(.trailing, .spacing1x)
+                }
+                .frame(height: Constants.rowHeight)
+            }
+            .overlay { grid(in: proxy.size) }
+        }
+        .frame(height: Constants.rowHeight * 2)
+    }
+
+    private func pill(_ symbol: String, percent: Int, color: Color) -> some View {
+        let shape = RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
+        return shape
+            .fill(color.opacity(.ultraLowOpacity))
+            .overlay {
+                shape.strokeBorder(color.opacity(.veryLowOpacity), lineWidth: Constants.pillLineWidth)
+            }
+            .overlay {
+                HStack(spacing: .spacing0x) {
+                    Image(systemName: symbol)
+                        .font(.system(size: Constants.symbolSize))
+                        .foregroundStyle(color)
+
+                    Spacer(minLength: .spacing1x)
+
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+                        BrightText("\(percent)", size: .standout3, color: color)
+                        BrightText("%", size: .body1, color: color)
+                    }
+                }
+                .padding(.horizontal, .spacing105x)
+            }
+            .frame(height: Constants.pillHeight)
+    }
+
+    private func grid(in size: CGSize) -> some View {
+        let color = Color.textColor.opacity(.ultraLowOpacity)
+        let column = size.width / CGFloat(Constants.columnCount)
+
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .strokeBorder(color, lineWidth: Constants.gridLineWidth)
+
+            ForEach(1..<Constants.columnCount, id: \.self) { index in
+                Rectangle()
+                    .fill(color)
+                    .frame(width: Constants.gridLineWidth)
+                    .offset(x: column * CGFloat(index))
+            }
+
+            Path { path in
+                path.move(to: CGPoint(x: 0, y: size.height / 2))
+                path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+            }
+            .stroke(color, style: StrokeStyle(lineWidth: Constants.gridLineWidth, dash: [Constants.gridDash]))
+        }
+    }
+
+    private func fraction(of percent: Int) -> CGFloat {
+        min(1, max(0, CGFloat(percent) / 100))
+    }
+
+    private func pillWidth(_ width: CGFloat, in available: CGFloat) -> CGFloat {
+        guard width.isFinite, available > 0 else { return 0 }
+        return min(available, max(Constants.minPillWidth, width))
+    }
+
+    private enum Constants {
+        static let rowHeight: CGFloat = 60
+        static let pillHeight: CGFloat = .spacing6x
+        static let minPillWidth: CGFloat = 90
+        static let pillLineWidth: CGFloat = 1
+        static let gridLineWidth: CGFloat = 0.5
+        static let gridDash: CGFloat = 3
+        static let columnCount = 4
+        static let symbolSize: CGFloat = 20
     }
 }
 
@@ -81,7 +181,7 @@ struct ExerciseSplitRow: View {
                 let track = max(0, proxy.size.width - .spacing05x)
                 HStack(spacing: .spacing05x) {
                     Capsule()
-                        .fill(Color.defaultPurplePink.opacity(.veryMinimalOpacity))
+                        .fill(Color.defaultPink.opacity(.veryMinimalOpacity))
                         .frame(width: width(of: split.strengthFraction, in: track))
                     Capsule()
                         .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
@@ -108,6 +208,7 @@ struct ExerciseSplitRow: View {
 
 #Preview {
     VStack(spacing: .spacing4x) {
+        ExerciseSplitPlot(strengthPercent: 45, cardioPercent: 55)
         ExerciseSplitBar(strengthPercent: 45, cardioPercent: 55)
         ExerciseSplitRow(split: ExerciseDemoData.trainingLoad.weeks[0])
     }

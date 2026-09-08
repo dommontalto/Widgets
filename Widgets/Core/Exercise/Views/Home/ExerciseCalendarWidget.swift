@@ -9,19 +9,15 @@ import SwiftUI
 
 struct ExerciseCalendarWidget: View {
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
-    @State private var showingPlan = false
 
     var body: some View {
         VStack(spacing: .spacing1x) {
             BrightCalendar(
                 selectedDate: $selectedDate,
                 backgroundColor: .clear,
+                showsIcon: false,
                 dotStyle: { ExerciseCalendarDemo.dotStyle(on: $0) }
-            ) {
-                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {
-                    showingPlan = true
-                }
-            }
+            )
 
             sessionView
                 .padding(.horizontal, .spacing3x)
@@ -31,110 +27,60 @@ struct ExerciseCalendarWidget: View {
         }
         .padding(.top, .spacing3x)
         .modifier(CardModifier())
-        .sheet(isPresented: $showingPlan) {
-            ExerciseCreateProgramSheet(startsAtBlocks: true)
-        }
     }
 
     private var sessionView: some View {
         Group {
-            if let session = ExerciseCalendarDemo.session(on: selectedDate) {
-                sessionCard(session)
-            } else {
+            let sessions = ExerciseCalendarDemo.sessions(on: selectedDate)
+            if sessions.isEmpty {
                 emptyCard
+            } else {
+                VStack(spacing: .spacing0x) {
+                    ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
+                        sessionRow(session, isLast: index == sessions.count - 1)
+                    }
+                }
             }
         }
         .id(selectedDate)
         .transition(.blurReplace)
     }
 
-    // A session holding more than one discipline wears the both gradient: the
-    // accent line runs the blend along its own height, and the body is masked
-    // by a gradient that reaches blue by mid-card — the swatch spread would
-    // stay purple for most of a card this wide.
-    private func sessionCard(_ session: ExerciseCalendarSession) -> some View {
-        let isMixed = session.symbols.count > 1
+    private func sessionRow(_ session: ExerciseCalendarSession, isLast: Bool) -> some View {
+        VStack(spacing: .spacing0x) {
+            HStack(spacing: .spacing105x) {
+                Rectangle()
+                    .fill(Color.textColor)
+                    .frame(width: Constants.accentWidth)
 
-        return HStack(spacing: .spacing105x) {
-            RoundedRectangle(cornerRadius: 1, style: .continuous)
-                .fill(isMixed
-                    ? AnyShapeStyle(ExerciseDayType.bothGradient)
-                    : AnyShapeStyle(session.color))
-                .frame(width: 2)
-
-            sessionBody(session)
-                .overlay {
-                    if isMixed {
-                        cardGradient
-                            .mask(sessionBody(session))
-                            .allowsHitTesting(false)
-                    }
+                VStack(alignment: .leading, spacing: .spacing1x) {
+                    BrightText(session.name, size: .body1, weight: .regular)
+                    BrightText(session.subtitle, size: .body1, color: .semiLightTextColor)
                 }
-        }
-        .padding(.spacing2x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            isMixed
-                ? AnyShapeStyle(cardGradient.opacity(.ultraLowOpacity))
-                : AnyShapeStyle(session.color.opacity(.ultraLowOpacity)),
-            in: RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous)
-        )
-    }
 
-    private var cardGradient: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: .defaultPurplePink, location: 0),
-                .init(color: .defaultSkyBlueCyan, location: Constants.cardBlueStop),
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
+                Spacer(minLength: .spacing2x)
 
-    private func sessionBody(_ session: ExerciseCalendarSession) -> some View {
-        VStack(alignment: .leading, spacing: .spacing05x) {
-            BrightText(session.name, size: .body2, color: session.color, weight: .regular)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack(spacing: .spacing1x) {
-                ForEach(session.symbols, id: \.self) { symbol in
-                    chip(symbol)
-                }
+                ExerciseCategoryCircleStack(categories: session.categories)
             }
-            .padding(.top, .spacing105x)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, .spacing2x)
+            .padding(.bottom, isLast ? .spacing0x : .spacing2x)
+
+            if !isLast {
+                BrightDivider()
+            }
         }
     }
 
     private var emptyCard: some View {
-        HStack(spacing: .spacing105x) {
-            BrightText("Rest day", size: .body2, color: .defaultGreen, weight: .regular)
-
-            Spacer(minLength: .spacing0x)
-        }
-        .padding(.spacing2x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: Constants.restCardHeight)
-        .background(ExerciseRestBackground())
-        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous))
-    }
-
-    private func chip(_ symbol: String) -> some View {
-        Circle()
-            .strokeBorder(Color.textColor.opacity(.minimalOpacity), lineWidth: 1)
-            .frame(width: Constants.chipSize, height: Constants.chipSize)
-            .overlay {
-                Image(systemName: symbol)
-                    .font(.standardSFPro(size: .subheading, weight: .light))
-                    .foregroundStyle(Color.textColor)
-            }
+        BrightText("No sessions", size: .body1, color: .lightTextColor)
+            .frame(maxWidth: .infinity)
+            .frame(height: Constants.emptyHeight)
     }
 
     enum Constants {
-        static let chipSize: CGFloat = 36
-        static let restCardHeight: CGFloat = 53
-        // Where the mixed card's gradient lands fully on blue.
-        static let cardBlueStop: Double = 0.55
+        static let accentWidth: CGFloat = 2
+        static let emptyHeight: CGFloat = .spacing12x
     }
 }
 

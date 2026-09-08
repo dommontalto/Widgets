@@ -22,6 +22,7 @@ extension FormatStyle where Self == Date.FormatStyle {
     static var brightDay: Self { Date.FormatStyle(locale: .bright).day(.defaultDigits) }
     static var brightWeekdayInitial: Self { Date.FormatStyle(locale: .bright).weekday(.narrow) }
     static var brightWeekday: Self { Date.FormatStyle(locale: .bright).weekday(.abbreviated) }
+    static var brightMonth: Self { Date.FormatStyle(locale: .bright).month(.abbreviated) }
 }
 
 extension FormatStyle where Self == Date.VerbatimFormatStyle {
@@ -49,6 +50,17 @@ struct BrightDateStyle: FormatStyle {
     }
 }
 
+struct BrightCalendarDateStyle: FormatStyle {
+    func format(_ value: Date) -> String {
+        let calendar = Calendar.autoupdatingCurrent
+        let day = value.formatted(Date.FormatStyle(locale: .bright).day().month(.abbreviated))
+        if calendar.isDateInToday(value) { return "Today, \(day)" }
+        if calendar.isDateInYesterday(value) { return "Yesterday, \(day)" }
+        if calendar.isDateInTomorrow(value) { return "Tomorrow, \(day)" }
+        return value.formatted(.brightDate)
+    }
+}
+
 struct BrightTimestampStyle: FormatStyle {
     func format(_ value: Date) -> String {
         guard Calendar.autoupdatingCurrent.isDate(value, equalTo: .now, toGranularity: .year) else {
@@ -60,6 +72,10 @@ struct BrightTimestampStyle: FormatStyle {
 
 extension FormatStyle where Self == BrightDateStyle {
     static var brightDate: Self { .init() }
+}
+
+extension FormatStyle where Self == BrightCalendarDateStyle {
+    static var brightCalendarDate: Self { .init() }
 }
 
 extension FormatStyle where Self == BrightTimestampStyle {

@@ -83,6 +83,13 @@ nonisolated class ImageNames {
     static let caloriesBurntV5 = "Heart/calories_burnt_v5"
     static let energyBurntV5   = "Heart/energy_burnt_v5"
 
+    // MARK: - Health
+
+    static let hrvV4                 = "Health/hrv_v4"
+    static let circleChevronTopV5    = "Health/circle_chevron_top_v5"
+    static let circleChevronBottomV5 = "Health/circle_chevron_bottom_v5"
+    static let activityWidgetIconV5  = "Health/activity_widget_icon_v5"
+
     // MARK: - Vault
 
     static let vaultTestFigureV5              = "Vault/vault_test_figure_v5"

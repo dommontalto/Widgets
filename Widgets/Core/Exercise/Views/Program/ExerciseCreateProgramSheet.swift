@@ -652,7 +652,7 @@ struct ExerciseCreateProgramSheet: View {
 
             Spacer(minLength: .spacing2x)
 
-            progressRing(period)
+            ExerciseProgressRing(fraction: period.fractionComplete)
                 // Sits the ring on the weeks label's centre rather than on the
                 // baseline the two numbers share.
                 .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + .spacing1x }
@@ -661,7 +661,7 @@ struct ExerciseCreateProgramSheet: View {
         .animation(.brightSnappy, value: period.totalWeeks)
         // The ring, not the tall number, sets the row's height, so the card's
         // own spacing lands as an even gap above and below it.
-        .frame(height: Constants.ringDiameter)
+        .frame(height: ExerciseProgressRing.diameter)
         .padding(.bottom, .spacing105x)
     }
 
@@ -947,29 +947,6 @@ struct ExerciseCreateProgramSheet: View {
         withAnimation(.brightSnappy) {
             period.wrappedValue.blocks.removeAll { $0.id == block.id }
         }
-    }
-
-    // Starting, restarting or ending a period sweeps the ring rather than
-    // snapping it.
-    private func progressRing(_ period: ExerciseTrainingPeriod) -> some View {
-        ZStack {
-            BrightText("\(period.percentComplete)%", size: .subheading1)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-
-            Circle()
-                .stroke(Color.defaultPurplePink.opacity(.minimalOpacity), lineWidth: Constants.ringWidth)
-
-            Circle()
-                .trim(from: 0, to: period.fractionComplete)
-                .stroke(
-                    Color.defaultPurplePink,
-                    style: StrokeStyle(lineWidth: Constants.ringWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-        }
-        .frame(width: Constants.ringDiameter, height: Constants.ringDiameter)
-        .animation(.brightSnappy, value: period.fractionComplete)
     }
 
     // MARK: - Shared pieces
@@ -1355,8 +1332,6 @@ struct ExerciseCreateProgramSheet: View {
         static let blockRowHeight = ExerciseSetRow.Constants.rowHeight
         static let restWeekOptions = [1, 2]
         static let blockNameWidth: CGFloat = .spacing12x
-        static let ringDiameter: CGFloat = 58
-        static let ringWidth: CGFloat = 10
         static let bottomSlack: CGFloat = 24
         static let hairline: CGFloat = 0.5
         static let styleIconSize: CGFloat = 50

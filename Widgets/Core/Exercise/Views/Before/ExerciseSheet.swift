@@ -90,25 +90,21 @@ struct ExerciseSheet: View {
 
     private func sessionCard(_ session: ExerciseQuickSession) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing1x) {
-                ForEach(session.glyphs) { glyph in
-                    Image(systemName: glyph.symbol)
-                        .font(.standard(size: .heading, weight: .light))
-                        .foregroundStyle(glyph.color)
-                }
-            }
-            .frame(height: Constants.iconSize, alignment: .leading)
-            .padding(.bottom, .spacing105x)
+            ExerciseCategoryCircleStack(
+                categories: session.categories,
+                ringColor: .defaultSheetModalCards
+            )
 
             BrightText(session.name, size: .body2, color: .semiLightTextColor, weight: .regular)
                 .lineLimit(1)
+                .padding(.leading, ExerciseCategoryCircle.Constants.ringWidth)
 
             BrightText(session.subtitle, size: .body2, color: .lightTextColor)
                 .lineLimit(1)
+                .padding(.leading, ExerciseCategoryCircle.Constants.ringWidth)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.spacing2x)
-        .frame(height: Constants.cardHeight, alignment: .topLeading)
         .modifier(CardModifier(color: .defaultSheetModalCards))
     }
 
@@ -174,11 +170,6 @@ struct ExerciseSheet: View {
         if let session = builder.saved.first(where: { $0.id == id }) {
             ExerciseCreateSessionSheet(editing: session) { builder.path = NavigationPath() }
         }
-    }
-
-    private enum Constants {
-        static let cardHeight: CGFloat = 97
-        static let iconSize: CGFloat = 24
     }
 }
 

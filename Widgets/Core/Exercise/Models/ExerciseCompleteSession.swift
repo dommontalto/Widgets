@@ -20,6 +20,7 @@ struct ExerciseCompleteSession {
     // What the part picker draws for this session. Cardio and sports carry
     // their own category; strength leaves it nil.
     var category: ExerciseCategory?
+    var isStrength = false
 
     // Strength always shows the gym glyph, bodyweight included, so a mixed
     // session's picker reads as "the lifting part" rather than naming the kit.
@@ -38,7 +39,8 @@ struct ExerciseCompleteSession {
     // A graph only arrives when it holds real readings, so its presence is the
     // whole test — none at all means the widget has nothing to say.
     var hasPerformanceGraph: Bool {
-        summary.heartGraph != nil
+        guard !isStrength else { return false }
+        return summary.heartGraph != nil
             || summary.altitudeGraph != nil
             || summary.paceGraph != nil
             || summary.cadenceGraph != nil

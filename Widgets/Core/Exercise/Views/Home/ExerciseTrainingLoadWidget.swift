@@ -13,37 +13,12 @@ struct ExerciseTrainingLoadWidget: View {
     @State private var showingYear = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing4x) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText("Split", size: .body1)
-                    BrightText("Past 4 weeks", size: .body2, color: .lightTextColor)
-                }
-
-                Spacer()
-
-                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {
-                    showingYear = true
-                }
-            }
-
-            ExerciseSplitBar(
-                strengthPercent: load.strengthPercent,
-                cardioPercent: load.cardioPercent
-            )
-
-            Rectangle()
-                .fill(Color.textColor.opacity(.ultraLowOpacity))
-                .frame(height: 1)
-
-            VStack(spacing: .spacing2x) {
-                ForEach(load.weeks.indices, id: \.self) { i in
-                    ExerciseSplitRow(split: load.weeks[i])
-                }
+        ExerciseTrainingLoadContent(load: load, title: "Split", subtitle: "Past 4 weeks") {
+            BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {
+                showingYear = true
             }
         }
         .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
         .sheet(isPresented: $showingYear) {
             ExerciseTrainingLoadSheet()

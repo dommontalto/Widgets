@@ -21,7 +21,11 @@ struct ExerciseHistoryWidget: View {
 
             VStack(spacing: .spacing0x) {
                 ForEach(sessions) { session in
-                    ExerciseLogRow(session: session, isLast: session.id == sessions.last?.id) {
+                    ExerciseLogRow(
+                        session: session,
+                        isFirst: session.id == sessions.first?.id,
+                        isLast: session.id == sessions.last?.id
+                    ) {
                         selectedSession = session
                     }
 
@@ -47,8 +51,8 @@ struct ExerciseHistoryWidget: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText("Logs", size: .body1)
-                BrightText("Past 14 days", size: .body2, color: .lightTextColor)
+                BrightText("Logs", size: .body1, color: .semiLightTextColor, weight: .regular)
+                BrightText("Past 14 days", size: .body1, color: .lightTextColor)
             }
 
             Spacer()
@@ -63,7 +67,7 @@ struct ExerciseHistoryWidget: View {
     // standing in for its rest days.
     private var key: some View {
         FlowLayout(spacing: .spacing2x) {
-            keyItem("Strength", fill: Color.defaultPurplePink)
+            keyItem("Strength", fill: Color.defaultPink)
             keyItem("Cardio", fill: Color.defaultSkyBlueCyan)
             keyItem("Both", fill: ExerciseDayType.bothGradient)
             keyItem("Apple Health", fill: Color.defaultRed)
@@ -72,16 +76,10 @@ struct ExerciseHistoryWidget: View {
 
     private func keyItem(_ title: String, fill: some ShapeStyle) -> some View {
         HStack(spacing: .spacing1x) {
-            Circle()
-                .fill(fill)
-                .frame(width: Constants.keySwatchSize, height: Constants.keySwatchSize)
+            ExerciseLogDot(fill)
 
-            BrightText(title, size: .body3, color: .lightTextColor)
+            BrightText(title, size: .body1, color: .lightTextColor)
         }
-    }
-
-    private enum Constants {
-        static let keySwatchSize: CGFloat = 12
     }
 }
 
