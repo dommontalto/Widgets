@@ -450,7 +450,7 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
-        let isRestDay = day.wrappedValue.sessions.contains { $0.kind == .rest }
+        let planned = Set(day.wrappedValue.sessions.map(\.title))
 
         return Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
@@ -460,7 +460,7 @@ struct ExerciseAddSessionsSheet: View {
                     Label {
                         Text(template.title)
                     } icon: {
-                        if template.kind == .rest, isRestDay {
+                        if planned.contains(template.title) {
                             Image(systemName: "checkmark")
                         } else {
                             Image(systemName: template.symbol)
@@ -473,6 +473,7 @@ struct ExerciseAddSessionsSheet: View {
                 .font(.system(size: Constants.plusIconSize, weight: .light))
                 .foregroundStyle(Color.defaultSkyBlue)
         }
+        .menuActionDismissBehavior(.disabled)
     }
 
     // A rest day is the whole day, so it clears the day it lands on and any
