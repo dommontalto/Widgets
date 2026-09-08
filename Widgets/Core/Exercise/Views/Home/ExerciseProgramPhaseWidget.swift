@@ -25,10 +25,6 @@ struct ExerciseProgramPhase {
 
     var totalWeeks: Int { blocks.reduce(0) { $0 + $1.weeks } }
 
-    var periodMonths: Int {
-        max(1, Int((Double(totalWeeks) / Constants.weeksPerMonth).rounded()))
-    }
-
     func elapsedDays(on date: Date) -> Int {
         let start = Calendar.current.startOfDay(for: startDate)
         let days = Calendar.current.dateComponents([.day], from: start, to: date).day ?? 0
@@ -42,10 +38,6 @@ struct ExerciseProgramPhase {
     func progress(on date: Date) -> Double {
         guard totalWeeks > 0 else { return 0 }
         return Double(elapsedDays(on: date)) / Double(totalWeeks * 7)
-    }
-
-    private enum Constants {
-        static let weeksPerMonth = 4.345
     }
 
     static let demo = ExerciseProgramPhase(
@@ -243,7 +235,7 @@ struct ExerciseProgramPhaseWidget: View {
         return VStack(alignment: .leading, spacing: .spacing3x) {
             bar(
                 name: phase.periodName,
-                detail: phase.periodMonths == 1 ? "1 mnth" : "\(phase.periodMonths) mnths",
+                detail: durationLabel(weeks: phase.totalWeeks),
                 color: .defaultGreen,
                 width: max(width(days: phase.totalWeeks * 7), blocksWidth)
             )
@@ -254,7 +246,7 @@ struct ExerciseProgramPhaseWidget: View {
                     if block.kind == .normal {
                         bar(
                             name: block.name,
-                            detail: block.weeks == 1 ? "1 week" : "\(block.weeks) weeks",
+                            detail: durationLabel(weeks: block.weeks),
                             color: .defaultSkyBlue,
                             width: barWidth
                         )
@@ -273,6 +265,10 @@ struct ExerciseProgramPhaseWidget: View {
 
     // A block's label sets a floor its own weeks may not reach, so the period
     // spans at least the row it holds.
+    private func durationLabel(weeks: Int) -> String {
+        weeks == 1 ? "1 week" : "\(weeks) weeks"
+    }
+
     private func blockWidth(_ block: ExerciseProgramPhase.Block) -> CGFloat {
         let span = width(days: block.weeks * 7) - .spacing105x
         return max(block.kind == .normal ? Constants.minBlockWidth : Constants.minDeloadWidth, span)
