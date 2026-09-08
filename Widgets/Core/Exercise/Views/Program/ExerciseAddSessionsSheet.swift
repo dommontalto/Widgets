@@ -450,17 +450,21 @@ struct ExerciseAddSessionsSheet: View {
     }
 
     private func addButton(for day: Binding<ExercisePlanDay>) -> some View {
-        let planned = Set(day.wrappedValue.sessions.map(\.title))
+        let sessions = day.wrappedValue.sessions
+        let planned = Set(sessions.map(\.title))
+        // A day with nothing on it already reads as a rest day, so the menu
+        // shows it as the one it is on.
+        let isRest = sessions.isEmpty || sessions.contains { $0.kind == .rest }
 
         return Menu {
             ForEach(ExerciseDemoPlanner.templates) { template in
                 Button {
-                    add(template, to: day)
+                    toggle(template, on: day)
                 } label: {
                     Label {
                         Text(template.title)
                     } icon: {
-                        if planned.contains(template.title) {
+                        if planned.contains(template.title) || (template.kind == .rest && isRest) {
                             Image(systemName: "checkmark")
                         } else {
                             Image(systemName: template.symbol)
@@ -474,6 +478,21 @@ struct ExerciseAddSessionsSheet: View {
                 .foregroundStyle(Color.defaultSkyBlue)
         }
         .menuActionDismissBehavior(.disabled)
+    }
+
+    // The menu reads as a set of switches, so tapping a session already on the
+    // day takes it off again. Rest is the day itself, never a toggle.
+    private func toggle(_ template: ExercisePlannedSession, on day: Binding<ExercisePlanDay>) {
+        guard template.kind != .rest else {
+            add(template, to: day)
+            return
+        }
+
+        if day.wrappedValue.sessions.contains(where: { $0.title == template.title }) {
+            day.wrappedValue.sessions.removeAll { $0.title == template.title }
+        } else {
+            add(template, to: day)
+        }
     }
 
     // A rest day is the whole day, so it clears the day it lands on and any

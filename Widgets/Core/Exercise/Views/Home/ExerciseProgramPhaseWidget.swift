@@ -237,27 +237,29 @@ struct ExerciseProgramPhaseWidget: View {
 
     private func phaseRows(_ phase: ExerciseProgramPhase) -> some View {
         let start = x(for: phase.startDate)
+        let blockWidths = phase.blocks.map { blockWidth($0) }
+        let blocksWidth = blockWidths.reduce(0, +) + .spacing105x * CGFloat(max(0, blockWidths.count - 1))
 
         return VStack(alignment: .leading, spacing: .spacing3x) {
             bar(
                 name: phase.periodName,
-                detail: "\(phase.periodMonths) mnths",
+                detail: phase.periodMonths == 1 ? "1 mnth" : "\(phase.periodMonths) mnths",
                 color: .defaultGreen,
-                width: width(days: phase.totalWeeks * 7)
+                width: max(width(days: phase.totalWeeks * 7), blocksWidth)
             )
             .padding(.leading, start)
 
             HStack(spacing: .spacing105x) {
-                ForEach(phase.blocks) { block in
+                ForEach(Array(zip(phase.blocks, blockWidths)), id: \.0.id) { block, barWidth in
                     if block.kind == .normal {
                         bar(
                             name: block.name,
-                            detail: "\(block.weeks) weeks",
+                            detail: block.weeks == 1 ? "1 week" : "\(block.weeks) weeks",
                             color: .defaultSkyBlue,
-                            width: max(Constants.minBlockWidth, width(days: block.weeks * 7) - .spacing105x)
+                            width: barWidth
                         )
                     } else {
-                        deloadBar(width: max(Constants.minDeloadWidth, width(days: block.weeks * 7) - .spacing105x))
+                        deloadBar(width: barWidth)
                     }
                 }
             }
@@ -269,17 +271,38 @@ struct ExerciseProgramPhaseWidget: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // A block's label sets a floor its own weeks may not reach, so the period
+    // spans at least the row it holds.
+    private func blockWidth(_ block: ExerciseProgramPhase.Block) -> CGFloat {
+        let span = width(days: block.weeks * 7) - .spacing105x
+        return max(block.kind == .normal ? Constants.minBlockWidth : Constants.minDeloadWidth, span)
+    }
+
     private func bar(name: String, detail: String, color: Color, width: CGFloat) -> some View {
         let shape = RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
-        return HStack(spacing: .spacing1x) {
-            BrightText("\(name.uppercased()):", size: .body1, color: color, weight: .regular)
-            BrightText(detail, size: .body1, color: color.opacity(.lowOpacity))
+        // The span sets the width, so a short period drops its duration and
+        // then its name rather than crushing them.
+        return ViewThatFits(in: .horizontal) {
+            barLabel(name: "\(name.uppercased()):", detail: detail, color: color)
+            barLabel(name: name.uppercased(), detail: nil, color: color)
+            Color.clear.frame(width: .spacing0x)
         }
-        .lineLimit(1)
         .padding(.horizontal, .spacing105x)
         .frame(width: width, height: Constants.barHeight, alignment: .leading)
         .background(color.opacity(.veryMinimalOpacity), in: shape)
         .overlay(shape.strokeBorder(color.opacity(.semiLowOpacity), lineWidth: Constants.strokeWidth))
+    }
+
+    private func barLabel(name: String, detail: String?, color: Color) -> some View {
+        HStack(spacing: .spacing1x) {
+            BrightText(name, size: .body1, color: color, weight: .regular)
+
+            if let detail {
+                BrightText(detail, size: .body1, color: color.opacity(.lowOpacity))
+            }
+        }
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     private func deloadBar(width: CGFloat) -> some View {
