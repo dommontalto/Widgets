@@ -139,7 +139,8 @@ enum ExerciseDemoComplete {
         ),
         cadenceGraph: ExerciseCadenceGraphPayload(
             yTicks: [150, 190],
-            data: cadenceSamples
+            data: cadenceSamples,
+            avg: cadenceSamples.reduce(0, +) / cadenceSamples.count
         ),
         splits: splits,
         intervals: intervals,

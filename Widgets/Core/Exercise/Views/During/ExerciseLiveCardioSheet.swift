@@ -11,6 +11,7 @@ struct ExerciseLiveCardioSheet: View {
     var session: ExerciseLiveCardioStats = ExerciseDemoData.liveCardioStats
     var isInterval = true
     var onStop: () -> Void = {}
+    var isFinishing = false
     // Ends the whole run. Only the flow can do that from a pushed leg, where
     // `dismiss` would pop back instead.
     var onClose: (() -> Void)?
@@ -383,13 +384,17 @@ struct ExerciseLiveCardioSheet: View {
 
     private var controls: some View {
         HStack(spacing: .spacing1x) {
-            BrightRoundButton(
-                systemImage: "stop.fill",
-                size: .finalBossLarge,
-                imageColor: .defaultRed,
-                haptic: .medium,
-                onTapCallback: onStop
-            )
+            if isFinishing {
+                ExerciseFinishingOrb(diameter: BrightButtonSizes.finalBossLarge.rawValue)
+            } else {
+                BrightRoundButton(
+                    systemImage: "stop.fill",
+                    size: .finalBossLarge,
+                    imageColor: .defaultRed,
+                    haptic: .medium,
+                    onTapCallback: onStop
+                )
+            }
 
             Spacer(minLength: .spacing1x)
 
@@ -405,9 +410,12 @@ struct ExerciseLiveCardioSheet: View {
                 withAnimation(.brightEaseInOut) { togglePause() }
             }
             .contentTransition(.symbolEffect(.replace))
+            .opacity(isFinishing ? .lowOpacity : .opaque)
+            .allowsHitTesting(!isFinishing)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing3x)
+        .animation(.brightEaseInOut, value: isFinishing)
     }
 
     private func togglePause() {

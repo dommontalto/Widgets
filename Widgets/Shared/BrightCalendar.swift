@@ -15,6 +15,7 @@ struct BrightCalendar<Trailing: View>: View {
     var dotStyle: (Date) -> AnyShapeStyle?
     var selectionColor: Color
     var isWeekly: Bool
+    var onSelectedDayTap: ((Date) -> Void)?
     @ViewBuilder var trailing: Trailing
 
     @State private var scrolledDay: Date?
@@ -31,6 +32,7 @@ struct BrightCalendar<Trailing: View>: View {
         isWeekly: Bool = false,
         dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
         selectionColor: Color = .textColor,
+        onSelectedDayTap: ((Date) -> Void)? = nil,
         @ViewBuilder trailing: () -> Trailing
     ) {
         _selectedDate = selectedDate
@@ -38,6 +40,7 @@ struct BrightCalendar<Trailing: View>: View {
         self.showsIcon = showsIcon
         self.isWeekly = isWeekly
         self.dotStyle = dotStyle
+        self.onSelectedDayTap = onSelectedDayTap
         self.selectionColor = selectionColor
         self.trailing = trailing()
 
@@ -200,6 +203,10 @@ struct BrightCalendar<Trailing: View>: View {
             selectionColor: selectionColor,
             onTap: { tappedDate in
                 BrightHaptic.soft.play()
+                guard !tappedDate.isSameDay(as: selectedDate) else {
+                    onSelectedDayTap?(tappedDate)
+                    return
+                }
                 withAnimation(.brightSnappy) {
                     selectedDate = tappedDate
                 }
@@ -239,7 +246,8 @@ extension BrightCalendar where Trailing == EmptyView {
         showsIcon: Bool = true,
         isWeekly: Bool = false,
         dotStyle: @escaping (Date) -> AnyShapeStyle? = { _ in nil },
-        selectionColor: Color = .textColor
+        selectionColor: Color = .textColor,
+        onSelectedDayTap: ((Date) -> Void)? = nil
     ) {
         self.init(
             selectedDate: selectedDate,
@@ -248,6 +256,7 @@ extension BrightCalendar where Trailing == EmptyView {
             isWeekly: isWeekly,
             dotStyle: dotStyle,
             selectionColor: selectionColor,
+            onSelectedDayTap: onSelectedDayTap,
             trailing: { EmptyView() }
         )
     }

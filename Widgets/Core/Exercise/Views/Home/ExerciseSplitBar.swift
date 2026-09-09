@@ -77,24 +77,18 @@ struct ExerciseSplitPlot: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let strengthWidth = pillWidth(width * fraction(of: strengthPercent), in: width)
+            let boundary = boundary(in: width)
 
             VStack(spacing: .spacing0x) {
-                HStack(spacing: .spacing0x) {
-                    pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
-                        .frame(width: max(0, strengthWidth - .spacing1x))
-                        .padding(.leading, .spacing1x)
-                    Spacer(minLength: .spacing0x)
-                }
-                .frame(height: Constants.rowHeight)
+                pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
+                    .padding(.leading, .spacing1x)
+                    .padding(.trailing, max(0, width - boundary))
+                    .frame(height: Constants.rowHeight)
 
-                HStack(spacing: .spacing0x) {
-                    Spacer(minLength: .spacing0x)
-                        .frame(width: max(0, min(strengthWidth, width - Constants.minPillWidth)))
-                    pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
-                        .padding(.trailing, .spacing1x)
-                }
-                .frame(height: Constants.rowHeight)
+                pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
+                    .padding(.leading, boundary)
+                    .padding(.trailing, .spacing1x)
+                    .frame(height: Constants.rowHeight)
             }
             .overlay { grid(in: proxy.size) }
         }
@@ -153,9 +147,13 @@ struct ExerciseSplitPlot: View {
         min(1, max(0, CGFloat(percent) / 100))
     }
 
-    private func pillWidth(_ width: CGFloat, in available: CGFloat) -> CGFloat {
-        guard width.isFinite, available > 0 else { return 0 }
-        return min(available, max(Constants.minPillWidth, width))
+    // Both pills are cut at the same x, so the strength pill's trailing edge meets
+    // the cardio pill's leading edge, and neither falls below a legible width.
+    private func boundary(in width: CGFloat) -> CGFloat {
+        guard width.isFinite, width > 0 else { return 0 }
+        let smallest = Constants.minPillWidth + .spacing1x
+        guard width > smallest * 2 else { return width / 2 }
+        return min(max(width * fraction(of: strengthPercent), smallest), width - smallest)
     }
 
     private enum Constants {

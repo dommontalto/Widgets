@@ -38,7 +38,7 @@ struct ExerciseLiveStrengthMenu: View {
                 sectionLabel(
                     isPaused ? "Currently paused" : "Currently playing",
                     symbol: isPaused ? "pause" : "play",
-                    color: isPaused ? .defaultOrange : .defaultGreen
+                    color: isPaused ? .defaultSkyBlueCyan : .defaultGreen
                 )
                     .padding(.horizontal, .spacing3x)
 
@@ -237,7 +237,7 @@ struct ExerciseLiveStrengthMenu: View {
         if index == currentIndex {
             Image(systemName: isPaused ? "pause" : "play")
                 .font(.standard(size: .standout3, weight: .regular))
-                .foregroundStyle(isPaused ? Color.defaultOrange : Color.defaultGreen)
+                .foregroundStyle(isPaused ? Color.defaultSkyBlueCyan : Color.defaultGreen)
                 .contentTransition(.symbolEffect(.replace))
         } else if index < currentIndex {
             BrightTick(isTicked: true)

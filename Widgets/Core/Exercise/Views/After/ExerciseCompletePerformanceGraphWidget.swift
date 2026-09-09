@@ -124,7 +124,7 @@ extension ExerciseCompletePerformanceGraphWidget {
         }
 
         let altitudeValues = (data.altitudeData.data ?? []).map(Double.init)
-        if !altitudeValues.isEmpty, altitudeGain.displayValue != "0" {
+        if !altitudeValues.isEmpty {
             specs.append(
                 MetricSpec(
                     metric: .altitude,
@@ -138,7 +138,7 @@ extension ExerciseCompletePerformanceGraphWidget {
         }
 
         let paceValues = (data.paceData.data ?? []).map(Double.init)
-        if !paceValues.isEmpty, avgPace != 0 {
+        if !paceValues.isEmpty {
             specs.append(
                 MetricSpec(
                     metric: .pace,
@@ -152,9 +152,7 @@ extension ExerciseCompletePerformanceGraphWidget {
         }
 
         let cadenceValues = (data.cadenceData.data ?? []).map(Double.init)
-        if !cadenceValues.isEmpty {
-            // Cadence has no separate average in the payload, so use the mean.
-            let mean = cadenceValues.reduce(0, +) / Double(cadenceValues.count)
+        if !cadenceValues.isEmpty, let cadenceAvg = data.cadenceData.avg {
             specs.append(
                 MetricSpec(
                     metric: .cadence,
@@ -162,7 +160,7 @@ extension ExerciseCompletePerformanceGraphWidget {
                     unit: "SPM",
                     values: cadenceValues,
                     yTicks: data.cadenceData.yTicks,
-                    restingReadout: String(Int(mean.rounded()))
+                    restingReadout: String(cadenceAvg)
                 )
             )
         }

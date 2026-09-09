@@ -322,7 +322,7 @@ struct ExerciseLiveStrengthSheet: View {
 
     private var pillColor: Color {
         if transportLabel != nil { return .defaultBlue }
-        return pauseDate == nil ? .defaultGreen : .defaultOrange
+        return pauseDate == nil ? .defaultGreen : .defaultSkyBlueCyan
     }
 
     // The pill doubles as the transport's read-out: a skip names itself for a

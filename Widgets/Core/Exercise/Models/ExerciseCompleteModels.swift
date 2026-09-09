@@ -148,6 +148,7 @@ struct ExerciseCadenceGraphPayload {
     var yTicks: [Int]?
     var xDates: [String]?
     var data: [Int]?
+    var avg: Int?
 }
 
 // MARK: - Split

@@ -60,6 +60,7 @@ struct ExerciseSessionFlow: View {
     @Environment(ExerciseBuilder.self) private var builder
 
     @State private var path: [ExerciseSessionStage] = []
+    @State private var isFinishingLeg = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -107,9 +108,8 @@ struct ExerciseSessionFlow: View {
 
         case let .cardio(session, leg):
             ExerciseLiveCardioSheet(
-                onStop: {
-                    advance(session, after: leg, finished: ExerciseDemoData.logged(session))
-                },
+                onStop: { finishCardio(session, leg: leg) },
+                isFinishing: isFinishingLeg,
                 onClose: close
             )
 
@@ -125,6 +125,18 @@ struct ExerciseSessionFlow: View {
         }
     }
 
+    // The app waits here on the save and on the summary the server computes;
+    // the prototype holds the orb long enough to see it.
+    private func finishCardio(_ session: ExerciseQuickSession, leg: Int) {
+        guard !isFinishingLeg else { return }
+        isFinishingLeg = true
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.finishingHold))
+            isFinishingLeg = false
+            advance(session, after: leg, finished: ExerciseDemoData.logged(session))
+        }
+    }
+
     // A finished leg hands straight to the next one's setup while there is one,
     // so a session of several legs only finishes once.
     private func advance(_ session: ExerciseQuickSession, after leg: Int, finished: ExerciseLoggedSession) {
@@ -137,6 +149,10 @@ struct ExerciseSessionFlow: View {
 
     private func close() {
         stage = nil
+    }
+
+    private enum Constants {
+        static let finishingHold: Double = 1.6
     }
 }
 

@@ -25,6 +25,7 @@ struct BrightCalendarDay: View {
     var events: (Date) -> [BrightCalendarDayEvent] = { _ in [] }
     var onEventTap: ((BrightCalendarDayEvent) -> Void)? = nil
     var onEventDelete: ((BrightCalendarDayEvent) -> Void)? = nil
+    var onSelectedDayTap: ((Date) -> Void)? = nil
 
     @State private var timelinePosition = ScrollPosition()
     @State private var pagedDay: Date?
@@ -40,7 +41,8 @@ struct BrightCalendarDay: View {
         isWeekly: Bool = false,
         events: @escaping (Date) -> [BrightCalendarDayEvent] = { _ in [] },
         onEventTap: ((BrightCalendarDayEvent) -> Void)? = nil,
-        onEventDelete: ((BrightCalendarDayEvent) -> Void)? = nil
+        onEventDelete: ((BrightCalendarDayEvent) -> Void)? = nil,
+        onSelectedDayTap: ((Date) -> Void)? = nil
     ) {
         _selectedDate = selectedDate
         self.backgroundColor = backgroundColor
@@ -49,6 +51,7 @@ struct BrightCalendarDay: View {
         self.events = events
         self.onEventTap = onEventTap
         self.onEventDelete = onEventDelete
+        self.onSelectedDayTap = onSelectedDayTap
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         pageDays = (-Constants.dayRange...Constants.dayRange).compactMap {
@@ -63,7 +66,8 @@ struct BrightCalendarDay: View {
                 selectedDate: $selectedDate,
                 backgroundColor: backgroundColor,
                 isWeekly: isWeekly,
-                dotStyle: dotStyle
+                dotStyle: dotStyle,
+                onSelectedDayTap: onSelectedDayTap
             )
             .brightCalendarEdge(progress: edgeProgress)
             .zIndex(1)
