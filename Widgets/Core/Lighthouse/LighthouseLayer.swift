@@ -18,6 +18,12 @@ struct LighthouseLayer: View {
     @State private var model = LighthouseModel.chatGPT
     @State private var showingModelSelector = false
     @State private var page = Page.chat
+    @State private var pageWidth: CGFloat = 0
+    // How far the pages have been dragged sideways, so they follow the finger.
+    @State private var pageDrag: CGFloat = 0
+    // Decided on the first movement of a drag: nil until then, then whether it
+    // is sideways enough to page rather than scroll the thread.
+    @State private var isPaging: Bool?
 
     private enum Page: Hashable {
         case placeholder
@@ -51,13 +57,13 @@ struct LighthouseLayer: View {
     }
 
     // The page still to come, then the chat Lighthouse opens on. The chrome
-    // stays put over both. A paged TabView rather than a horizontal ScrollView:
-    // the scroll view drops the keyboard inset before it reaches the chat, so
-    // the input card would sit under the keyboard.
+    // stays put over both. Hand-rolled rather than a ScrollView or TabView:
+    // both host the chat in a way that loses either the keyboard inset or its
+    // animation, so the input card stops tracking the keyboard.
     private var pages: some View {
-        TabView(selection: $page) {
+        ZStack {
             placeholder
-                .tag(Page.placeholder)
+                .offset(x: chatOffset - pageWidth)
 
             LighthouseChatView(
                 isThinking: $isThinking,
@@ -66,14 +72,41 @@ struct LighthouseLayer: View {
                 isTyping: isTyping,
                 onDismiss: close
             )
-            .tag(Page.chat)
+            .offset(x: chatOffset)
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
+        .simultaneousGesture(pageDragGesture)
         .brightHaptic(.impact, trigger: page)
-        // Behind the TabView rather than inside its pages: a page's background
-        // stops at the TabView's bounds, leaving a strip of screen showing
-        // under the home indicator.
         .background { LighthouseChatBackground() }
+    }
+
+    private var chatOffset: CGFloat {
+        let resting: CGFloat = page == .chat ? 0 : pageWidth
+        return min(max(resting + pageDrag, 0), pageWidth)
+    }
+
+    private var pageDragGesture: some Gesture {
+        DragGesture(minimumDistance: Constants.pageDragDistance)
+            .onChanged { value in
+                if isPaging == nil {
+                    isPaging = abs(value.translation.width) > abs(value.translation.height)
+                }
+                guard isPaging == true else { return }
+                pageDrag = value.translation.width
+            }
+            .onEnded { value in
+                defer { isPaging = nil }
+                guard isPaging == true else { return }
+                let projected = value.predictedEndTranslation.width
+                withAnimation(.brightBouncy) {
+                    if page == .chat, projected > pageWidth / 2 {
+                        page = .placeholder
+                    } else if page == .placeholder, projected < -pageWidth / 2 {
+                        page = .chat
+                    }
+                    pageDrag = 0
+                }
+            }
     }
 
     private var placeholder: some View {
@@ -128,5 +161,9 @@ struct LighthouseLayer: View {
     private func dismiss() {
         withAnimation(.brightBouncy) { isPresented = false }
         page = .chat
+    }
+
+    private enum Constants {
+        static let pageDragDistance: CGFloat = 20
     }
 }
