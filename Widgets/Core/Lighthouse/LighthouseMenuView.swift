@@ -20,18 +20,22 @@ struct LighthouseMenuView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
+            // Same inset and height as the chat page's buttons, so the two top
+            // rows line up as the pages slide past each other.
             searchRow
+                .padding(.horizontal, .spacing205x)
 
-            modelCard
+            VStack(alignment: .leading, spacing: .spacing3x) {
+                modelCard
 
-            shortcuts
+                shortcuts
 
-            history
+                history
+            }
+            .padding(.horizontal, .spacing3x)
 
             Spacer(minLength: .spacing0x)
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing1x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
             bottomBar
@@ -166,7 +170,7 @@ struct LighthouseMenuView: View {
             )
         }
         .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing2x)
+        .padding(.bottom, .spacing8x)
     }
 
     private enum Constants {

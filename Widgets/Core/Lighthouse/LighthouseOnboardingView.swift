@@ -21,13 +21,7 @@ struct LighthouseOnboardingView: View {
         _selectedModel = selectedModel
         self.onFinish = onFinish
         _carouselIndex = State(initialValue: LighthouseModel.allCases.firstIndex(of: selectedModel.wrappedValue) ?? 0)
-
-        var tiers: [String: BrightCarouselTier] = [:]
-        for model in LighthouseModel.allCases {
-            let tier = model.selectedTier()
-            tiers[model.id] = BrightCarouselTier(id: tier.id, name: tier.name, label: tier.label)
-        }
-        _selectedTiers = State(initialValue: tiers)
+        _selectedTiers = State(initialValue: LighthouseModelPicker.storedTiers())
     }
 
     private var isLastPage: Bool {
@@ -67,7 +61,7 @@ struct LighthouseOnboardingView: View {
             Spacer(minLength: .spacing0x)
 
             LighthouseBeacon(size: Constants.beaconSize)
-                .padding(.bottom, .spacing2x)
+                .padding(.bottom, .spacing8x)
 
             BrightText(Constants.welcomeTitle, size: .standout1, color: .semiLightTextColor)
 
@@ -110,37 +104,7 @@ struct LighthouseOnboardingView: View {
     }
 
     private var modelPicker: some View {
-        VStack(spacing: .spacing0x) {
-            VStack(spacing: .spacing1x) {
-                BrightText(Constants.modelTitle, size: .heading)
-
-                BrightText(Constants.modelSubtitle, size: .body3, color: .lightTextColor)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, .spacing12x)
-            .padding(.horizontal, .spacing6x)
-
-            Spacer(minLength: .spacing0x)
-
-            BrightCarousel(
-                items: LighthouseModel.allCases,
-                activeIndex: $carouselIndex,
-                cardWidthRatio: Constants.cardWidthRatio,
-                tiers: { model in
-                    model.tiers.map { BrightCarouselTier(id: $0.id, name: $0.name, label: $0.label) }
-                },
-                selectedTiers: $selectedTiers
-            ) { model, width in
-                Image(model.wallpaperImageName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: width, height: width * Constants.cardAspect)
-                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius40))
-            }
-
-            Spacer(minLength: .spacing0x)
-            Spacer(minLength: .spacing0x)
-        }
+        LighthouseModelPicker(activeIndex: $carouselIndex, selectedTiers: $selectedTiers)
     }
 
     // MARK: - Footer
@@ -154,7 +118,7 @@ struct LighthouseOnboardingView: View {
             BrightPillButton(buttonTitle, buttonSize: .large, onTapCallback: advance)
                 .animation(.brightBouncy, value: page)
         }
-        .padding(.bottom, .spacing2x)
+        .padding(.bottom, .spacing8x)
     }
 
     private var buttonTitle: String {
@@ -182,15 +146,8 @@ struct LighthouseOnboardingView: View {
             withAnimation(.brightBouncy) { page += 1 }
             return
         }
-        let models = LighthouseModel.allCases
-        let model = models[min(max(carouselIndex ?? 0, 0), models.count - 1)]
-        for chosen in models {
-            if let tier = selectedTiers[chosen.id],
-               let match = chosen.tiers.first(where: { $0.id == tier.id }) {
-                chosen.saveTier(match)
-            }
-        }
-        selectedModel = model
+        LighthouseModelPicker.save(selectedTiers)
+        selectedModel = LighthouseModelPicker.model(at: carouselIndex)
         onFinish()
     }
 
@@ -206,14 +163,9 @@ struct LighthouseOnboardingView: View {
     private enum Constants {
         static let pageCount = 3
         static let beaconSize: CGFloat = 176
-        static let cardWidthRatio: CGFloat = 0.46
-        static let cardAspect: CGFloat = 1.25
-
         static let welcomeTitle = "lighthouse"
         static let welcomeSubtitle = "Welcome to your personal health coach."
         static let capabilitiesTitle = "What lighthouse can do"
-        static let modelTitle = "Which LLM would you like to use?"
-        static let modelSubtitle = "You can change your LLM later in lighthouse settings"
         static let nextTitle = "Next"
         static let getStartedTitle = "Get Started"
         static let chooseTitle = "Choose"

@@ -25,14 +25,88 @@ struct LighthouseModelSelectorBackground: View {
     }
 }
 
+// The model question and the carousel that answers it, shared by the
+// onboarding and the selector so a switch later looks like the first choice.
+struct LighthouseModelPicker: View {
+    @Binding var activeIndex: Int?
+    @Binding var selectedTiers: [String: BrightCarouselTier]
+
+    var body: some View {
+        VStack(spacing: .spacing0x) {
+            VStack(spacing: .spacing1x) {
+                BrightText(Constants.title, size: .heading)
+
+                BrightText(Constants.subtitle, size: .body3, color: .lightTextColor)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, .spacing12x)
+            .padding(.horizontal, .spacing6x)
+
+            Spacer(minLength: .spacing0x)
+
+            BrightCarousel(
+                items: LighthouseModel.allCases,
+                activeIndex: $activeIndex,
+                cardWidthRatio: Constants.cardWidthRatio,
+                tiers: { model in
+                    model.tiers.map { BrightCarouselTier(id: $0.id, name: $0.name, label: $0.label) }
+                },
+                selectedTiers: $selectedTiers
+            ) { model, width in
+                Image(model.wallpaperImageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: width, height: width * Constants.cardAspect)
+                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius40))
+            }
+
+            Spacer(minLength: .spacing0x)
+            Spacer(minLength: .spacing0x)
+        }
+    }
+
+    // The tiers the carousel shows, keyed by model id, seeded from what each
+    // model last had chosen.
+    static func storedTiers() -> [String: BrightCarouselTier] {
+        var tiers: [String: BrightCarouselTier] = [:]
+        for model in LighthouseModel.allCases {
+            let tier = model.selectedTier()
+            tiers[model.id] = BrightCarouselTier(id: tier.id, name: tier.name, label: tier.label)
+        }
+        return tiers
+    }
+
+    static func save(_ tiers: [String: BrightCarouselTier]) {
+        for model in LighthouseModel.allCases {
+            if let tier = tiers[model.id],
+               let match = model.tiers.first(where: { $0.id == tier.id }) {
+                model.saveTier(match)
+            }
+        }
+    }
+
+    static func model(at index: Int?) -> LighthouseModel {
+        let models = LighthouseModel.allCases
+        return models[min(max(index ?? 0, 0), models.count - 1)]
+    }
+
+    private enum Constants {
+        static let title = "Which LLM would you like to use?"
+        static let subtitle = "You can change your LLM later in lighthouse settings"
+        static let cardWidthRatio: CGFloat = 0.46
+        static let cardAspect: CGFloat = 1.25
+    }
+}
+
 struct LighthouseModelSelectorView: View {
-    var currentModel: LighthouseModel = .chatGPT
-    var onModelSelected: (LighthouseModel) -> Void = { _ in }
-    var onDismiss: () -> Void = {}
+    let currentModel: LighthouseModel
+    let onModelSelected: (LighthouseModel) -> Void
+    let onDismiss: () -> Void
+
     @State private var isShowing = false
     @State private var isClosing = false
     @State private var activeIndex: Int?
-    @State private var selectedTiers: [LighthouseModel: LighthouseModelTier]
+    @State private var selectedTiers: [String: BrightCarouselTier]
 
     init(
         currentModel: LighthouseModel = .chatGPT,
@@ -43,132 +117,63 @@ struct LighthouseModelSelectorView: View {
         self.onModelSelected = onModelSelected
         self.onDismiss = onDismiss
         _activeIndex = State(initialValue: LighthouseModel.allCases.firstIndex(of: currentModel) ?? 0)
-
-        var tiers: [LighthouseModel: LighthouseModelTier] = [:]
-        for model in LighthouseModel.allCases {
-            tiers[model] = model.selectedTier()
-        }
-        _selectedTiers = State(initialValue: tiers)
-    }
-
-    private var visibleModel: LighthouseModel {
-        guard let index = activeIndex,
-              index >= 0, index < LighthouseModel.allCases.count
-        else {
-            return currentModel
-        }
-        return LighthouseModel.allCases[index]
+        _selectedTiers = State(initialValue: LighthouseModelPicker.storedTiers())
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.clear
                 .ignoresSafeArea()
                 .contentShape(.rect)
-                .onTapGesture {
-                    close()
-                }
+                .onTapGesture { close() }
 
             VStack(spacing: .spacing0x) {
-                BrightText("Which LLM would you like to use?", size: .subheading)
-                    .opacity(isShowing ? 1 : 0)
-                    .offset(y: isShowing ? 0 : Constants.titleRise)
-                    .padding(.top, Constants.titleTopPadding)
+                Color.clear
+                    .frame(height: BrightButtonSizes.large.rawValue)
 
-                Spacer()
+                LighthouseModelPicker(activeIndex: $activeIndex, selectedTiers: $selectedTiers)
 
-                modelCarousel
-
-                BrightPageIndicator(
-                    total: LighthouseModel.allCases.count,
-                    activeIndex: $activeIndex
-                )
-                .opacity(isShowing ? 1 : 0)
-                .padding(.top, .spacing10x)
-
-                Spacer()
-            }
-
-            VStack {
-                HStack {
-                    BrightRoundButton(systemImage: "xmark", size: .large) {
-                        close()
-                    }
-
-                    Spacer()
-
-                    BrightRoundButton(systemImage: "checkmark", size: .large, color: .defaultSkyBlue) {
-                        onModelSelected(visibleModel)
-                        close()
-                    }
+                BrightPillButton(Constants.chooseTitle, buttonSize: .large) {
+                    LighthouseModelPicker.save(selectedTiers)
+                    onModelSelected(LighthouseModelPicker.model(at: activeIndex))
+                    close()
                 }
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing1x)
+                .padding(.bottom, .spacing8x)
+            }
+            .opacity(isShowing ? 1 : 0)
+            .offset(y: isShowing ? 0 : Constants.rise)
+
+            HStack {
+                BrightRoundButton(systemImage: "xmark", size: .large) { close() }
 
                 Spacer()
             }
+            .padding(.horizontal, .spacing205x)
+            .opacity(isShowing ? 1 : 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.brightBouncy) {
-                isShowing = true
-            }
+            withAnimation(.brightBouncy) { isShowing = true }
         }
     }
 
-    private var modelCarousel: some View {
-        BrightCarousel(
-            items: LighthouseModel.allCases,
-            activeIndex: $activeIndex,
-            tiers: { model in
-                model.tiers.map { BrightCarouselTier(id: $0.id, name: $0.name, label: $0.label) }
-            },
-            selectedTiers: carouselTiers
-        ) { model, width in
-            Image(model.wallpaperImageName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: width, height: width * Constants.cardAspect)
-                .clipShape(RoundedRectangle(cornerRadius: .cornerRadius40))
-        }
-    }
-
-    // Bridges the carousel's presentational tiers to the persisted
-    // LighthouseModelTier keyed by model.
-    private var carouselTiers: Binding<[String: BrightCarouselTier]> {
-        Binding(
-            get: {
-                selectedTiers.reduce(into: [:]) { dict, entry in
-                    dict[entry.key.rawValue] = BrightCarouselTier(
-                        id: entry.value.id,
-                        name: entry.value.name,
-                        label: entry.value.label
-                    )
-                }
-            },
-            set: { newValue in
-                for (key, tier) in newValue {
-                    if let model = LighthouseModel(rawValue: key),
-                       let selected = model.tiers.first(where: { $0.id == tier.id }) {
-                        selectedTiers[model] = selected
-                    }
-                }
-            }
-        )
-    }
-
+    // Plays the arrival in reverse, then hands over so the host can fade the
+    // whole picker away rather than cut to the chat.
     private func close() {
         guard !isClosing else { return }
         isClosing = true
-        for (model, tier) in selectedTiers {
-            model.saveTier(tier)
+        LighthouseModelPicker.save(selectedTiers)
+        withAnimation(.brightEaseInOut) { isShowing = false }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(Constants.closeDelay))
+            onDismiss()
         }
-        onDismiss()
     }
 
     private enum Constants {
-        static let titleTopPadding: CGFloat = 100
-        static let titleRise: CGFloat = 20
-        static let cardAspect: CGFloat = 1.25
+        static let chooseTitle = "Choose"
+        static let rise: CGFloat = 20
+        static let closeDelay = 200
     }
 }
 

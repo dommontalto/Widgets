@@ -35,12 +35,14 @@ struct LighthouseLayer: View {
     }
 
     var body: some View {
-        ZStack {
+        // Top-aligned throughout: the layer shrinks with the keyboard, and
+        // nothing in it may ignore the keyboard or the stack grows past its
+        // siblings and drags the chat down behind it.
+        ZStack(alignment: .top) {
             if isPresented {
                 if showOnboarding {
                     onboarding
                         .overlay(alignment: .top) { chrome }
-                        .ignoresSafeArea(.keyboard)
                         .transition(.asymmetric(
                             insertion: .move(edge: .bottom).combined(with: .opacity),
                             removal: .opacity
@@ -51,10 +53,9 @@ struct LighthouseLayer: View {
                         .allowsHitTesting(!showingModelSelector)
 
                     // Rides sideways with the chat page but is laid out here,
-                    // outside the keyboard's reach, so it never lifts with it.
+                    // pinned to the layer's top, so the keyboard can't lift it.
                     chrome
                         .frame(maxHeight: .infinity, alignment: .top)
-                        .ignoresSafeArea(.keyboard)
                         .offset(x: chatOffset)
                         .transition(.opacity)
                         .allowsHitTesting(!showingModelSelector)
@@ -74,6 +75,11 @@ struct LighthouseLayer: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // The layer runs to the screen's bottom edge itself. Left to the chat,
+        // that ignore expands it past the layer's frame by the home-indicator
+        // inset, which is exactly how far its input card then sits under the
+        // keyboard.
+        .ignoresSafeArea(.container, edges: .bottom)
     }
 
     private var onboarding: some View {
