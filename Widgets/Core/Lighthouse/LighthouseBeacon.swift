@@ -8,8 +8,8 @@
 import SwiftUI
 
 // The Lighthouse mark: a dim lens ring with the lamp banked on one side and
-// the glow it throws across the inside. The lamp sweeps one full turn like a
-// lighthouse lens as the mark appears, then settles.
+// the glow it throws across the inside. The lamp turns without stopping, like
+// a lighthouse lens.
 struct LighthouseBeacon: View {
     var size: CGFloat = Constants.size
 
@@ -25,7 +25,12 @@ struct LighthouseBeacon: View {
 
             lamp
                 .rotationEffect(.degrees(isSweeping ? 360 : 0))
-                .animation(.easeInOut(duration: Constants.sweepDuration), value: isSweeping)
+                // 360° back to 0° is the same frame, so a linear repeat reads
+                // as one unbroken turn.
+                .animation(
+                    .linear(duration: Constants.sweepDuration).repeatForever(autoreverses: false),
+                    value: isSweeping
+                )
         }
         .frame(width: size, height: size)
         .onAppear {

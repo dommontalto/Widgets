@@ -113,6 +113,15 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     var body: some View {
         thread
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // An empty thread stops taking taps, so the ground behind it takes
+            // the tap that puts the keyboard away.
+            .background {
+                if isTyping.wrappedValue {
+                    Color.clear
+                        .contentShape(.rect)
+                        .onTapGesture { isTyping.wrappedValue = false }
+                }
+            }
             .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
                 inputCard
             }

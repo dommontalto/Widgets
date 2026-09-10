@@ -44,7 +44,7 @@ struct LighthouseChatView: View {
             },
             modelPicker: { modelPickerButton }
         )
-        .overlay(alignment: .top) {
+        .overlay {
             if messages.isEmpty {
                 welcome
                     .allowsHitTesting(false)
@@ -59,14 +59,22 @@ struct LighthouseChatView: View {
         .onDisappear { replyTask?.cancel() }
     }
 
+    // One spacer above and three below park it a quarter of the way down, and
+    // let it ride up and back as the keyboard comes and goes.
     private var welcome: some View {
         VStack(spacing: .spacing2x) {
+            Spacer(minLength: .spacing0x)
+
             LighthouseBeacon()
 
             BrightText(Constants.welcome, size: .subheading, color: .semiLightTextColor)
                 .multilineTextAlignment(.center)
+
+            Spacer(minLength: .spacing0x)
+            Spacer(minLength: .spacing0x)
+            Spacer(minLength: .spacing0x)
         }
-        .padding(.top, .spacing4x)
+        .frame(maxHeight: .infinity)
         .padding(.horizontal, .spacing6x)
     }
 
