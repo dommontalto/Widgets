@@ -31,7 +31,7 @@ struct ContentView: View {
         }
         .environment(builder)
         .ignoresSafeArea(.keyboard)
-        .overlay {
+        .overlay(alignment: .top) {
             LighthouseLayer(
                 isPresented: $showingLighthouse,
                 showOnboarding: $showingLighthouseOnboarding,

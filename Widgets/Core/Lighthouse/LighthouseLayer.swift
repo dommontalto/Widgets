@@ -38,7 +38,10 @@ struct LighthouseLayer: View {
     }
 
     var body: some View {
-        ZStack {
+        // Top-aligned: the chat's height changes as the keyboard comes and
+        // goes, and a centred stack would share that change between its top
+        // and bottom edges, nudging the chrome.
+        ZStack(alignment: .top) {
             if isPresented {
                 if showOnboarding {
                     onboarding
