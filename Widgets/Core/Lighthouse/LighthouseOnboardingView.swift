@@ -61,7 +61,7 @@ struct LighthouseOnboardingView: View {
             Spacer(minLength: .spacing0x)
 
             LighthouseBeacon(size: Constants.beaconSize)
-                .padding(.bottom, .spacing8x)
+                .padding(.bottom, .spacing2x)
 
             BrightText(Constants.welcomeTitle, size: .standout1, color: .semiLightTextColor)
 
@@ -118,7 +118,7 @@ struct LighthouseOnboardingView: View {
             BrightPillButton(buttonTitle, buttonSize: .large, onTapCallback: advance)
                 .animation(.brightBouncy, value: page)
         }
-        .padding(.bottom, .spacing8x)
+        .padding(.bottom, .spacing2x)
     }
 
     private var buttonTitle: String {

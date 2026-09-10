@@ -37,7 +37,7 @@ struct LighthouseMenuView: View {
             Spacer(minLength: .spacing0x)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
+        .overlay(alignment: .bottom) {
             bottomBar
         }
     }
@@ -170,7 +170,7 @@ struct LighthouseMenuView: View {
             )
         }
         .padding(.horizontal, .spacing3x)
-        .padding(.bottom, .spacing8x)
+        .padding(.bottom, .spacing2x)
     }
 
     private enum Constants {

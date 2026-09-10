@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
     @State private var showingLighthouseOnboarding = true
+    @State private var showingLighthouseCheckIns = false
     @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
@@ -30,12 +31,11 @@ struct ContentView: View {
         }
         .environment(builder)
         .ignoresSafeArea(.keyboard)
-        // Pinned to the top: the layer shrinks by the keyboard, and a centred
-        // overlay would split that shift between its chrome and its input bar.
-        .overlay(alignment: .top) {
+        .overlay {
             LighthouseLayer(
                 isPresented: $showingLighthouse,
                 showOnboarding: $showingLighthouseOnboarding,
+                showingCheckIns: $showingLighthouseCheckIns,
                 isTyping: $lighthouseTyping
             )
         }
@@ -179,6 +179,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingSession) {
             ExerciseSheet()
+        }
+        .sheet(isPresented: $showingLighthouseCheckIns) {
+            LighthouseCheckInsSheet()
         }
         .sheet(isPresented: $showingProgram) {
             ExerciseCreateProgramSheet()

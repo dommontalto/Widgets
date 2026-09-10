@@ -15,13 +15,16 @@ struct LighthouseLayer: View {
     // On for now, so every open starts with the onboarding; finishing it puts
     // the chat in its place until it is switched back on.
     @Binding var showOnboarding: Bool
+    // Presented by the screen underneath, not here: a sheet modifier inside
+    // the layer wraps it in a UIKit host, and the chat's input card stops
+    // tracking the keyboard the moment that happens.
+    @Binding var showingCheckIns: Bool
     var isTyping: FocusState<Bool>.Binding
 
     @State private var isThinking = false
     @State private var model = LighthouseModel.chatGPT
     @State private var showingModelSelector = false
     @State private var page = Page.chat
-    @State private var showingCheckIns = false
     @State private var pageWidth: CGFloat = 0
     // How far the pages have been dragged sideways, so they follow the finger.
     @State private var pageDrag: CGFloat = 0
@@ -35,10 +38,7 @@ struct LighthouseLayer: View {
     }
 
     var body: some View {
-        // Top-aligned throughout: the layer shrinks with the keyboard, and
-        // nothing in it may ignore the keyboard or the stack grows past its
-        // siblings and drags the chat down behind it.
-        ZStack(alignment: .top) {
+        ZStack {
             if isPresented {
                 if showOnboarding {
                     onboarding
@@ -52,8 +52,6 @@ struct LighthouseLayer: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .allowsHitTesting(!showingModelSelector)
 
-                    // Rides sideways with the chat page but is laid out here,
-                    // pinned to the layer's top, so the keyboard can't lift it.
                     chrome
                         .frame(maxHeight: .infinity, alignment: .top)
                         .offset(x: chatOffset)
@@ -74,12 +72,6 @@ struct LighthouseLayer: View {
                     .transition(.opacity)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        // The layer runs to the screen's bottom edge itself. Left to the chat,
-        // that ignore expands it past the layer's frame by the home-indicator
-        // inset, which is exactly how far its input card then sits under the
-        // keyboard.
-        .ignoresSafeArea(.container, edges: .bottom)
     }
 
     private var onboarding: some View {
@@ -158,9 +150,6 @@ struct LighthouseLayer: View {
             onNewChat: showChat,
             onClose: showChat
         )
-        .sheet(isPresented: $showingCheckIns) {
-            LighthouseCheckInsSheet()
-        }
     }
 
     private var chrome: some View {
