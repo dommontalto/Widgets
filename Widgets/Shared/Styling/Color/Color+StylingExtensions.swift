@@ -79,7 +79,7 @@ nonisolated extension Color {
     
     fileprivate static let sheetGrey = Color(hex: "#141419")
     
-    fileprivate static let cardGrey = Color(hex: "#0E0E14")
+    fileprivate static let cardGrey = Color(hex: "#1A1A1F")
     fileprivate static let modalCardGrey = Color(hex: "#27272E")
     fileprivate static let sheetModalCardGrey = Color(hex: "#27272F")
     

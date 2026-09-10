@@ -55,12 +55,7 @@ struct LighthouseChatView: View {
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing9x)
         }
-        .background {
-            LighthouseChatBackground()
-                // The screen behind still scrolls until the thread has something
-                // in it.
-                .allowsHitTesting(!messages.isEmpty)
-        }
+        .background { LighthouseChatBackground() }
         .onDisappear { replyTask?.cancel() }
     }
 

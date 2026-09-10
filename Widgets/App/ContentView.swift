@@ -12,9 +12,6 @@ struct ContentView: View {
     @State private var showingProgram = false
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
-    @State private var lighthouseThinking = false
-    @State private var lighthouseModel = LighthouseModel.chatGPT
-    @State private var showingModelSelector = false
     @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
@@ -32,77 +29,13 @@ struct ContentView: View {
         }
         .environment(builder)
         .ignoresSafeArea(.keyboard)
-        .overlay(alignment: .bottom) {
-            if showingLighthouse {
-                LighthouseChatView(
-                    isThinking: $lighthouseThinking,
-                    selectedModel: $lighthouseModel,
-                    showingModelSelector: $showingModelSelector,
-                    isTyping: $lighthouseTyping,
-                    onDismiss: closeLighthouse
-                )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .allowsHitTesting(!showingModelSelector)
-            }
-        }
         .overlay {
-            if lighthouseThinking {
-                BrightScreenEdgeBeam(colorVariant: .skyBlueCyan)
-                    .transition(.identity)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if showingLighthouse {
-                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
-                    .padding(.trailing, .spacing205x)
-                    .transition(.opacity)
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            if showingLighthouse {
-                BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large) {}
-                    .padding(.leading, .spacing205x)
-                    .transition(.opacity)
-            }
-        }
-        // The picker sits in front of the input bar and the close button so
-        // nothing shows through it.
-        .overlay {
-            if showingModelSelector {
-                ZStack {
-                    LighthouseModelSelectorBackground()
-                    LighthouseModelSelectorView(currentModel: lighthouseModel) { model in
-                        lighthouseModel = model
-                    } onDismiss: {
-                        withAnimation(.brightBouncy) { showingModelSelector = false }
-                    }
-                }
-                .transition(.opacity)
-            }
+            LighthouseLayer(isPresented: $showingLighthouse, isTyping: $lighthouseTyping)
         }
     }
 
     private var sessions: [ExerciseQuickSession] {
         builder.saved
-    }
-
-    private func closeLighthouse() {
-        guard lighthouseTyping else {
-            withAnimation(.brightBouncy) { showingLighthouse = false }
-            return
-        }
-        UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder),
-            to: nil,
-            from: nil,
-            for: nil
-        )
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            withAnimation(.brightBouncy) {
-                showingLighthouse = false
-            }
-        }
     }
 
     private func start(_ session: ExerciseQuickSession) {
