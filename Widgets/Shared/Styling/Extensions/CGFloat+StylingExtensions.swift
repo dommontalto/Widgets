@@ -97,7 +97,11 @@ nonisolated extension CGFloat {
 
     static var cornerRadius24: CGFloat = 24
 
+    static let cornerRadius36: CGFloat = 36
+
     static let cornerRadius40: CGFloat = 40
+
+    static let cornerRadius44: CGFloat = 44
 
     static let cornerRadius50: CGFloat = 50
 

@@ -44,16 +44,35 @@ struct LighthouseChatView: View {
             },
             modelPicker: { modelPickerButton }
         )
+        .overlay(alignment: .top) {
+            if messages.isEmpty {
+                welcome
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.brightEaseInOut, value: messages.isEmpty)
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing9x)
         }
         .background {
             LighthouseChatBackground()
-                .opacity(messages.isEmpty ? 0 : 1)
+                // The screen behind still scrolls until the thread has something
+                // in it.
                 .allowsHitTesting(!messages.isEmpty)
-                .animation(.brightEaseInOut, value: messages.isEmpty)
         }
         .onDisappear { replyTask?.cancel() }
+    }
+
+    private var welcome: some View {
+        VStack(spacing: .spacing2x) {
+            LighthouseBeacon()
+
+            BrightText(Constants.welcome, size: .subheading, color: .semiLightTextColor)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.top, .spacing4x)
+        .padding(.horizontal, .spacing6x)
     }
 
     private var modelPickerButton: some View {
@@ -61,13 +80,30 @@ struct LighthouseChatView: View {
             guard !isThinking else { return }
             withAnimation(.brightBouncy) { showingModelSelector = true }
         } label: {
-            Image(selectedModel.tierImageName)
-                .frame(height: BrightButtonSizes.large.rawValue)
-                .padding(.leading, .spacing1x)
-                // The glyph is narrow, so the target reaches past it without
-                // widening the gap to the field.
-                .contentShape(Rectangle().inset(by: -.spacing2x))
+            HStack(spacing: .spacing1x) {
+                Image(selectedModel.tierImageName)
+                    .frame(height: BrightButtonSizes.large.rawValue)
+
+                speedPill
+            }
+            .padding(.leading, .spacing1x)
+            // The glyph is narrow, so the target reaches past it without
+            // widening the gap to the field.
+            .contentShape(Rectangle().inset(by: -.spacing2x))
         }
+    }
+
+    private var speedPill: some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: "hare.fill")
+                .font(.standard(size: .body1, weight: .light))
+
+            BrightText("Fast", size: .body1)
+        }
+        .foregroundStyle(Color.semiLightTextColor)
+        .padding(.horizontal, .spacing1x)
+        .padding(.vertical, .spacing05x)
+        .background(Color.textColor.opacity(.ultraLowOpacity), in: .capsule)
     }
 
     private func send(_ text: String) {
@@ -113,6 +149,7 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
+        static let welcome = "Welcome to lighthouse. What would you like to do?"
         static let thinkingRange = 2.5...4.0
         static let prompts = [
             "Why is my sleep bad?",

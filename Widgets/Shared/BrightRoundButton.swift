@@ -36,6 +36,7 @@ struct BrightRoundButton: View {
     init(
         systemImage: String,
         size: BrightButtonSizes = .medium,
+        fontSize: FontSizes? = nil,
         color: Color? = nil,
         imageColor: Color? = nil,
         imageRotation: Angle = .zero,
@@ -46,7 +47,7 @@ struct BrightRoundButton: View {
     ) {
         self.imageSource = .system(systemImage)
         self.size = size
-        self.fontSize = nil
+        self.fontSize = fontSize
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
@@ -59,6 +60,7 @@ struct BrightRoundButton: View {
     init(
         imageName: String,
         size: BrightButtonSizes = .medium,
+        fontSize: FontSizes? = nil,
         color: Color? = nil,
         imageColor: Color? = nil,
         imageRotation: Angle = .zero,
@@ -67,7 +69,7 @@ struct BrightRoundButton: View {
     ) {
         self.imageSource = .asset(imageName)
         self.size = size
-        self.fontSize = nil
+        self.fontSize = fontSize
         self.color = color
         self.imageColor = imageColor
         self.imageRotation = imageRotation
@@ -138,14 +140,23 @@ struct BrightRoundButton: View {
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
-                .frame(width: size.glyphSize, height: size.glyphSize)
+                .frame(width: glyphBox, height: glyphBox)
         case .text(let title):
             BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor, weight: .regular)
         }
     }
 
+    // An asset wider than it is tall loses height to a square fit box, so a
+    // mark drawn bigger than the default 17pt can ask for its own.
+    private var glyphBox: CGFloat {
+        fontSize?.rawValue ?? size.glyphSize
+    }
+
     private var glyphFont: Font {
-        size == .large ? .body.weight(.regular) : .system(size: size.glyphSize, weight: .medium)
+        if let fontSize {
+            return .system(size: fontSize.rawValue, weight: size == .large ? .regular : .medium)
+        }
+        return size == .large ? .body.weight(.regular) : .system(size: size.glyphSize, weight: .medium)
     }
 
     private var resolvedHaptic: BrightHaptic? {

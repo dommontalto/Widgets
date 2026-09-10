@@ -51,9 +51,16 @@ struct ContentView: View {
                     .transition(.identity)
             }
         }
-        .overlay(alignment: .topLeading) {
+        .overlay(alignment: .topTrailing) {
             if showingLighthouse {
                 BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: closeLighthouse)
+                    .padding(.trailing, .spacing205x)
+                    .transition(.opacity)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if showingLighthouse {
+                BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large) {}
                     .padding(.leading, .spacing205x)
                     .transition(.opacity)
             }
@@ -79,9 +86,6 @@ struct ContentView: View {
         builder.saved
     }
 
-    // Resign first so the keyboard glides down with its system animation —
-    // tearing the focused field out with the view snaps it away instead. With
-    // no keyboard up there is nothing to wait for.
     private func closeLighthouse() {
         guard lighthouseTyping else {
             withAnimation(.brightBouncy) { showingLighthouse = false }

@@ -25,7 +25,6 @@ nonisolated extension Color {
     static let defaultWhiteBlack = Color(light: .black, dark: .white)
     static let defaultBlackWhite = Color(light: .white, dark: .black)
     
-    static let defaultHomeCards = Color(light: .white, dark: .homeCardGrey)
     static let defaultCards = Color(light: .white, dark: .cardGrey)
     static let defaultModalCards = Color(light: .white, dark: .modalCardGrey)
     static let defaultSheetModalCards = Color(light: .white, dark: .sheetModalCardGrey)
@@ -43,7 +42,7 @@ nonisolated extension Color {
     static let defaultSkyBlueCyan = Color(light: .defaultSkyBlue, dark: .defaultCyan)
     static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
     
-    static let defaultGrey = Color(hex: "#EDEFF2")
+    static let defaultGrey = Color(hex: "#F2F2F7")
     
     static let defaultDarkGreen = Color(hex: "#1A3D45")
     static let defaultBrightGreen = Color(hex: "#2FB360")
@@ -78,12 +77,11 @@ nonisolated extension Color {
     fileprivate static let mainGreyLight = Color(hex: "#CDD4D8")
     fileprivate static let mainGreyDark = Color(hex: "#232623")
     
-    fileprivate static let sheetGrey = Color(hex: "#18181C")
+    fileprivate static let sheetGrey = Color(hex: "#141419")
     
-    fileprivate static let homeCardGrey = Color(hex: "#0E0E14")
-    fileprivate static let cardGrey = Color(hex: "#1B1B20")
+    fileprivate static let cardGrey = Color(hex: "#0E0E14")
     fileprivate static let modalCardGrey = Color(hex: "#27272E")
-    fileprivate static let sheetModalCardGrey = Color(hex: "#2A2A2F")
+    fileprivate static let sheetModalCardGrey = Color(hex: "#27272F")
     
     // MARK: -- Sections
     

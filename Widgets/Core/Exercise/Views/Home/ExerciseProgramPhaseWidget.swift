@@ -321,7 +321,8 @@ struct ExerciseProgramPhaseWidget: View {
             BrightText("Create a program", size: .body1, weight: .regular)
             BrightRoundButton(systemImage: "play.fill", size: .medium, onTapCallback: onCreate)
         }
-        .frame(maxWidth: .infinity)
+        .padding(.leading, x(for: today) + Constants.createLabelInset)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, .spacing205x)
         .background(Color.defaultGreen.opacity(.finalBossLowOpacity))
         .overlay(alignment: .top) { bandEdge }
@@ -381,7 +382,10 @@ struct ExerciseProgramPhaseWidget: View {
 
     private enum Constants {
         static let todayX: CGFloat = 84
-        static let dayWidth: CGFloat = 5
+        // Holds the create label just clear of today's marker, so it stays put
+        // whatever the day scale is.
+        static let createLabelInset: CGFloat = .spacing4x
+        static let dayWidth: CGFloat = 8
         static let emptyMonthDays = 365
         static let daysBefore = 60 + emptyMonthDays
         static let daysAfter = 120 + emptyMonthDays

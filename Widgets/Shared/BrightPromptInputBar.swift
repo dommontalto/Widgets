@@ -14,6 +14,8 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     var showsModelPicker: Bool
     var onSend: () -> Void
     var onStop: () -> Void
+    var onAttach: () -> Void
+    var onDictate: () -> Void
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
@@ -25,6 +27,8 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         showsModelPicker: Bool,
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
+        onAttach: @escaping () -> Void = {},
+        onDictate: @escaping () -> Void = {},
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -33,28 +37,38 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         self.showsModelPicker = showsModelPicker
         self.onSend = onSend
         self.onStop = onStop
+        self.onAttach = onAttach
+        self.onDictate = onDictate
         self.modelPicker = modelPicker()
     }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: .spacing2x) {
-            if showsModelPicker {
-                modelPicker
-                    .frame(height: BrightButtonSizes.large.rawValue)
-            }
-
+        VStack(alignment: .leading, spacing: .spacing2x) {
             field
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: BrightButtonSizes.large.rawValue)
 
-            sendOrStopButton
+            HStack(alignment: .center, spacing: .spacing2x) {
+                if showsModelPicker {
+                    modelPicker
+                        .frame(height: BrightButtonSizes.large.rawValue)
+                }
+
+                Spacer(minLength: .spacing2x)
+
+                HStack(spacing: .spacing0x) {
+                    glyphButton("plus", action: onAttach)
+                    glyphButton("mic.fill", action: onDictate)
+                }
+
+                sendOrStopButton
+            }
         }
         .animation(.brightBouncy, value: isBusy)
         .padding(.spacing2x)
         .frame(maxWidth: .infinity)
         .contentShape(.rect)
         .onTapGesture { isFocused.wrappedValue = true }
-        .modifier(GlassEffect(shape: .roundedRect, cornerRadius: Constants.cornerRadius))
+        .modifier(GlassEffect(shape: .unevenRoundedRect(top: Constants.topCorner, bottom: Constants.bottomCorner)))
         .geometryGroup()
     }
 
@@ -74,17 +88,26 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                 .focused(isFocused)
                 .submitLabel(.return)
         }
-        .padding(.vertical, .spacing105x)
-        .padding(.leading, showsModelPicker ? .spacing0x : .spacing1x)
+        .padding(.top, .spacing105x)
+        .padding(.horizontal, .spacing1x)
+    }
+
+    // A bare glyph rather than a BrightRoundButton: inside the card's own glass
+    // a second glass circle reads as a chip.
+    private func glyphButton(_ systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.standard(size: .subheading1, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                // Narrower than it is tall so the two glyphs sit close together
+                // while each keeps a 44pt-tall tap target.
+                .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.large.rawValue)
+                .contentShape(Rectangle())
+        }
     }
 
     private var sendOrStopButton: some View {
-        BrightRoundButton(
-            systemImage: isBusy ? "stop.fill" : "arrow.up",
-            size: .large,
-            color: .textColor,
-            imageColor: .defaultBlackWhite
-        ) {
+        BrightRoundButton(systemImage: isBusy ? "stop.fill" : "arrow.up", size: .large) {
             if isBusy {
                 onStop()
             } else {
@@ -105,7 +128,8 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
 }
 
 private enum Constants {
-    static let cornerRadius: CGFloat = (BrightButtonSizes.large.rawValue + .spacing2x * 2) / 2
+    static let topCorner: CGFloat = .cornerRadius36
+    static let bottomCorner: CGFloat = .cornerRadius44
     static let maxLines = 8
 }
 
@@ -116,7 +140,9 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
         isFocused: FocusState<Bool>.Binding,
         showsModelPicker: Bool = false,
         onSend: @escaping () -> Void,
-        onStop: @escaping () -> Void
+        onStop: @escaping () -> Void,
+        onAttach: @escaping () -> Void = {},
+        onDictate: @escaping () -> Void = {}
     ) {
         self.init(
             text: text,
@@ -124,7 +150,9 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
             isFocused: isFocused,
             showsModelPicker: showsModelPicker,
             onSend: onSend,
-            onStop: onStop
+            onStop: onStop,
+            onAttach: onAttach,
+            onDictate: onDictate
         ) {
             EmptyView()
         }

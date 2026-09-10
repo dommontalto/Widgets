@@ -122,7 +122,14 @@ struct ExerciseCompleteSheet: View {
     }
 
     var body: some View {
-        page
+        if sessions.isEmpty {
+            container {
+                ExerciseFinishingOrb(glassed: false)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        } else {
+            page
+        }
     }
 
     // MARK: - Chrome
