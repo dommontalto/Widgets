@@ -12,12 +12,16 @@ import SwiftUI
 // underneath only says whether it is up.
 struct LighthouseLayer: View {
     @Binding var isPresented: Bool
+    // On for now, so every open starts with the onboarding; finishing it puts
+    // the chat in its place until it is switched back on.
+    @Binding var showOnboarding: Bool
     var isTyping: FocusState<Bool>.Binding
 
     @State private var isThinking = false
     @State private var model = LighthouseModel.chatGPT
     @State private var showingModelSelector = false
     @State private var page = Page.chat
+    @State private var showingCheckIns = false
     @State private var pageWidth: CGFloat = 0
     // How far the pages have been dragged sideways, so they follow the finger.
     @State private var pageDrag: CGFloat = 0
@@ -26,20 +30,35 @@ struct LighthouseLayer: View {
     @State private var isPaging: Bool?
 
     private enum Page: Hashable {
-        case placeholder
+        case menu
         case chat
     }
 
     var body: some View {
         ZStack {
             if isPresented {
-                pages
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .allowsHitTesting(!showingModelSelector)
+                if showOnboarding {
+                    onboarding
+                        .overlay(alignment: .top) { chrome }
+                        .ignoresSafeArea(.keyboard)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                } else {
+                    pages
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .allowsHitTesting(!showingModelSelector)
 
-                chrome
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .transition(.opacity)
+                    // Rides sideways with the chat page but is laid out here,
+                    // outside the keyboard's reach, so it never lifts with it.
+                    chrome
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .ignoresSafeArea(.keyboard)
+                        .offset(x: chatOffset)
+                        .transition(.opacity)
+                        .allowsHitTesting(!showingModelSelector)
+                }
             }
 
             if isThinking {
@@ -54,15 +73,24 @@ struct LighthouseLayer: View {
                     .transition(.opacity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    // The page still to come, then the chat Lighthouse opens on. The chrome
-    // stays put over both. Hand-rolled rather than a ScrollView or TabView:
-    // both host the chat in a way that loses either the keyboard inset or its
-    // animation, so the input card stops tracking the keyboard.
+    private var onboarding: some View {
+        LighthouseOnboardingView(selectedModel: $model) {
+            withAnimation(.brightEaseInOut) { showOnboarding = false }
+        }
+        .background { LighthouseChatBackground() }
+    }
+
+    // The menu, then the chat Lighthouse opens on, each carrying its own top
+    // row so the buttons travel with the page. Hand-rolled rather than a
+    // ScrollView or TabView: both host the chat in a way that loses either the
+    // keyboard inset or its animation, so the input card stops tracking the
+    // keyboard.
     private var pages: some View {
         ZStack {
-            placeholder
+            menu
                 .offset(x: chatOffset - pageWidth)
 
             LighthouseChatView(
@@ -82,7 +110,7 @@ struct LighthouseLayer: View {
         .simultaneousGesture(pageDragGesture)
         .brightHaptic(.impact, trigger: page)
         .onChange(of: page) { _, page in
-            guard page == .placeholder else { return }
+            guard page == .menu else { return }
             withAnimation(.brightEaseInOut) { isTyping.wrappedValue = false }
         }
     }
@@ -107,8 +135,8 @@ struct LighthouseLayer: View {
                 let projected = value.predictedEndTranslation.width
                 withAnimation(.brightBouncy) {
                     if page == .chat, projected > pageWidth / 2 {
-                        page = .placeholder
-                    } else if page == .placeholder, projected < -pageWidth / 2 {
+                        page = .menu
+                    } else if page == .menu, projected < -pageWidth / 2 {
                         page = .chat
                     }
                     pageDrag = 0
@@ -116,23 +144,35 @@ struct LighthouseLayer: View {
             }
     }
 
-    private var placeholder: some View {
-        BrightPlaceholderView(
-            systemImage: "sparkles",
-            title: "Coming soon",
-            subtitle: "This part of Lighthouse is still on its way."
+    private var menu: some View {
+        LighthouseMenuView(
+            model: model,
+            onSwitchModel: { withAnimation(.brightBouncy) { showingModelSelector = true } },
+            onCheckIns: { showingCheckIns = true },
+            onNewChat: showChat,
+            onClose: showChat
         )
+        .sheet(isPresented: $showingCheckIns) {
+            LighthouseCheckInsSheet()
+        }
     }
 
     private var chrome: some View {
-        HStack(spacing: .spacing0x) {
-            BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large) {}
+        HStack(spacing: .spacing2x) {
+            if !showOnboarding {
+                BrightRoundButton(systemImage: "line.3.horizontal", size: .large) {
+                    withAnimation(.brightBouncy) { page = .menu }
+                }
+
+                BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large) {}
+            }
 
             Spacer()
 
             BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: close)
         }
         .padding(.horizontal, .spacing205x)
+        .animation(.brightEaseInOut, value: showOnboarding)
     }
 
     private var modelSelector: some View {
@@ -162,6 +202,10 @@ struct LighthouseLayer: View {
             try? await Task.sleep(for: .milliseconds(250))
             dismiss()
         }
+    }
+
+    private func showChat() {
+        withAnimation(.brightBouncy) { page = .chat }
     }
 
     // Reopening lands on the chat, whichever page was showing when it closed.

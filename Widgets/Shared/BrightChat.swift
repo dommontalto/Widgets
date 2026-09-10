@@ -262,13 +262,15 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         HStack(spacing: .spacing0x) {
             Spacer(minLength: .spacing8x)
 
-            BrightText(message.text, size: .body1)
+            BrightText(message.text, size: .body1, color: .defaultCyan)
                 .lineSpacing(.lineSpacingMedium)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, .spacing3x)
                 .padding(.vertical, .spacing2x)
-                .modifier(GlassEffect(shape: .cornerRadii(Constants.bubbleRadii), interactive: false))
-                .shadow(color: .black.opacity(.ultraLowOpacity), radius: 15)
+                .background(
+                    Color.defaultCyan.opacity(.ultraLowOpacity),
+                    in: RoundedRectangle(cornerRadius: .cornerRadius22, style: .continuous)
+                )
         }
     }
 
@@ -507,14 +509,6 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 // Outside the struct: a generic type cannot hold static stored properties.
 private enum Constants {
     static let thinkingID = "thinking"
-
-    // The corner nearest the sender is the tight one.
-    static let bubbleRadii = RectangleCornerRadii(
-        topLeading: .cornerRadius22,
-        bottomLeading: .cornerRadius22,
-        bottomTrailing: .cornerRadius12,
-        topTrailing: .cornerRadius22
-    )
 
     static let orbSize: CGFloat = 64
     // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
