@@ -55,7 +55,6 @@ struct LighthouseChatView: View {
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing9x)
         }
-        .background { LighthouseChatBackground() }
         .onDisappear { replyTask?.cancel() }
     }
 
@@ -192,5 +191,6 @@ struct LighthouseChatBackground: View {
                 isTyping: $isTyping,
                 onDismiss: {}
             )
+            .background { LighthouseChatBackground() }
         }
 }

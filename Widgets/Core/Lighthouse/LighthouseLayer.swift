@@ -17,19 +17,19 @@ struct LighthouseLayer: View {
     @State private var isThinking = false
     @State private var model = LighthouseModel.chatGPT
     @State private var showingModelSelector = false
+    @State private var page = Page.chat
+
+    private enum Page: Hashable {
+        case placeholder
+        case chat
+    }
 
     var body: some View {
         ZStack {
             if isPresented {
-                LighthouseChatView(
-                    isThinking: $isThinking,
-                    selectedModel: $model,
-                    showingModelSelector: $showingModelSelector,
-                    isTyping: isTyping,
-                    onDismiss: close
-                )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .allowsHitTesting(!showingModelSelector)
+                pages
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .allowsHitTesting(!showingModelSelector)
 
                 chrome
                     .frame(maxHeight: .infinity, alignment: .top)
@@ -48,6 +48,40 @@ struct LighthouseLayer: View {
                     .transition(.opacity)
             }
         }
+    }
+
+    // The page still to come, then the chat Lighthouse opens on. The chrome
+    // stays put over both. A paged TabView rather than a horizontal ScrollView:
+    // the scroll view drops the keyboard inset before it reaches the chat, so
+    // the input card would sit under the keyboard.
+    private var pages: some View {
+        TabView(selection: $page) {
+            placeholder
+                .tag(Page.placeholder)
+
+            LighthouseChatView(
+                isThinking: $isThinking,
+                selectedModel: $model,
+                showingModelSelector: $showingModelSelector,
+                isTyping: isTyping,
+                onDismiss: close
+            )
+            .tag(Page.chat)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .brightHaptic(.impact, trigger: page)
+        // Behind the TabView rather than inside its pages: a page's background
+        // stops at the TabView's bounds, leaving a strip of screen showing
+        // under the home indicator.
+        .background { LighthouseChatBackground() }
+    }
+
+    private var placeholder: some View {
+        BrightPlaceholderView(
+            systemImage: "sparkles",
+            title: "Coming soon",
+            subtitle: "This part of Lighthouse is still on its way."
+        )
     }
 
     private var chrome: some View {
@@ -75,7 +109,7 @@ struct LighthouseLayer: View {
     // no keyboard up there is nothing to wait for.
     private func close() {
         guard isTyping.wrappedValue else {
-            withAnimation(.brightBouncy) { isPresented = false }
+            dismiss()
             return
         }
         UIApplication.shared.sendAction(
@@ -86,7 +120,13 @@ struct LighthouseLayer: View {
         )
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(250))
-            withAnimation(.brightBouncy) { isPresented = false }
+            dismiss()
         }
+    }
+
+    // Reopening lands on the chat, whichever page was showing when it closed.
+    private func dismiss() {
+        withAnimation(.brightBouncy) { isPresented = false }
+        page = .chat
     }
 }
