@@ -75,9 +75,12 @@ struct LighthouseLayer: View {
             .offset(x: chatOffset)
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
+        // The wash goes on before the drag so a swipe that starts over bare
+        // background — an empty thread with the keyboard down — still pages.
+        .background { LighthouseChatBackground() }
+        .contentShape(.rect)
         .simultaneousGesture(pageDragGesture)
         .brightHaptic(.impact, trigger: page)
-        .background { LighthouseChatBackground() }
     }
 
     private var chatOffset: CGFloat {
