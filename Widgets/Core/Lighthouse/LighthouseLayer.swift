@@ -81,6 +81,10 @@ struct LighthouseLayer: View {
         .contentShape(.rect)
         .simultaneousGesture(pageDragGesture)
         .brightHaptic(.impact, trigger: page)
+        .onChange(of: page) { _, page in
+            guard page == .placeholder else { return }
+            withAnimation(.brightEaseInOut) { isTyping.wrappedValue = false }
+        }
     }
 
     private var chatOffset: CGFloat {

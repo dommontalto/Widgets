@@ -47,7 +47,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
             field
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(alignment: .center, spacing: .spacing2x) {
+            HStack(alignment: .center, spacing: .spacing1x) {
                 if showsModelPicker {
                     modelPicker
                         .frame(height: BrightButtonSizes.large.rawValue)

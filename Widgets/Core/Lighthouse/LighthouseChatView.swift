@@ -82,7 +82,7 @@ struct LighthouseChatView: View {
             guard !isThinking else { return }
             withAnimation(.brightBouncy) { showingModelSelector = true }
         } label: {
-            HStack(spacing: .spacing1x) {
+            HStack(spacing: .spacing2x) {
                 Image(selectedModel.tierImageName)
                     .frame(height: BrightButtonSizes.large.rawValue)
 
