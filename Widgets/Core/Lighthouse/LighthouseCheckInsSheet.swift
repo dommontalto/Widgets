@@ -65,10 +65,10 @@ struct LighthouseCheckInsSheet: View {
 
                     HStack(spacing: .spacing1x) {
                         Image(systemName: "person.badge.clock.fill")
-                            .font(.standard(size: .body2, weight: .light))
+                            .font(.standard(size: .body1, weight: .light))
                             .foregroundStyle(Color.semiLightTextColor)
 
-                        BrightText(checkIn.wrappedValue.repeats, size: .body2, color: .semiLightTextColor)
+                        BrightText(checkIn.wrappedValue.repeats, size: .body1, color: .semiLightTextColor)
                     }
                 }
 
@@ -82,7 +82,7 @@ struct LighthouseCheckInsSheet: View {
 
             BrightDivider()
 
-            BrightText(checkIn.wrappedValue.detail, size: .body2, color: .lightTextColor)
+            BrightText(checkIn.wrappedValue.detail, size: .body1, color: .lightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
         }

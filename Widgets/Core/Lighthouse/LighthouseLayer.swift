@@ -12,8 +12,8 @@ import SwiftUI
 // underneath only says whether it is up.
 struct LighthouseLayer: View {
     @Binding var isPresented: Bool
-    // On for now, so every open starts with the onboarding; finishing it puts
-    // the chat in its place until it is switched back on.
+    // Finishing the onboarding puts the chat in its place; the flag is stored
+    // by the screen, so it stays off across launches until switched back on.
     @Binding var showOnboarding: Bool
     // Presented by the screen underneath, not here: a sheet modifier inside
     // the layer wraps it in a UIKit host, and the chat's input card stops
@@ -22,7 +22,9 @@ struct LighthouseLayer: View {
     var isTyping: FocusState<Bool>.Binding
 
     @State private var isThinking = false
-    @State private var model = LighthouseModel.chatGPT
+    // The model picked in onboarding (or later, in the selector) survives
+    // relaunches, so a returning user lands on the assistant they chose.
+    @AppStorage(Constants.modelKey) private var model = LighthouseModel.chatGPT
     @State private var showingModelSelector = false
     @State private var page = Page.chat
     @State private var pageWidth: CGFloat = 0
@@ -66,6 +68,16 @@ struct LighthouseLayer: View {
             if isThinking {
                 BrightScreenEdgeBeam(colorVariant: .skyBlueCyan)
                     .transition(.identity)
+            }
+
+            if isThinking {
+                BrightIslandIndicator {
+                    BrightSolvingStars(state: .thinking, ambientMotion: .off)
+                        .aspectRatio(1, contentMode: .fit)
+                        .containerRelativeFrame(.horizontal) { width, _ in
+                            width * Constants.orbWidthFraction
+                        }
+                }
             }
 
             // The picker sits in front of the input bar and the close button so
@@ -161,8 +173,6 @@ struct LighthouseLayer: View {
                 BrightRoundButton(systemImage: "line.3.horizontal", size: .large) {
                     withAnimation(.brightBouncy) { page = .menu }
                 }
-
-                BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large) {}
             }
 
             Spacer()
@@ -214,5 +224,7 @@ struct LighthouseLayer: View {
 
     private enum Constants {
         static let pageDragDistance: CGFloat = 20
+        static let orbWidthFraction: CGFloat = 0.25
+        static let modelKey = "lighthouseSelectedModel"
     }
 }

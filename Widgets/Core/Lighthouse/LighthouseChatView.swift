@@ -29,6 +29,7 @@ struct LighthouseChatView: View {
             isThinking: isThinking,
             isBusy: isThinking,
             isTyping: isTyping,
+            showsThinkingOrb: false,
             suggestions: BrightChatSuggestions(
                 prompts: Constants.prompts,
                 custom: customPrompts,
@@ -152,7 +153,7 @@ struct LighthouseChatView: View {
 
     private enum Constants {
         static let welcome = "Welcome to lighthouse. What would you like to do?"
-        static let thinkingRange = 2.5...4.0
+        static let thinkingRange = 6.0...9.0
         static let prompts = [
             "Why is my sleep bad?",
             "What should I focus on?",
@@ -163,15 +164,6 @@ struct LighthouseChatView: View {
             "Recovery is trending up. Keep the easy cardio on rest days and hold strength volume where it is for another week before adding load.",
             "Resting heart rate has been climbing since Tuesday. That usually shows up two days before you feel run down, so an early night tonight would help.",
         ]
-    }
-}
-
-struct LighthouseChatBackground: View {
-    var body: some View {
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .overlay(Color(light: .clear, dark: .black.opacity(.mediumOpacity)))
-            .ignoresSafeArea()
     }
 }
 

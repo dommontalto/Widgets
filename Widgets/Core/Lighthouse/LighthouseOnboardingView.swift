@@ -104,7 +104,7 @@ struct LighthouseOnboardingView: View {
     }
 
     private var modelPicker: some View {
-        LighthouseModelPicker(activeIndex: $carouselIndex, selectedTiers: $selectedTiers)
+        LighthouseModelPicker(activeIndex: $carouselIndex, selectedTiers: $selectedTiers, isVisible: isLastPage)
     }
 
     // MARK: - Footer

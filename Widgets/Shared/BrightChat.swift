@@ -83,6 +83,9 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     let isThinking: Bool
     let isBusy: Bool
     var isTyping: FocusState<Bool>.Binding
+    // Off when the caller draws the orb somewhere of its own — Lighthouse
+    // hangs it off the Dynamic Island instead of the thread.
+    var showsThinkingOrb = true
     var emptyState: BrightChatEmptyState?
     var suggestions: BrightChatSuggestions?
     var onSend: (String) -> Void
@@ -144,7 +147,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                             .id(message.id)
                     }
 
-                    if isThinking {
+                    if isThinking, showsThinkingOrb {
                         thinkingIndicator
                             .id(Constants.thinkingID)
                     }
@@ -167,7 +170,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                 withAnimation(.brightSnappy) { proxy.scrollTo(last.id, anchor: .bottom) }
             }
             .onChange(of: isThinking) { _, isThinking in
-                guard isThinking else { return }
+                guard isThinking, showsThinkingOrb else { return }
                 withAnimation(.brightSnappy) { proxy.scrollTo(Constants.thinkingID, anchor: .bottom) }
             }
         }
@@ -532,6 +535,7 @@ extension BrightChat where ModelPicker == EmptyView {
         isThinking: Bool,
         isBusy: Bool,
         isTyping: FocusState<Bool>.Binding,
+        showsThinkingOrb: Bool = true,
         emptyState: BrightChatEmptyState? = nil,
         suggestions: BrightChatSuggestions? = nil,
         onSend: @escaping (String) -> Void,
@@ -545,6 +549,7 @@ extension BrightChat where ModelPicker == EmptyView {
             isThinking: isThinking,
             isBusy: isBusy,
             isTyping: isTyping,
+            showsThinkingOrb: showsThinkingOrb,
             emptyState: emptyState,
             suggestions: suggestions,
             onSend: onSend,

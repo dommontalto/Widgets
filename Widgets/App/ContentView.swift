@@ -12,7 +12,7 @@ struct ContentView: View {
     @State private var showingProgram = false
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
-    @State private var showingLighthouseOnboarding = true
+    @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
     @State private var showingLighthouseCheckIns = false
     @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false

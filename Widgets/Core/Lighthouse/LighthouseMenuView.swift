@@ -61,7 +61,7 @@ struct LighthouseMenuView: View {
 
             Spacer(minLength: .spacing2x)
 
-            BrightPillButton(Constants.switchTitle, size: .body3, buttonSize: .small, onTapCallback: onSwitchModel)
+            BrightPillButton(Constants.switchTitle, buttonSize: .small, onTapCallback: onSwitchModel)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing2x + .spacing05x)
@@ -72,6 +72,10 @@ struct LighthouseMenuView: View {
         VStack(spacing: .spacing0x) {
             shortcutRow(symbol: "person.badge.clock.fill", title: Constants.checkInTitle, action: onCheckIns)
             shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle) {}
+            shortcutRow(
+                symbol: "bubble.left.and.bubble.right",
+                title: Constants.temporaryChatTitle
+            ) {}
         }
         .padding(.horizontal, .spacing1x)
     }
@@ -90,7 +94,7 @@ struct LighthouseMenuView: View {
                     Spacer(minLength: .spacing2x)
 
                     Image(systemName: "chevron.right")
-                        .font(.standard(size: .body3, weight: .medium))
+                        .font(.standard(size: .body1, weight: .medium))
                         .foregroundStyle(Color.lightTextColor)
                 }
                 .frame(height: Constants.rowHeight)
@@ -178,6 +182,7 @@ struct LighthouseMenuView: View {
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
+        static let temporaryChatTitle = "Temporary Chat"
         static let historyTitle = "History"
         static let newChatTitle = "New Chat"
         static let tierImageSize: CGFloat = 40
