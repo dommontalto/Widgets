@@ -5,11 +5,13 @@
 //  Created by Dom Montalto on 10/9/2026.
 //
 
+import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 // Lighthouse as a full-screen cover over the app: the onboarding on first run,
-// then the chat with the side menu behind it, with the edge beam and the
-// island orb while it thinks and the model picker in front of the lot.
+// then the chat with the side menu behind it, with the island orb while it
+// thinks and the model picker in front of the lot.
 // Keeping the chat out of a paging scroll view lets its bottom safe-area inset
 // stay attached to the keyboard throughout its interactive dismissal.
 struct LighthouseScreen: View {
@@ -26,6 +28,10 @@ struct LighthouseScreen: View {
     @State private var isThinking = false
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
+    @State private var showingThoughtProcess = false
+    @State private var attachments = [BrightChatAttachment]()
+    @State private var attachmentSource: BrightChatAttachmentSource?
+    @State private var pickedPhotos = [PhotosPickerItem]()
     @State private var isMenuOpen = false
     @FocusState private var isTyping: Bool
 
@@ -64,6 +70,33 @@ struct LighthouseScreen: View {
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
         }
+        .sheet(isPresented: $showingThoughtProcess) {
+            LighthouseThoughtProcessSheet(steps: LighthouseDemo.thoughtSteps)
+        }
+        .photosPicker(
+            isPresented: attaching(.photos),
+            selection: $pickedPhotos,
+            maxSelectionCount: Constants.maxAttachments,
+            matching: .images
+        )
+        .onChange(of: pickedPhotos) { _, items in
+            guard !items.isEmpty else { return }
+            pickedPhotos = []
+            Task { await attach(items) }
+        }
+        .fullScreenCover(isPresented: attaching(.camera)) {
+            BrightCameraPicker { image in
+                attachments.append(BrightChatAttachment(image: image))
+            }
+            .ignoresSafeArea()
+        }
+        .fileImporter(
+            isPresented: attaching(.files),
+            allowedContentTypes: [.image],
+            allowsMultipleSelection: true
+        ) { result in
+            attach(try? result.get())
+        }
         .fullScreenCover(isPresented: $showingModelSelector) {
             LighthouseModelSelectorView(currentModel: model) { model = $0 }
         }
@@ -77,11 +110,6 @@ struct LighthouseScreen: View {
             } else {
                 pages
                     .transition(.opacity)
-            }
-
-            if isThinking {
-                BrightScreenEdgeBeam(colorVariant: .skyBlueCyan)
-                    .transition(.identity)
             }
 
             if isThinking {
@@ -105,7 +133,7 @@ struct LighthouseScreen: View {
     // The chat slides right off the menu behind it, dimming as it goes, by
     // swipe or the bar button. Opening puts the keyboard away.
     private var pages: some View {
-        BrightSlideMenu(isExpanded: $isMenuOpen) {
+        BrightSideMenu(isExpanded: $isMenuOpen) {
             menu
         } content: {
             chat
@@ -123,7 +151,10 @@ struct LighthouseScreen: View {
             selectedModel: $model,
             showingModelSelector: $showingModelSelector,
             isTyping: $isTyping,
-            onDismiss: { dismiss() }
+            attachments: $attachments,
+            onDismiss: { dismiss() },
+            onThoughtProcess: { showingThoughtProcess = true },
+            onAttach: { attachmentSource = $0 }
         )
     }
 
@@ -140,8 +171,43 @@ struct LighthouseScreen: View {
         withAnimation(.brightSnappy) { isMenuOpen = false }
     }
 
+    // MARK: - Attachments
+
+    // One optional drives all three pickers, so only the source that was
+    // picked from the "+" menu is presented.
+    private func attaching(_ source: BrightChatAttachmentSource) -> Binding<Bool> {
+        Binding(
+            get: { attachmentSource == source },
+            set: { if !$0, attachmentSource == source { attachmentSource = nil } }
+        )
+    }
+
+    private func attach(_ items: [PhotosPickerItem]) async {
+        for item in items {
+            guard let data = try? await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else { continue }
+            attachments.append(BrightChatAttachment(image: image))
+        }
+    }
+
+    private func attach(_ urls: [URL]?) {
+        for url in urls ?? [] {
+            // Files from outside the sandbox are security scoped; the read has
+            // to sit inside the access window.
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessed {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+            guard let data = try? Data(contentsOf: url), let image = UIImage(data: data) else { continue }
+            attachments.append(BrightChatAttachment(image: image))
+        }
+    }
+
     private enum Constants {
-        static let orbWidthFraction: CGFloat = 0.25
+        static let maxAttachments = 4
+        static let orbWidthFraction: CGFloat = 0.3
         static let modelKey = "lighthouseSelectedModel"
     }
 }

@@ -25,12 +25,26 @@ nonisolated struct BrightChatMessage<Payload>: Identifiable, Equatable {
     // answer — puts the keyboard away when it lands. A quick question with
     // chips, like "2 days / 3 days", keeps it up so you can answer.
     var dismissesKeyboard = false
+    // How long the model worked before this reply; set, a "Thought for…" row
+    // sits above the answer and opens the thought process.
+    var thoughtSeconds: Int?
+    // Images sent along with the text, shown above it in the bubble.
+    var attachments: [BrightChatAttachment] = []
 
-    init(kind: Kind, text: String, payload: Payload? = nil, dismissesKeyboard: Bool = false) {
+    init(
+        kind: Kind,
+        text: String,
+        payload: Payload? = nil,
+        dismissesKeyboard: Bool = false,
+        thoughtSeconds: Int? = nil,
+        attachments: [BrightChatAttachment] = []
+    ) {
         self.kind = kind
         self.text = text
         self.payload = payload
         self.dismissesKeyboard = dismissesKeyboard
+        self.thoughtSeconds = thoughtSeconds
+        self.attachments = attachments
     }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -94,6 +108,12 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     // Set to make a swipe down on the card — once the keyboard is away —
     // dismiss the whole chat.
     var onSwipeDismiss: (() -> Void)?
+    // Tapping a reply's "Thought for…" row; the caller presents the detail.
+    var onThoughtTap: ((BrightChatMessage<Payload>) -> Void)?
+    // Images queued in the input card for the next message; the caller owns
+    // them so it can present the pickers from the screen root.
+    var attachments: Binding<[BrightChatAttachment]> = .constant([])
+    var onAttach: (BrightChatAttachmentSource) -> Void = { _ in }
     @ViewBuilder var response: (BrightChatMessage<Payload>) -> Response
     @ViewBuilder var modelPicker: ModelPicker
 
@@ -248,10 +268,10 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             userBubble(message)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         case .assistant:
-            assistantText(message.text)
+            withThought(message) { assistantText(message.text) }
                 .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
         case .response:
-            response(message)
+            withThought(message) { response(message) }
                 .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
         case .failure:
             failureRow(message)
@@ -265,23 +285,86 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         HStack(spacing: .spacing0x) {
             Spacer(minLength: .spacing8x)
 
-            BrightText(message.text, size: .body1, color: .defaultCyan)
-                .lineSpacing(.lineSpacingMedium)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, .spacing3x)
-                .padding(.vertical, .spacing2x)
-                .background(
-                    Color.defaultCyan.opacity(.ultraLowOpacity),
-                    in: RoundedRectangle(cornerRadius: .cornerRadius22, style: .continuous)
-                )
+            VStack(alignment: .trailing, spacing: .spacing2x) {
+                if !message.attachments.isEmpty {
+                    sentImages(message.attachments)
+                }
+
+                if !message.text.isEmpty {
+                    BrightText(message.text, size: .body1, color: .white)
+                        .lineSpacing(.lineSpacingMedium)
+                        .multilineTextAlignment(.leading)
+                        .padding(.horizontal, .spacing3x)
+                        .padding(.vertical, .spacing2x)
+                        .background(
+                            Color.defaultSkyBlue,
+                            in: RoundedRectangle(cornerRadius: .cornerRadius22, style: .continuous)
+                        )
+                }
+            }
         }
     }
 
+    private func sentImages(_ attachments: [BrightChatAttachment]) -> some View {
+        HStack(spacing: .spacing1x) {
+            ForEach(attachments) { attachment in
+                Image(uiImage: attachment.image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Constants.sentImageSize, height: Constants.sentImageSize)
+                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
+            }
+        }
+    }
+
+    // Mirrors the sent bubble: a reply keeps clear of the trailing edge, so
+    // the thread reads as two sides of a conversation.
     private func assistantText(_ text: String) -> some View {
-        BrightText(text, size: .body1)
-            .lineSpacing(.lineSpacingMedium)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(spacing: .spacing0x) {
+            BrightText(text, size: .body1)
+                .lineSpacing(.lineSpacingMedium)
+                .multilineTextAlignment(.leading)
+
+            Spacer(minLength: .spacing8x)
+        }
+    }
+
+    // A reply the model thought about first carries the row that says so.
+    @ViewBuilder
+    private func withThought<Content: View>(
+        _ message: BrightChatMessage<Payload>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        if let seconds = message.thoughtSeconds {
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                thoughtRow(seconds: seconds, message: message)
+                content()
+            }
+        } else {
+            content()
+        }
+    }
+
+    private func thoughtRow(seconds: Int, message: BrightChatMessage<Payload>) -> some View {
+        Button {
+            onThoughtTap?(message)
+        } label: {
+            HStack(spacing: .spacing105x) {
+                Image(systemName: "brain")
+                    .font(.standard(size: .body1, weight: .light))
+
+                BrightText("Thought for \(seconds) seconds", size: .body1, color: .lightTextColor)
+                    .monospacedDigit()
+
+                Image(systemName: "chevron.forward")
+                    .font(.standard(size: .body4, weight: .regular))
+
+                Spacer(minLength: .spacing0x)
+            }
+            .foregroundStyle(Color.lightTextColor)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func failureRow(_ message: BrightChatMessage<Payload>) -> some View {
@@ -314,11 +397,13 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
             BrightPromptInputBar(
                 text: $draft,
+                attachments: attachments,
                 isBusy: isBusy,
                 isFocused: isTyping,
                 showsModelPicker: ModelPicker.self != EmptyView.self,
                 onSend: send,
-                onStop: onStop
+                onStop: onStop,
+                onAttach: onAttach
             ) {
                 modelPicker
             }
@@ -495,7 +580,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
+        guard !text.isEmpty || !attachments.wrappedValue.isEmpty else { return }
 
         withAnimation(.brightSnappy) {
             onSend(text)
@@ -519,6 +604,7 @@ private enum Constants {
     static let orbSpeed: Double = 1.2
 
     static let exampleIconSize: CGFloat = 64
+    static let sentImageSize: CGFloat = .spacing12x + .spacing8x
     static let exampleSwapEvery: TimeInterval = 3
 
     static let addPromptSize: CGFloat = 30

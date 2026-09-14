@@ -18,14 +18,9 @@ struct LighthouseModelPicker: View {
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            VStack(spacing: .spacing1x) {
-                BrightText(Constants.title, size: .heading)
-
-                BrightText(Constants.subtitle, size: .body1, color: .lightTextColor)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, .spacing12x)
-            .padding(.horizontal, .spacing6x)
+            BrightText(Constants.title, size: .heading)
+                .padding(.top, .spacing12x)
+                .padding(.horizontal, .spacing6x)
 
             Spacer(minLength: .spacing0x)
 
@@ -79,7 +74,6 @@ struct LighthouseModelPicker: View {
 
     private enum Constants {
         static let title = "Which LLM would you like to use?"
-        static let subtitle = "You can change your LLM later in lighthouse settings"
         static let cardWidthRatio: CGFloat = 0.46
         static let cardAspect: CGFloat = 1.25
     }

@@ -156,6 +156,10 @@ nonisolated extension Color {
         light: .mainGreyLight.opacity(.ultraLowOpacity),
         dark: .sheetGrey.opacity(.veryLowOpacity)
     )
+
+    // The veil over content pushed aside by the side menu, on top of its
+    // frosting. Light mode has nothing to darken against, so it stays clear.
+    static let sideMenuDim = Color(light: .clear, dark: .black.opacity(.lowOpacity))
 }
 
 // MARK: - Support

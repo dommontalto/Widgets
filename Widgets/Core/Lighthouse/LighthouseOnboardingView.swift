@@ -165,9 +165,9 @@ struct LighthouseOnboardingView: View {
     private enum Constants {
         static let pageCount = 3
         static let beaconSize: CGFloat = 176
-        static let welcomeTitle = "lighthouse"
+        static let welcomeTitle = "Lighthouse"
         static let welcomeSubtitle = "Welcome to your personal health coach."
-        static let capabilitiesTitle = "What lighthouse can do"
+        static let capabilitiesTitle = "What Lighthouse can do"
         static let nextTitle = "Next"
         static let getStartedTitle = "Get Started"
         static let chooseTitle = "Choose"

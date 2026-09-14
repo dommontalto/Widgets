@@ -102,3 +102,39 @@ enum LighthouseModel: String, CaseIterable, Identifiable {
         static let tiersKey = "lighthouseModelTiers"
     }
 }
+
+// How hard the model works on a reply, picked from the pill beside the model
+// glyph in the input bar.
+enum LighthouseSpeed: String, CaseIterable, Identifiable {
+    case fast
+    case thinking
+    case adaptive
+
+    var id: String {
+        rawValue
+    }
+
+    var title: String {
+        switch self {
+        case .fast: "Fast"
+        case .thinking: "Thinking"
+        case .adaptive: "Adaptive"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .fast: "Fast and efficient"
+        case .thinking: "For long answers"
+        case .adaptive: "Adapts based on task"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .fast: "hare.fill"
+        case .thinking: "brain"
+        case .adaptive: "sparkles"
+        }
+    }
+}

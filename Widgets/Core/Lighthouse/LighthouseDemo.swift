@@ -23,7 +23,68 @@ nonisolated struct LighthouseCheckIn: Identifiable {
 
 // Hard-coded Lighthouse content — a sleep reply, past chats and check-ins — so
 // the screens fill without a backend.
+// One step of a reply's reasoning. `depth` nests it under the step before,
+// and the waypoint is the goal the chain arrives at.
+nonisolated struct LighthouseThoughtStep: Identifiable {
+    let id = UUID()
+    let symbol: String
+    let title: String
+    // What the model was doing at this step, in its own words.
+    let detail: String
+    var depth = 0
+    var isWaypoint = false
+}
+
 enum LighthouseDemo {
+    static let thoughtSteps = [
+        LighthouseThoughtStep(
+            symbol: "rays",
+            title: "Evaluating next steps",
+            detail: "You've asked how to get fitter for the football season. Before I answer I'm working out what a good answer needs: your current training, how long the season is, and what fitness means for your position."
+        ),
+        LighthouseThoughtStep(
+            symbol: "globe",
+            title: "Researching effectiveness",
+            detail: "I'm checking what the evidence says about pre-season conditioning for amateur footballers, with an eye on programmes that mix strength, repeated sprints and aerobic base work."
+        ),
+        LighthouseThoughtStep(
+            symbol: "globe",
+            title: "Researching effectiveness",
+            detail: "Now I'm comparing how much of each quality to train each week, and how recent studies balance intensity against recovery over a six-week block."
+        ),
+        LighthouseThoughtStep(
+            symbol: "brain",
+            title: "Defining Goal",
+            detail: "Right now, I'm focusing on your question about getting fit for football. I've pinpointed repeated-sprint ability as the biggest gap between where you are and match fitness. My next step will be to lay out a plan that builds it without dropping your strength work."
+        ),
+        LighthouseThoughtStep(
+            symbol: "filemenu.and.selection",
+            title: "Generating Plan",
+            detail: "I'm shaping a six-week plan: two strength sessions, two conditioning sessions and one easy run each week, with load rising for three weeks before a lighter one.",
+            depth: 1
+        ),
+        LighthouseThoughtStep(
+            symbol: "figure.strengthtraining.traditional",
+            title: "Generating Upper Body workout",
+            detail: "I'm writing the upper-body session around pressing, pulling and trunk work, kept short so it doesn't eat into recovery for the running days.",
+            depth: 1
+        ),
+        LighthouseThoughtStep(
+            symbol: "figure.strengthtraining.traditional",
+            title: "Generating Lower Body workout",
+            detail: "I'm building the lower-body session around squats, hinges and single-leg work, with a plyometric finisher to carry the strength over to sprinting.",
+            depth: 1
+        ),
+        LighthouseThoughtStep(
+            symbol: "arrow.up",
+            title: "Creating Waypoint",
+            detail: "Everything comes together as a waypoint: match-fit by the first game, with the plan and both workouts attached so progress can be tracked week to week.",
+            depth: 2,
+            isWaypoint: true
+        ),
+    ]
+
+
     static let history = [
         LighthouseHistoryEntry(title: "Optimising Your Nutrition Strategy", when: "4 min ago"),
         LighthouseHistoryEntry(title: "Pre-Season Football Strength & Conditioning", when: "23 h ago"),

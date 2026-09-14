@@ -16,9 +16,13 @@ struct LighthouseChatView: View {
     @Binding var selectedModel: LighthouseModel
     @Binding var showingModelSelector: Bool
     var isTyping: FocusState<Bool>.Binding
+    @Binding var attachments: [BrightChatAttachment]
     let onDismiss: () -> Void
+    let onThoughtProcess: () -> Void
+    let onAttach: (BrightChatAttachmentSource) -> Void
 
     @State private var messages = [LighthouseChatMessage]()
+    @State private var speed = LighthouseSpeed.adaptive
     @State private var customPrompts = [String]()
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
@@ -40,10 +44,19 @@ struct LighthouseChatView: View {
             onSend: send,
             onStop: stopThinking,
             onSwipeDismiss: onDismiss,
+            onThoughtTap: { _ in onThoughtProcess() },
+            attachments: $attachments,
+            onAttach: onAttach,
             response: { message in
                 LighthouseChatResponse(text: message.text, items: message.payload ?? [])
             },
-            modelPicker: { modelPickerButton }
+            modelPicker: {
+                HStack(spacing: .spacing2x) {
+                    modelPickerButton
+                    speedMenu
+                }
+                .padding(.leading, .spacing1x)
+            }
         )
         .overlay {
             if messages.isEmpty {
@@ -83,43 +96,81 @@ struct LighthouseChatView: View {
             guard !isThinking else { return }
             showingModelSelector = true
         } label: {
-            HStack(spacing: .spacing2x) {
-                Image(selectedModel.tierImageName)
-                    .frame(height: BrightButtonSizes.large.rawValue)
-
-                speedPill
-            }
-            .padding(.leading, .spacing1x)
-            // The glyph is narrow, so the target reaches past it without
-            // widening the gap to the field.
-            .contentShape(Rectangle().inset(by: -.spacing2x))
+            Image(selectedModel.tierImageName)
+                .resizable()
+                .scaledToFit()
+                .frame(height: BrightButtonSizes.small.rawValue)
+                .frame(height: BrightButtonSizes.large.rawValue)
+                // The glyph is narrow, so the target reaches past it without
+                // widening the gap to the pill.
+                .contentShape(Rectangle().inset(by: -.spacing105x))
         }
     }
 
-    private var speedPill: some View {
-        HStack(spacing: .spacing1x) {
-            Image(systemName: "hare.fill")
-                .font(.standard(size: .body1, weight: .light))
-
-            BrightText("Fast", size: .body1)
+    // A Picker inside the Menu draws each speed with its glyph leading and
+    // the tick trailing on the one in use.
+    private var speedMenu: some View {
+        Menu {
+            Picker("Speed", selection: $speed) {
+                ForEach(LighthouseSpeed.allCases) { speed in
+                    Label {
+                        Text(speed.title)
+                        Text(speed.subtitle)
+                    } icon: {
+                        Image(systemName: speed.symbol)
+                    }
+                    .tag(speed)
+                }
+            }
+        } label: {
+            speedPill
         }
-        .foregroundStyle(Color.semiLightTextColor)
-        .padding(.horizontal, .spacing1x)
-        .padding(.vertical, .spacing05x)
-        .background(Color.textColor.opacity(.ultraLowOpacity), in: .capsule)
+        .buttonStyle(.plain)
+        .modifier(GlassEffect(shape: .capsule))
+        .brightHaptic(.light, trigger: speed)
+    }
+
+    // The widest option sits hidden underneath so the pill keeps one width
+    // as the choice changes and the glass never re-lays out.
+    private var speedPill: some View {
+        ZStack {
+            speedLabel(Constants.widestSpeed)
+                .hidden()
+
+            speedLabel(speed)
+        }
+        .padding(.horizontal, .spacing105x)
+        .frame(height: BrightButtonSizes.small.rawValue)
+        .compositingGroup()
+    }
+
+    private func speedLabel(_ speed: LighthouseSpeed) -> some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: speed.symbol)
+                .font(.standard(size: BrightButtonSizes.small.defaultFontSize, weight: .light))
+                .foregroundStyle(Color.textColor)
+                .contentTransition(.symbolEffect(.replace))
+
+            BrightText(speed.title, size: BrightButtonSizes.small.defaultFontSize)
+                .contentTransition(.numericText())
+        }
+        .animation(.brightSnappy, value: speed)
     }
 
     private func send(_ text: String) {
+        let sent = attachments
         withAnimation(.brightSnappy) {
-            messages.append(LighthouseChatMessage(kind: .user, text: text))
+            messages.append(LighthouseChatMessage(kind: .user, text: text, attachments: sent))
+            attachments = []
             isThinking = true
         }
         replyTask = Task { await reply() }
     }
 
     private func reply() async {
+        let thinkingSeconds = Double.random(in: Constants.thinkingRange)
         do {
-            try await Task.sleep(for: .seconds(Double.random(in: Constants.thinkingRange)))
+            try await Task.sleep(for: .seconds(thinkingSeconds))
         } catch {
             return
         }
@@ -130,12 +181,14 @@ struct LighthouseChatView: View {
                 kind: .response,
                 text: LighthouseDemo.sleepPartOne,
                 payload: LighthouseDemo.sleepItems,
-                dismissesKeyboard: true
+                dismissesKeyboard: true,
+                thoughtSeconds: Int(thinkingSeconds.rounded())
             )
         } else {
             LighthouseChatMessage(
                 kind: .assistant,
-                text: Constants.replies[(replyIndex - 1) % Constants.replies.count]
+                text: Constants.replies[(replyIndex - 1) % Constants.replies.count],
+                thoughtSeconds: Int(thinkingSeconds.rounded())
             )
         }
         replyIndex += 1
@@ -152,7 +205,8 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
-        static let welcome = "Welcome to lighthouse. What would you like to do?"
+        static let widestSpeed = LighthouseSpeed.adaptive
+        static let welcome = "Welcome to Lighthouse. What would you like to do?"
         static let thinkingRange = 6.0...9.0
         static let prompts = [
             "Why is my sleep bad?",
@@ -172,6 +226,7 @@ struct LighthouseChatView: View {
     @Previewable @State var selectedModel = LighthouseModel.chatGPT
     @Previewable @State var showingModelSelector = false
     @Previewable @FocusState var isTyping: Bool
+    @Previewable @State var attachments = [BrightChatAttachment]()
 
     Color.defaultBackground
         .ignoresSafeArea()
@@ -181,7 +236,10 @@ struct LighthouseChatView: View {
                 selectedModel: $selectedModel,
                 showingModelSelector: $showingModelSelector,
                 isTyping: $isTyping,
-                onDismiss: {}
+                attachments: $attachments,
+                onDismiss: {},
+                onThoughtProcess: {},
+                onAttach: { _ in }
             )
             .background { LighthouseChatBackground() }
         }

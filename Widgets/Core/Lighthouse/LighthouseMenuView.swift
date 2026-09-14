@@ -58,6 +58,7 @@ struct LighthouseMenuView: View {
                 symbol: "bubble.left.and.bubble.right",
                 title: Constants.temporaryChatTitle
             ) {}
+            shortcutRow(symbol: "gear", title: Constants.settingsTitle) {}
         }
         .padding(.horizontal, .spacing1x)
     }
@@ -143,16 +144,14 @@ struct LighthouseMenuView: View {
 
     private var bottomBar: some View {
         HStack(spacing: .spacing0x) {
-            BrightRoundButton(systemImage: "gear", size: .large) {}
-
-            Spacer()
-
             BrightPillButton(
                 Constants.newChatTitle,
                 systemImage: "bubble.left",
                 buttonSize: .large,
                 onTapCallback: onNewChat
             )
+
+            Spacer()
         }
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
@@ -163,6 +162,7 @@ struct LighthouseMenuView: View {
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
         static let temporaryChatTitle = "Temporary Chat"
+        static let settingsTitle = "Settings"
         static let historyTitle = "History"
         static let newChatTitle = "New Chat"
         static let tierImageSize: CGFloat = 40
