@@ -16,19 +16,19 @@ struct LighthouseMenuView: View {
     let onNewChat: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            modelCard
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: .spacing3x) {
+                modelCard
 
-            shortcuts
+                shortcuts
 
-            history
-
-            Spacer(minLength: .spacing0x)
+                history
+            }
+            .padding(.horizontal, .spacing3x)
+            .padding(.top, .spacing3x)
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing3x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .overlay(alignment: .bottom) {
+        .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
             bottomBar
         }
     }

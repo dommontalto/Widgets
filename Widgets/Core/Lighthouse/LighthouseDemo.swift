@@ -28,6 +28,16 @@ enum LighthouseDemo {
         LighthouseHistoryEntry(title: "Optimising Your Nutrition Strategy", when: "4 min ago"),
         LighthouseHistoryEntry(title: "Pre-Season Football Strength & Conditioning", when: "23 h ago"),
         LighthouseHistoryEntry(title: "Dashboard Adjustment - Sleep Focus", when: "7 Sep"),
+        LighthouseHistoryEntry(title: "Why Is My Resting Heart Rate Climbing?", when: "6 Sep"),
+        LighthouseHistoryEntry(title: "Deload Week Planning", when: "4 Sep"),
+        LighthouseHistoryEntry(title: "Protein Timing Around Evening Sessions", when: "2 Sep"),
+        LighthouseHistoryEntry(title: "Reading My HRV Trend", when: "30 Aug"),
+        LighthouseHistoryEntry(title: "Hip Mobility Routine for Squats", when: "28 Aug"),
+        LighthouseHistoryEntry(title: "Caffeine Cut-Off and Deep Sleep", when: "25 Aug"),
+        LighthouseHistoryEntry(title: "Zone 2 Volume for the Off-Season", when: "21 Aug"),
+        LighthouseHistoryEntry(title: "Comparing Two Weeks of Recovery Scores", when: "18 Aug"),
+        LighthouseHistoryEntry(title: "Travel Week: Keeping the Routine", when: "14 Aug"),
+        LighthouseHistoryEntry(title: "First Look at My Genome Summary", when: "9 Aug"),
     ]
 
     static let checkIns = [

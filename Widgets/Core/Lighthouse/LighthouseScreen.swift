@@ -8,10 +8,10 @@
 import SwiftUI
 
 // Lighthouse as a full-screen cover over the app: the onboarding on first run,
-// then the menu over the root-level chat, with the edge beam and the island orb
-// while it thinks and the model picker in front of the lot. Keeping the chat out
-// of a paging scroll view lets its bottom safe-area inset stay attached to the
-// keyboard throughout its interactive dismissal.
+// then the chat with the home screen's side menu behind it, with the edge beam
+// and the island orb while it thinks and the model picker in front of the lot.
+// Keeping the chat out of a paging scroll view lets its bottom safe-area inset
+// stay attached to the keyboard throughout its interactive dismissal.
 struct LighthouseScreen: View {
     // Finishing the onboarding puts the chat in its place; the flag is stored
     // by the screen underneath, so it stays off across launches until switched
@@ -26,13 +26,8 @@ struct LighthouseScreen: View {
     @State private var isThinking = false
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
-    @State private var page: Page? = .chat
+    @State private var isMenuOpen = false
     @FocusState private var isTyping: Bool
-
-    private enum Page: Hashable {
-        case menu
-        case chat
-    }
 
     var body: some View {
         NavigationStack {
@@ -43,14 +38,14 @@ struct LighthouseScreen: View {
                     if !showOnboarding {
                         ToolbarItem(placement: .topBarLeading) {
                             Button {
-                                withAnimation(.brightEaseInOut) {
-                                    page = page == .menu ? .chat : .menu
+                                withAnimation(.brightSideMenu) {
+                                    isMenuOpen.toggle()
                                 }
                             } label: {
                                 Image(systemName: "line.3.horizontal")
                                     .foregroundStyle(Color.textColor)
                             }
-                            .accessibilityLabel(page == .menu ? "Close menu" : "Open menu")
+                            .accessibilityLabel(isMenuOpen ? "Close menu" : "Open menu")
                         }
                     }
 
@@ -107,23 +102,21 @@ struct LighthouseScreen: View {
         }
     }
 
-    // The chat owns the screen's keyboard-safe-area inset. The menu is a drawer
-    // above it instead of a neighbouring page in a horizontal scroll view: a
-    // paging scroll view can receive keyboard inset updates late, leaving the
-    // input card behind while the keyboard moves.
+    // The home screen's side menu: the chat slides right off the menu behind
+    // it, dimming as it goes, by swipe or the bar button. Opening puts the
+    // keyboard away.
     private var pages: some View {
-        ZStack(alignment: .leading) {
+        BrightSideMenu(
+            menuBackground: AnyView(LighthouseChatBackground()),
+            contentBackground: AnyView(LighthouseChatBackground()),
+            isExpanded: $isMenuOpen
+        ) { _ in
+            menu
+        } content: { _ in
             chat
-
-            if page == .menu {
-                menu
-                    .background { LighthouseChatBackground() }
-                    .transition(.move(edge: .leading))
-            }
         }
-        .brightHaptic(.impact, trigger: page)
-        .onChange(of: page) { _, page in
-            guard page == .menu else { return }
+        .onChange(of: isMenuOpen) { _, isMenuOpen in
+            guard isMenuOpen else { return }
             isTyping = false
         }
     }
@@ -148,7 +141,7 @@ struct LighthouseScreen: View {
     }
 
     private func showChat() {
-        withAnimation(.brightEaseInOut) { page = .chat }
+        withAnimation(.brightSideMenu) { isMenuOpen = false }
     }
 
     private enum Constants {
