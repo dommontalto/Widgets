@@ -8,10 +8,10 @@
 import SwiftUI
 
 // Lighthouse as a full-screen cover over the app: the onboarding on first run,
-// then the menu and chat side by side, with the edge beam and the island orb
-// while it thinks and the model picker in front of the lot. Presenting it as a
-// cover leaves the keyboard to the system, so the input card rides above it
-// without any help from here.
+// then the menu over the root-level chat, with the edge beam and the island orb
+// while it thinks and the model picker in front of the lot. Keeping the chat out
+// of a paging scroll view lets its bottom safe-area inset stay attached to the
+// keyboard throughout its interactive dismissal.
 struct LighthouseScreen: View {
     // Finishing the onboarding puts the chat in its place; the flag is stored
     // by the screen underneath, so it stays off across launches until switched
@@ -50,6 +50,7 @@ struct LighthouseScreen: View {
                                 Image(systemName: "line.3.horizontal")
                                     .foregroundStyle(Color.textColor)
                             }
+                            .accessibilityLabel(page == .menu ? "Close menu" : "Open menu")
                         }
                     }
 
@@ -106,24 +107,20 @@ struct LighthouseScreen: View {
         }
     }
 
-    // The menu, then the chat Lighthouse opens on.
+    // The chat owns the screen's keyboard-safe-area inset. The menu is a drawer
+    // above it instead of a neighbouring page in a horizontal scroll view: a
+    // paging scroll view can receive keyboard inset updates late, leaving the
+    // input card behind while the keyboard moves.
     private var pages: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: .spacing0x) {
-                menu
-                    .containerRelativeFrame(.horizontal)
-                    .id(Page.menu)
+        ZStack(alignment: .leading) {
+            chat
 
-                chat
-                    .containerRelativeFrame(.horizontal)
-                    .id(Page.chat)
+            if page == .menu {
+                menu
+                    .background { LighthouseChatBackground() }
+                    .transition(.move(edge: .leading))
             }
-            .scrollTargetLayout()
         }
-        .scrollTargetBehavior(.paging)
-        .scrollPosition(id: $page)
-        .scrollIndicators(.hidden)
-        .defaultScrollAnchor(.trailing)
         .brightHaptic(.impact, trigger: page)
         .onChange(of: page) { _, page in
             guard page == .menu else { return }
