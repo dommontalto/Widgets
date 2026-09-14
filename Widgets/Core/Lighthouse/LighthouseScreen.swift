@@ -8,8 +8,8 @@
 import SwiftUI
 
 // Lighthouse as a full-screen cover over the app: the onboarding on first run,
-// then the chat with the home screen's side menu behind it, with the edge beam
-// and the island orb while it thinks and the model picker in front of the lot.
+// then the chat with the side menu behind it, with the edge beam and the
+// island orb while it thinks and the model picker in front of the lot.
 // Keeping the chat out of a paging scroll view lets its bottom safe-area inset
 // stay attached to the keyboard throughout its interactive dismissal.
 struct LighthouseScreen: View {
@@ -38,7 +38,7 @@ struct LighthouseScreen: View {
                     if !showOnboarding {
                         ToolbarItem(placement: .topBarLeading) {
                             Button {
-                                withAnimation(.brightSideMenu) {
+                                withAnimation(.brightSnappy) {
                                     isMenuOpen.toggle()
                                 }
                             } label: {
@@ -102,18 +102,14 @@ struct LighthouseScreen: View {
         }
     }
 
-    // The home screen's side menu: the chat slides right off the menu behind
-    // it, dimming as it goes, by swipe or the bar button. Opening puts the
-    // keyboard away.
+    // The chat slides right off the menu behind it, dimming as it goes, by
+    // swipe or the bar button. Opening puts the keyboard away.
     private var pages: some View {
-        BrightSideMenu(
-            menuBackground: AnyView(LighthouseChatBackground()),
-            contentBackground: AnyView(LighthouseChatBackground()),
-            isExpanded: $isMenuOpen
-        ) { _ in
+        BrightSlideMenu(isExpanded: $isMenuOpen) {
             menu
-        } content: { _ in
+        } content: {
             chat
+                .background { LighthouseChatBackground() }
         }
         .onChange(of: isMenuOpen) { _, isMenuOpen in
             guard isMenuOpen else { return }
@@ -141,7 +137,7 @@ struct LighthouseScreen: View {
     }
 
     private func showChat() {
-        withAnimation(.brightSideMenu) { isMenuOpen = false }
+        withAnimation(.brightSnappy) { isMenuOpen = false }
     }
 
     private enum Constants {

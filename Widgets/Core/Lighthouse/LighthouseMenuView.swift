@@ -25,7 +25,7 @@ struct LighthouseMenuView: View {
                 history
             }
             .padding(.horizontal, .spacing3x)
-            .padding(.top, .spacing3x)
+            .padding(.top, .spacing2x)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
