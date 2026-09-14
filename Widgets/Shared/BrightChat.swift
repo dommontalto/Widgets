@@ -368,50 +368,50 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private func suggestionChips(_ suggestions: BrightChatSuggestions) -> some View {
         HStack(spacing: .spacing0x) {
-            if suggestions.onAdd != nil, !isAddingPrompt {
-                Button {
-                    withAnimation(.brightBouncy) {
-                        isAddingPrompt = true
-                    }
-                } label: {
-                    Image(ImageNames.lighthouseCirclePlusV5)
-                        .resizable()
-                        .renderingMode(.template)
-                        .scaledToFit()
-                        .frame(width: Constants.addPromptSize, height: Constants.addPromptSize)
-                        .foregroundStyle(Color.defaultBlue)
-                }
-                .padding(.top, .spacing1x)
-            }
+//            if suggestions.onAdd != nil, !isAddingPrompt {
+//                Button {
+//                    withAnimation(.brightBouncy) {
+//                        isAddingPrompt = true
+//                    }
+//                } label: {
+//                    Image(ImageNames.lighthouseCirclePlusV5)
+//                        .resizable()
+//                        .renderingMode(.template)
+//                        .scaledToFit()
+//                        .frame(width: Constants.addPromptSize, height: Constants.addPromptSize)
+//                        .foregroundStyle(Color.defaultBlue)
+//                }
+//                .padding(.top, .spacing1x)
+//            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: .spacing105x) {
-                    ForEach(suggestions.prompts, id: \.self) { prompt in
-                        BrightTag(title: prompt, systemImage: "sparkles", isSelected: true) {
-                            suggestions.onTap(prompt)
-                        }
-                        .disabled(isBusy)
-                    }
+//                    ForEach(suggestions.prompts, id: \.self) { prompt in
+//                        BrightTag(title: prompt, systemImage: "sparkles", isSelected: true) {
+//                            suggestions.onTap(prompt)
+//                        }
+//                        .disabled(isBusy)
+//                    }
 
-                    ForEach(suggestions.custom, id: \.self) { prompt in
-                        BrightTag(title: prompt, systemImage: "bookmark", isSelected: true) {
-                            suggestions.onTap(prompt)
-                        }
-                        .disabled(isBusy)
-                        .transition(.scale.combined(with: .opacity))
-                        .contextMenu {
-                            if let onDelete = suggestions.onDelete {
-                                Button(role: .destructive) {
-                                    withAnimation(.brightBouncy) {
-                                        onDelete(prompt)
-                                    }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                .tint(.defaultRed)
-                            }
-                        }
-                    }
+//                    ForEach(suggestions.custom, id: \.self) { prompt in
+//                        BrightTag(title: prompt, systemImage: "bookmark", isSelected: true) {
+//                            suggestions.onTap(prompt)
+//                        }
+//                        .disabled(isBusy)
+//                        .transition(.scale.combined(with: .opacity))
+//                        .contextMenu {
+//                            if let onDelete = suggestions.onDelete {
+//                                Button(role: .destructive) {
+//                                    withAnimation(.brightBouncy) {
+//                                        onDelete(prompt)
+//                                    }
+//                                } label: {
+//                                    Label("Delete", systemImage: "trash")
+//                                }
+//                                .tint(.defaultRed)
+//                            }
+//                        }
+//                    }
 
                     if isAddingPrompt, let onAdd = suggestions.onAdd {
                         newPromptField(onAdd: onAdd)
