@@ -7,46 +7,29 @@
 
 import SwiftUI
 
-// The page beside the chat: search, the model in use, check-ins and
-// configurations, then the chats that came before.
+// The page beside the chat: the model in use, check-ins and configurations,
+// then the chats that came before.
 struct LighthouseMenuView: View {
     let model: LighthouseModel
     let onSwitchModel: () -> Void
     let onCheckIns: () -> Void
     let onNewChat: () -> Void
-    let onClose: () -> Void
-
-    @State private var query = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            // Same inset and height as the chat page's buttons, so the two top
-            // rows line up as the pages slide past each other.
-            searchRow
-                .padding(.horizontal, .spacing205x)
+            modelCard
 
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                modelCard
+            shortcuts
 
-                shortcuts
-
-                history
-            }
-            .padding(.horizontal, .spacing3x)
+            history
 
             Spacer(minLength: .spacing0x)
         }
+        .padding(.horizontal, .spacing3x)
+        .padding(.top, .spacing3x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .overlay(alignment: .bottom) {
             bottomBar
-        }
-    }
-
-    private var searchRow: some View {
-        HStack(spacing: .spacing2x) {
-            BrightSearchBar(Constants.searchPlaceholder, text: $query, height: BrightButtonSizes.large.rawValue)
-
-            BrightRoundButton(systemImage: "sidebar.right", size: .large, onTapCallback: onClose)
         }
     }
 
@@ -63,8 +46,7 @@ struct LighthouseMenuView: View {
 
             BrightPillButton(Constants.switchTitle, buttonSize: .small, onTapCallback: onSwitchModel)
         }
-        .padding(.horizontal, .spacing3x)
-        .padding(.vertical, .spacing2x + .spacing05x)
+        .padding(.spacing3x)
         .modifier(CardModifier())
     }
 
@@ -168,7 +150,6 @@ struct LighthouseMenuView: View {
             BrightPillButton(
                 Constants.newChatTitle,
                 systemImage: "bubble.left",
-                color: .defaultGreen,
                 buttonSize: .large,
                 onTapCallback: onNewChat
             )
@@ -178,7 +159,6 @@ struct LighthouseMenuView: View {
     }
 
     private enum Constants {
-        static let searchPlaceholder = "Search in lighthouse"
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
@@ -199,8 +179,7 @@ struct LighthouseMenuView: View {
                 model: .chatGPT,
                 onSwitchModel: {},
                 onCheckIns: {},
-                onNewChat: {},
-                onClose: {}
+                onNewChat: {}
             )
             .background { LighthouseChatBackground() }
         }

@@ -54,7 +54,7 @@ struct LighthouseChatView: View {
         }
         .animation(.brightEaseInOut, value: messages.isEmpty)
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
-            Color.clear.frame(height: .spacing9x)
+            Color.clear.frame(height: .spacing2x)
         }
         .onDisappear { replyTask?.cancel() }
     }
@@ -81,7 +81,7 @@ struct LighthouseChatView: View {
     private var modelPickerButton: some View {
         Button {
             guard !isThinking else { return }
-            withAnimation(.brightBouncy) { showingModelSelector = true }
+            showingModelSelector = true
         } label: {
             HStack(spacing: .spacing2x) {
                 Image(selectedModel.tierImageName)

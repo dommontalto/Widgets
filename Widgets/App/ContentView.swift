@@ -13,8 +13,6 @@ struct ContentView: View {
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
-    @State private var showingLighthouseCheckIns = false
-    @FocusState private var lighthouseTyping: Bool
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -30,14 +28,8 @@ struct ContentView: View {
             content
         }
         .environment(builder)
-        .ignoresSafeArea(.keyboard)
-        .overlay(alignment: .top) {
-            LighthouseLayer(
-                isPresented: $showingLighthouse,
-                showOnboarding: $showingLighthouseOnboarding,
-                showingCheckIns: $showingLighthouseCheckIns,
-                isTyping: $lighthouseTyping
-            )
+        .fullScreenCover(isPresented: $showingLighthouse) {
+            LighthouseScreen(showOnboarding: $showingLighthouseOnboarding)
         }
     }
 
@@ -123,10 +115,6 @@ struct ContentView: View {
             }
             .padding(.spacing3x)
         }
-        // With Lighthouse open the screen still scrolls, so a drag here pulls
-        // the keyboard down with it and a tap anywhere puts it away.
-        .scrollDismissesKeyboard(.interactively)
-        .simultaneousGesture(TapGesture().onEnded { lighthouseTyping = false })
         .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
             ToolbarItemGroup(placement: .topBarLeading) {
@@ -145,7 +133,7 @@ struct ContentView: View {
                 }
 
                 Button {
-                    withAnimation(.brightSnappy) { showingLighthouse = true }
+                    showingLighthouse = true
                 } label: {
                     Label("Lighthouse", systemImage: "sparkles")
                         .labelStyle(.iconOnly)
@@ -179,9 +167,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingSession) {
             ExerciseSheet()
-        }
-        .sheet(isPresented: $showingLighthouseCheckIns) {
-            LighthouseCheckInsSheet()
         }
         .sheet(isPresented: $showingProgram) {
             ExerciseCreateProgramSheet()

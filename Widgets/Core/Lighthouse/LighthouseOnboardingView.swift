@@ -30,13 +30,6 @@ struct LighthouseOnboardingView: View {
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            // Sits in the chrome row beside the close button, so the second
-            // page's title reads as the screen's own.
-            BrightText(Constants.capabilitiesTitle, size: .heading, color: .semiLightTextColor)
-                .opacity(page == 1 ? 1 : 0)
-                .frame(height: BrightButtonSizes.large.rawValue)
-                .animation(.brightEaseInOut, value: page)
-
             TabView(selection: $page) {
                 welcome
                     .tag(0)
@@ -52,6 +45,15 @@ struct LighthouseOnboardingView: View {
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .toolbar {
+            // In the bar beside the close button, so the second page's title
+            // reads as the screen's own.
+            ToolbarItem(placement: .principal) {
+                BrightText(Constants.capabilitiesTitle, size: .heading, color: .semiLightTextColor)
+                    .opacity(page == 1 ? 1 : 0)
+                    .animation(.brightEaseInOut, value: page)
+            }
+        }
     }
 
     // MARK: - Pages
@@ -116,7 +118,7 @@ struct LighthouseOnboardingView: View {
                 .animation(.brightEaseInOut, value: isLastPage)
 
             BrightPillButton(buttonTitle, buttonSize: .large, onTapCallback: advance)
-                .animation(.brightBouncy, value: page)
+                .animation(.brightEaseInOut, value: page)
         }
         .padding(.bottom, .spacing2x)
     }
@@ -135,7 +137,7 @@ struct LighthouseOnboardingView: View {
             get: { page },
             set: { newValue in
                 if let newValue {
-                    withAnimation(.brightBouncy) { page = newValue }
+                    withAnimation(.brightEaseInOut) { page = newValue }
                 }
             }
         )
@@ -143,7 +145,7 @@ struct LighthouseOnboardingView: View {
 
     private func advance() {
         guard isLastPage else {
-            withAnimation(.brightBouncy) { page += 1 }
+            withAnimation(.brightEaseInOut) { page += 1 }
             return
         }
         LighthouseModelPicker.save(selectedTiers)
@@ -203,10 +205,8 @@ struct LighthouseOnboardingView: View {
 #Preview {
     @Previewable @State var model = LighthouseModel.chatGPT
 
-    Color.defaultBackground
-        .ignoresSafeArea()
-        .overlay {
-            LighthouseOnboardingView(selectedModel: $model) {}
-                .background { LighthouseChatBackground() }
-        }
+    NavigationStack {
+        LighthouseOnboardingView(selectedModel: $model) {}
+            .background { LighthouseChatBackground() }
+    }
 }
