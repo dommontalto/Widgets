@@ -17,6 +17,7 @@ struct LighthouseChatView: View {
     @Binding var showingModelSelector: Bool
     var isTyping: FocusState<Bool>.Binding
     @Binding var attachments: [BrightChatAttachment]
+    let dictation: BrightDictation
     let onDismiss: () -> Void
     let onThoughtProcess: () -> Void
     let onAttach: (BrightChatAttachmentSource) -> Void
@@ -47,6 +48,7 @@ struct LighthouseChatView: View {
             onThoughtTap: { _ in onThoughtProcess() },
             attachments: $attachments,
             onAttach: onAttach,
+            dictation: dictation,
             response: { message in
                 LighthouseChatResponse(text: message.text, items: message.payload ?? [])
             },
@@ -237,6 +239,7 @@ struct LighthouseChatView: View {
                 showingModelSelector: $showingModelSelector,
                 isTyping: $isTyping,
                 attachments: $attachments,
+                dictation: BrightDictation(),
                 onDismiss: {},
                 onThoughtProcess: {},
                 onAttach: { _ in }

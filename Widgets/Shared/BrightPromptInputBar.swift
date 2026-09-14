@@ -60,10 +60,17 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     var onSend: () -> Void
     var onStop: () -> Void
     var onAttach: (BrightChatAttachmentSource) -> Void
+    // Pass the caller's own so it can watch the mic — Lighthouse shows the
+    // orb listening — otherwise the bar keeps one to itself.
+    var sharedDictation: BrightDictation?
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
-    @State private var dictation = BrightDictation()
+    @State private var ownDictation = BrightDictation()
+
+    private var dictation: BrightDictation {
+        sharedDictation ?? ownDictation
+    }
 
     init(
         text: Binding<String>,
@@ -74,6 +81,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
         onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
+        dictation: BrightDictation? = nil,
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -84,6 +92,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         self.onSend = onSend
         self.onStop = onStop
         self.onAttach = onAttach
+        self.sharedDictation = dictation
         self.modelPicker = modelPicker()
     }
 
@@ -105,16 +114,14 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
 
                 Spacer(minLength: .spacing2x)
 
-                HStack(spacing: .spacing0x) {
-                    attachMenu
-                    dictateButton
-                }
+                attachMenu
 
-                sendOrStopButton
+                actionButton
             }
         }
         .animation(.brightBouncy, value: isBusy)
         .animation(.brightSnappy, value: attachments)
+        .animation(.brightSnappy, value: action)
         .onDisappear { dictation.stop() }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity)
@@ -187,9 +194,12 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     }
 
     // Each source the "+" can draw from; the caller presents the picker.
+    // The bar sits at the foot of the screen, so the menu opens upward and
+    // iOS stacks its items from the button up — reversed here so the first
+    // source reads at the top.
     private var attachMenu: some View {
         Menu {
-            ForEach(BrightChatAttachmentSource.allCases.filter(\.isAvailable)) { source in
+            ForEach(BrightChatAttachmentSource.allCases.filter(\.isAvailable).reversed()) { source in
                 Button {
                     onAttach(source)
                 } label: {
@@ -199,19 +209,6 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         } label: {
             glyph("plus")
         }
-    }
-
-    // Red while the mic is live, with the waveform pulsing as it listens.
-    private var dictateButton: some View {
-        Button {
-            dictation.toggle($text)
-        } label: {
-            glyph(dictation.isListening ? "waveform" : "mic.fill")
-                .foregroundStyle(dictation.isListening ? Color.defaultRed : Color.textColor)
-                .symbolEffect(.variableColor.iterative, isActive: dictation.isListening)
-                .contentTransition(.symbolEffect(.replace))
-        }
-        .brightHaptic(.light, trigger: dictation.isListening)
     }
 
     // A bare glyph rather than a BrightRoundButton: inside the card's own glass
@@ -226,20 +223,59 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
             .contentShape(Rectangle())
     }
 
-    private var sendOrStopButton: some View {
-        BrightRoundButton(systemImage: isBusy ? "stop.fill" : "arrow.up", size: .large) {
-            if isBusy {
-                onStop()
-            } else {
-                send()
+    // What the round button does right now: with nothing to send it listens,
+    // and it morphs into the send arrow as soon as there's something typed.
+    private enum Action {
+        case stop
+        case dictating
+        case send
+        case dictate
+
+        var symbol: String {
+            switch self {
+            case .stop: "stop.fill"
+            case .dictating: "waveform"
+            case .send: "arrow.up"
+            case .dictate: "mic.fill"
             }
         }
-        .contentTransition(.symbolEffect(.replace.upUp))
     }
 
-    // A photo on its own is a message too, so only an empty card nudges.
+    private var action: Action {
+        if isBusy {
+            .stop
+        } else if dictation.isListening {
+            .dictating
+        } else if hasContent {
+            .send
+        } else {
+            .dictate
+        }
+    }
+
+    private var hasContent: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty
+    }
+
+    private var actionButton: some View {
+        BrightRoundButton(
+            systemImage: action.symbol,
+            size: .large,
+            imageColor: action == .dictating ? .defaultRed : nil
+        ) {
+            switch action {
+            case .stop: onStop()
+            case .dictating, .dictate: dictation.toggle($text)
+            case .send: send()
+            }
+        }
+        .symbolEffect(.variableColor.iterative, isActive: action == .dictating)
+        .contentTransition(.symbolEffect(.replace.upUp))
+        .brightHaptic(.light, trigger: dictation.isListening)
+    }
+
     private func send() {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty else {
+        guard hasContent else {
             nudge += 1
             return
         }
@@ -266,7 +302,8 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
         showsModelPicker: Bool = false,
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
-        onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in }
+        onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
+        dictation: BrightDictation? = nil
     ) {
         self.init(
             text: text,
@@ -276,7 +313,8 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
             showsModelPicker: showsModelPicker,
             onSend: onSend,
             onStop: onStop,
-            onAttach: onAttach
+            onAttach: onAttach,
+            dictation: dictation
         ) {
             EmptyView()
         }

@@ -114,6 +114,8 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     // them so it can present the pickers from the screen root.
     var attachments: Binding<[BrightChatAttachment]> = .constant([])
     var onAttach: (BrightChatAttachmentSource) -> Void = { _ in }
+    // The caller's dictation, when it wants to watch the mic itself.
+    var dictation: BrightDictation?
     @ViewBuilder var response: (BrightChatMessage<Payload>) -> Response
     @ViewBuilder var modelPicker: ModelPicker
 
@@ -403,7 +405,8 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                 showsModelPicker: ModelPicker.self != EmptyView.self,
                 onSend: send,
                 onStop: onStop,
-                onAttach: onAttach
+                onAttach: onAttach,
+                dictation: dictation
             ) {
                 modelPicker
             }

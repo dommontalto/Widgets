@@ -30,6 +30,7 @@ struct LighthouseScreen: View {
     @State private var showingCheckIns = false
     @State private var showingThoughtProcess = false
     @State private var attachments = [BrightChatAttachment]()
+    @State private var dictation = BrightDictation()
     @State private var attachmentSource: BrightChatAttachmentSource?
     @State private var pickedPhotos = [PhotosPickerItem]()
     @State private var isMenuOpen = false
@@ -112,16 +113,25 @@ struct LighthouseScreen: View {
                     .transition(.opacity)
             }
 
-            if isThinking {
+            // Speaking to it lights the orb up too: it listens to the mic
+            // and swells with your voice until the reply is being worked out.
+            if isThinking || dictation.isListening {
                 BrightIslandIndicator {
-                    BrightSolvingStars(state: .thinking, ambientMotion: .off)
-                        .aspectRatio(1, contentMode: .fit)
-                        .containerRelativeFrame(.horizontal) { width, _ in
-                            width * Constants.orbWidthFraction
-                        }
+                    BrightSolvingStars(
+                        state: dictation.isListening ? .listening : .thinking,
+                        audioLevel: dictation.audioLevel,
+                        ambientMotion: .off
+                    )
+                    .aspectRatio(1, contentMode: .fit)
+                    .containerRelativeFrame(.horizontal) { width, _ in
+                        width * Constants.orbWidthFraction
+                    }
                 }
             }
         }
+        // The mic flips outside any withAnimation, so the island's grow and
+        // collapse are animated here.
+        .animation(.brightSnappy, value: dictation.isListening)
     }
 
     private var onboarding: some View {
@@ -152,6 +162,7 @@ struct LighthouseScreen: View {
             showingModelSelector: $showingModelSelector,
             isTyping: $isTyping,
             attachments: $attachments,
+            dictation: dictation,
             onDismiss: { dismiss() },
             onThoughtProcess: { showingThoughtProcess = true },
             onAttach: { attachmentSource = $0 }
