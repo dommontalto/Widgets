@@ -7,31 +7,31 @@
 
 import SwiftUI
 
-// SwiftUI port of Orbloom, the voice-reactive orb from Ricky Bharti's component
-// vault (https://vault.rickybharti.com/orbloom). The sphere itself is the
-// site's WebGL fragment shader rewritten in Metal (`OrbloomShaders.metal`) and
+// SwiftUI port of the voice-reactive orb from Ricky Bharti's component
+// vault (https://vault.rickybharti.com). The sphere itself is the
+// site's WebGL fragment shader rewritten in Metal (`BrightSolvingStarsShaders.metal`) and
 // drawn through `colorEffect`; the spin, audio smoothing and state fade that
-// the site keeps in JavaScript live in `OrbloomMotionDriver`; the glass
+// the site keeps in JavaScript live in `BrightSolvingStarsMotionDriver`; the glass
 // chrome and the slow ambient bob are its CSS, rebuilt as views.
 //
 // `audioLevel` is a normalised 0…1 loudness. Feed it from whatever is
 // speaking and the orb brightens, pulses and spins with it.
 struct BrightSolvingStars: View {
-    var theme: OrbloomTheme = .default
-    var state: OrbloomState = .idle
+    var theme: BrightSolvingStarsTheme = .default
+    var state: BrightSolvingStarsState = .idle
     // nil fills whatever space the orb is given, as the largest square that
     // fits, so it scales with the screen.
     var size: CGFloat? = nil
-    var quality: OrbloomQuality = .high
+    var quality: BrightSolvingStarsQuality = .high
     var audioLevel: Double = 0
     // nil follows the theme's own float; pass `.off` to pin the orb in place.
-    var ambientMotion: OrbloomAmbientMotion? = nil
+    var ambientMotion: BrightSolvingStarsAmbientMotion? = nil
     var shellBlur: CGFloat = Chrome.defaultShellBlur
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale) private var displayScale
 
-    @State private var driver = OrbloomMotionDriver()
+    @State private var driver = BrightSolvingStarsMotionDriver()
 
     var body: some View {
         if let size {
@@ -65,7 +65,7 @@ struct BrightSolvingStars: View {
         }
     }
 
-    private func sphere(_ frame: OrbloomMotionDriver.Frame, side: CGFloat) -> some View {
+    private func sphere(_ frame: BrightSolvingStarsMotionDriver.Frame, side: CGFloat) -> some View {
         Rectangle()
             .fill(Color.black)
             .colorEffect(shader(for: frame, side: side))
@@ -74,8 +74,8 @@ struct BrightSolvingStars: View {
             .accessibilityLabel("Animated voice-reactive orb")
     }
 
-    private func shader(for frame: OrbloomMotionDriver.Frame, side: CGFloat) -> Shader {
-        ShaderLibrary.default.orbloom(
+    private func shader(for frame: BrightSolvingStarsMotionDriver.Frame, side: CGFloat) -> Shader {
+        ShaderLibrary.default.brightSolvingStars(
             .float2(CGSize(width: side, height: side)),
             .float(renderResolution(side: side)),
             .float(frame.time),

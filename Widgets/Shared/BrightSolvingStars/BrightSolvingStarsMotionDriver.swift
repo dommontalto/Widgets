@@ -1,5 +1,5 @@
 //
-//  OrbloomMotionDriver.swift
+//  BrightSolvingStarsMotionDriver.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 14/9/2026.
@@ -13,7 +13,7 @@ import Foundation
 // for brightness), and a state change fades its tint in rather than snapping.
 // Stepped once per frame from the view's timeline; not observed, so stepping
 // it inside `body` doesn't invalidate anything.
-final class OrbloomMotionDriver {
+final class BrightSolvingStarsMotionDriver {
     struct Frame {
         let time: Double
         let spin: Double
@@ -27,7 +27,7 @@ final class OrbloomMotionDriver {
     private let timeOffset = Double.random(in: 0..<Constants.maxTimeOffset)
 
     private var themeID: String?
-    private var state: OrbloomState?
+    private var state: BrightSolvingStarsState?
 
     private var phase: Double = 0
     private var audioSmooth: Double = 0
@@ -49,8 +49,8 @@ final class OrbloomMotionDriver {
 
     func frame(
         at date: Date,
-        theme: OrbloomTheme,
-        state: OrbloomState,
+        theme: BrightSolvingStarsTheme,
+        state: BrightSolvingStarsState,
         audioLevel: Double,
         reduceMotion: Bool
     ) -> Frame {

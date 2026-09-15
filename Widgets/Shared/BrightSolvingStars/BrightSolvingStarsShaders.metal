@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// Orbloom — the voice-reactive orb from Ricky Bharti's component vault
-// (https://vault.rickybharti.com/orbloom). A single fragment pass ray-casts a
+// The voice-reactive orb from Ricky Bharti's component vault
+// (https://vault.rickybharti.com). A single fragment pass ray-casts a
 // unit sphere per pixel, refracts a second ray out of its back face, and
 // paints both with a procedural galaxy (band, dust lanes, three star scales, a
 // pulsar), then layers an aurora, a meteor, moving lights, the semantic state
@@ -16,7 +16,7 @@ static float scalarHash(float value) {
     return fract(sin(value * 127.1) * 43758.5453);
 }
 
-struct OrbloomSky {
+struct BrightSolvingStarsSky {
     float resolution;
     float seed;
     float archetype;
@@ -27,7 +27,7 @@ struct OrbloomSky {
     float3 accentHighlight;
 };
 
-static float4 sampleSky(float3 direction, float time, thread const OrbloomSky &u) {
+static float4 sampleSky(float3 direction, float time, thread const BrightSolvingStarsSky &u) {
     float longitude = atan2(direction.z, direction.x);
     float latitude = asin(clamp(direction.y, -1.0, 1.0));
     float varianceA = fract(u.seed * 7.13);
@@ -167,7 +167,7 @@ static float4 sampleSky(float3 direction, float time, thread const OrbloomSky &u
     return float4(min(color, float3(1.0)), min(coverage, 1.0));
 }
 
-static float4 sampleRotatedSphere(float3 direction, float spin, float time, thread const OrbloomSky &u) {
+static float4 sampleRotatedSphere(float3 direction, float spin, float time, thread const BrightSolvingStarsSky &u) {
     float roll = time * 0.13;
     float rollCos = cos(roll);
     float rollSin = sin(roll);
@@ -194,8 +194,8 @@ static float4 sampleRotatedSphere(float3 direction, float spin, float time, thre
     return sampleSky(direction, time, u);
 }
 
-struct OrbloomOrb {
-    OrbloomSky sky;
+struct BrightSolvingStarsOrb {
+    BrightSolvingStarsSky sky;
     float time;
     float spin;
     float audioBrightness;
@@ -208,8 +208,8 @@ struct OrbloomOrb {
     float3 baseColor;
 };
 
-static float3 shadeOrb(float2 point, thread const OrbloomOrb &o) {
-    thread const OrbloomSky &u = o.sky;
+static float3 shadeOrb(float2 point, thread const BrightSolvingStarsOrb &o) {
+    thread const BrightSolvingStarsSky &u = o.sky;
     bool compact = o.glass <= 0.0;
 
     float radius = length(point);
@@ -333,7 +333,7 @@ static float3 shadeOrb(float2 point, thread const OrbloomOrb &o) {
 
 // The web canvas is clipped by a CSS circle mask with a half-pixel soft edge;
 // the same coverage is folded into the premultiplied output here.
-[[ stitchable ]] half4 orbloom(
+[[ stitchable ]] half4 brightSolvingStars(
     float2 position,
     half4 inColor,
     float2 size,
@@ -365,7 +365,7 @@ static float3 shadeOrb(float2 point, thread const OrbloomOrb &o) {
     float coverage = 1.0 - smoothstep(1.0 - edge, 1.0, radius);
     if (coverage <= 0.0) return half4(0.0);
 
-    OrbloomOrb o;
+    BrightSolvingStarsOrb o;
     o.sky.resolution = resolution;
     o.sky.seed = seed;
     o.sky.archetype = archetype;
