@@ -37,13 +37,7 @@ final class BrightDictation {
         guard !isListening, let recognizer, recognizer.isAvailable else { return }
         guard await requestAuthorisation() else { return }
 
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            return
-        }
+        guard await Self.activateSession() else { return }
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
@@ -95,6 +89,25 @@ final class BrightDictation {
         task?.finish()
         request = nil
         task = nil
+        Task.detached { Self.deactivateSession() }
+    }
+
+    // Activating and deactivating the session block, so both run off the
+    // main thread rather than stalling the UI while the hardware turns over.
+    private nonisolated static func activateSession() async -> Bool {
+        await Task.detached {
+            let session = AVAudioSession.sharedInstance()
+            do {
+                try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+                try session.setActive(true, options: .notifyOthersOnDeactivation)
+                return true
+            } catch {
+                return false
+            }
+        }.value
+    }
+
+    private nonisolated static func deactivateSession() {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 

@@ -16,6 +16,7 @@ struct LighthouseOnboardingView: View {
     @State private var page = 0
     @State private var carouselIndex: Int?
     @State private var selectedTiers: [String: BrightCarouselTier]
+    @State private var revealedCapabilities = 0
 
     init(selectedModel: Binding<LighthouseModel>, onFinish: @escaping () -> Void) {
         _selectedModel = selectedModel
@@ -78,14 +79,18 @@ struct LighthouseOnboardingView: View {
 
     private var capabilities: some View {
         VStack(alignment: .leading, spacing: .spacing8x) {
-            ForEach(Constants.capabilities) { capability in
-                capabilityRow(capability)
+            ForEach(Array(Constants.capabilities.enumerated()), id: \.element.id) { index, capability in
+                if index < revealedCapabilities {
+                    capabilityRow(capability)
+                        .transition(.offset(y: -.spacing1x).combined(with: .opacity))
+                }
             }
 
             Spacer(minLength: .spacing0x)
         }
         .padding(.top, .spacing8x)
         .padding(.horizontal, .spacing5x)
+        .task(id: page) { await revealCapabilities() }
     }
 
     private func capabilityRow(_ capability: Capability) -> some View {
@@ -94,6 +99,7 @@ struct LighthouseOnboardingView: View {
                 .font(.standard(size: .standout1, weight: .light))
                 .foregroundStyle(capability.color)
                 .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+                .transition(.symbolEffect(.drawOn))
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 BrightText(capability.title, size: .subheading, weight: .regular)
@@ -143,6 +149,21 @@ struct LighthouseOnboardingView: View {
         )
     }
 
+    // The rows land one after another as the page arrives, and clear
+    // off-screen so they do it again next time.
+    private func revealCapabilities() async {
+        revealedCapabilities = 0
+        guard page == 1 else { return }
+        for _ in Constants.capabilities {
+            do {
+                try await Task.sleep(for: .seconds(Constants.capabilityRevealEvery))
+            } catch {
+                return
+            }
+            withAnimation(.brightSpring) { revealedCapabilities += 1 }
+        }
+    }
+
     private func advance() {
         guard isLastPage else {
             withAnimation(.brightEaseInOut) { page += 1 }
@@ -171,6 +192,7 @@ struct LighthouseOnboardingView: View {
         static let nextTitle = "Next"
         static let getStartedTitle = "Get Started"
         static let chooseTitle = "Choose"
+        static let capabilityRevealEvery: TimeInterval = 0.45
 
         static let capabilityDetail = "Reminders daily, weekly or monthly to keep you on track with your goals"
         static let capabilities = [

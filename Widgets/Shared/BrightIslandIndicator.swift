@@ -31,6 +31,12 @@ struct BrightIslandIndicator<Content: View>: View {
                     cornerRadius: CGFloat.cornerRadius44,
                     tint: .black
                 ))
+                // The same hairline the side menu draws down the content's
+                // edge, so the panel reads as a lifted plate over the chat.
+                .overlay {
+                    RoundedRectangle(cornerRadius: CGFloat.cornerRadius44)
+                        .strokeBorder(Color.white.opacity(Constants.edgeLineOpacity), lineWidth: Constants.edgeLineWidth)
+                }
 
             Spacer(minLength: .spacing0x)
         }
@@ -57,6 +63,8 @@ struct BrightIslandIndicator<Content: View>: View {
 // Outside the struct: a generic type cannot hold static stored properties.
 private enum Constants {
     static let widthFraction: CGFloat = 0.5
+    static let edgeLineWidth: CGFloat = 0.5
+    static let edgeLineOpacity: Double = .minimalOpacity
     static let growScale: CGFloat = 0.3
     static let washSolidEnd: CGFloat = 0.25
     static let washFadeStart: CGFloat = 0.6

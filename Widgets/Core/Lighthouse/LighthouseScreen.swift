@@ -29,6 +29,9 @@ struct LighthouseScreen: View {
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
     @State private var showingThoughtProcess = false
+    // Presenting the thought process takes the keyboard with it, so this
+    // remembers whether it was up to bring it straight back after.
+    @State private var wasTypingBeforeThoughtProcess = false
     @State private var attachments = [BrightChatAttachment]()
     @State private var dictation = BrightDictation()
     @State private var attachmentSource: BrightChatAttachmentSource?
@@ -72,6 +75,10 @@ struct LighthouseScreen: View {
             LighthouseCheckInsSheet()
         }
         .sheet(isPresented: $showingThoughtProcess) {
+            if wasTypingBeforeThoughtProcess {
+                isTyping = true
+            }
+        } content: {
             LighthouseThoughtProcessSheet(steps: LighthouseDemo.thoughtSteps)
         }
         .photosPicker(
@@ -115,6 +122,16 @@ struct LighthouseScreen: View {
 
             // Speaking to it lights the orb up too: it listens to the mic
             // and swells with your voice until the reply is being worked out.
+            island
+        }
+    }
+
+    // The island's grow and collapse are animated here, scoped to it, so the
+    // chat's own changes keep their animations. A real container rather than
+    // a Group: a Group is gone once its only child leaves, and the collapse
+    // has nothing to animate on.
+    private var island: some View {
+        ZStack(alignment: .top) {
             if isThinking || dictation.isListening {
                 BrightIslandIndicator {
                     BrightSolvingStars(
@@ -129,9 +146,8 @@ struct LighthouseScreen: View {
                 }
             }
         }
-        // The mic flips outside any withAnimation, so the island's grow and
-        // collapse are animated here.
-        .animation(.brightSnappy, value: dictation.isListening)
+        .animation(.brightEaseInOut, value: isThinking)
+        .animation(.brightEaseInOut, value: dictation.isListening)
     }
 
     private var onboarding: some View {
@@ -164,7 +180,10 @@ struct LighthouseScreen: View {
             attachments: $attachments,
             dictation: dictation,
             onDismiss: { dismiss() },
-            onThoughtProcess: { showingThoughtProcess = true },
+            onThoughtProcess: {
+                wasTypingBeforeThoughtProcess = isTyping
+                showingThoughtProcess = true
+            },
             onAttach: { attachmentSource = $0 }
         )
     }

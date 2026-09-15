@@ -183,7 +183,6 @@ struct LighthouseChatView: View {
                 kind: .response,
                 text: LighthouseDemo.sleepPartOne,
                 payload: LighthouseDemo.sleepItems,
-                dismissesKeyboard: true,
                 thoughtSeconds: Int(thinkingSeconds.rounded())
             )
         } else {

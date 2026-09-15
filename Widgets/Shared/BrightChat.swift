@@ -21,10 +21,6 @@ nonisolated struct BrightChatMessage<Payload>: Identifiable, Equatable {
     let kind: Kind
     let text: String
     var payload: Payload?
-    // A reply that fills the screen — a full plan, or widgets in a Lighthouse
-    // answer — puts the keyboard away when it lands. A quick question with
-    // chips, like "2 days / 3 days", keeps it up so you can answer.
-    var dismissesKeyboard = false
     // How long the model worked before this reply; set, a "Thought for…" row
     // sits above the answer and opens the thought process.
     var thoughtSeconds: Int?
@@ -35,14 +31,12 @@ nonisolated struct BrightChatMessage<Payload>: Identifiable, Equatable {
         kind: Kind,
         text: String,
         payload: Payload? = nil,
-        dismissesKeyboard: Bool = false,
         thoughtSeconds: Int? = nil,
         attachments: [BrightChatAttachment] = []
     ) {
         self.kind = kind
         self.text = text
         self.payload = payload
-        self.dismissesKeyboard = dismissesKeyboard
         self.thoughtSeconds = thoughtSeconds
         self.attachments = attachments
     }
@@ -181,11 +175,12 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             // Dragging the thread carries the keyboard — and the input card
             // riding above it — down with the finger.
             .scrollDismissesKeyboard(.interactively)
-            // A drawn response is read from its top, so only plain replies
-            // follow the thread down to the bottom.
+            // Anything that arrives puts the keyboard away. A drawn response
+            // is read from its top, so only plain replies follow the thread
+            // down to the bottom.
             .onChange(of: messages) { _, messages in
                 guard let last = messages.last else { return }
-                if last.dismissesKeyboard {
+                if last.kind != .user {
                     isTyping.wrappedValue = false
                 }
                 guard last.kind != .response else { return }
@@ -268,7 +263,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         switch message.kind {
         case .user:
             userBubble(message)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .transition(BrightSentTransition().animation(.brightBouncy))
         case .assistant:
             withThought(message) { assistantText(message.text) }
                 .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
@@ -392,7 +387,9 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private var inputCard: some View {
         VStack(spacing: .spacing0x) {
-            if let suggestions, !suggestions.isEmpty {
+            // With the chips out of service the strip is an empty horizontal
+            // scroll view, which would still drag sideways under the finger.
+            if let suggestions, !suggestions.isEmpty, isAddingPrompt {
                 suggestionChips(suggestions)
                     .padding(.leading, .spacing2x)
             }
@@ -588,6 +585,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         withAnimation(.brightSnappy) {
             onSend(text)
         }
+        isTyping.wrappedValue = false
         // Clearing in the same turn as the tap can land while the field is
         // still committing pending input, leaving typed text on screen over an
         // empty draft; the next turn lets it settle first.
@@ -597,9 +595,30 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     }
 }
 
+// A sent message lifts out of the input field: it begins small, soft and low
+// in the middle of the field, where the words were typed, and sharpens into
+// its bubble at the trailing edge. The card is inset into the thread's frame,
+// so the scroll view draws the start of the journey beneath the glass.
+private struct BrightSentTransition: Transition {
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        let arriving = phase == .willAppear
+        return content
+            .scaleEffect(arriving ? Constants.sentStartScale : 1, anchor: .bottom)
+            .offset(x: arriving ? -Constants.sentSweep : 0, y: arriving ? Constants.sentLift : 0)
+            .blur(radius: arriving ? Constants.sentBlur : 0)
+            .opacity(phase.isIdentity ? 1 : 0)
+    }
+}
+
 // Outside the struct: a generic type cannot hold static stored properties.
 private enum Constants {
     static let thinkingID = "thinking"
+    // Where a sent bubble starts: down in the middle of the input field, small
+    // and soft, before lifting out to its place at the trailing edge.
+    static let sentStartScale: CGFloat = 0.6
+    static let sentSweep: CGFloat = .spacing12x + .spacing8x
+    static let sentLift: CGFloat = .spacing7x
+    static let sentBlur: CGFloat = 8
 
     static let orbSize: CGFloat = 64
     // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's

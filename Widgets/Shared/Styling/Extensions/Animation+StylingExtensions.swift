@@ -1,3 +1,10 @@
+//
+//  Animation+StylingExtensions.swift
+//  Widgets
+//
+//  Created by Dom Montalto on 7/7/2026.
+//
+
 import SwiftUI
 
 extension Animation {

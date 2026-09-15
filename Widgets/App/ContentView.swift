@@ -162,7 +162,6 @@ struct ContentView: View {
                 } primaryAction: {
                     showingSession = true
                 }
-                .tint(.defaultGreen)
             }
         }
         .sheet(isPresented: $showingSession) {
