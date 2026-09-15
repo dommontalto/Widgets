@@ -13,7 +13,11 @@ struct LighthouseMenuView: View {
     let model: LighthouseModel
     let onSwitchModel: () -> Void
     let onCheckIns: () -> Void
+    let onConfigurations: () -> Void
+    let onTemporaryChat: () -> Void
     let onNewChat: () -> Void
+
+    @State private var historySort = HistorySort.newest
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -53,11 +57,12 @@ struct LighthouseMenuView: View {
     private var shortcuts: some View {
         VStack(spacing: .spacing0x) {
             shortcutRow(symbol: "person.badge.clock.fill", title: Constants.checkInTitle, action: onCheckIns)
-            shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle) {}
+            shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle, action: onConfigurations)
             shortcutRow(
                 symbol: "bubble.left.and.bubble.right",
-                title: Constants.temporaryChatTitle
-            ) {}
+                title: Constants.temporaryChatTitle,
+                action: onTemporaryChat
+            )
             shortcutRow(symbol: "gear", title: Constants.settingsTitle) {}
         }
         .padding(.horizontal, .spacing1x)
@@ -101,18 +106,55 @@ struct LighthouseMenuView: View {
 
                 Spacer(minLength: .spacing2x)
 
-                BrightRoundButton(systemImage: "line.3.horizontal.decrease", size: .small) {}
+                sortMenu
             }
             .frame(height: Constants.rowHeight)
 
             BrightDivider()
 
-            ForEach(LighthouseDemo.history) { entry in
+            ForEach(sortedHistory) { entry in
                 historyRow(entry)
             }
         }
+        .animation(.brightSnappy, value: historySort)
         .padding(.horizontal, .spacing1x)
         .padding(.top, .spacing2x)
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            ForEach(HistorySort.allCases) { sort in
+                Button {
+                    historySort = sort
+                } label: {
+                    Label {
+                        Text(sort.title)
+                    } icon: {
+                        if sort == historySort {
+                            Image(systemName: "checkmark")
+                        } else {
+                            Image(systemName: sort.symbol)
+                        }
+                    }
+                }
+            }
+        } label: {
+            BrightRoundButton(systemImage: "line.3.horizontal.decrease", size: .small) {}
+                .allowsHitTesting(false)
+        }
+    }
+
+    // The demo list is already newest first, so that order is the source
+    // and the alphabetical one is derived from it.
+    private var sortedHistory: [LighthouseHistoryEntry] {
+        switch historySort {
+        case .newest:
+            LighthouseDemo.history
+        case .alphabetical:
+            LighthouseDemo.history.sorted {
+                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+        }
     }
 
     private func historyRow(_ entry: LighthouseHistoryEntry) -> some View {
@@ -157,6 +199,27 @@ struct LighthouseMenuView: View {
         .padding(.bottom, .spacing2x)
     }
 
+    private enum HistorySort: CaseIterable, Identifiable {
+        case newest
+        case alphabetical
+
+        var id: Self { self }
+
+        var title: String {
+            switch self {
+            case .newest: "Newest"
+            case .alphabetical: "Alphabetical"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .newest: "clock"
+            case .alphabetical: "textformat.abc"
+            }
+        }
+    }
+
     private enum Constants {
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
@@ -179,6 +242,8 @@ struct LighthouseMenuView: View {
                 model: .chatGPT,
                 onSwitchModel: {},
                 onCheckIns: {},
+                onConfigurations: {},
+                onTemporaryChat: {},
                 onNewChat: {}
             )
             .background { LighthouseChatBackground() }

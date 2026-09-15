@@ -21,6 +21,14 @@ nonisolated struct LighthouseCheckIn: Identifiable {
     var isOn: Bool
 }
 
+nonisolated struct LighthouseConfiguration: Identifiable {
+    let id = UUID()
+    let title: String
+    let created: String
+    let widgets: [String]
+    var isOn: Bool
+}
+
 // Hard-coded Lighthouse content — a sleep reply, past chats and check-ins — so
 // the screens fill without a backend.
 // One step of a reply's reasoning. `depth` nests it under the step before,
@@ -118,6 +126,21 @@ enum LighthouseDemo {
             title: "Monthly Sleep Review",
             repeats: "Repeat: 1st, 8:00 AM",
             detail: "A monthly look at your sleep trends and what has been moving them.",
+            isOn: false
+        ),
+    ]
+
+    static let configurations = [
+        LighthouseConfiguration(
+            title: "Climbing S&C",
+            created: "Created: 2 May",
+            widgets: ["Intake", "Activity", "Sleep", "Recovery", "Fatigue", "Readiness"],
+            isOn: true
+        ),
+        LighthouseConfiguration(
+            title: "Weight loss focus",
+            created: "Created: 24 Dec 2025",
+            widgets: ["Intake", "Activity", "Steps", "Macros", "Zones"],
             isOn: false
         ),
     ]

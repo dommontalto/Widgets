@@ -28,6 +28,10 @@ struct LighthouseScreen: View {
     @State private var isThinking = false
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
+    @State private var showingConfigurations = false
+    // The thread's state lives in the chat view, so starting afresh means
+    // giving it a new identity.
+    @State private var chatID = UUID()
     @State private var showingThoughtProcess = false
     // Presenting the thought process takes the keyboard with it, so this
     // remembers whether it was up to bring it straight back after.
@@ -73,6 +77,9 @@ struct LighthouseScreen: View {
         .animation(.brightEaseInOut, value: showOnboarding)
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
+        }
+        .sheet(isPresented: $showingConfigurations) {
+            LighthouseConfigurationsSheet()
         }
         .sheet(isPresented: $showingThoughtProcess) {
             if wasTypingBeforeThoughtProcess {
@@ -186,6 +193,7 @@ struct LighthouseScreen: View {
             },
             onAttach: { attachmentSource = $0 }
         )
+        .id(chatID)
     }
 
     private var menu: some View {
@@ -193,12 +201,19 @@ struct LighthouseScreen: View {
             model: model,
             onSwitchModel: { showingModelSelector = true },
             onCheckIns: { showingCheckIns = true },
-            onNewChat: showChat
+            onConfigurations: { showingConfigurations = true },
+            onTemporaryChat: startNewChat,
+            onNewChat: startNewChat
         )
     }
 
-    private func showChat() {
-        withAnimation(.brightSnappy) { isMenuOpen = false }
+    private func startNewChat() {
+        isThinking = false
+        attachments = []
+        withAnimation(.brightSnappy) {
+            chatID = UUID()
+            isMenuOpen = false
+        }
     }
 
     // MARK: - Attachments
