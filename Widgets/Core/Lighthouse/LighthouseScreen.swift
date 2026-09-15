@@ -29,9 +29,9 @@ struct LighthouseScreen: View {
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
-    // The thread's state lives in the chat view, so starting afresh means
-    // giving it a new identity.
-    @State private var chatID = UUID()
+    // Bumped to have the chat view clear its thread in place, so the input
+    // field survives and keeps the keyboard.
+    @State private var chatResetCount = 0
     @State private var showingThoughtProcess = false
     // Presenting the thought process takes the keyboard with it, so this
     // remembers whether it was up to bring it straight back after.
@@ -140,7 +140,7 @@ struct LighthouseScreen: View {
     private var island: some View {
         ZStack(alignment: .top) {
             if isThinking || dictation.isListening {
-                BrightIslandIndicator {
+                BrightIslandIndicator(onTap: islandTap) {
                     BrightSolvingStars(
                         state: dictation.isListening ? .listening : .thinking,
                         audioLevel: dictation.audioLevel,
@@ -150,6 +150,8 @@ struct LighthouseScreen: View {
                     .containerRelativeFrame(.horizontal) { width, _ in
                         width * Constants.orbWidthFraction
                     }
+                } footer: {
+                    LighthouseThinkingStatus(isListening: dictation.isListening)
                 }
             }
         }
@@ -186,14 +188,11 @@ struct LighthouseScreen: View {
             isTyping: $isTyping,
             attachments: $attachments,
             dictation: dictation,
+            resetCount: chatResetCount,
             onDismiss: { dismiss() },
-            onThoughtProcess: {
-                wasTypingBeforeThoughtProcess = isTyping
-                showingThoughtProcess = true
-            },
+            onThoughtProcess: showThoughtProcess,
             onAttach: { attachmentSource = $0 }
         )
-        .id(chatID)
     }
 
     private var menu: some View {
@@ -207,13 +206,27 @@ struct LighthouseScreen: View {
         )
     }
 
+    // Tapping the island while a reply is being worked out opens the thought
+    // process; while listening it stays out of the way.
+    private var islandTap: (() -> Void)? {
+        guard isThinking, !dictation.isListening else { return nil }
+        return { showThoughtProcess() }
+    }
+
+    private func showThoughtProcess() {
+        wasTypingBeforeThoughtProcess = isTyping
+        showingThoughtProcess = true
+    }
+
     private func startNewChat() {
         isThinking = false
         attachments = []
         withAnimation(.brightSnappy) {
-            chatID = UUID()
+            chatResetCount += 1
             isMenuOpen = false
         }
+        // Opening the menu put the keyboard away; a fresh chat wants it back.
+        isTyping = true
     }
 
     // MARK: - Attachments

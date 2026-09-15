@@ -18,6 +18,8 @@ struct LighthouseChatView: View {
     var isTyping: FocusState<Bool>.Binding
     @Binding var attachments: [BrightChatAttachment]
     let dictation: BrightDictation
+    // Each change clears the thread for a new chat.
+    var resetCount = 0
     let onDismiss: () -> Void
     let onThoughtProcess: () -> Void
     let onAttach: (BrightChatAttachmentSource) -> Void
@@ -72,6 +74,12 @@ struct LighthouseChatView: View {
             Color.clear.frame(height: .spacing2x)
         }
         .onDisappear { replyTask?.cancel() }
+        .onChange(of: resetCount) { _, _ in
+            replyTask?.cancel()
+            replyTask = nil
+            messages = []
+            replyIndex = 0
+        }
     }
 
     // One spacer above and three below park it a quarter of the way down, and

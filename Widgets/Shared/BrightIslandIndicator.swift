@@ -11,8 +11,14 @@ import SwiftUI
 // rather than sliding in from off-screen. It blacks the notch out — solid for
 // the top quarter, dissolving into the black glass beneath by its bottom edge
 // — so the island and the panel read as one shape.
-struct BrightIslandIndicator<Content: View>: View {
+struct BrightIslandIndicator<Content: View, Footer: View>: View {
+    // Set to make the square itself tappable; everything around it still
+    // lets touches through to the screen beneath.
+    var onTap: (() -> Void)?
     @ViewBuilder var content: Content
+    // Laid over the foot of the square rather than stacked under the
+    // content, so adding it doesn't shift the content off centre.
+    @ViewBuilder var footer: Footer
 
     var body: some View {
         VStack(spacing: .spacing0x) {
@@ -23,6 +29,10 @@ struct BrightIslandIndicator<Content: View>: View {
                 .aspectRatio(1, contentMode: .fit)
                 .containerRelativeFrame(.horizontal) { width, _ in
                     width * Constants.widthFraction
+                }
+                .overlay(alignment: .bottom) {
+                    footer
+                        .padding(.bottom, .spacing2x)
                 }
                 .background(wash)
                 .clipShape(.rect(cornerRadius: CGFloat.cornerRadius44))
@@ -37,12 +47,14 @@ struct BrightIslandIndicator<Content: View>: View {
                     RoundedRectangle(cornerRadius: CGFloat.cornerRadius44)
                         .strokeBorder(Color.white.opacity(Constants.edgeLineOpacity), lineWidth: Constants.edgeLineWidth)
                 }
+                .contentShape(.rect(cornerRadius: CGFloat.cornerRadius44))
+                .onTapGesture { onTap?() }
 
             Spacer(minLength: .spacing0x)
         }
         .padding(.top, .spacing2x)
         .ignoresSafeArea()
-        .allowsHitTesting(false)
+        .allowsHitTesting(onTap != nil)
         .transition(.scale(scale: Constants.growScale, anchor: .top).combined(with: .opacity))
     }
 
@@ -57,6 +69,12 @@ struct BrightIslandIndicator<Content: View>: View {
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+}
+
+extension BrightIslandIndicator where Footer == EmptyView {
+    init(onTap: (() -> Void)? = nil, @ViewBuilder content: () -> Content) {
+        self.init(onTap: onTap, content: content, footer: { EmptyView() })
     }
 }
 
