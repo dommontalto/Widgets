@@ -9,10 +9,16 @@ import SwiftUI
 
 // The first run of Lighthouse: the beacon and a welcome, what it can do, then
 // the model to run it on. Pages turn by swipe or by the button underneath.
+// It opens on the intro: dark, a spark, a bang, and the welcome condensing
+// out of it. A tap skips straight to the settled page.
 struct LighthouseOnboardingView: View {
     @Binding var selectedModel: LighthouseModel
     let onFinish: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var introPhase = LighthouseIntroPhase.dark
+    @State private var beaconCentre = CGPoint.zero
     @State private var page = 0
     @State private var carouselIndex: Int?
     @State private var selectedTiers: [String: BrightCarouselTier]
@@ -32,23 +38,46 @@ struct LighthouseOnboardingView: View {
         page == Constants.pageCount - 1
     }
 
+    private var isIntroDone: Bool {
+        introPhase == .done
+    }
+
     var body: some View {
-        VStack(spacing: .spacing0x) {
-            TabView(selection: $page) {
-                welcome
-                    .tag(0)
+        ZStack {
+            VStack(spacing: .spacing0x) {
+                TabView(selection: $page) {
+                    welcome
+                        .tag(0)
 
-                capabilities
-                    .tag(1)
+                    capabilities
+                        .tag(1)
 
-                modelPicker
-                    .tag(2)
+                    modelPicker
+                        .tag(2)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+
+                footer
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
 
-            footer
+            if !isIntroDone {
+                LighthouseIntro(phase: introPhase, beaconCentre: beaconCentre) {
+                    introPhase = .done
+                }
+                .transition(.opacity)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(.brightEaseInOut, value: isIntroDone)
+        .brightHaptic(trigger: introPhase) { _, phase in
+            switch phase {
+            case .spark: .soft
+            case .bang: .impact
+            case .title: .light
+            default: nil
+            }
+        }
+        .task { await runIntro() }
         .toolbar {
             // In the bar beside the close button, so the second page's title
             // reads as the screen's own.
@@ -66,18 +95,59 @@ struct LighthouseOnboardingView: View {
         VStack(spacing: .spacing2x) {
             Spacer(minLength: .spacing0x)
 
-            LighthouseBeacon(size: Constants.beaconSize)
+            welcomeBeacon
                 .padding(.bottom, .spacing2x)
 
-            BrightText(Constants.welcomeTitle, size: .standout1, color: .semiLightTextColor)
+            welcomeTitle
 
             BrightText(Constants.welcomeSubtitle, size: .body1, color: .semiLightTextColor)
                 .multilineTextAlignment(.center)
+                .opacity(introPhase >= .subtitle ? 1 : 0)
+                .offset(y: introPhase >= .subtitle ? 0 : Constants.subtitleRise)
+                .animation(.brightChartReveal, value: introPhase >= .subtitle)
 
             Spacer(minLength: .spacing0x)
             Spacer(minLength: .spacing0x)
         }
         .padding(.horizontal, .spacing6x)
+    }
+
+    // The beacon condenses out of the blast: a huge soft glow that sharpens
+    // and shrinks into place while its lamp makes one turn and rests. It
+    // tells the intro where its centre is, so the burst goes off from the
+    // same spot.
+    private var welcomeBeacon: some View {
+        let hasBanged = introPhase >= .bang
+        return LighthouseBeacon(size: Constants.beaconSize, sweepsForever: false, isLit: hasBanged)
+            .opacity(hasBanged ? 1 : 0)
+            .animation(.brightEaseInOut, value: hasBanged)
+            .scaleEffect(hasBanged ? 1 : Constants.beaconBurstScale)
+            .blur(radius: hasBanged ? 0 : Constants.beaconBurstBlur)
+            .animation(.easeOut(duration: Constants.beaconLandDuration), value: hasBanged)
+            .onGeometryChange(for: CGPoint.self) { proxy in
+                let frame = proxy.frame(in: .global)
+                return CGPoint(x: frame.midX, y: frame.midY)
+            } action: { beaconCentre = $0 }
+    }
+
+    // The name arrives a letter at a time, each sharpening from a blur as the
+    // whole word pulls in from wide tracking to its resting spacing.
+    private var welcomeTitle: some View {
+        let hasTitle = introPhase >= .title
+        return HStack(spacing: hasTitle ? .spacing0x : .spacing2x) {
+            ForEach(Array(Constants.welcomeTitle.enumerated()), id: \.offset) { index, letter in
+                BrightText(String(letter), size: .standout1, color: .semiLightTextColor)
+                    .opacity(hasTitle ? 1 : 0)
+                    .blur(radius: hasTitle ? 0 : Constants.letterBlur)
+                    .offset(y: hasTitle ? 0 : Constants.letterRise)
+                    .animation(
+                        .easeOut(duration: Constants.letterDuration)
+                            .delay(Double(index) * Constants.letterStagger),
+                        value: hasTitle
+                    )
+            }
+        }
+        .animation(.easeOut(duration: Constants.titleTightenDuration), value: hasTitle)
     }
 
     private var capabilities: some View {
@@ -140,6 +210,9 @@ struct LighthouseOnboardingView: View {
                 .animation(.brightEaseInOut, value: page)
         }
         .padding(.bottom, .spacing2x)
+        .opacity(isIntroDone ? 1 : 0)
+        .offset(y: isIntroDone ? 0 : Constants.footerRise)
+        .animation(.brightChartReveal, value: isIntroDone)
     }
 
     private var buttonTitle: String {
@@ -183,6 +256,25 @@ struct LighthouseOnboardingView: View {
         }
     }
 
+    // Plays the beats on their cue. A tap can have jumped ahead, so a beat
+    // that has already passed is left alone rather than rewound.
+    private func runIntro() async {
+        guard !reduceMotion else {
+            introPhase = .done
+            return
+        }
+        for beat in Constants.introBeats {
+            do {
+                try await Task.sleep(for: .seconds(beat.after))
+            } catch {
+                return
+            }
+            guard !isIntroDone else { return }
+            guard introPhase < beat.phase else { continue }
+            introPhase = beat.phase
+        }
+    }
+
     private func advance() {
         guard isLastPage else {
             withAnimation(.brightEaseInOut) { page += 1 }
@@ -202,9 +294,32 @@ struct LighthouseOnboardingView: View {
         var id: String { title }
     }
 
+    private struct IntroBeat {
+        let phase: LighthouseIntroPhase
+        // Seconds after the previous beat.
+        let after: TimeInterval
+    }
+
     private enum Constants {
         static let pageCount = 3
         static let beaconSize: CGFloat = 176
+        static let introBeats = [
+            IntroBeat(phase: .spark, after: 0.5),
+            IntroBeat(phase: .bang, after: 1.1),
+            IntroBeat(phase: .title, after: 0.55),
+            IntroBeat(phase: .subtitle, after: 0.5),
+            IntroBeat(phase: .done, after: 0.5),
+        ]
+        static let beaconBurstScale: CGFloat = 2.6
+        static let beaconBurstBlur: CGFloat = 40
+        static let beaconLandDuration: TimeInterval = 1.4
+        static let letterBlur: CGFloat = 8
+        static let letterRise: CGFloat = .spacing2x
+        static let letterDuration: TimeInterval = 0.6
+        static let letterStagger: TimeInterval = 0.04
+        static let titleTightenDuration: TimeInterval = 0.9
+        static let subtitleRise: CGFloat = .spacing2x
+        static let footerRise: CGFloat = .spacing4x
         static let welcomeTitle = "Lighthouse"
         static let welcomeSubtitle = "Welcome to your personal health coach."
         static let capabilitiesTitle = "What Lighthouse can do"
