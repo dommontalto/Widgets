@@ -90,13 +90,13 @@ struct LighthouseThoughtProcessSheet: View {
                             .transition(.symbolEffect(.drawOn))
                     }
 
-                    BrightText(step.title, size: .body2, color: .semiLightTextColor)
+                    BrightText(step.title, size: .body1, color: .semiLightTextColor)
                         .lineLimit(1)
 
                     Spacer(minLength: .spacing2x)
 
                     Image(systemName: "chevron.forward")
-                        .font(.standard(size: .body2, weight: .light))
+                        .font(.standard(size: .body1, weight: .light))
                         .foregroundStyle(Color.semiLightTextColor)
                         .rotationEffect(.degrees(isExpanded ? Constants.openChevronDegrees : 0))
                 }
@@ -124,7 +124,7 @@ struct LighthouseThoughtProcessSheet: View {
                 .frame(width: 1)
                 .frame(width: iconWidth(for: step))
 
-            BrightText(step.detail, size: .body4, color: .lightTextColor)
+            BrightText(step.detail, size: .body1, color: .lightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, .spacing105x)

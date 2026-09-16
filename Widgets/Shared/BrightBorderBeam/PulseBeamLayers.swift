@@ -212,9 +212,8 @@ struct PulseBeamLayers: View {
     private func layers(at t: Double, elementSize: CGSize, fade: Double) -> some View {
         let spec = config.spec
         let osc = PulseDriver.sample(config.themeSection, at: t, durationScale: config.durationScale)
-        let hue = (config.staticColors || config.reduceMotion || config.variant.isSingleHue)
-            ? 0
-            : PulseDriver.hueDegrees(at: t, period: config.huePeriod)
+        // Every variant is one hue, so the ring never drifts through colours.
+        let hue = 0.0
         let tuning = config.tuning
         let cm = BeamColorMatrix.composed(
             hueDegrees: hue, brightness: config.finalBrightness, saturation: config.finalSaturation

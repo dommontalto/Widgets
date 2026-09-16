@@ -9,7 +9,7 @@ import SwiftUI
 
 // The first run of Lighthouse: the beacon and a welcome, what it can do, then
 // the model to run it on. Pages turn by swipe or by the button underneath.
-// It opens on the intro: dark, a spark, a bang, and the welcome condensing
+// It opens on the intro: dark, a bang, and the welcome condensing
 // out of it. A tap skips straight to the settled page.
 struct LighthouseOnboardingView: View {
     @Binding var selectedModel: LighthouseModel
@@ -75,7 +75,6 @@ struct LighthouseOnboardingView: View {
         .animation(.easeOut(duration: Constants.afterglowFade), value: introPhase == .faded)
         .brightHaptic(trigger: introPhase) { _, phase in
             switch phase {
-            case .spark: .soft
             case .bang: .impact
             case .title: .light
             default: nil
@@ -221,8 +220,8 @@ struct LighthouseOnboardingView: View {
         switch capability.flourish {
         case .nudge:
             image.symbolEffect(.wiggle, value: hasSettled)
-        case .shimmy:
-            image.symbolEffect(.wiggle.left, value: hasSettled)
+        case .bob:
+            image.symbolEffect(.wiggle.up, value: hasSettled)
         case .spring:
             image.symbolEffect(.bounce.up, value: hasSettled)
         case .clatter:
@@ -331,11 +330,11 @@ struct LighthouseOnboardingView: View {
     }
 
     // What each icon does once its row has landed, chosen to suit the glyph:
-    // a reminder's nudge, the 3D graph shimmying side to side, the runner
+    // a reminder's nudge, the 3D graph bobbing up and down, the runner
     // springing off, cutlery knocking together.
     private enum Flourish {
         case nudge
-        case shimmy
+        case bob
         case spring
         case clatter
     }
@@ -350,8 +349,7 @@ struct LighthouseOnboardingView: View {
         static let pageCount = 3
         static let beaconSize: CGFloat = 176
         static let introBeats = [
-            IntroBeat(phase: .spark, after: 0.5),
-            IntroBeat(phase: .bang, after: 1.1),
+            IntroBeat(phase: .bang, after: 1.6),
             IntroBeat(phase: .title, after: 0.55),
             IntroBeat(phase: .subtitle, after: 0.5),
             IntroBeat(phase: .done, after: 0.5),
@@ -395,7 +393,7 @@ struct LighthouseOnboardingView: View {
                 title: "Trend Analysis",
                 detail: capabilityDetail,
                 color: .defaultYellow,
-                flourish: .shimmy
+                flourish: .bob
             ),
             Capability(
                 symbol: "figure.run.square.stack.fill",

@@ -26,6 +26,10 @@ struct LighthouseChatView: View {
 
     @State private var messages = [LighthouseChatMessage]()
     @State private var speed = LighthouseSpeed.adaptive
+    // The tier picked from the pill; nil falls back to the stored choice, and
+    // it clears whenever the model or the selector sheet changes so the pill
+    // rereads what was saved there.
+    @State private var pickedTier: LighthouseModelTier?
     @State private var customPrompts = [String]()
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
@@ -57,6 +61,7 @@ struct LighthouseChatView: View {
             modelPicker: {
                 HStack(spacing: .spacing2x) {
                     modelPickerButton
+                    tierMenu
                     speedMenu
                 }
                 .padding(.leading, .spacing1x)
@@ -70,6 +75,8 @@ struct LighthouseChatView: View {
             }
         }
         .animation(.brightEaseInOut, value: messages.isEmpty)
+        .onChange(of: selectedModel) { _, _ in pickedTier = nil }
+        .onChange(of: showingModelSelector) { _, _ in pickedTier = nil }
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing2x)
         }
@@ -117,6 +124,58 @@ struct LighthouseChatView: View {
         }
     }
 
+    private var tier: LighthouseModelTier {
+        pickedTier ?? selectedModel.selectedTier()
+    }
+
+    private var tierBinding: Binding<LighthouseModelTier> {
+        Binding(
+            get: { tier },
+            set: { picked in
+                pickedTier = picked
+                selectedModel.saveTier(picked)
+            }
+        )
+    }
+
+    // The current model's tiers, ticked on the one in use, in a pill cut like
+    // the speed one beside it.
+    private var tierMenu: some View {
+        Menu {
+            Picker("Tier", selection: tierBinding) {
+                ForEach(selectedModel.tiers) { tier in
+                    Label {
+                        Text(tier.name)
+                        Text(tier.label)
+                    } icon: {
+                        EmptyView()
+                    }
+                    .tag(tier)
+                }
+            }
+        } label: {
+            tierPill
+        }
+        .buttonStyle(.plain)
+        .modifier(GlassEffect(shape: .capsule))
+        .brightHaptic(.light, trigger: tier)
+    }
+
+    // Sized to the name in use, so the pill grows and shrinks with the tier.
+    private var tierPill: some View {
+        tierLabel(tier)
+            .padding(.horizontal, .spacing105x)
+            .frame(height: BrightButtonSizes.small.rawValue)
+            .compositingGroup()
+    }
+
+    private func tierLabel(_ tier: LighthouseModelTier) -> some View {
+        BrightText(tier.name, size: BrightButtonSizes.small.defaultFontSize)
+            .monospacedDigit()
+            .fixedSize()
+            .animation(.brightSnappy, value: tier)
+    }
+
     // A Picker inside the Menu draws each speed with its glyph leading and
     // the tick trailing on the one in use.
     private var speedMenu: some View {
@@ -140,18 +199,11 @@ struct LighthouseChatView: View {
         .brightHaptic(.light, trigger: speed)
     }
 
-    // The widest option sits hidden underneath so the pill keeps one width
-    // as the choice changes and the glass never re-lays out.
     private var speedPill: some View {
-        ZStack {
-            speedLabel(Constants.widestSpeed)
-                .hidden()
-
-            speedLabel(speed)
-        }
-        .padding(.horizontal, .spacing105x)
-        .frame(height: BrightButtonSizes.small.rawValue)
-        .compositingGroup()
+        speedLabel(speed)
+            .padding(.horizontal, .spacing105x)
+            .frame(height: BrightButtonSizes.small.rawValue)
+            .compositingGroup()
     }
 
     private func speedLabel(_ speed: LighthouseSpeed) -> some View {
@@ -162,8 +214,10 @@ struct LighthouseChatView: View {
                 .contentTransition(.symbolEffect(.replace))
 
             BrightText(speed.title, size: BrightButtonSizes.small.defaultFontSize)
-                .contentTransition(.numericText())
         }
+        // The menu hands its label a stale width for a beat after a pick, and
+        // a squeezed label truncates; sizing to the text keeps every glyph.
+        .fixedSize()
         .animation(.brightSnappy, value: speed)
     }
 
@@ -214,7 +268,6 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
-        static let widestSpeed = LighthouseSpeed.adaptive
         static let welcome = "Welcome to Lighthouse. What would you like to do?"
         static let thinkingRange = 6.0...9.0
         static let prompts = [

@@ -196,7 +196,6 @@ extension BeamColorVariant: Identifiable {
 
     var title: String {
         switch self {
-        case .brand: "Brand"
         case .defaultOrange: "Orange"
         case .defaultSkyBlue: "Sky Blue"
         case .defaultCyan: "Cyan"

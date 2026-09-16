@@ -50,11 +50,45 @@ static float stopsAlpha(device const float *stops, int floatCount, float t) {
     return stops[2 * (n - 1) + 1];
 }
 
-// CSS conic angle fraction (0 at top, clockwise) for a y-down coordinate space.
-static float conicFraction(float2 p, float2 center) {
-    float2 d = p - center;
-    float theta = atan2(d.x, -d.y);              // 0 up, +clockwise
-    return fract(theta / (2.0 * M_PI_F) + 1.0);
+// Where a pixel sits along the border as a fraction of the perimeter, 0 at
+// the top-centre and clockwise, with the top and bottom corner pairs allowed
+// their own radii. The beam window is measured in this rather than conic
+// angle so it covers the same distance every frame: a conic sweep races
+// along the long sides of a tall shape and crawls across the short ones.
+// Interior pixels take the nearest edge's projection.
+static float borderPathFraction(float2 rel, float2 halfSize, float2 radii) {
+    float rT = radii.x, rB = radii.y;
+    float exT = max(halfSize.x - rT, 0.0), exB = max(halfSize.x - rB, 0.0);
+    float eyT = max(halfSize.y - rT, 0.0), eyB = max(halfSize.y - rB, 0.0);
+    float arcT = 0.5 * M_PI_F * rT, arcB = 0.5 * M_PI_F * rB;
+    float sideRun = eyT + eyB;
+    float P = 2.0 * exT + 2.0 * exB + 2.0 * sideRun + 2.0 * arcT + 2.0 * arcB;
+    float halfPi = 0.5 * M_PI_F;
+    float x = rel.x, y = rel.y;
+    float s;
+
+    if (x > exT && y < -eyT) {
+        float2 v = rel - float2(exT, -eyT);
+        s = exT + rT * clamp(atan2(v.x, -v.y), 0.0, halfPi);
+    } else if (x > exB && y > eyB) {
+        float2 v = rel - float2(exB, eyB);
+        s = exT + arcT + sideRun + rB * clamp(atan2(v.y, v.x), 0.0, halfPi);
+    } else if (x < -exB && y > eyB) {
+        float2 v = rel - float2(-exB, eyB);
+        s = exT + arcT + sideRun + arcB + 2.0 * exB + rB * clamp(atan2(-v.x, v.y), 0.0, halfPi);
+    } else if (x < -exT && y < -eyT) {
+        float2 v = rel - float2(-exT, -eyT);
+        s = exT + arcT + 2.0 * sideRun + 2.0 * arcB + 2.0 * exB + rT * clamp(atan2(-v.y, -v.x), 0.0, halfPi);
+    } else {
+        float dR = halfSize.x - x, dL = x + halfSize.x;
+        float dT = y + halfSize.y, dB = halfSize.y - y;
+        float m = min(min(dR, dL), min(dT, dB));
+        if (m == dT)      s = (x >= 0.0) ? clamp(x, 0.0, exT) : P - clamp(-x, 0.0, exT);
+        else if (m == dR) s = exT + arcT + clamp(y + eyT, 0.0, sideRun);
+        else if (m == dB) s = exT + arcT + sideRun + arcB + clamp(exB - x, 0.0, 2.0 * exB);
+        else              s = exT + arcT + sideRun + 2.0 * arcB + 2.0 * exB + clamp(eyB - y, 0.0, sideRun);
+    }
+    return fract(s / max(P, 0.0001));
 }
 
 // src-over composite of premultiplied colors.
@@ -120,7 +154,7 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     float2 position,
     half4 inColor,
     float2 size,
-    float beamAngle,        // fraction of a full turn, 0..1
+    float beamAngle,        // fraction of a lap round the border, 0..1
     float2 cornerRadii,     // x = top corners, y = bottom corners
     float borderWidth,
     float layerKind,
@@ -153,10 +187,11 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     }
     if (geom <= 0.0) return half4(0.0);
 
-    // Conic beam-window mask, rotating with beamAngle.
+    // Beam-window mask, travelling round the border with beamAngle.
+    float along = borderPathFraction(rel, center, cornerRadii);
     float mask = 1.0;
     if (maskCount > 0) {
-        float t = fract(conicFraction(position, center) - beamAngle);
+        float t = fract(along - beamAngle);
         mask = stopsAlpha(maskStops, maskCount, t);
     }
 
@@ -172,23 +207,38 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     }
     if (mask <= 0.001) return half4(0.0);
 
-    // Blob stack (premultiplied, first blob on top ⇒ composite last-to-first).
+    // Blob stack. The blobs only lend their colour: each pixel takes the
+    // coverage-weighted mix of the blobs reaching it (or the nearest blob's
+    // colour where none does) at one flat alpha, the strongest in the stack.
+    // Compositing them with their own falloffs made the beam flare where it
+    // crossed a blob and fade in the gaps between.
     float4 acc = float4(0.0);
     int nBlobs = blobCount / 8;
-    for (int i = nBlobs - 1; i >= 0; i--) {
-        device const float *e = blobs + i * 8;
-        float2 radii = float2(max(e[0], 0.001), max(e[1], 0.001));
-        float2 c = float2(e[2], e[3]) * size;
-        float d = length((position - c) / radii);
-        float alpha = e[7] * clamp(1.0 - d, 0.0, 1.0);
-        if (alpha <= 0.0) continue;
-        float4 src = float4(float3(e[4], e[5], e[6]) * alpha, alpha);
-        acc = srcOver(src, acc);
+    if (nBlobs > 0) {
+        float3 rgbSum = float3(0.0);
+        float wSum = 0.0;
+        float aMax = 0.0;
+        float nearest = FLT_MAX;
+        float3 nearestRGB = float3(0.0);
+        for (int i = 0; i < nBlobs; i++) {
+            device const float *e = blobs + i * 8;
+            float2 radii = float2(max(e[0], 0.001), max(e[1], 0.001));
+            float2 c = float2(e[2], e[3]) * size;
+            float d = length((position - c) / radii);
+            float3 rgb = float3(e[4], e[5], e[6]);
+            float w = e[7] * clamp(1.0 - d, 0.0, 1.0);
+            rgbSum += rgb * w;
+            wSum += w;
+            aMax = max(aMax, e[7]);
+            if (d < nearest) { nearest = d; nearestRGB = rgb; }
+        }
+        float3 rgb = wSum > 0.0 ? rgbSum / wSum : nearestRGB;
+        acc = float4(rgb * aMax, aMax);
     }
 
-    // Conic gradient on top (white beam highlight, or the bloom ring pattern).
+    // Gradient on top (white beam highlight, or the bloom ring pattern).
     if (bgCount > 0) {
-        float t = fract(conicFraction(position, center) - beamAngle);
+        float t = fract(along - beamAngle);
         float a = stopsAlpha(bg, bgCount, t);
         float3 rgb = (bgIsBlack > 0.5) ? float3(0.0) : float3(1.0);
         acc = srcOver(float4(rgb * a, a), acc);

@@ -29,6 +29,7 @@ struct LighthouseScreen: View {
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
+    @State private var showingSettings = false
     // Bumped to have the chat view clear its thread in place, so the input
     // field survives and keeps the keyboard.
     @State private var chatResetCount = 0
@@ -56,10 +57,19 @@ struct LighthouseScreen: View {
                                     isMenuOpen.toggle()
                                 }
                             } label: {
-                                Image(systemName: "line.3.horizontal")
-                                    .foregroundStyle(Color.textColor)
+                                Label(isMenuOpen ? "Close menu" : "Open menu", systemImage: "line.3.horizontal")
+                                    .labelStyle(.iconOnly)
                             }
-                            .accessibilityLabel(isMenuOpen ? "Close menu" : "Open menu")
+                        }
+
+                        // Without this the bar folds both buttons into one capsule.
+                        ToolbarSpacer(.fixed, placement: .topBarLeading)
+
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button(action: startNewChat) {
+                                Label("Temporary chat", systemImage: "bubble.left.and.bubble.right")
+                                    .labelStyle(.iconOnly)
+                            }
                         }
                     }
 
@@ -67,9 +77,10 @@ struct LighthouseScreen: View {
                         Button {
                             dismiss()
                         } label: {
-                            Image(systemName: "xmark")
-                                .foregroundStyle(Color.textColor)
+                            Label("Close", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
                         }
+
                     }
                 }
         }
@@ -77,6 +88,9 @@ struct LighthouseScreen: View {
         .animation(.brightEaseInOut, value: showOnboarding)
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
+        }
+        .sheet(isPresented: $showingSettings) {
+            LighthouseSettingsSheet()
         }
         .sheet(isPresented: $showingConfigurations) {
             LighthouseConfigurationsSheet()
@@ -201,7 +215,7 @@ struct LighthouseScreen: View {
             onSwitchModel: { showingModelSelector = true },
             onCheckIns: { showingCheckIns = true },
             onConfigurations: { showingConfigurations = true },
-            onTemporaryChat: startNewChat,
+            onSettings: { showingSettings = true },
             onNewChat: startNewChat
         )
     }

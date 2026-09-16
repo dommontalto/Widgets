@@ -8,13 +8,13 @@
 import SwiftUI
 
 // The page beside the chat: the model in use, check-ins and configurations,
-// then the chats that came before.
+// then the chats that came before, with settings tucked in the bottom corner.
 struct LighthouseMenuView: View {
     let model: LighthouseModel
     let onSwitchModel: () -> Void
     let onCheckIns: () -> Void
     let onConfigurations: () -> Void
-    let onTemporaryChat: () -> Void
+    let onSettings: () -> Void
     let onNewChat: () -> Void
 
     @State private var historySort = HistorySort.newest
@@ -58,12 +58,6 @@ struct LighthouseMenuView: View {
         VStack(spacing: .spacing0x) {
             shortcutRow(symbol: "person.badge.clock.fill", title: Constants.checkInTitle, action: onCheckIns)
             shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle, action: onConfigurations)
-            shortcutRow(
-                symbol: "bubble.left.and.bubble.right",
-                title: Constants.temporaryChatTitle,
-                action: onTemporaryChat
-            )
-            shortcutRow(symbol: "gear", title: Constants.settingsTitle) {}
         }
         .padding(.horizontal, .spacing1x)
     }
@@ -194,6 +188,8 @@ struct LighthouseMenuView: View {
             )
 
             Spacer()
+
+            BrightRoundButton(systemImage: "gear", size: .large, onTapCallback: onSettings)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
@@ -224,8 +220,6 @@ struct LighthouseMenuView: View {
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
-        static let temporaryChatTitle = "Temporary Chat"
-        static let settingsTitle = "Settings"
         static let historyTitle = "History"
         static let newChatTitle = "New Chat"
         static let tierImageSize: CGFloat = 40
@@ -243,7 +237,7 @@ struct LighthouseMenuView: View {
                 onSwitchModel: {},
                 onCheckIns: {},
                 onConfigurations: {},
-                onTemporaryChat: {},
+                onSettings: {},
                 onNewChat: {}
             )
             .background { LighthouseChatBackground() }

@@ -2,13 +2,16 @@ import SwiftUI
 
 // Resolved, parse-once configuration for the rotate family (`sm` / `md`).
 // Built when props/theme change; the per-frame closure only varies the beam
-// angle and hue-shift matrix.
+// position and hue-shift matrix.
 struct RotateBeamConfig {
     let size: BeamSize
     let variant: BeamColorVariant
     let theme: String
     let staticColors: Bool
-    let duration: Double
+    // A fixed lap time; nil lets the lap follow the perimeter at `speed`.
+    let duration: Double?
+    // Points per second along the border.
+    let speed: Double
     let borderRadius: Double?
     // Bottom corner pair when it differs from the top, e.g. a card whose
     // bottom corners follow the screen edge. nil keeps all four equal.
@@ -98,8 +101,20 @@ struct RotateBeamConfig {
 
     // ── Per-frame values ──
 
-    func beamAngle(at t: Double) -> Double {
-        (t / duration).truncatingRemainder(dividingBy: 1)
+    // How long one trip round a border of this size takes.
+    func lapDuration(for size: CGSize) -> Double {
+        if let duration { return duration }
+        let cap = min(size.width, size.height) / 2
+        let top = min(radius, cap)
+        let bottom = min(radiusBottom, cap)
+        let perimeter = (size.width - 2 * top) + (size.width - 2 * bottom)
+            + 2 * (size.height - top - bottom) + .pi * (top + bottom)
+        return max(perimeter, 1) / max(speed, 1)
+    }
+
+    // Fraction of a lap the beam has travelled at time t.
+    func beamAngle(at t: Double, size: CGSize) -> Double {
+        (t / lapDuration(for: size)).truncatingRemainder(dividingBy: 1)
     }
 
     // Rotate-family hue shift: ±hueRange ping-pong over 12 s (web keyframes).
@@ -128,7 +143,6 @@ struct RotateBeamLayers: View {
 
     @ViewBuilder
     private func layers(at t: Double, fade: Double) -> some View {
-        let angle = config.beamAngle(at: t)
         let hue = config.hueShiftDegrees(at: t)
         // Web parity: with staticColors the CSS stroke/inner layers have NO
         // filter at all — brightness/saturate exist only inside the hue-shift
@@ -150,6 +164,7 @@ struct RotateBeamLayers: View {
 
         GeometryReader { geo in
             let size = geo.size
+            let angle = config.beamAngle(at: t, size: size)
             ZStack {
                 // Inner glow (::before) — full rounded rect, conic window +
                 // edge fade mask, inset shadow.

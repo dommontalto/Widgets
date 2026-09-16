@@ -31,7 +31,7 @@ struct LighthouseThinkingStatus: View {
 
             if !isListening {
                 Image(systemName: "chevron.forward")
-                    .font(.standard(size: .body4, weight: .regular))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
                     .transition(.opacity)
             }

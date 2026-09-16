@@ -13,19 +13,6 @@ struct LighthouseCheckInsSheet: View {
 
     var body: some View {
         BrightPageSheetView(
-            trailing: {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {} label: {
-                        Label("Settings", systemImage: "gear")
-                            .labelStyle(.iconOnly)
-                    }
-
-                    Button {} label: {
-                        Label("Add check-in", systemImage: "plus")
-                            .labelStyle(.iconOnly)
-                    }
-                }
-            },
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: .spacing3x) {
@@ -36,11 +23,7 @@ struct LighthouseCheckInsSheet: View {
                         }
                     }
                     .padding(.top, .spacing2x)
-                    .padding(.bottom, .spacing12x)
-                }
-                .overlay(alignment: .bottomTrailing) {
-                    BrightRoundButton(systemImage: "magnifyingglass", size: .large) {}
-                        .padding(.bottom, .spacing2x)
+                    .padding(.bottom, .spacing4x)
                 }
             }
         )

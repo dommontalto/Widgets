@@ -293,10 +293,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal, .spacing3x)
                         .padding(.vertical, .spacing2x)
-                        .background(
-                            Color.defaultSkyBlue,
-                            in: RoundedRectangle(cornerRadius: .cornerRadius22, style: .continuous)
-                        )
+                        .modifier(GlassEffect(
+                            shape: .roundedRect,
+                            tint: .defaultSkyBlue,
+                            interactive: false
+                        ))
                 }
             }
         }

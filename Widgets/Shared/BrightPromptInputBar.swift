@@ -112,7 +112,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
                         .frame(height: BrightButtonSizes.large.rawValue)
                 }
 
-                Spacer(minLength: .spacing2x)
+                Spacer(minLength: .spacing1x)
 
                 attachMenu
 

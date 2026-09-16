@@ -7,25 +7,29 @@ import SwiftUI
 //     Card()
 // }
 // // or
-// Card().borderBeam(.md, colorVariant: .brand)
+// Card().borderBeam(.md, colorVariant: .defaultOrange)
 // ```
 //
 // Rendering matches the web version layer-for-layer: an inner glow layer, a
-// stroke ring layer window-masked by a rotating conic gradient, and a blurred
-// bloom ring — all drawn by the `beamRotateLayer` Metal shader from data in
-// the shared `beam-spec.json`.
+// stroke ring layer window-masked by a beam travelling round the border, and
+// a blurred bloom ring — all drawn by the `beamRotateLayer` Metal shader from
+// data in the shared `beam-spec.json`.
+//
+// The beam moves at `BorderBeamPace.pointsPerSecond` along the border, so a
+// card and the whole screen travel at the same speed and one number tunes
+// every beam. Pass `duration` to pin a lap time instead.
 public struct BorderBeam<Content: View>: View {
     private let size: BeamSize
     private let colorVariant: BeamColorVariant
     private let theme: BeamTheme
     private let staticColors: Bool
     private let duration: Double?
+    private let speed: Double
     private let active: Bool
     private let borderRadius: Double?
     private let borderRadiusBottom: Double?
     private let brightness: Double?
     private let saturation: Double?
-    private let hueRange: Double
     private let strength: Double
     private let tuning: BeamTuning
     private let onActivate: (() -> Void)?
@@ -44,16 +48,16 @@ public struct BorderBeam<Content: View>: View {
 
     public init(
         size: BeamSize = .md,
-        colorVariant: BeamColorVariant = .brand,
+        colorVariant: BeamColorVariant = .defaultCyan,
         theme: BeamTheme = .dark,
         staticColors: Bool = false,
         duration: Double? = nil,
+        speed: Double = BorderBeamPace.pointsPerSecond,
         active: Bool = true,
         borderRadius: Double? = nil,
         borderRadiusBottom: Double? = nil,
         brightness: Double? = nil,
         saturation: Double? = nil,
-        hueRange: Double = 30,
         strength: Double = 1,
         tuning: BeamTuning = .none,
         onActivate: (() -> Void)? = nil,
@@ -65,12 +69,12 @@ public struct BorderBeam<Content: View>: View {
         self.theme = theme
         self.staticColors = staticColors
         self.duration = duration
+        self.speed = speed
         self.active = active
         self.borderRadius = borderRadius
         self.borderRadiusBottom = borderRadiusBottom
         self.brightness = brightness
         self.saturation = saturation
-        self.hueRange = hueRange
         self.strength = strength
         self.tuning = tuning
         self.onActivate = onActivate
@@ -147,10 +151,6 @@ public struct BorderBeam<Content: View>: View {
         }
     }
 
-    private var finalHueRange: Double {
-        colorVariant.isSingleHue ? 0 : hueRange
-    }
-
     private var resolvedVariant: BeamColorVariant {
         colorVariant.resolved(forDark: resolvedTheme == "dark")
     }
@@ -161,12 +161,13 @@ public struct BorderBeam<Content: View>: View {
             variant: resolvedVariant,
             theme: resolvedTheme,
             staticColors: staticColors,
-            duration: duration ?? BeamSpec.shared.defaults.duration.rotate,
+            duration: duration,
+            speed: speed,
             borderRadius: borderRadius,
             borderRadiusBottom: borderRadiusBottom,
             brightness: brightness,
             saturation: saturation,
-            hueRange: finalHueRange,
+            hueRange: 0,
             strength: min(max(strength, 0), 1)
         )
     }
@@ -181,8 +182,7 @@ public struct BorderBeam<Content: View>: View {
             borderRadius: borderRadius,
             brightness: brightness,
             saturation: saturation,
-            // The line family caps the hue range at 13° (web parity).
-            hueRange: min(finalHueRange, spec.defaults.lineHueRangeCap),
+            hueRange: 0,
             strength: min(max(strength, 0), 1)
         )
     }
@@ -205,16 +205,25 @@ public struct BorderBeam<Content: View>: View {
     }
 }
 
+// The one knob for how fast every beam travels, in points per second along
+// its border.
+public enum BorderBeamPace {
+    public static let pointsPerSecond: Double = 350
+}
+
 // MARK: - View modifier sugar
 
 public extension View {
     // Wraps the view in a ``BorderBeam``.
     func borderBeam(
         _ size: BeamSize = .md,
-        colorVariant: BeamColorVariant = .brand,
+        colorVariant: BeamColorVariant = .defaultCyan,
         theme: BeamTheme = .dark,
         staticColors: Bool = false,
         duration: Double? = nil,
+        // Rotate family only; the canvas this runs on may be scaled, so a
+        // wrapper can keep the on-screen pace by dividing through its scale.
+        speed: Double = BorderBeamPace.pointsPerSecond,
         active: Bool = true,
         borderRadius: Double? = nil,
         // Rotate family only: a differing bottom corner pair, for cards whose
@@ -222,7 +231,6 @@ public extension View {
         borderRadiusBottom: Double? = nil,
         brightness: Double? = nil,
         saturation: Double? = nil,
-        hueRange: Double = 30,
         strength: Double = 1,
         tuning: BeamTuning = .none,
         onActivate: (() -> Void)? = nil,
@@ -234,12 +242,12 @@ public extension View {
             theme: theme,
             staticColors: staticColors,
             duration: duration,
+            speed: speed,
             active: active,
             borderRadius: borderRadius,
             borderRadiusBottom: borderRadiusBottom,
             brightness: brightness,
             saturation: saturation,
-            hueRange: hueRange,
             strength: strength,
             tuning: tuning,
             onActivate: onActivate,

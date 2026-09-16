@@ -58,18 +58,18 @@ enum LighthouseModel: String, CaseIterable, Identifiable {
             [
                 LighthouseModelTier(id: "gpt54", name: "GPT-5.4", label: "Fast & versatile"),
                 LighthouseModelTier(id: "gpt55", name: "GPT-5.5", label: "Most capable"),
-                LighthouseModelTier(id: "o3", name: "o3", label: "Advanced reasoning"),
             ]
         case .gemini:
             [
-                LighthouseModelTier(id: "flash", name: "2.5 Flash", label: "Fast responses"),
-                LighthouseModelTier(id: "pro25", name: "2.5 Pro", label: "Most capable"),
+                LighthouseModelTier(id: "flash3", name: "3 Flash", label: "Fast responses"),
+                LighthouseModelTier(id: "pro31", name: "3.1 Pro", label: "Most capable"),
             ]
         case .claude:
             [
                 LighthouseModelTier(id: "haiku", name: "Haiku 4.5", label: "Fast & lightweight"),
-                LighthouseModelTier(id: "sonnet", name: "Sonnet 4.6", label: "Fast & smart"),
-                LighthouseModelTier(id: "opus", name: "Opus 4.6", label: "Most capable"),
+                LighthouseModelTier(id: "sonnet", name: "Sonnet 5", label: "Fast & smart"),
+                LighthouseModelTier(id: "opus", name: "Opus 5", label: "Most capable"),
+                LighthouseModelTier(id: "fable", name: "Fable 5.1", label: "Most intelligent"),
             ]
         case .grok:
             [
