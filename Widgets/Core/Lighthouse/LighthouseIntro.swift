@@ -16,7 +16,10 @@ enum LighthouseIntroPhase: Int, Comparable {
     case bang
     case title
     case subtitle
+    // The page is settled and usable; the edge beam is still glowing.
     case done
+    // The afterglow has gone too.
+    case faded
 
     static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.rawValue < rhs.rawValue
@@ -24,8 +27,9 @@ enum LighthouseIntroPhase: Int, Comparable {
 }
 
 // Everything the intro draws over the onboarding: the veil the screen starts
-// under, the spark, and the burst that lights the room. It sits above the
-// page and eats touches while it runs, so a tap anywhere skips ahead.
+// under, the spark, the burst that lights the room and the edge beam it
+// leaves glowing. It sits above the page and eats touches while it runs, so
+// a tap anywhere skips ahead; the caller lets touches through once settled.
 struct LighthouseIntro: View {
     let phase: LighthouseIntroPhase
     // Where the beacon lands, in global coordinates, so the burst comes from
@@ -35,6 +39,7 @@ struct LighthouseIntro: View {
 
     @State private var isBreathing = false
     @State private var bangDate: Date?
+    @State private var beamOpacity: Double = .opaque
 
     var body: some View {
         ZStack {
@@ -43,7 +48,9 @@ struct LighthouseIntro: View {
                 .opacity(phase < .bang ? 1 : 0)
                 .animation(.easeOut(duration: Constants.veilLift), value: phase)
 
-            BrightScreenEdgeBeam(isActive: phase >= .bang && phase < .done)
+            // Lit by the bang, then dwindling steadily the whole way to gone.
+            BrightScreenEdgeBeam(isActive: phase >= .bang && phase < .faded, duration: Constants.beamLap)
+                .opacity(beamOpacity)
 
             GeometryReader { proxy in
                 let centre = localCentre(in: proxy)
@@ -66,6 +73,9 @@ struct LighthouseIntro: View {
         .onChange(of: phase) { _, phase in
             if phase >= .bang, bangDate == nil {
                 bangDate = .now
+                withAnimation(.linear(duration: Constants.beamDwindle)) {
+                    beamOpacity = .zero
+                }
             }
         }
     }
@@ -99,6 +109,10 @@ struct LighthouseIntro: View {
 
     private enum Constants {
         static let veilLift: TimeInterval = 0.8
+        // Matches the beats from the bang to the afterglow's end.
+        static let beamDwindle: TimeInterval = 5
+        // One trip round the screen; half the beam's usual pace.
+        static let beamLap: TimeInterval = 2
         static let sparkSize: CGFloat = .spacing105x
         static let sparkBlur: CGFloat = 1.5
         static let sparkHalo: CGFloat = .spacing8x
@@ -235,7 +249,7 @@ private struct LighthouseIntroBurst: View {
     ZStack {
         LighthouseChatBackground()
 
-        LighthouseBeacon(size: 176)
+        LighthouseBeacon(size: 176, isLit: phase >= .bang)
             .opacity(phase >= .bang ? 1 : 0)
 
         LighthouseIntro(phase: phase, beaconCentre: CGPoint(x: 196, y: 426)) {

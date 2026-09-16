@@ -39,7 +39,7 @@ struct LighthouseOnboardingView: View {
     }
 
     private var isIntroDone: Bool {
-        introPhase == .done
+        introPhase >= .done
     }
 
     var body: some View {
@@ -60,15 +60,19 @@ struct LighthouseOnboardingView: View {
                 footer
             }
 
-            if !isIntroDone {
+            // The overlay outlives the intro so the edge beam can glow on
+            // behind a page that is already in use, then fade out unhurried.
+            if introPhase < .faded {
                 LighthouseIntro(phase: introPhase, beaconCentre: beaconCentre) {
                     introPhase = .done
                 }
+                .allowsHitTesting(!isIntroDone)
                 .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.brightEaseInOut, value: isIntroDone)
+        .animation(.easeOut(duration: Constants.afterglowFade), value: introPhase == .faded)
         .brightHaptic(trigger: introPhase) { _, phase in
             switch phase {
             case .spark: .soft
@@ -118,7 +122,7 @@ struct LighthouseOnboardingView: View {
     // same spot.
     private var welcomeBeacon: some View {
         let hasBanged = introPhase >= .bang
-        return LighthouseBeacon(size: Constants.beaconSize, sweepsForever: false, isLit: hasBanged)
+        return LighthouseBeacon(size: Constants.beaconSize, isLit: hasBanged)
             .opacity(hasBanged ? 1 : 0)
             .animation(.brightEaseInOut, value: hasBanged)
             .scaleEffect(hasBanged ? 1 : Constants.beaconBurstScale)
@@ -168,16 +172,20 @@ struct LighthouseOnboardingView: View {
     }
 
     // Each row is always in the tree and condenses into place when its turn
-    // comes: rising, sharpening from a blur and swelling to size, with the
-    // icon taking a bow as it lands. Animating the rows themselves rather
-    // than inserting them keeps it working inside the paged tab view.
+    // comes: rising, sharpening from a blur and swelling to size. The icon
+    // draws itself on stroke by stroke as the row arrives, then floods with
+    // its colour and does its own flourish once the text has landed.
+    // Animating the rows themselves rather than inserting them keeps it
+    // working inside the paged tab view.
     private func capabilityRow(_ capability: Capability, isRevealed: Bool, hasSettled: Bool) -> some View {
         HStack(alignment: .top, spacing: .spacing4x) {
-            Image(systemName: capability.symbol)
-                .font(.standard(size: .standout1, weight: .light))
-                .foregroundStyle(capability.color)
-                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-                .symbolEffect(.bounce, value: hasSettled)
+            ZStack {
+                if isRevealed {
+                    capabilityIcon(capability, hasSettled: hasSettled)
+                        .transition(iconArrival)
+                }
+            }
+            .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 BrightText(capability.title, size: .subheading, weight: .regular)
@@ -192,6 +200,34 @@ struct LighthouseOnboardingView: View {
         .scaleEffect(isRevealed ? 1 : Constants.capabilityStartScale, anchor: .leading)
         .offset(y: isRevealed ? 0 : Constants.capabilityRise)
         .animation(.brightChartReveal, value: isRevealed)
+    }
+
+    // Older systems have no draw-on, so the icon condenses in like its row.
+    private var iconArrival: AnyTransition {
+        if #available(iOS 26, *) {
+            AnyTransition(SymbolEffectTransition.symbolEffect(.drawOn.byLayer))
+        } else {
+            .brightCondenseIn
+        }
+    }
+
+    @ViewBuilder
+    private func capabilityIcon(_ capability: Capability, hasSettled: Bool) -> some View {
+        let image = Image(systemName: capability.symbol)
+            .font(.standard(size: .standout1, weight: .light))
+            .foregroundStyle(hasSettled ? capability.color : Color.textColor)
+            .animation(.brightEaseInOut, value: hasSettled)
+
+        switch capability.flourish {
+        case .nudge:
+            image.symbolEffect(.wiggle, value: hasSettled)
+        case .shimmy:
+            image.symbolEffect(.wiggle.left, value: hasSettled)
+        case .spring:
+            image.symbolEffect(.bounce.up, value: hasSettled)
+        case .clatter:
+            image.symbolEffect(.wiggle.byLayer, value: hasSettled)
+        }
     }
 
     private var modelPicker: some View {
@@ -269,7 +305,6 @@ struct LighthouseOnboardingView: View {
             } catch {
                 return
             }
-            guard !isIntroDone else { return }
             guard introPhase < beat.phase else { continue }
             introPhase = beat.phase
         }
@@ -290,8 +325,19 @@ struct LighthouseOnboardingView: View {
         let title: String
         let detail: String
         let color: Color
+        let flourish: Flourish
 
         var id: String { title }
+    }
+
+    // What each icon does once its row has landed, chosen to suit the glyph:
+    // a reminder's nudge, the 3D graph shimmying side to side, the runner
+    // springing off, cutlery knocking together.
+    private enum Flourish {
+        case nudge
+        case shimmy
+        case spring
+        case clatter
     }
 
     private struct IntroBeat {
@@ -309,7 +355,9 @@ struct LighthouseOnboardingView: View {
             IntroBeat(phase: .title, after: 0.55),
             IntroBeat(phase: .subtitle, after: 0.5),
             IntroBeat(phase: .done, after: 0.5),
+            IntroBeat(phase: .faded, after: 3.45),
         ]
+        static let afterglowFade: TimeInterval = 1.2
         static let beaconBurstScale: CGFloat = 2.6
         static let beaconBurstBlur: CGFloat = 40
         static let beaconLandDuration: TimeInterval = 1.4
@@ -339,25 +387,29 @@ struct LighthouseOnboardingView: View {
                 symbol: "person.fill.checkmark.and.xmark",
                 title: "Create checkins",
                 detail: capabilityDetail,
-                color: .defaultCyan
+                color: .defaultCyan,
+                flourish: .nudge
             ),
             Capability(
                 symbol: "graph.3d",
                 title: "Trend Analysis",
                 detail: capabilityDetail,
-                color: .defaultYellow
+                color: .defaultYellow,
+                flourish: .shimmy
             ),
             Capability(
                 symbol: "figure.run.square.stack.fill",
                 title: "Custom Programs",
                 detail: capabilityDetail,
-                color: .defaultPink
+                color: .defaultPink,
+                flourish: .spring
             ),
             Capability(
                 symbol: "fork.knife",
                 title: "Log Food",
                 detail: capabilityDetail,
-                color: .defaultOrange
+                color: .defaultOrange,
+                flourish: .clatter
             ),
         ]
     }

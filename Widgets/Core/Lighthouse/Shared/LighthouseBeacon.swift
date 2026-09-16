@@ -8,14 +8,11 @@
 import SwiftUI
 
 // The Lighthouse mark: a dim lens ring with the lamp banked on one side and
-// the glow it throws across the inside. The lamp turns without stopping, like
-// a lighthouse lens, or makes a single turn and rests.
+// the glow it throws across the inside. The lamp sits still unless lit, when
+// it makes a single turn and comes to rest.
 struct LighthouseBeacon: View {
     var size: CGFloat = Constants.size
-    var sweepsForever = true
-    // The lamp starts turning once this is true, so a caller can hold it
-    // until its moment.
-    var isLit = true
+    var isLit = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -41,14 +38,8 @@ struct LighthouseBeacon: View {
         isSweeping = true
     }
 
-    // 360° back to 0° is the same frame, so a linear repeat reads as one
-    // unbroken turn; a single turn eases out so it comes to rest.
     private var sweep: Animation {
-        if sweepsForever {
-            .linear(duration: Constants.sweepDuration).repeatForever(autoreverses: false)
-        } else {
-            .easeOut(duration: Constants.sweepDuration)
-        }
+        .easeOut(duration: Constants.sweepDuration)
     }
 
     private var lamp: some View {
