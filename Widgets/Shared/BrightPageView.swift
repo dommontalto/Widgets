@@ -84,6 +84,7 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .brightSoftScrollEdges()
             .toolbar(.visible, for: .navigationBar)
             .toolbar {
                 if !title.isEmpty {

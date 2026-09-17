@@ -70,7 +70,6 @@ struct ExerciseSheet: View {
             title: "No sessions yet",
             subtitle: "Add exercises, runs or sports and save them as a session."
         )
-        .padding(.top, .spacing12x)
     }
 
     private var sessionCards: some View {

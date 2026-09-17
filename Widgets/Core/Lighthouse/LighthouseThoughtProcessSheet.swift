@@ -17,6 +17,9 @@ struct LighthouseThoughtProcessSheet: View {
     @State private var revealedCount = 0
     @State private var expandedStepIDs: Set<LighthouseThoughtStep.ID> = []
     @State private var waypointProgress: CGFloat = 0
+    // Flips once the ring has closed, so the waypoint reads as made.
+    @State private var isWaypointCreated = false
+    @State private var showingWaypoint = false
 
     var body: some View {
         BrightPageSheetView(
@@ -46,6 +49,9 @@ struct LighthouseThoughtProcessSheet: View {
             }
         )
         .task { await reveal() }
+        .sheet(isPresented: $showingWaypoint) {
+            LighthouseWaypointSheet()
+        }
     }
 
     private var title: some View {
@@ -69,6 +75,11 @@ struct LighthouseThoughtProcessSheet: View {
 
         return VStack(alignment: .leading, spacing: .spacing0x) {
             Button {
+                // The waypoint opens its set-up rather than its reasoning.
+                if step.isWaypoint {
+                    showingWaypoint = true
+                    return
+                }
                 withAnimation(.brightSpring) {
                     if isExpanded {
                         expandedStepIDs.remove(step.id)
@@ -83,22 +94,24 @@ struct LighthouseThoughtProcessSheet: View {
                     } else {
                         Image(systemName: step.symbol)
                             .font(.standard(size: .heading, weight: .light))
-                            .foregroundStyle(Color.semiLightTextColor)
+                            .foregroundStyle(step.tint)
                             .frame(width: Constants.iconSize, height: Constants.iconSize)
                             .symbolEffect(.pulse, isActive: isLatest && isRevealing)
                             .symbolEffect(.bounce, value: isExpanded)
                             .transition(.symbolEffect(.drawOn))
                     }
 
-                    BrightText(step.title, size: .body1, color: .semiLightTextColor)
+                    BrightText(title(for: step), size: .body1, color: .semiLightTextColor)
                         .lineLimit(1)
+                        .contentTransition(.opacity)
+                        .animation(.brightEaseInOut, value: isWaypointCreated)
 
                     Spacer(minLength: .spacing2x)
 
                     Image(systemName: "chevron.forward")
                         .font(.standard(size: .body1, weight: .light))
                         .foregroundStyle(Color.semiLightTextColor)
-                        .rotationEffect(.degrees(isExpanded ? Constants.openChevronDegrees : 0))
+                        .rotationEffect(.degrees(isExpanded && !step.isWaypoint ? Constants.openChevronDegrees : 0))
                 }
                 .contentShape(Rectangle())
             }
@@ -113,6 +126,10 @@ struct LighthouseThoughtProcessSheet: View {
             .clipped()
         }
         .padding(.leading, indent(for: step.depth))
+    }
+
+    private func title(for step: LighthouseThoughtStep) -> String {
+        step.isWaypoint && isWaypointCreated ? Constants.createdWaypointTitle : step.title
     }
 
     // The detail sits beside the icon column, and the tree line keeps running
@@ -158,6 +175,10 @@ struct LighthouseThoughtProcessSheet: View {
         .onAppear {
             withAnimation(.brightChartReveal) { waypointProgress = 1 }
         }
+        .task {
+            try? await Task.sleep(for: .seconds(Constants.ringCloseSeconds))
+            isWaypointCreated = true
+        }
     }
 
     // MARK: - Connectors
@@ -201,6 +222,9 @@ struct LighthouseThoughtProcessSheet: View {
 
     private enum Constants {
         static let title = "Thought Process"
+        static let createdWaypointTitle = "Created Waypoint"
+        // Matches the ring's reveal animation.
+        static let ringCloseSeconds: TimeInterval = 1.1
         static let iconSize: CGFloat = .spacing5x
         static let indent: CGFloat = .spacing2x
         static let connectorHeight: CGFloat = .spacing4x
@@ -210,7 +234,7 @@ struct LighthouseThoughtProcessSheet: View {
         static let ringLineWidth: CGFloat = .spacing05x
         static let ringStart: Double = -90
         static let openChevronDegrees: Double = 90
-        static let revealEvery: TimeInterval = 0.9
+        static let revealEvery: TimeInterval = 2
     }
 }
 

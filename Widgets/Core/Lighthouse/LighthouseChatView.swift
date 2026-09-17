@@ -56,10 +56,10 @@ struct LighthouseChatView: View {
             onAttach: onAttach,
             dictation: dictation,
             response: { message in
-                LighthouseChatResponse(text: message.text, items: message.payload ?? [])
+                LighthouseChatResponse(text: message.text, items: message.payload ?? [], onSubmit: send)
             },
             modelPicker: {
-                HStack(spacing: .spacing2x) {
+                HStack(spacing: .spacing1x) {
                     modelPickerButton
                     tierMenu
                     speedMenu

@@ -22,6 +22,7 @@ extension FormatStyle where Self == Date.FormatStyle {
     static var brightDay: Self { Date.FormatStyle(locale: .bright).day(.defaultDigits) }
     static var brightWeekdayInitial: Self { Date.FormatStyle(locale: .bright).weekday(.narrow) }
     static var brightWeekday: Self { Date.FormatStyle(locale: .bright).weekday(.abbreviated) }
+    static var brightWeekdayShort: Self { Date.FormatStyle(locale: .bright).weekday(.abbreviated) }
     static var brightMonth: Self { Date.FormatStyle(locale: .bright).month(.abbreviated) }
 }
 

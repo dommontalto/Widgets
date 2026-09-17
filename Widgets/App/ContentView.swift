@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var showingGuidedProgram = false
     @State private var showingLighthouse = false
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
+    @State private var showingGuidedTesting = false
+    @AppStorage("vaultGuidedTestingShowsSplash") private var showingGuidedTestingSplash = true
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
@@ -26,6 +28,9 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             content
+                .navigationDestination(isPresented: $showingGuidedTesting) {
+                    VaultGuidedTestingScreen(showSplash: $showingGuidedTestingSplash)
+                }
         }
         .environment(builder)
         .fullScreenCover(isPresented: $showingLighthouse) {
@@ -44,6 +49,14 @@ struct ContentView: View {
     private var content: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
+                section("Vault") {
+                    widgetLabel("VaultGuidedTestingCard")
+                    VaultGuidedTestingCard {
+                        showingGuidedTesting = true
+                    }
+                        .padding(.bottom, .spacing3x)
+                }
+
                 section("Exercise") {
                     widgetLabel("ExerciseScoresWidget")
                     ExerciseScoresWidget()
@@ -141,6 +154,12 @@ struct ContentView: View {
 
                 Toggle(isOn: $showingLighthouseOnboarding) {
                     Label("Lighthouse onboarding", systemImage: "graduationcap")
+                        .labelStyle(.iconOnly)
+                }
+                .toggleStyle(.button)
+
+                Toggle(isOn: $showingGuidedTestingSplash) {
+                    Label("Guided testing splash", systemImage: "heart.text.square")
                         .labelStyle(.iconOnly)
                 }
                 .toggleStyle(.button)

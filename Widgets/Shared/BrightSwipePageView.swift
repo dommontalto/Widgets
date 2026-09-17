@@ -182,6 +182,7 @@ struct BrightSwipePageView<Content: View>: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(navigationBarVisibility, for: .navigationBar)
+        .brightSoftScrollEdges()
         .toolbar {
             if collapsesTitleToToolbar {
                 ToolbarItem(placement: .principal) {

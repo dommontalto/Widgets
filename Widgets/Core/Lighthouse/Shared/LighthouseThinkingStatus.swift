@@ -7,9 +7,10 @@
 
 import SwiftUI
 
-// What the island is doing, under the orb. Thinking shows a fixed
-// "Generating" with the thought process's glyphs swapping through beside it,
-// so the row never changes width; listening shows the mic.
+// What the island is doing, under the orb. Thinking walks through the
+// thought process's steps, the glyph morphing and the title rolling over
+// like a counter as each one arrives; listening shows the mic. The island
+// is black in both modes, so the row is always white.
 struct LighthouseThinkingStatus: View {
     var isListening = false
 
@@ -19,20 +20,33 @@ struct LighthouseThinkingStatus: View {
         LighthouseDemo.thoughtSteps[stepIndex % LighthouseDemo.thoughtSteps.count]
     }
 
+    private var title: String {
+        isListening ? Constants.listeningTitle : step.title
+    }
+
+    private var shortTitle: String {
+        let first = title.split(separator: " ").first.map(String.init) ?? title
+        return first == title ? title : first + Constants.ellipsis
+    }
+
     var body: some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: isListening ? "mic.fill" : step.symbol)
-                .font(.standard(size: .body1, weight: .light))
-                .foregroundStyle(Color.semiLightTextColor)
+                .font(.standard(size: .body2, weight: .light))
+                .foregroundStyle(Color.white.opacity(.mediumOpacity))
                 .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
 
-            BrightText(isListening ? Constants.listeningTitle : Constants.generatingTitle, size: .body1, color: .semiLightTextColor)
-                .contentTransition(.opacity)
+            // The whole title when it fits; otherwise the first word and an
+            // ellipsis, rather than a word chopped mid-way.
+            ViewThatFits(in: .horizontal) {
+                statusTitle(title)
+                statusTitle(shortTitle)
+            }
 
             if !isListening {
                 Image(systemName: "chevron.forward")
-                    .font(.standard(size: .body1, weight: .regular))
-                    .foregroundStyle(Color.semiLightTextColor)
+                    .font(.standard(size: .body2, weight: .regular))
+                    .foregroundStyle(Color.white.opacity(.mediumOpacity))
                     .transition(.opacity)
             }
         }
@@ -51,10 +65,17 @@ struct LighthouseThinkingStatus: View {
         }
     }
 
+    private func statusTitle(_ text: String) -> some View {
+        BrightText(text, size: .body2, color: .white.opacity(.mediumOpacity))
+            .lineLimit(1)
+            .fixedSize()
+            .contentTransition(.numericText())
+    }
+
     private enum Constants {
-        static let generatingTitle = "Generating"
+        static let ellipsis = "…"
         static let listeningTitle = "Listening"
-        static let stepEvery: TimeInterval = 1.4
+        static let stepEvery: TimeInterval = 2
     }
 }
 

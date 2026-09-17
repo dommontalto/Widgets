@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "vault_test_figure.png",
+      "filename" : "vault_test_hormones_category.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "vault_test_figure@2x.png",
+      "filename" : "vault_test_hormones_category@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "vault_test_figure@3x.png",
+      "filename" : "vault_test_hormones_category@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

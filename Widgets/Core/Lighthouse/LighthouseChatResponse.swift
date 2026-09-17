@@ -17,6 +17,8 @@ nonisolated struct LighthouseStoryItem: Identifiable, Equatable {
 struct LighthouseChatResponse: View {
     let text: String
     let items: [LighthouseStoryItem]
+    // Sends the picked choice back into the thread as the next message.
+    let onSubmit: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing5x) {
@@ -31,7 +33,7 @@ struct LighthouseChatResponse: View {
                     .multilineTextAlignment(.leading)
             }
 
-            LighthouseChoiceBox(options: LighthouseChoiceBox.demoOptions) { _ in }
+            LighthouseChoiceBox(options: LighthouseChoiceBox.demoOptions, onSubmit: onSubmit)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -57,7 +59,8 @@ struct LighthouseChoiceBox: View {
                 row(option, isLast: index == options.count - 1)
             }
 
-            BrightPillButton(Constants.submitTitle, buttonSize: .small) {
+            // Faded until there's something to send.
+            BrightPillButton(Constants.submitTitle, isSelected: selected != nil) {
                 guard let selected else { return }
                 onSubmit(selected)
             }
@@ -107,7 +110,8 @@ struct LighthouseChoiceBox: View {
     ScrollView {
         LighthouseChatResponse(
             text: LighthouseDemo.sleepPartOne,
-            items: LighthouseDemo.sleepItems
+            items: LighthouseDemo.sleepItems,
+            onSubmit: { _ in }
         )
         .padding(.spacing3x)
     }

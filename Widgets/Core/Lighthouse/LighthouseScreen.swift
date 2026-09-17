@@ -48,41 +48,7 @@ struct LighthouseScreen: View {
         NavigationStack {
             layers
                 .background { LighthouseChatBackground() }
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbar {
-                    if !showOnboarding {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                withAnimation(.brightSnappy) {
-                                    isMenuOpen.toggle()
-                                }
-                            } label: {
-                                Label(isMenuOpen ? "Close menu" : "Open menu", systemImage: "line.3.horizontal")
-                                    .labelStyle(.iconOnly)
-                            }
-                        }
-
-                        // Without this the bar folds both buttons into one capsule.
-                        ToolbarSpacer(.fixed, placement: .topBarLeading)
-
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button(action: startNewChat) {
-                                Label("Temporary chat", systemImage: "bubble.left.and.bubble.right")
-                                    .labelStyle(.iconOnly)
-                            }
-                        }
-                    }
-
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Label("Close", systemImage: "xmark")
-                                .labelStyle(.iconOnly)
-                        }
-
-                    }
-                }
+                .toolbar(.hidden, for: .navigationBar)
         }
         .presentationBackground(.clear)
         .animation(.brightEaseInOut, value: showOnboarding)
@@ -131,10 +97,38 @@ struct LighthouseScreen: View {
         }
     }
 
+    private var topButtons: some View {
+        HStack(spacing: .spacing2x) {
+            BrightRoundButton(systemImage: "line.3.horizontal", size: .large) {
+                withAnimation(.brightSnappy) {
+                    isMenuOpen.toggle()
+                }
+            }
+            .accessibilityLabel(isMenuOpen ? "Close menu" : "Open menu")
+
+            BrightRoundButton(systemImage: "bubble.left.and.bubble.right", size: .large, onTapCallback: startNewChat)
+                .accessibilityLabel("Temporary chat")
+
+            Spacer(minLength: .spacing0x)
+
+            closeButton
+        }
+        .padding(.horizontal, .spacing3x)
+    }
+
+    private var closeButton: some View {
+        BrightRoundButton(systemImage: "xmark", size: .large) { dismiss() }
+            .accessibilityLabel("Close")
+    }
+
     private var layers: some View {
         ZStack(alignment: .top) {
             if showOnboarding {
                 onboarding
+                    .overlay(alignment: .topTrailing) {
+                        closeButton
+                            .padding(.horizontal, .spacing3x)
+                    }
                     .transition(.opacity)
             } else {
                 pages
@@ -187,6 +181,10 @@ struct LighthouseScreen: View {
         } content: {
             chat
                 .background { LighthouseChatBackground() }
+                // Fixed where the bar's buttons would sit, so their glass
+                // can't fold together or stretch to fit a glyph, and riding
+                // on the chat page so they slide over with it.
+                .overlay(alignment: .top) { topButtons }
         }
         .onChange(of: isMenuOpen) { _, isMenuOpen in
             guard isMenuOpen else { return }

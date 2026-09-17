@@ -114,6 +114,8 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var draft = ""
+    @State private var flight = BrightSendFlight()
+    @Namespace private var sendNamespace
     @State private var promptIndex = 0
     @State private var isAddingPrompt = false
     @State private var newPromptText = ""
@@ -128,6 +130,19 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     // A swipe that starts over the card must not end as a tap on a chip or
     // a focus on the field.
     @State private var isDismissDragging = false
+    // True once the thread is scrolled up past the latest message, so the
+    // arrow that jumps back down has a reason to show.
+    @State private var isAwayFromBottom = false
+
+    // The message currently flying out of the input field: the newest one, held
+    // back by the thread until the copy over the field hands it over.
+    // Stays put through the landing animation as well as the wait, so the fit
+    // it carries can't leak onto the sent bubble before it.
+    private var flightID: UUID? {
+        guard flight.isWaiting || flight.isFitted,
+              let last = messages.last, last.kind == .user, flight.isNew(last.id) else { return nil }
+        return last.id
+    }
 
     var body: some View {
         thread
@@ -157,21 +172,46 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     private var thread: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                VStack(spacing: .spacing3x) {
-                    ForEach(messages) { message in
-                        row(for: message)
-                            .id(message.id)
-                    }
+                VStack(spacing: .spacing0x) {
+                    VStack(spacing: .spacing3x) {
+                        ForEach(messages) { message in
+                            row(for: message)
+                                .id(message.id)
+                        }
 
-                    if isThinking, showsThinkingOrb {
-                        thinkingIndicator
-                            .id(Constants.thinkingID)
+                        if isThinking, showsThinkingOrb {
+                            thinkingIndicator
+                        }
                     }
+                    .padding(.spacing3x)
+                    .animation(.brightSnappy, value: messages)
+
+                    // Sits under the padding, so scrolling to it lands on the
+                    // true end of the content with nothing left to drag.
+                    Color.clear
+                        .frame(height: .spacing0x)
+                        .id(Constants.bottomID)
                 }
-                .padding(.spacing3x)
-                .animation(.brightSnappy, value: messages)
             }
             .defaultScrollAnchor(.bottom)
+            .onScrollGeometryChange(for: Bool.self) { geo in
+                let remaining = geo.contentSize.height - geo.contentOffset.y - geo.containerSize.height
+                return remaining > Constants.awayFromBottomThreshold
+            } action: { _, isAway in
+                isAwayFromBottom = isAway
+            }
+            // Sits just above the input card, riding the keyboard with it.
+            .overlay(alignment: .bottom) {
+                if isAwayFromBottom {
+                    BrightRoundButton(systemImage: "arrow.down", size: .small) {
+                        withAnimation(.brightSnappy) { proxy.scrollTo(Constants.bottomID, anchor: .bottom) }
+                    }
+                    .accessibilityLabel("Scroll to latest")
+                    .padding(.bottom, .spacing2x)
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .animation(.brightSnappy, value: isAwayFromBottom)
             // Dragging the thread carries the keyboard — and the input card
             // riding above it — down with the finger.
             .scrollDismissesKeyboard(.interactively)
@@ -180,15 +220,18 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             // down to the bottom.
             .onChange(of: messages) { _, messages in
                 guard let last = messages.last else { return }
+                if last.kind == .user {
+                    flight.land()
+                }
                 if last.kind != .user {
                     isTyping.wrappedValue = false
                 }
                 guard last.kind != .response else { return }
-                withAnimation(.brightSnappy) { proxy.scrollTo(last.id, anchor: .bottom) }
+                withAnimation(.brightSnappy) { proxy.scrollTo(Constants.bottomID, anchor: .bottom) }
             }
             .onChange(of: isThinking) { _, isThinking in
                 guard isThinking, showsThinkingOrb else { return }
-                withAnimation(.brightSnappy) { proxy.scrollTo(Constants.thinkingID, anchor: .bottom) }
+                withAnimation(.brightSnappy) { proxy.scrollTo(Constants.bottomID, anchor: .bottom) }
             }
         }
         // The scroll view collapses to its content while the thread is empty,
@@ -263,7 +306,6 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         switch message.kind {
         case .user:
             userBubble(message)
-                .transition(BrightSentTransition().animation(.brightBouncy))
         case .assistant:
             withThought(message) { assistantText(message.text) }
                 .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
@@ -282,23 +324,44 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         HStack(spacing: .spacing0x) {
             Spacer(minLength: .spacing8x)
 
-            VStack(alignment: .trailing, spacing: .spacing2x) {
-                if !message.attachments.isEmpty {
-                    sentImages(message.attachments)
-                }
+            sentBubble(text: message.text, attachments: message.attachments)
+                .brightSendDestination(
+                    flight,
+                    isHeld: flight.isWaiting && flightID == message.id,
+                    isFitted: flight.isFitted && flightID == message.id,
+                    id: message.id,
+                    in: sendNamespace
+                )
+        }
+    }
 
-                if !message.text.isEmpty {
-                    BrightText(message.text, size: .body1, color: .white)
-                        .lineSpacing(.lineSpacingMedium)
-                        .multilineTextAlignment(.leading)
-                        .padding(.horizontal, .spacing3x)
-                        .padding(.vertical, .spacing2x)
-                        .modifier(GlassEffect(
-                            shape: .roundedRect,
-                            tint: .defaultSkyBlue,
-                            interactive: false
-                        ))
-                }
+    // Drawn twice over: once in the thread, and once over the input field
+    // while the message is in flight between the two.
+    private func sentBubble(text: String, attachments: [BrightChatAttachment]) -> some View {
+        VStack(alignment: .trailing, spacing: .spacing2x) {
+            if !attachments.isEmpty {
+                sentImages(attachments)
+            }
+
+            if !text.isEmpty {
+                // A touch larger than the reply text, with the padding
+                // pulled in so the bubble stays the same size.
+                BrightText(text, size: .subheading, color: .white)
+                    .lineSpacing(.lineSpacingMedium)
+                    .multilineTextAlignment(.leading)
+                    .padding(.horizontal, .spacing2x)
+                    .padding(.vertical, .spacing105x)
+                    // The tight bottom trailing corner stands in for a tail.
+                    .modifier(GlassEffect(
+                        shape: .cornerRadii(RectangleCornerRadii(
+                            topLeading: .cornerRadius22,
+                            bottomLeading: .cornerRadius22,
+                            bottomTrailing: .cornerRadius8,
+                            topTrailing: .cornerRadius22
+                        )),
+                        tint: .defaultSkyBlue,
+                        interactive: false
+                    ))
             }
         }
     }
@@ -404,17 +467,28 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                 onSend: send,
                 onStop: onStop,
                 onAttach: onAttach,
-                dictation: dictation
+                dictation: dictation,
+                fieldFrame: $flight.fieldFrame
             ) {
                 modelPicker
             }
             .padding(.horizontal, .spacing3x)
             .padding(.bottom, .spacing3x)
         }
+        .coordinateSpace(.named(BrightChatSpace.input))
+        .overlay(alignment: .topLeading) { sentSource }
         .disabled(isDismissDragging)
         .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
+    }
+
+    @ViewBuilder
+    private var sentSource: some View {
+        if flight.isWaiting, let flightID {
+            sentBubble(text: flight.text, attachments: flight.attachments)
+                .brightSendSource(flight, id: flightID, in: sendNamespace)
+        }
     }
 
     private var dismissKeyboardDrag: some Gesture {
@@ -583,9 +657,8 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty || !attachments.wrappedValue.isEmpty else { return }
 
-        withAnimation(.brightSnappy) {
-            onSend(text)
-        }
+        flight.begin(text: text, attachments: attachments.wrappedValue, after: messages.last?.id)
+        onSend(text)
         isTyping.wrappedValue = false
         // Clearing in the same turn as the tap can land while the field is
         // still committing pending input, leaving typed text on screen over an
@@ -596,31 +669,12 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     }
 }
 
-// A sent message lifts out of the input field: it begins small, soft and low
-// in the middle of the field, where the words were typed, and sharpens into
-// its bubble at the trailing edge. The card is inset into the thread's frame,
-// so the scroll view draws the start of the journey beneath the glass.
-private struct BrightSentTransition: Transition {
-    func body(content: Content, phase: TransitionPhase) -> some View {
-        let arriving = phase == .willAppear
-        return content
-            .scaleEffect(arriving ? Constants.sentStartScale : 1, anchor: .bottom)
-            .offset(x: arriving ? -Constants.sentSweep : 0, y: arriving ? Constants.sentLift : 0)
-            .blur(radius: arriving ? Constants.sentBlur : 0)
-            .opacity(phase.isIdentity ? 1 : 0)
-    }
-}
-
 // Outside the struct: a generic type cannot hold static stored properties.
 private enum Constants {
-    static let thinkingID = "thinking"
-    // Where a sent bubble starts: down in the middle of the input field, small
-    // and soft, before lifting out to its place at the trailing edge.
-    static let sentStartScale: CGFloat = 0.6
-    static let sentSweep: CGFloat = .spacing12x + .spacing8x
-    static let sentLift: CGFloat = .spacing7x
-    static let sentBlur: CGFloat = 8
-
+    // How far up the thread has to sit before the arrow appears: a nudge to
+    // reread the last reply shouldn't summon it, only a real scroll back.
+    static let awayFromBottomThreshold: CGFloat = .spacing12x * 4
+    static let bottomID = "bottom"
     static let orbSize: CGFloat = 64
     // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
     // preset rate.

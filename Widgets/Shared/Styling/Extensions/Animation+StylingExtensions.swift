@@ -15,6 +15,7 @@ extension Animation {
     static let brightSpring: Animation = .spring(response: 0.5, dampingFraction: 1.0, blendDuration: 1.0)
     static let brightRepeatForever: Animation = .linear(duration: 2.0).repeatForever(autoreverses: false)
     static let brightChartReveal: Animation = .easeInOut(duration: 1.1)
+    static let brightSendFlight: Animation = .interpolatingSpring(duration: 0.3, bounce: 0, initialVelocity: 0)
 
     static func brightStaggered(_ delay: Double) -> Animation {
         .easeInOut(duration: 0.35).delay(delay)

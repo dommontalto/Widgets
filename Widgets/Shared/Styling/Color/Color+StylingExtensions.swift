@@ -128,11 +128,7 @@ nonisolated extension Color {
     
     // Vault
     
-    static let vaultGoalLongevityTop = Color(hex: "#FFEBAA")
-    static let vaultGoalHormonesTop  = Color(hex: "#AAB8FF")
-    static let vaultGoalGutHealthTop = Color(hex: "#FFC9E6")
-    static let vaultGoalMetabolicTop = Color(hex: "#FFA98C")
-    static let vaultGoalFertilityTop = Color(hex: "#AAF7FF")
+    static let vaultTestingSplashGlyph = Color(hex: "#F6FF00")
     
     // Genome
     

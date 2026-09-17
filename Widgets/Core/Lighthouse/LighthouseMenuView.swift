@@ -18,23 +18,52 @@ struct LighthouseMenuView: View {
     let onNewChat: () -> Void
 
     @State private var historySort = HistorySort.newest
+    @State private var searchText = ""
+    @State private var entries = LighthouseDemo.history
+    // The chat being renamed, and the name being typed for it.
+    @State private var renaming: LighthouseHistoryEntry?
+    @State private var newTitle = ""
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                modelCard
+                BrightSearchBar(Constants.searchPlaceholder, text: $searchText)
 
-                shortcuts
+                // Typing a search clears the way for the results; the card and
+                // shortcuts come back as soon as the field is empty again.
+                if !isSearching {
+                    modelCard
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+
+                    shortcuts
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
 
                 history
             }
             .padding(.horizontal, .spacing3x)
             .padding(.top, .spacing2x)
+            .animation(.brightSnappy, value: isSearching)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        // A tap anywhere off the search field puts the keyboard away.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
             bottomBar
         }
+        .alert(Constants.renameTitle, isPresented: isRenaming) {
+            TextField(Constants.renamePlaceholder, text: $newTitle)
+            Button(Constants.saveTitle, action: commitRename)
+            Button(Constants.cancelTitle, role: .cancel) { renaming = nil }
+        }
+    }
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private var modelCard: some View {
@@ -50,7 +79,8 @@ struct LighthouseMenuView: View {
 
             BrightPillButton(Constants.switchTitle, buttonSize: .small, onTapCallback: onSwitchModel)
         }
-        .padding(.spacing3x)
+        .padding(.horizontal, .spacing2x + .spacing05x)
+        .padding(.vertical, .spacing105x)
         .modifier(CardModifier())
     }
 
@@ -111,6 +141,7 @@ struct LighthouseMenuView: View {
             }
         }
         .animation(.brightSnappy, value: historySort)
+        .animation(.brightSnappy, value: searchText)
         .padding(.horizontal, .spacing1x)
         .padding(.top, .spacing2x)
     }
@@ -139,13 +170,18 @@ struct LighthouseMenuView: View {
     }
 
     // The demo list is already newest first, so that order is the source
-    // and the alphabetical one is derived from it.
+    // and the alphabetical one is derived from it; the search narrows it
+    // by title.
     private var sortedHistory: [LighthouseHistoryEntry] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        let matching = query.isEmpty
+            ? entries
+            : entries.filter { $0.title.localizedCaseInsensitiveContains(query) }
         switch historySort {
         case .newest:
-            LighthouseDemo.history
+            return matching
         case .alphabetical:
-            LighthouseDemo.history.sorted {
+            return matching.sorted {
                 $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
             }
         }
@@ -163,10 +199,17 @@ struct LighthouseMenuView: View {
             Spacer(minLength: .spacing2x)
 
             Menu {
-                Button("Rename", systemImage: "pencil") {}
+                Button(Constants.renameAction, systemImage: "pencil") {
+                    newTitle = entry.title
+                    renaming = entry
+                }
 
-                Button("Delete", systemImage: "trash", role: .destructive) {}
-                    .tint(.defaultRed)
+                Button(Constants.deleteAction, systemImage: "trash", role: .destructive) {
+                    withAnimation(.brightSnappy) {
+                        entries.removeAll { $0.id == entry.id }
+                    }
+                }
+                .tint(.defaultRed)
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.standard(size: .body1, weight: .medium))
@@ -176,6 +219,21 @@ struct LighthouseMenuView: View {
             }
         }
         .padding(.vertical, .spacing2x)
+    }
+
+    private var isRenaming: Binding<Bool> {
+        Binding(
+            get: { renaming != nil },
+            set: { if !$0 { renaming = nil } }
+        )
+    }
+
+    private func commitRename() {
+        let trimmed = newTitle.trimmingCharacters(in: .whitespaces)
+        defer { renaming = nil }
+        guard let renaming, !trimmed.isEmpty,
+              let index = entries.firstIndex(where: { $0.id == renaming.id }) else { return }
+        entries[index].title = trimmed
     }
 
     private var bottomBar: some View {
@@ -217,10 +275,17 @@ struct LighthouseMenuView: View {
     }
 
     private enum Constants {
+        static let searchPlaceholder = "Search chats"
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
         static let historyTitle = "History"
+        static let renameTitle = "Rename chat"
+        static let renamePlaceholder = "Chat name"
+        static let saveTitle = "Save"
+        static let cancelTitle = "Cancel"
+        static let renameAction = "Rename"
+        static let deleteAction = "Delete"
         static let newChatTitle = "New Chat"
         static let tierImageSize: CGFloat = 40
         static let glyphWidth: CGFloat = 24

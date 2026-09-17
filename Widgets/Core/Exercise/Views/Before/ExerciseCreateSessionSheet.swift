@@ -209,7 +209,8 @@ struct ExerciseCreateSessionSheet: View {
                 systemImage: ExerciseCategory.gym.symbol,
                 title: "Nothing added yet",
                 subtitle: "Add exercises, runs or sports and they'll line up above.",
-                buttonTitle: "Add exercise"
+                buttonTitle: "Add exercise",
+                fillsViewport: false
             ) {
                 isAddingExercise = true
             }

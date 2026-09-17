@@ -32,6 +32,10 @@ struct BrightIslandIndicator<Content: View, Footer: View>: View {
                 }
                 .overlay(alignment: .bottom) {
                     footer
+                        // Held inside the square, so a long line truncates
+                        // instead of poking out past the glass.
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, .spacing3x)
                         .padding(.bottom, .spacing2x)
                 }
                 .background(wash)

@@ -63,6 +63,9 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
     // Pass the caller's own so it can watch the mic — Lighthouse shows the
     // orb listening — otherwise the bar keeps one to itself.
     var sharedDictation: BrightDictation?
+    // Reported in the chat's input coordinate space, so a sent bubble can be
+    // laid over the field it flies out of.
+    var fieldFrame: Binding<CGRect>
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
@@ -82,6 +85,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         onStop: @escaping () -> Void,
         onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
         dictation: BrightDictation? = nil,
+        fieldFrame: Binding<CGRect> = .constant(.zero),
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -93,6 +97,7 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         self.onStop = onStop
         self.onAttach = onAttach
         self.sharedDictation = dictation
+        self.fieldFrame = fieldFrame
         self.modelPicker = modelPicker()
     }
 
@@ -157,6 +162,9 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         }
         .padding(.top, .spacing105x)
         .padding(.horizontal, .spacing1x)
+        .onGeometryChange(for: CGRect.self) {
+            $0.frame(in: .named(BrightChatSpace.input))
+        } action: { fieldFrame.wrappedValue = $0 }
     }
 
     private var attachmentStrip: some View {
@@ -303,7 +311,8 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
         onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
-        dictation: BrightDictation? = nil
+        dictation: BrightDictation? = nil,
+        fieldFrame: Binding<CGRect> = .constant(.zero)
     ) {
         self.init(
             text: text,
@@ -314,7 +323,8 @@ extension BrightPromptInputBar where ModelPicker == EmptyView {
             onSend: onSend,
             onStop: onStop,
             onAttach: onAttach,
-            dictation: dictation
+            dictation: dictation,
+            fieldFrame: fieldFrame
         ) {
             EmptyView()
         }

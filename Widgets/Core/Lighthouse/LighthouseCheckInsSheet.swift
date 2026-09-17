@@ -7,23 +7,29 @@
 
 import SwiftUI
 
-// The check-ins Lighthouse runs on a schedule, each one switchable on its own.
+// The check-ins Lighthouse runs on a schedule, grouped by how often they
+// repeat and each one switchable on its own.
 struct LighthouseCheckInsSheet: View {
     @State private var checkIns = LighthouseDemo.checkIns
+    @State private var editing: LighthouseCheckIn?
 
     var body: some View {
         BrightPageSheetView(
             content: {
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: .spacing3x) {
+                    VStack(alignment: .leading, spacing: .spacing4x) {
                         header
 
-                        ForEach($checkIns) { $checkIn in
-                            card($checkIn)
+                        ForEach(LighthouseCheckInFrequency.allCases) { frequency in
+                            section(frequency)
                         }
                     }
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing4x)
+                }
+                .animation(.brightEaseInOut, value: checkIns)
+                .sheet(item: $editing) { checkIn in
+                    LighthouseWaypointSheet(checkIn: checkIn, onConfirm: save)
                 }
             }
         )
@@ -40,20 +46,28 @@ struct LighthouseCheckInsSheet: View {
         .padding(.horizontal, .spacing2x)
     }
 
-    private func card(_ checkIn: Binding<LighthouseCheckIn>) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(alignment: .top, spacing: .spacing2x) {
-                VStack(alignment: .leading, spacing: .spacing1x) {
-                    BrightText(checkIn.wrappedValue.title, size: .body1, weight: .regular)
+    @ViewBuilder
+    private func section(_ frequency: LighthouseCheckInFrequency) -> some View {
+        let group = indices(for: frequency)
 
-                    HStack(spacing: .spacing1x) {
-                        Image(systemName: "person.badge.clock.fill")
-                            .font(.standard(size: .body1, weight: .light))
-                            .foregroundStyle(Color.semiLightTextColor)
+        if !group.isEmpty {
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                BrightText(frequency.title, size: .body1, color: .semiLightTextColor, weight: .regular)
+                    .padding(.horizontal, .spacing2x)
 
-                        BrightText(checkIn.wrappedValue.repeats, size: .body1, color: .semiLightTextColor)
+                VStack(spacing: .spacing3x) {
+                    ForEach(group, id: \.self) { index in
+                        card($checkIns[index])
                     }
                 }
+            }
+        }
+    }
+
+    private func card(_ checkIn: Binding<LighthouseCheckIn>) -> some View {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            HStack(spacing: .spacing2x) {
+                BrightText(checkIn.wrappedValue.title, size: .body1, weight: .regular)
 
                 Spacer(minLength: .spacing2x)
 
@@ -71,6 +85,17 @@ struct LighthouseCheckInsSheet: View {
         }
         .padding(.spacing3x)
         .modifier(CardModifier())
+        .contentShape(Rectangle())
+        .onTapGesture { editing = checkIn.wrappedValue }
+    }
+
+    private func indices(for frequency: LighthouseCheckInFrequency) -> [Int] {
+        checkIns.indices.filter { checkIns[$0].frequency == frequency }
+    }
+
+    private func save(_ updated: LighthouseCheckIn) {
+        guard let index = checkIns.firstIndex(where: { $0.id == updated.id }) else { return }
+        checkIns[index] = updated
     }
 
     private enum Constants {

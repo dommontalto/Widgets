@@ -372,12 +372,17 @@ Rules:
   `.contentShape(Rectangle())` + `.onTapGesture`.
 - Toolbar items go in the `trailing:` builder, not a separate `.toolbar`.
 - `showBackButton: true` replaces the close button for pushed-style sheets.
+- **Scroll edges are always `.soft`.** The system default under a nav bar is the
+  `.hard` edge effect; the three page containers apply `.brightSoftScrollEdges()`
+  so it never shows. Never call `.scrollEdgeEffectStyle` directly, and if a screen
+  can't use a container, put `.brightSoftScrollEdges()` on it yourself.
 
 Deliberate exceptions: full-bleed chrome-less sheets (own `presentationBackground`,
 no nav bar) stay hand-rolled.
 
-`BrightPageView` — the pushed-destination equivalent with no `NavigationStack` of its
-own — exists in the Bright iOS app but has **not** been ported here yet.
+`BrightPageView` (`Shared/BrightPageView.swift`) is the pushed-destination equivalent
+with no `NavigationStack` of its own; `BrightSwipePageView` is the horizontally paged
+one. All three share the same rules above.
 
 ---
 

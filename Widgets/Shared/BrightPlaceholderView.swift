@@ -8,6 +8,7 @@ import SwiftUI
 struct BrightPlaceholderView: View {
     let title: String
     var subtitle: String?
+    var fillsViewport = true
 
     private let systemImage: String?
     private let assetImage: String?
@@ -21,6 +22,7 @@ struct BrightPlaceholderView: View {
         subtitle: String? = nil,
         imageColor: Color? = nil,
         buttonTitle: String? = nil,
+        fillsViewport: Bool = true,
         buttonAction: (() -> Void)? = nil
     ) {
         self.systemImage = systemImage
@@ -29,6 +31,7 @@ struct BrightPlaceholderView: View {
         self.subtitle = subtitle
         self.imageColor = imageColor
         self.buttonTitle = buttonTitle
+        self.fillsViewport = fillsViewport
         self.buttonAction = buttonAction
     }
 
@@ -37,6 +40,7 @@ struct BrightPlaceholderView: View {
         title: String,
         subtitle: String? = nil,
         buttonTitle: String? = nil,
+        fillsViewport: Bool = true,
         buttonAction: (() -> Void)? = nil
     ) {
         self.systemImage = nil
@@ -45,6 +49,7 @@ struct BrightPlaceholderView: View {
         self.subtitle = subtitle
         self.imageColor = nil
         self.buttonTitle = buttonTitle
+        self.fillsViewport = fillsViewport
         self.buttonAction = buttonAction
     }
 
@@ -56,7 +61,18 @@ struct BrightPlaceholderView: View {
         }
     }
 
+    @ViewBuilder
     var body: some View {
+        if fillsViewport {
+            layout
+                .padding(.bottom, .spacing12x + .spacing12x + .spacing6x)
+                .containerRelativeFrame(.vertical)
+        } else {
+            layout
+        }
+    }
+
+    private var layout: some View {
         VStack(spacing: .spacing2x) {
             image
                 .resizable()

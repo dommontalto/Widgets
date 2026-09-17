@@ -92,15 +92,16 @@ nonisolated class ImageNames {
 
     // MARK: - Vault
 
-    static let vaultTestFigureV5              = "Vault/vault_test_figure_v5"
-
     static let vaultGuidedTestingBannerV5     = "Vault/Banner/vault_guided_testing_banner_v5"
 
-    static let vaultTestLongevityBackgroundV5       = "Vault/Background/vault_test_longevity_background_v5"
-    static let vaultTestHormonesBackgroundV5        = "Vault/Background/vault_test_hormones_background_v5"
-    static let vaultTestGutHealthBackgroundV5       = "Vault/Background/vault_test_gut_health_background_v5"
+    static let vaultTestLongevityCategoryV5         = "Vault/Category/vault_test_longevity_category_v5"
+    static let vaultTestHormonesCategoryV5          = "Vault/Category/vault_test_hormones_category_v5"
+    static let vaultTestGutHealthCategoryV5         = "Vault/Category/vault_test_gut_health_category_v5"
     static let vaultTestMetabolicHealthBackgroundV5 = "Vault/Background/vault_test_metabolic_health_background_v5"
     static let vaultTestFertilityBackgroundV5       = "Vault/Background/vault_test_fertility_background_v5"
+
+    static let paymentMastercardV5 = "Vault/Payment/payment_mastercard_v5"
+    static let paymentApplePayV5   = "Vault/Payment/payment_apple_pay_v5"
 
     static let vaultTestHormonesIconV5        = "Vault/Icon/vault_test_hormones_icon_v5"
     static let vaultTestGutHealthIconV5       = "Vault/Icon/vault_test_gut_health_icon_v5"

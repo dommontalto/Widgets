@@ -40,7 +40,10 @@ struct BrightSearchBar: View {
             )
             .font(.system(size: 16))
             .foregroundStyle(Color.textColor)
-            .submitLabel(.search)
+            // The list filters as you type, so the key's only job is to put
+            // the keyboard away.
+            .submitLabel(.done)
+            .onSubmit { isFocused = false }
             .focused($isFocused)
             .frame(maxWidth: .infinity, alignment: .leading)
         }

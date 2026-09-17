@@ -9,15 +9,42 @@ import SwiftUI
 
 nonisolated struct LighthouseHistoryEntry: Identifiable {
     let id = UUID()
-    let title: String
+    var title: String
     let when: String
 }
 
-nonisolated struct LighthouseCheckIn: Identifiable {
+nonisolated enum LighthouseCheckInFrequency: String, CaseIterable, Identifiable, Hashable {
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+
+    var id: String { rawValue }
+    var title: String { rawValue }
+}
+
+nonisolated enum LighthouseWeekday: Int, CaseIterable, Identifiable, Hashable {
+    case sunday = 1
+    case monday, tuesday, wednesday, thursday, friday, saturday
+
+    var id: Int { rawValue }
+
+    var title: String { date.formatted(.brightWeekdayShort) }
+
+    private var date: Date {
+        let calendar = Calendar.autoupdatingCurrent
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: .now)?.start ?? .now
+        return calendar.date(bySetting: .weekday, value: rawValue, of: weekStart) ?? weekStart
+    }
+}
+
+nonisolated struct LighthouseCheckIn: Identifiable, Hashable {
     let id = UUID()
-    let title: String
-    let repeats: String
-    let detail: String
+    var title: String
+    var frequency: LighthouseCheckInFrequency
+    var weekday: LighthouseWeekday
+    var dayOfMonth: Int
+    var time: Date
+    var detail: String
     var isOn: Bool
 }
 
@@ -39,6 +66,7 @@ nonisolated struct LighthouseThoughtStep: Identifiable {
     let title: String
     // What the model was doing at this step, in its own words.
     let detail: String
+    var tint: Color = .semiLightTextColor
     var depth = 0
     var isWaypoint = false
 }
@@ -48,45 +76,53 @@ enum LighthouseDemo {
         LighthouseThoughtStep(
             symbol: "rays",
             title: "Evaluating next steps",
-            detail: "You've asked how to get fitter for the football season. Before I answer I'm working out what a good answer needs: your current training, how long the season is, and what fitness means for your position."
+            detail: "You've asked how to get fitter for the football season. Before I answer I'm working out what a good answer needs: your current training, how long the season is, and what fitness means for your position.",
+            tint: .defaultOrange
         ),
         LighthouseThoughtStep(
             symbol: "globe",
             title: "Researching effectiveness",
-            detail: "I'm checking what the evidence says about pre-season conditioning for amateur footballers, with an eye on programmes that mix strength, repeated sprints and aerobic base work."
+            detail: "I'm checking what the evidence says about pre-season conditioning for amateur footballers, with an eye on programmes that mix strength, repeated sprints and aerobic base work.",
+            tint: .defaultBlue
         ),
         LighthouseThoughtStep(
             symbol: "globe",
             title: "Researching effectiveness",
-            detail: "Now I'm comparing how much of each quality to train each week, and how recent studies balance intensity against recovery over a six-week block."
+            detail: "Now I'm comparing how much of each quality to train each week, and how recent studies balance intensity against recovery over a six-week block.",
+            tint: .defaultBlue
         ),
         LighthouseThoughtStep(
             symbol: "brain",
             title: "Defining Goal",
-            detail: "Right now, I'm focusing on your question about getting fit for football. I've pinpointed repeated-sprint ability as the biggest gap between where you are and match fitness. My next step will be to lay out a plan that builds it without dropping your strength work."
+            detail: "Right now, I'm focusing on your question about getting fit for football. I've pinpointed repeated-sprint ability as the biggest gap between where you are and match fitness. My next step will be to lay out a plan that builds it without dropping your strength work.",
+            tint: .defaultPink
         ),
         LighthouseThoughtStep(
             symbol: "filemenu.and.selection",
             title: "Generating Plan",
             detail: "I'm shaping a six-week plan: two strength sessions, two conditioning sessions and one easy run each week, with load rising for three weeks before a lighter one.",
+            tint: .defaultGreen,
             depth: 1
         ),
         LighthouseThoughtStep(
             symbol: "figure.strengthtraining.traditional",
             title: "Generating Upper Body workout",
             detail: "I'm writing the upper-body session around pressing, pulling and trunk work, kept short so it doesn't eat into recovery for the running days.",
+            tint: .defaultBrightViolet,
             depth: 1
         ),
         LighthouseThoughtStep(
             symbol: "figure.strengthtraining.traditional",
             title: "Generating Lower Body workout",
             detail: "I'm building the lower-body session around squats, hinges and single-leg work, with a plyometric finisher to carry the strength over to sprinting.",
+            tint: .defaultBrightViolet,
             depth: 1
         ),
         LighthouseThoughtStep(
             symbol: "arrow.up",
             title: "Creating Waypoint",
             detail: "Everything comes together as a waypoint: match-fit by the first game, with the plan and both workouts attached so progress can be tracked week to week.",
+            tint: .defaultCyan,
             depth: 2,
             isWaypoint: true
         ),
@@ -111,24 +147,46 @@ enum LighthouseDemo {
 
     static let checkIns = [
         LighthouseCheckIn(
+            title: "Daily Training Readiness",
+            frequency: .daily,
+            weekday: .sunday,
+            dayOfMonth: 1,
+            time: time(hour: 7),
+            detail: "A short morning read on whether today suits the session you have planned.",
+            isOn: true
+        ),
+        LighthouseCheckIn(
             title: "Weekly Climbing Review",
-            repeats: "Repeat: Sun, 6:00 PM",
+            frequency: .weekly,
+            weekday: .sunday,
+            dayOfMonth: 1,
+            time: time(hour: 18),
             detail: "Check in on your weekly progress, finger health, and any plateaus you've encountered.",
             isOn: true
         ),
         LighthouseCheckIn(
             title: "Weekly Nutrition Review",
-            repeats: "Repeat: Sun, 6:00 PM",
+            frequency: .weekly,
+            weekday: .sunday,
+            dayOfMonth: 1,
+            time: time(hour: 18),
             detail: "Check in on how the week's meals lined up with your targets and where the gaps were.",
             isOn: true
         ),
         LighthouseCheckIn(
             title: "Monthly Sleep Review",
-            repeats: "Repeat: 1st, 8:00 AM",
+            frequency: .monthly,
+            weekday: .sunday,
+            dayOfMonth: 1,
+            time: time(hour: 8),
             detail: "A monthly look at your sleep trends and what has been moving them.",
             isOn: false
         ),
     ]
+
+    static func time(hour: Int, minute: Int = 0) -> Date {
+        Calendar.autoupdatingCurrent.date(bySettingHour: hour, minute: minute, second: 0, of: .now) ?? .now
+    }
 
     static let configurations = [
         LighthouseConfiguration(

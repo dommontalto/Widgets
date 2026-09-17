@@ -72,7 +72,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                 }
                 .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
-                .scrollEdgeEffectStyle(.soft, for: .vertical)
+                .brightSoftScrollEdges()
                 .toolbar {
                     if showBackButton {
                         ToolbarItem(placement: .topBarLeading) {

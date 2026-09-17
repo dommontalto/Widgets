@@ -25,8 +25,13 @@ struct BrightTag: View {
         self.action = action
     }
 
+    @State private var tapTick = 0
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            tapTick += 1
+            action()
+        } label: {
             HStack(spacing: .spacing1x) {
                 if let systemImage {
                     Image(systemName: systemImage)
@@ -45,6 +50,7 @@ struct BrightTag: View {
         .buttonStyle(.plain)
         .modifier(GlassEffect(shape: .capsule))
         .opacity(isSelected ? 1 : .semiLowOpacity)
+        .brightHaptic(.light, trigger: tapTick)
     }
 
     private enum Constants {
