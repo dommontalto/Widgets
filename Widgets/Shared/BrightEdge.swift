@@ -1,5 +1,5 @@
 //
-//  BrightCalendarEdge.swift
+//  BrightEdge.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 25/8/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct BrightCalendarEdge: View {
+struct BrightEdge: View {
     var progress: CGFloat
 
     var body: some View {
@@ -29,10 +29,10 @@ struct BrightCalendarEdge: View {
 }
 
 extension View {
-    func brightCalendarEdge(progress: CGFloat) -> some View {
+    func brightEdge(progress: CGFloat) -> some View {
         overlay(alignment: .bottom) {
-            BrightCalendarEdge(progress: progress)
-                .offset(y: BrightCalendarEdge.Constants.lineHeight)
+            BrightEdge(progress: progress)
+                .offset(y: BrightEdge.Constants.lineHeight)
         }
     }
 }
@@ -43,13 +43,13 @@ extension View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, .spacing2x)
             .background(Color.defaultSheetBackground)
-            .brightCalendarEdge(progress: 0.5)
+            .brightEdge(progress: 0.5)
 
         BrightText("Fully scrolled", size: .body1)
             .frame(maxWidth: .infinity)
             .padding(.vertical, .spacing2x)
             .background(Color.defaultSheetBackground)
-            .brightCalendarEdge(progress: 1)
+            .brightEdge(progress: 1)
     }
     .frame(maxHeight: .infinity)
     .background(Color.defaultBackground.ignoresSafeArea())

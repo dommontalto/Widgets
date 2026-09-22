@@ -69,7 +69,7 @@ struct BrightCalendarDay: View {
                 dotStyle: dotStyle,
                 onSelectedDayTap: onSelectedDayTap
             )
-            .brightCalendarEdge(progress: edgeProgress)
+            .brightEdge(progress: edgeProgress)
             .zIndex(1)
 
             timeline
@@ -84,7 +84,7 @@ struct BrightCalendarDay: View {
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
         } action: { _, offset in
-            let progress = BrightCalendarEdge.progress(forOffset: offset)
+            let progress = BrightEdge.progress(forOffset: offset)
             guard progress != edgeProgress else { return }
             edgeProgress = progress
         }
