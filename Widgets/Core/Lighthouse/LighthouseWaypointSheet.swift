@@ -14,6 +14,7 @@ struct LighthouseWaypointSheet: View {
     private let checkIn: LighthouseCheckIn?
     private let onConfirm: (LighthouseCheckIn) -> Void
     private let onSkip: () -> Void
+    private let onDelete: (LighthouseCheckIn) -> Void
 
     @State private var name: String
     @State private var frequency: LighthouseCheckInFrequency
@@ -29,11 +30,13 @@ struct LighthouseWaypointSheet: View {
     init(
         checkIn: LighthouseCheckIn? = nil,
         onConfirm: @escaping (LighthouseCheckIn) -> Void = { _ in },
-        onSkip: @escaping () -> Void = {}
+        onSkip: @escaping () -> Void = {},
+        onDelete: @escaping (LighthouseCheckIn) -> Void = { _ in }
     ) {
         self.checkIn = checkIn
         self.onConfirm = onConfirm
         self.onSkip = onSkip
+        self.onDelete = onDelete
         _name = State(initialValue: checkIn?.title ?? Constants.defaultName)
         _frequency = State(initialValue: checkIn?.frequency ?? .weekly)
         _day = State(initialValue: checkIn?.weekday ?? .sunday)
@@ -80,8 +83,20 @@ struct LighthouseWaypointSheet: View {
                     .padding(.bottom, .spacing4x)
                 }
                 .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
-                    BrightPillButton(confirmTitle, systemImage: "checkmark", buttonSize: .large) {
-                        confirm()
+                    HStack(spacing: .spacing2x) {
+                        if isEditing {
+                            BrightPillButton(
+                                Constants.deleteTitle,
+                                systemImage: "trash",
+                                textColor: .defaultRed,
+                                buttonSize: .large,
+                                onTapCallback: delete
+                            )
+                        }
+
+                        BrightPillButton(confirmTitle, systemImage: "checkmark", buttonSize: .large) {
+                            confirm()
+                        }
                     }
                     .padding(.bottom, .spacing2x)
                 }
@@ -319,6 +334,12 @@ struct LighthouseWaypointSheet: View {
         dismiss()
     }
 
+    private func delete() {
+        guard let checkIn else { return }
+        onDelete(checkIn)
+        dismiss()
+    }
+
     private enum EndDate: PickerOption {
         case endOfProgram
         case oneMonth
@@ -342,6 +363,7 @@ struct LighthouseWaypointSheet: View {
         static let skipTitle = "Skip"
         static let confirmTitle = "Confirm"
         static let saveTitle = "Save"
+        static let deleteTitle = "Delete"
         static let frequencyTitle = "Frequency"
         static let dayTitle = "Check-in day"
         static let dateTitle = "Check-in date"

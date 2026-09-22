@@ -11,6 +11,7 @@ import SwiftUI
 // then the chats that came before, with settings tucked in the bottom corner.
 struct LighthouseMenuView: View {
     let model: LighthouseModel
+    let usesApiKey: Bool
     let onSwitchModel: () -> Void
     let onCheckIns: () -> Void
     let onConfigurations: () -> Void
@@ -68,12 +69,18 @@ struct LighthouseMenuView: View {
 
     private var modelCard: some View {
         HStack(spacing: .spacing2x) {
-            Image(model.tierImageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: Constants.tierImageSize, height: Constants.tierImageSize)
+            if usesApiKey {
+                LighthouseApiKeyGlyph(size: Constants.tierImageSize)
 
-            BrightText(model.selectedTier().name, size: .heading, color: .semiLightTextColor)
+                BrightText(LighthouseModelChoice.apiKeyTitle, size: .heading, color: .semiLightTextColor)
+            } else {
+                Image(model.tierImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Constants.tierImageSize, height: Constants.tierImageSize)
+
+                BrightText(model.selectedTier().name, size: .heading, color: .semiLightTextColor)
+            }
 
             Spacer(minLength: .spacing2x)
 
@@ -299,6 +306,7 @@ struct LighthouseMenuView: View {
         .overlay {
             LighthouseMenuView(
                 model: .chatGPT,
+                usesApiKey: false,
                 onSwitchModel: {},
                 onCheckIns: {},
                 onConfigurations: {},

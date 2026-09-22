@@ -2,7 +2,7 @@
 //  VaultTestingDemo.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 17/9/2026.
+//  Created by Dom Montalto on 18/9/2026.
 //
 
 import Foundation
@@ -57,18 +57,26 @@ struct VaultTestCategory: Identifiable, Hashable {
 }
 
 enum VaultTestAvailability: String, CaseIterable, Identifiable {
-    case atHome = "At Home"
+    case atHomeKit = "At Home Kit"
     case inPerson = "In Person"
-    case diy = "DIY"
+    case homeVisit = "Home Visit"
 
     var id: String { rawValue }
 
     var systemImage: String {
         switch self {
-        case .atHome: "house"
+        case .atHomeKit: "cross.case"
         case .inPerson: "figure.walk"
-        case .diy: "person.fill"
+        case .homeVisit: "house"
         }
+    }
+
+    var needsAddress: Bool {
+        self != .inPerson
+    }
+
+    var needsShipping: Bool {
+        self == .atHomeKit
     }
 }
 
@@ -188,7 +196,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A broad blood panel covering the markers most linked to biological ageing and long-term disease risk.",
                     categoryId: "longevity",
                     included: ["Complete blood count", "Lipid profile", "HbA1c", "hs-CRP", "Liver function", "Kidney function"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "metabolic-panel",
@@ -196,7 +204,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Blood sugar regulation and insulin sensitivity alongside your cholesterol picture.",
                     categoryId: "metabolic",
                     included: ["Fasting glucose", "HbA1c", "Fasting insulin", "Lipid profile"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "inflammation-markers",
@@ -204,7 +212,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The main circulating markers of chronic inflammation, useful for tracking recovery and diet changes.",
                     categoryId: "longevity",
                     included: ["hs-CRP", "ESR", "Ferritin"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "hormone-baseline",
@@ -212,7 +220,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A starting read on the hormones behind energy, mood and recovery.",
                     categoryId: "hormones",
                     included: ["Testosterone", "Estradiol", "TSH", "Cortisol"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "gut-health-screen",
@@ -220,7 +228,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A first-pass stool screen for the causes behind bloating and irregularity.",
                     categoryId: "gut",
                     included: ["Calprotectin", "Pathogen screen", "Occult blood"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "fertility-overview",
@@ -228,7 +236,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The cycle and reserve markers worth knowing before any fertility planning.",
                     categoryId: "fertility",
                     included: ["AMH", "FSH", "LH", "Progesterone"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -247,7 +255,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Sex and adrenal hormones that shape energy, mood, libido, sleep and body composition.",
                     categoryId: "hormones",
                     included: ["Total testosterone", "Free testosterone", "Estradiol", "SHBG", "DHEA-S", "LH and FSH"],
-                    availability: [.atHome, .inPerson, .diy]
+                    availability: [.atHomeKit, .inPerson, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "thyroid-function",
@@ -255,7 +263,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A full thyroid picture, including the antibodies that flag autoimmune thyroid conditions.",
                     categoryId: "hormones",
                     included: ["TSH", "Free T4", "Free T3", "Thyroid antibodies"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "cortisol-rhythm",
@@ -263,7 +271,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Four saliva samples across the day map how your stress hormone rises and falls.",
                     categoryId: "hormones",
                     included: ["Waking cortisol", "Midday cortisol", "Evening cortisol", "Bedtime cortisol"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "longevity-bloods",
@@ -271,7 +279,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The everyday bloods that track how well you are ageing, repeated quarterly.",
                     categoryId: "longevity",
                     included: ["Complete blood count", "hs-CRP", "HbA1c", "Liver function", "Kidney function"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "glucose-and-lipids",
@@ -279,7 +287,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Sugar handling and cholesterol in one fasting draw.",
                     categoryId: "metabolic",
                     included: ["Fasting glucose", "HbA1c", "Lipid profile", "ApoB"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "gut-symptom-panel",
@@ -287,7 +295,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Digestion, absorption and inflammation markers read together.",
                     categoryId: "gut",
                     included: ["Pancreatic elastase", "Calprotectin", "Secretory IgA", "Zonulin"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "fertility-hormones",
@@ -295,7 +303,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Day-three hormones timed to the cycle, with reserve markers alongside.",
                     categoryId: "fertility",
                     included: ["AMH", "Day 3 FSH", "Estradiol", "Prolactin"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
             ]
         ),
@@ -314,7 +322,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Sequences the bacteria in a stool sample to score diversity and screen for pathogens.",
                     categoryId: "gut",
                     included: ["16S sequencing", "Diversity score", "Pathogen screen", "Short-chain fatty acids"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "food-sensitivity",
@@ -322,7 +330,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "IgG reactions to 96 common foods, to help narrow down what is driving digestive symptoms.",
                     categoryId: "gut",
                     included: ["96-food IgG panel", "Reaction ranking", "Elimination guide"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "heavy-metals",
@@ -330,7 +338,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Blood levels of the metals that accumulate from diet, water and the environment.",
                     categoryId: "longevity",
                     included: ["Lead", "Mercury", "Arsenic", "Cadmium"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "metabolic-genomics",
@@ -338,7 +346,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The gene variants that shape how you handle carbs, fats and caffeine.",
                     categoryId: "metabolic",
                     included: ["Carbohydrate response", "Lipid metabolism", "Caffeine clearance", "Lactose tolerance"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -357,7 +365,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The advanced lipid markers and a resting ECG that together size up cardiovascular risk.",
                     categoryId: "metabolic",
                     included: ["ApoB", "Lipoprotein(a)", "Lipid profile", "hs-CRP", "Resting ECG"],
-                    availability: [.inPerson, .diy, .atHome]
+                    availability: [.inPerson, .homeVisit, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "glucose-control",
@@ -365,7 +373,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "How well your body handles sugar day to day and over the last three months.",
                     categoryId: "metabolic",
                     included: ["Fasting glucose", "HbA1c", "Fasting insulin"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "cardio-longevity-bloods",
@@ -373,7 +381,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Heart markers read as an ageing signal rather than a one-off risk score.",
                     categoryId: "longevity",
                     included: ["ApoB", "Lipoprotein(a)", "hs-CRP", "Homocysteine"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "stress-hormones",
@@ -381,7 +389,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Cortisol through the day for when training load and sleep stop adding up.",
                     categoryId: "hormones",
                     included: ["Waking cortisol", "Midday cortisol", "Evening cortisol", "DHEA-S"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -400,7 +408,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Ovarian reserve and the cycle hormones that matter most when planning to conceive.",
                     categoryId: "fertility",
                     included: ["AMH", "FSH", "LH", "Estradiol", "Progesterone"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "semen-analysis",
@@ -408,7 +416,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Count, movement and shape of sperm, assessed in the lab within an hour of collection.",
                     categoryId: "fertility",
                     included: ["Sperm count", "Motility", "Morphology", "Volume and pH"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "vitamin-panel",
@@ -416,7 +424,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The vitamins and minerals most often low in an otherwise healthy diet.",
                     categoryId: "longevity",
                     included: ["Vitamin D", "Vitamin B12", "Folate", "Iron studies"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "cycle-hormones",
@@ -424,7 +432,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Hormones sampled across a full cycle to map how it actually runs.",
                     categoryId: "hormones",
                     included: ["Estradiol", "Progesterone", "LH", "FSH", "Prolactin"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -443,7 +451,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The standard screen most GPs start with, covering blood cells, iron and the common deficiencies.",
                     categoryId: "longevity",
                     included: ["Complete blood count", "Iron studies", "Vitamin D", "Vitamin B12", "Folate"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "thyroid-check",
@@ -451,7 +459,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A first look at thyroid function when energy, weight or temperature feel off.",
                     categoryId: "hormones",
                     included: ["TSH", "Free T4", "Free T3"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
             ]
         ),
@@ -470,7 +478,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Cortisol and melatonin through the day, read against the hormones that shape sleep quality.",
                     categoryId: "hormones",
                     included: ["Waking cortisol", "Evening cortisol", "Melatonin", "DHEA-S"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "testosterone-check",
@@ -478,7 +486,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Total and free testosterone with the binding protein needed to read them properly.",
                     categoryId: "hormones",
                     included: ["Total testosterone", "Free testosterone", "SHBG", "LH"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
             ]
         ),
@@ -497,7 +505,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "How well the two organs clearing your bloodstream are keeping up.",
                     categoryId: "longevity",
                     included: ["ALT and AST", "GGT", "Bilirubin", "eGFR", "Creatinine"],
-                    availability: [.inPerson, .diy, .atHome]
+                    availability: [.inPerson, .homeVisit, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "insulin-resistance",
@@ -505,7 +513,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Fasting markers that flag insulin resistance years before glucose starts to drift.",
                     categoryId: "metabolic",
                     included: ["Fasting insulin", "Fasting glucose", "HOMA-IR", "HbA1c"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
             ]
         ),
@@ -524,7 +532,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Digestive markers that show how well the gut lining is absorbing and holding up.",
                     categoryId: "gut",
                     included: ["Calprotectin", "Zonulin", "Pancreatic elastase", "Secretory IgA"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "omega-3-index",
@@ -532,7 +540,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The share of omega-3 in your red blood cells, the marker used in longevity research.",
                     categoryId: "longevity",
                     included: ["Omega-3 index", "EPA", "DHA", "Omega-6 to omega-3 ratio"],
-                    availability: [.diy, .atHome]
+                    availability: [.homeVisit, .atHomeKit]
                 ),
             ]
         ),
@@ -551,7 +559,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "AMH and the early-cycle hormones that estimate how many eggs are left in reserve.",
                     categoryId: "fertility",
                     included: ["AMH", "Day 3 FSH", "Day 3 LH", "Estradiol"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "thyroid-antibodies",
@@ -559,7 +567,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The antibodies behind Hashimoto's and Graves', for when thyroid results keep moving.",
                     categoryId: "hormones",
                     included: ["TPO antibodies", "Thyroglobulin antibodies", "TSH receptor antibodies"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -578,7 +586,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The antibody screen for gluten sensitivity, taken while you are still eating gluten.",
                     categoryId: "gut",
                     included: ["Tissue transglutaminase IgA", "Total IgA", "Deamidated gliadin peptide"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "inflammation-baseline",
@@ -586,7 +594,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A starting point for tracking inflammation through a training block or diet change.",
                     categoryId: "longevity",
                     included: ["hs-CRP", "ESR", "White cell differential"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
             ]
         ),
@@ -605,7 +613,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Blood pressure, an ECG and the blood markers that together score heart risk.",
                     categoryId: "metabolic",
                     included: ["Resting ECG", "Blood pressure", "Lipid profile", "hs-CRP"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "advanced-lipids",
@@ -613,7 +621,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The particle-level cholesterol markers a standard lipid panel leaves out.",
                     categoryId: "metabolic",
                     included: ["ApoB", "ApoA1", "Lipoprotein(a)", "LDL particle number"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
             ]
         ),
@@ -632,7 +640,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "An epigenetic read of biological age alongside the bloods that explain the number.",
                     categoryId: "longevity",
                     included: ["Epigenetic age", "Telomere length", "hs-CRP", "HbA1c", "Lipid profile"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "executive-hormone-screen",
@@ -640,7 +648,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "A broad hormone sweep aimed at energy, recovery and body composition under load.",
                     categoryId: "hormones",
                     included: ["Testosterone", "Cortisol", "Thyroid panel", "IGF-1", "DHEA-S"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "gut-and-microbiome-screen",
@@ -648,7 +656,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Full microbiome sequencing paired with the markers of a leaky or inflamed gut.",
                     categoryId: "gut",
                     included: ["16S sequencing", "Diversity score", "Calprotectin", "Zonulin", "Short-chain fatty acids"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
                 VaultClinicTest(
                     id: "metabolic-performance-panel",
@@ -656,7 +664,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Fuel use under load, from fasting insulin through to advanced lipids.",
                     categoryId: "metabolic",
                     included: ["Fasting insulin", "HbA1c", "ApoB", "Lipoprotein(a)", "Liver function"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "family-planning-check",
@@ -664,7 +672,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Reserve, thyroid and immunity checks for couples thinking a year ahead.",
                     categoryId: "fertility",
                     included: ["AMH", "Thyroid panel", "Rubella immunity", "Semen analysis"],
-                    availability: [.inPerson, .atHome, .diy]
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -683,7 +691,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "The hormone, iron and immunity checks recommended in the months before trying.",
                     categoryId: "fertility",
                     included: ["AMH", "Thyroid panel", "Iron studies", "Rubella immunity", "Vitamin D"],
-                    availability: [.inPerson, .atHome]
+                    availability: [.inPerson, .atHomeKit]
                 ),
                 VaultClinicTest(
                     id: "carrier-screening",
@@ -691,7 +699,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Screens both partners for the inherited conditions most often passed on together.",
                     categoryId: "fertility",
                     included: ["Cystic fibrosis", "Spinal muscular atrophy", "Fragile X", "Expanded panel"],
-                    availability: [.atHome, .diy]
+                    availability: [.atHomeKit, .homeVisit]
                 ),
             ]
         ),
@@ -710,7 +718,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Two weeks of continuous glucose paired with the bloods that explain the curves.",
                     categoryId: "metabolic",
                     included: ["Continuous glucose monitor", "HbA1c", "Fasting insulin", "Lipid profile", "Liver function"],
-                    availability: [.atHome, .inPerson]
+                    availability: [.atHomeKit, .inPerson]
                 ),
                 VaultClinicTest(
                     id: "kidney-function",
@@ -718,18 +726,95 @@ struct VaultTestingClinic: Identifiable, Hashable {
                     detail: "Filtration rate and urine protein, the pair that catch kidney strain early.",
                     categoryId: "longevity",
                     included: ["eGFR", "Creatinine", "Urea", "Urine albumin to creatinine ratio"],
-                    availability: [.inPerson, .diy]
+                    availability: [.inPerson, .homeVisit]
                 ),
             ]
         ),
     ]
 }
 
+struct VaultTestDelivery: Hashable {
+    let arrivesOn: Date
+    var progress: Double
+    var deliveredAt: Date?
+
+    var status: String {
+        guard let deliveredAt else { return "Arrives \(arrivesOn.formatted(.brightWeekday))" }
+        return "Delivered: \(deliveredAt.formatted(.brightTimestamp))"
+    }
+}
+
 struct VaultTestOrder: Identifiable, Hashable {
     let id = UUID()
+    let number: String
     let test: VaultClinicTest
     let clinic: VaultTestingClinic
+    let type: VaultTestAvailability
     let placedAt: Date
+    var scheduledAt: Date?
+    var address: String?
+    var delivery: VaultTestDelivery?
+    var paymentMethod: VaultPaymentMethod?
+
+    var reference: String {
+        "Order #\(number)"
+    }
+
+    static func newNumber() -> String {
+        String(Int.random(in: 100_000...999_999))
+    }
+}
+
+struct VaultCountry: Identifiable, Hashable {
+    let code: String
+    let name: String
+    let dialCode: String
+
+    var id: String { code }
+
+    var flag: String {
+        code.unicodeScalars.reduce(into: "") { flag, scalar in
+            guard let regional = UnicodeScalar(scalar.value + Constants.regionalIndicatorOffset) else { return }
+            flag.unicodeScalars.append(regional)
+        }
+    }
+
+    static let all: [VaultCountry] = Constants.dialCodes
+        .split(whereSeparator: \.isWhitespace)
+        .compactMap { entry in
+            let parts = entry.split(separator: ":")
+            guard parts.count == 2 else { return nil }
+            let code = String(parts[0])
+            guard let name = Locale.bright.localizedString(forRegionCode: code) else { return nil }
+            return VaultCountry(code: code, name: name, dialCode: "+\(parts[1])")
+        }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+    static let `default` = all.first { $0.code == Constants.defaultCode } ?? all[0]
+
+    private enum Constants {
+        static let regionalIndicatorOffset: UInt32 = 127_397
+        static let defaultCode = "AU"
+        static let dialCodes = """
+        AD:376 AE:971 AF:93 AG:1 AI:1 AL:355 AM:374 AO:244 AR:54 AS:1 AT:43 AU:61 AW:297 AX:358 AZ:994
+        BA:387 BB:1 BD:880 BE:32 BF:226 BG:359 BH:973 BI:257 BJ:229 BL:590 BM:1 BN:673 BO:591 BQ:599 BR:55
+        BS:1 BT:975 BW:267 BY:375 BZ:501 CA:1 CC:61 CD:243 CF:236 CG:242 CH:41 CI:225 CK:682 CL:56 CM:237
+        CN:86 CO:57 CR:506 CU:53 CV:238 CW:599 CX:61 CY:357 CZ:420 DE:49 DJ:253 DK:45 DM:1 DO:1 DZ:213
+        EC:593 EE:372 EG:20 EH:212 ER:291 ES:34 ET:251 FI:358 FJ:679 FK:500 FM:691 FO:298 FR:33 GA:241 GB:44
+        GD:1 GE:995 GF:594 GG:44 GH:233 GI:350 GL:299 GM:220 GN:224 GP:590 GQ:240 GR:30 GS:500 GT:502 GU:1
+        GW:245 GY:592 HK:852 HN:504 HR:385 HT:509 HU:36 ID:62 IE:353 IL:972 IM:44 IN:91 IO:246 IQ:964 IR:98
+        IS:354 IT:39 JE:44 JM:1 JO:962 JP:81 KE:254 KG:996 KH:855 KI:686 KM:269 KN:1 KP:850 KR:82 KW:965
+        KY:1 KZ:7 LA:856 LB:961 LC:1 LI:423 LK:94 LR:231 LS:266 LT:370 LU:352 LV:371 LY:218 MA:212 MC:377
+        MD:373 ME:382 MF:590 MG:261 MH:692 MK:389 ML:223 MM:95 MN:976 MO:853 MP:1 MQ:596 MR:222 MS:1 MT:356
+        MU:230 MV:960 MW:265 MX:52 MY:60 MZ:258 NA:264 NC:687 NE:227 NF:672 NG:234 NI:505 NL:31 NO:47 NP:977
+        NR:674 NU:683 NZ:64 OM:968 PA:507 PE:51 PF:689 PG:675 PH:63 PK:92 PL:48 PM:508 PR:1 PS:970 PT:351
+        PW:680 PY:595 QA:974 RE:262 RO:40 RS:381 RU:7 RW:250 SA:966 SB:677 SC:248 SD:249 SE:46 SG:65 SH:290
+        SI:386 SJ:47 SK:421 SL:232 SM:378 SN:221 SO:252 SR:597 SS:211 ST:239 SV:503 SX:1 SY:963 SZ:268 TC:1
+        TD:235 TG:228 TH:66 TJ:992 TK:690 TL:670 TM:993 TN:216 TO:676 TR:90 TT:1 TV:688 TW:886 TZ:255 UA:380
+        UG:256 US:1 UY:598 UZ:998 VA:39 VC:1 VE:58 VG:1 VI:1 VN:84 VU:678 WF:681 WS:685 YE:967 YT:262 ZA:27
+        ZM:260 ZW:263
+        """
+    }
 }
 
 enum VaultTestingSortOrder: String, CaseIterable, Identifiable {

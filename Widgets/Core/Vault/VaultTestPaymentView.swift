@@ -2,7 +2,7 @@
 //  VaultTestPaymentView.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 17/9/2026.
+//  Created by Dom Montalto on 18/9/2026.
 //
 
 import SwiftUI
@@ -11,17 +11,18 @@ struct VaultTestPaymentView: View {
     let test: VaultClinicTest
     let type: VaultTestAvailability
     let clinic: VaultTestingClinic
-    let onPay: () -> Void
+    let onPay: (VaultTestOrder) -> Void
 
-    @State private var collapsed = Set<Section>()
+    @State private var addresses = VaultShippingAddress.demo
+    @State private var methods = VaultPaymentMethod.demo
     @State private var selectedAddress: VaultShippingAddress.ID?
     @State private var selectedShipping: VaultShippingOption.ID?
     @State private var selectedPayment: VaultPaymentMethod.ID?
+    @State private var isAddingAddress = false
+    @State private var isAddingCard = false
     @State private var nudges = [Section: Int]()
 
-    private let addresses = VaultShippingAddress.demo
     private let shipping = VaultShippingOption.demo
-    private let methods = VaultPaymentMethod.demo
 
     enum Section: Hashable {
         case shipTo
@@ -45,23 +46,12 @@ struct VaultTestPaymentView: View {
             case .payment: "creditcard"
             }
         }
-
-        var isCollapsible: Bool {
-            switch self {
-            case .location, .payment: false
-            case .shipTo, .shipping: true
-            }
-        }
-    }
-
-    private var isShipped: Bool {
-        type != .inPerson
     }
 
     private var blocking: Section? {
-        if isShipped {
+        if type.needsAddress {
             if selectedAddress == nil { return .shipTo }
-            if selectedShipping == nil { return .shipping }
+            if type.needsShipping, selectedShipping == nil { return .shipping }
         }
         return selectedPayment == nil ? .payment : nil
     }
@@ -77,11 +67,14 @@ struct VaultTestPaymentView: View {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
 
-                    if isShipped {
+                    if type.needsAddress {
                         shipToCard
-                        shippingCard
                     } else {
                         locationCard
+                    }
+
+                    if type.needsShipping {
+                        shippingCard
                     }
 
                     paymentCard
@@ -95,6 +88,18 @@ struct VaultTestPaymentView: View {
         .overlay(alignment: .bottom) {
             BrightPillButton(Constants.payTitle, systemImage: "arrow.right", buttonSize: .large, onTapCallback: pay)
                 .padding(.bottom, .spacing4x)
+        }
+        .sheet(isPresented: $isAddingAddress) {
+            VaultAddAddressSheet { address in
+                addresses.append(address)
+                selectedAddress = address.id
+            }
+        }
+        .sheet(isPresented: $isAddingCard) {
+            VaultAddPaymentMethodSheet { method in
+                methods.append(method)
+                selectedPayment = method.id
+            }
         }
     }
 
@@ -121,7 +126,7 @@ struct VaultTestPaymentView: View {
 
     private var shipToCard: some View {
         card(.shipTo) {
-            ForEach(Array(addresses.enumerated()), id: \.element.id) { index, address in
+            removableRows(addresses, onRemove: remove) { address in
                 selectableRow(isSelected: selectedAddress == address.id) {
                     selectedAddress = address.id
                 } label: {
@@ -132,15 +137,11 @@ struct VaultTestPaymentView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-
-                if index < addresses.count - 1 {
-                    BrightDivider()
-                }
             }
 
             BrightDivider()
 
-            addRow(Constants.addAddressTitle)
+            addRow(Constants.addAddressTitle) { isAddingAddress = true }
         }
     }
 
@@ -184,21 +185,17 @@ struct VaultTestPaymentView: View {
 
     private var paymentCard: some View {
         card(.payment) {
-            ForEach(Array(methods.enumerated()), id: \.element.id) { index, method in
+            removableRows(methods, onRemove: remove) { method in
                 selectableRow(isSelected: selectedPayment == method.id) {
                     selectedPayment = method.id
                 } label: {
                     methodLabel(method)
                 }
-
-                if index < methods.count - 1 {
-                    BrightDivider()
-                }
             }
 
             BrightDivider()
 
-            addRow(Constants.addCardTitle)
+            addRow(Constants.addCardTitle) { isAddingCard = true }
         }
     }
 
@@ -206,6 +203,7 @@ struct VaultTestPaymentView: View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
                 BrightText(method.name, size: .body1, weight: .regular)
+                    .lineLimit(1)
 
                 if let last4 = method.last4 {
                     HStack(spacing: .spacing05x) {
@@ -257,13 +255,11 @@ struct VaultTestPaymentView: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            sectionHeader(section)
+            headerLabel(section)
 
-            if isExpanded(section) {
-                BrightDivider()
+            BrightDivider()
 
-                content()
-            }
+            content()
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -271,22 +267,7 @@ struct VaultTestPaymentView: View {
         .brightWiggle(trigger: nudges[section, default: 0])
     }
 
-    @ViewBuilder
-    private func sectionHeader(_ section: Section) -> some View {
-        if section.isCollapsible {
-            Button {
-                withAnimation(.brightSnappy) { toggle(section) }
-            } label: {
-                headerLabel(section, showsChevron: true)
-            }
-            .buttonStyle(.plain)
-            .brightHaptic(.light, trigger: collapsed)
-        } else {
-            headerLabel(section, showsChevron: false)
-        }
-    }
-
-    private func headerLabel(_ section: Section, showsChevron: Bool) -> some View {
+    private func headerLabel(_ section: Section) -> some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: section.systemImage)
                 .font(.standard(size: .heading, weight: .light))
@@ -295,17 +276,10 @@ struct VaultTestPaymentView: View {
 
             Spacer(minLength: .spacing2x)
 
-            if showsChevron {
-                Image(systemName: collapsed.contains(section) ? "chevron.down" : "chevron.up")
-                    .font(.standard(size: .body1, weight: .regular))
-                    .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-            }
+            Image(systemName: "chevron.down")
+                .font(.standard(size: .body1, weight: .regular))
+                .foregroundStyle(Color.semiLightTextColor)
         }
-        .contentShape(Rectangle())
-    }
-
-    private func isExpanded(_ section: Section) -> Bool {
-        !section.isCollapsible || !collapsed.contains(section)
     }
 
     private func selectableRow<Label: View>(
@@ -326,35 +300,80 @@ struct VaultTestPaymentView: View {
         .buttonStyle(.plain)
     }
 
-    private func addRow(_ title: String) -> some View {
-        HStack(spacing: .spacing2x) {
-            BrightRoundButton(systemImage: "plus", haptic: nil)
-                .allowsHitTesting(false)
+    private func removableRows<Item: Identifiable, Row: View>(
+        _ items: [Item],
+        onRemove: @escaping (Item) -> Void,
+        @ViewBuilder row: @escaping (Item) -> Row
+    ) -> some View {
+        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+            row(item)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        withAnimation(.brightSnappy) { onRemove(item) }
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
+                    .tint(.defaultRed)
+                }
 
-            BrightText(title, size: .body1, color: .lightTextColor)
-
-            Spacer(minLength: .spacing2x)
+            if index < items.count - 1 {
+                BrightDivider()
+            }
         }
+    }
+
+    private func addRow(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: .spacing2x) {
+                BrightRoundButton(systemImage: "plus", haptic: nil)
+                    .allowsHitTesting(false)
+
+                BrightText(title, size: .body1, color: .lightTextColor)
+
+                Spacer(minLength: .spacing2x)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Actions
 
-    private func toggle(_ section: Section) {
-        if collapsed.contains(section) {
-            collapsed.remove(section)
-        } else {
-            collapsed.insert(section)
+    private func remove(_ address: VaultShippingAddress) {
+        addresses.removeAll { $0.id == address.id }
+        if selectedAddress == address.id {
+            selectedAddress = nil
+        }
+    }
+
+    private func remove(_ method: VaultPaymentMethod) {
+        methods.removeAll { $0.id == method.id }
+        if selectedPayment == method.id {
+            selectedPayment = nil
         }
     }
 
     private func pay() {
         guard let blocking else {
-            onPay()
+            onPay(order)
             return
         }
 
-        withAnimation(.brightSnappy) { collapsed.remove(blocking) }
         nudges[blocking, default: 0] += 1
+    }
+
+    private var order: VaultTestOrder {
+        VaultTestOrder(
+            number: VaultTestOrder.newNumber(),
+            test: test,
+            clinic: clinic,
+            type: type,
+            placedAt: .now,
+            scheduledAt: type.needsShipping ? nil : Constants.scheduledAt,
+            address: type.needsAddress ? addresses.first { $0.id == selectedAddress }?.street : clinic.address,
+            delivery: type.needsShipping ? Constants.delivery : nil,
+            paymentMethod: methods.first { $0.id == selectedPayment }
+        )
     }
 
     private enum Constants {
@@ -364,6 +383,18 @@ struct VaultTestPaymentView: View {
         static let currency = "AUD"
         static let addAddressTitle = "Add an address"
         static let addCardTitle = "Add a card"
+        static let appointmentDays = 2
+        static let deliveryDays = 3
+        static let startingProgress = 0.25
+
+        static var scheduledAt: Date {
+            Calendar.autoupdatingCurrent.date(byAdding: .day, value: appointmentDays, to: .now) ?? .now
+        }
+
+        static var delivery: VaultTestDelivery {
+            let arrives = Calendar.autoupdatingCurrent.date(byAdding: .day, value: deliveryDays, to: .now) ?? .now
+            return VaultTestDelivery(arrivesOn: arrives, progress: startingProgress)
+        }
     }
 }
 
@@ -371,8 +402,8 @@ struct VaultTestPaymentView: View {
     NavigationStack {
         VaultTestPaymentView(
             test: VaultTestingClinic.demo[0].tests[0],
-            type: .atHome,
+            type: .atHomeKit,
             clinic: VaultTestingClinic.demo[0]
-        ) {}
+        ) { _ in }
     }
 }

@@ -2,14 +2,14 @@
 //  VaultClinicSheet.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 17/9/2026.
+//  Created by Dom Montalto on 18/9/2026.
 //
 
 import SwiftUI
 
 struct VaultClinicSheet: View {
     let clinic: VaultTestingClinic
-    let onOrder: (VaultClinicTest) -> Void
+    let onOrder: (VaultTestOrder) -> Void
 
     @State private var selectedCategoryId: String?
     @State private var selectedTest: VaultClinicTest?
@@ -45,7 +45,7 @@ struct VaultClinicSheet: View {
                 .scrollIndicators(.hidden)
                 .animation(.brightSnappy, value: selectedCategoryId)
                 .navigationDestination(item: $selectedTest) { test in
-                    VaultTestDetailView(test: test, clinic: clinic) { onOrder(test) }
+                    VaultTestDetailView(test: test, clinic: clinic, onOrder: onOrder)
                 }
             }
         )

@@ -2,7 +2,7 @@
 //  VaultTestDetailView.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 17/9/2026.
+//  Created by Dom Montalto on 18/9/2026.
 //
 
 import SwiftUI
@@ -10,12 +10,12 @@ import SwiftUI
 struct VaultTestDetailView: View {
     let test: VaultClinicTest
     let clinic: VaultTestingClinic
-    let onOrder: () -> Void
+    let onOrder: (VaultTestOrder) -> Void
 
     @State private var selectedType: VaultTestAvailability
     @State private var showingPayment = false
 
-    init(test: VaultClinicTest, clinic: VaultTestingClinic, onOrder: @escaping () -> Void) {
+    init(test: VaultClinicTest, clinic: VaultTestingClinic, onOrder: @escaping (VaultTestOrder) -> Void) {
         self.test = test
         self.clinic = clinic
         self.onOrder = onOrder
@@ -43,9 +43,9 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing4x)
         }
         .navigationDestination(isPresented: $showingPayment) {
-            VaultTestPaymentView(test: test, type: selectedType, clinic: clinic) {
+            VaultTestPaymentView(test: test, type: selectedType, clinic: clinic) { order in
                 showingPayment = false
-                onOrder()
+                onOrder(order)
             }
         }
     }
@@ -132,6 +132,6 @@ struct VaultTestDetailView: View {
 
 #Preview {
     NavigationStack {
-        VaultTestDetailView(test: VaultTestingClinic.demo[0].tests[0], clinic: VaultTestingClinic.demo[0]) {}
+        VaultTestDetailView(test: VaultTestingClinic.demo[0].tests[0], clinic: VaultTestingClinic.demo[0]) { _ in }
     }
 }

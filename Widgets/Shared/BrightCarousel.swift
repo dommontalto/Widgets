@@ -56,12 +56,12 @@ struct BrightCarousel<Item: Identifiable & Hashable, Card: View>: View {
 
     var body: some View {
         ScrollView(.horizontal) {
-            HStack(spacing: .spacing05x) {
+            HStack(alignment: .top, spacing: .spacing05x) {
                 ForEach(items) { item in
                     VStack(spacing: .spacing4x) {
                         card(item, cardWidth)
-                        if tiers != nil {
-                            tierMenu(item)
+                        if let itemTiers = tiers?(item), !itemTiers.isEmpty {
+                            tierMenu(item, itemTiers)
                         }
                     }
                     .frame(width: cardWidth)
@@ -121,8 +121,7 @@ struct BrightCarousel<Item: Identifiable & Hashable, Card: View>: View {
 
     // MARK: Tier picker
 
-    private func tierMenu(_ item: Item) -> some View {
-        let itemTiers = tiers?(item) ?? []
+    private func tierMenu(_ item: Item, _ itemTiers: [BrightCarouselTier]) -> some View {
         let selected = selectedTiers?.wrappedValue[item.id] ?? itemTiers.first
 
         return Menu {

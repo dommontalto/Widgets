@@ -13,6 +13,7 @@ import SwiftUI
 // out of it. A tap skips straight to the settled page.
 struct LighthouseOnboardingView: View {
     @Binding var selectedModel: LighthouseModel
+    var onApiKeySaved: (String) -> Void = { _ in }
     let onFinish: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,11 +27,17 @@ struct LighthouseOnboardingView: View {
     // Rows whose text has finished drifting into place; the icon bows only
     // once its row has settled.
     @State private var settledCapabilities = 0
+    @State private var isEnteringKey = false
 
-    init(selectedModel: Binding<LighthouseModel>, onFinish: @escaping () -> Void) {
+    init(
+        selectedModel: Binding<LighthouseModel>,
+        onApiKeySaved: @escaping (String) -> Void = { _ in },
+        onFinish: @escaping () -> Void
+    ) {
         _selectedModel = selectedModel
+        self.onApiKeySaved = onApiKeySaved
         self.onFinish = onFinish
-        _carouselIndex = State(initialValue: LighthouseModel.allCases.firstIndex(of: selectedModel.wrappedValue) ?? 0)
+        _carouselIndex = State(initialValue: LighthouseModelPicker.index(of: selectedModel.wrappedValue))
         _selectedTiers = State(initialValue: LighthouseModelPicker.storedTiers())
     }
 
@@ -81,6 +88,10 @@ struct LighthouseOnboardingView: View {
             }
         }
         .task { await runIntro() }
+        .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
+            onApiKeySaved(key)
+            onFinish()
+        }
         .toolbar {
             // In the bar beside the close button, so the second page's title
             // reads as the screen's own.
@@ -315,7 +326,11 @@ struct LighthouseOnboardingView: View {
             return
         }
         LighthouseModelPicker.save(selectedTiers)
-        selectedModel = LighthouseModelPicker.model(at: carouselIndex)
+        guard let model = LighthouseModelPicker.choice(at: carouselIndex).model else {
+            isEnteringKey = true
+            return
+        }
+        selectedModel = model
         onFinish()
     }
 

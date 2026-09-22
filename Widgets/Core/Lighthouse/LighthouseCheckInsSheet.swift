@@ -29,7 +29,7 @@ struct LighthouseCheckInsSheet: View {
                 }
                 .animation(.brightEaseInOut, value: checkIns)
                 .sheet(item: $editing) { checkIn in
-                    LighthouseWaypointSheet(checkIn: checkIn, onConfirm: save)
+                    LighthouseWaypointSheet(checkIn: checkIn, onConfirm: save, onDelete: remove)
                 }
             }
         )
@@ -96,6 +96,10 @@ struct LighthouseCheckInsSheet: View {
     private func save(_ updated: LighthouseCheckIn) {
         guard let index = checkIns.firstIndex(where: { $0.id == updated.id }) else { return }
         checkIns[index] = updated
+    }
+
+    private func remove(_ checkIn: LighthouseCheckIn) {
+        checkIns.removeAll { $0.id == checkIn.id }
     }
 
     private enum Constants {

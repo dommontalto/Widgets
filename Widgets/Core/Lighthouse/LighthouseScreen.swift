@@ -25,6 +25,9 @@ struct LighthouseScreen: View {
     // The model picked in onboarding (or later, in the selector) survives
     // relaunches, so a returning user lands on the assistant they chose.
     @AppStorage(Constants.modelKey) private var model = LighthouseModel.chatGPT
+    // Set when the API key card is chosen instead of a model: while it holds a
+    // key, the key stands in for the model logo across the chat and the menu.
+    @AppStorage(Constants.apiKeyKey) private var apiKey = ""
     @State private var isThinking = false
     @State private var showingModelSelector = false
     @State private var showingCheckIns = false
@@ -93,7 +96,10 @@ struct LighthouseScreen: View {
             attach(try? result.get())
         }
         .fullScreenCover(isPresented: $showingModelSelector) {
-            LighthouseModelSelectorView(currentModel: model) { model = $0 }
+            LighthouseModelSelectorView(
+                currentModel: model,
+                onApiKeySaved: { apiKey = $0 }
+            ) { model = $0; apiKey = "" }
         }
     }
 
@@ -168,7 +174,10 @@ struct LighthouseScreen: View {
     }
 
     private var onboarding: some View {
-        LighthouseOnboardingView(selectedModel: $model) {
+        LighthouseOnboardingView(
+            selectedModel: $model,
+            onApiKeySaved: { apiKey = $0 }
+        ) {
             showOnboarding = false
         }
     }
@@ -196,6 +205,7 @@ struct LighthouseScreen: View {
         LighthouseChatView(
             isThinking: $isThinking,
             selectedModel: $model,
+            usesApiKey: usesApiKey,
             showingModelSelector: $showingModelSelector,
             isTyping: $isTyping,
             attachments: $attachments,
@@ -207,9 +217,14 @@ struct LighthouseScreen: View {
         )
     }
 
+    private var usesApiKey: Bool {
+        !apiKey.isEmpty
+    }
+
     private var menu: some View {
         LighthouseMenuView(
             model: model,
+            usesApiKey: usesApiKey,
             onSwitchModel: { showingModelSelector = true },
             onCheckIns: { showingCheckIns = true },
             onConfigurations: { showingConfigurations = true },
@@ -279,5 +294,6 @@ struct LighthouseScreen: View {
         static let maxAttachments = 4
         static let orbWidthFraction: CGFloat = 0.3
         static let modelKey = "lighthouseSelectedModel"
+        static let apiKeyKey = "lighthouseApiKey"
     }
 }

@@ -17,8 +17,9 @@ struct BrightPillButton: View {
     let size: FontSizes?
     let buttonSize: BrightButtonSizes
     let isClear: Bool
-    // Matches InlineTabPill: unselected dims the whole capsule and drops the
-    // label to 60%. Defaults to true, so a plain button is full strength.
+    // Unselected dims the whole capsule and drops the label to 60%. Defaults
+    // to true, so a plain button is full strength. `BrightTag` and the page
+    // pills in `BrightSwipePageView` are this button at `.small`.
     let isSelected: Bool
     let onTapCallback: () -> Void
 
@@ -64,10 +65,14 @@ struct BrightPillButton: View {
                         .font(.system(size: Constants.imageSize, weight: .medium))
                         .foregroundStyle(resolvedTextColor)
                 } else if let image {
+                    // A template, so the asset takes the label's colour and
+                    // dims with it, the way a symbol does.
                     Image(image)
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(height: Constants.imageSize)
+                        .frame(width: Constants.imageSize, height: Constants.imageSize)
+                        .foregroundStyle(resolvedTextColor)
                 }
                 BrightText(title, size: resolvedSize, color: resolvedTextColor)
             }

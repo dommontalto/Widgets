@@ -13,19 +13,23 @@ import SwiftUI
 struct LighthouseModelSelectorView: View {
     let currentModel: LighthouseModel
     let onModelSelected: (LighthouseModel) -> Void
+    let onApiKeySaved: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var activeIndex: Int?
     @State private var selectedTiers: [String: BrightCarouselTier]
+    @State private var isEnteringKey = false
 
     init(
         currentModel: LighthouseModel = .chatGPT,
+        onApiKeySaved: @escaping (String) -> Void = { _ in },
         onModelSelected: @escaping (LighthouseModel) -> Void = { _ in }
     ) {
         self.currentModel = currentModel
+        self.onApiKeySaved = onApiKeySaved
         self.onModelSelected = onModelSelected
-        _activeIndex = State(initialValue: LighthouseModel.allCases.firstIndex(of: currentModel) ?? 0)
+        _activeIndex = State(initialValue: LighthouseModelPicker.index(of: currentModel))
         _selectedTiers = State(initialValue: LighthouseModelPicker.storedTiers())
     }
 
@@ -34,11 +38,8 @@ struct LighthouseModelSelectorView: View {
             VStack(spacing: .spacing0x) {
                 LighthouseModelPicker(activeIndex: $activeIndex, selectedTiers: $selectedTiers)
 
-                BrightPillButton(Constants.chooseTitle, buttonSize: .large) {
-                    onModelSelected(LighthouseModelPicker.model(at: activeIndex))
-                    dismiss()
-                }
-                .padding(.bottom, .spacing8x)
+                BrightPillButton(Constants.chooseTitle, buttonSize: .large, onTapCallback: choose)
+                    .padding(.bottom, .spacing8x)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background { LighthouseChatBackground() }
@@ -55,7 +56,20 @@ struct LighthouseModelSelectorView: View {
             }
         }
         .presentationBackground(.clear)
+        .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
+            onApiKeySaved(key)
+            dismiss()
+        }
         .onDisappear { LighthouseModelPicker.save(selectedTiers) }
+    }
+
+    private func choose() {
+        guard let model = LighthouseModelPicker.choice(at: activeIndex).model else {
+            isEnteringKey = true
+            return
+        }
+        onModelSelected(model)
+        dismiss()
     }
 
     private enum Constants {

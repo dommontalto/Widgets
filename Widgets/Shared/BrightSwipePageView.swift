@@ -109,6 +109,12 @@ struct BrightSwipePageView<Content: View>: View {
     @ViewBuilder let content: (Int) -> Content
 
     @State private var scrollPosition: Int?
+    @State private var hasSettledInitialPage = false
+
+    // Pages the pills changed, so their haptic is not doubled by a swipe's.
+    @State private var pillTapPending = false
+    // Counts page changes that came from a swipe — the ones that buzz.
+    @State private var swipeTick = 0
     @State private var state = BrightSwipePageState()
 
     init(
@@ -208,7 +214,7 @@ struct BrightSwipePageView<Content: View>: View {
 
     private var pager: some View {
         ScrollViewReader { proxy in
-            scrollView
+            scrollView(proxy)
                 // `scrollPosition` is seeded with the selected page, so assigning
                 // it again can't move anything. Jumping through the proxy does,
                 // and leaves the binding — and the haptic riding it — alone.
@@ -216,7 +222,12 @@ struct BrightSwipePageView<Content: View>: View {
         }
     }
 
-    private var scrollView: some View {
+    private var initialAnchor: UnitPoint {
+        guard pages.count > 1 else { return .leading }
+        return UnitPoint(x: CGFloat(selectedIndex) / CGFloat(pages.count - 1), y: 0)
+    }
+
+    private func scrollView(_ proxy: ScrollViewProxy) -> some View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
                 ForEach(pages.indices, id: \.self) { i in
@@ -228,17 +239,29 @@ struct BrightSwipePageView<Content: View>: View {
             .scrollTargetLayout()
         }
         .scrollTargetBehavior(.paging)
+        .defaultScrollAnchor(initialAnchor, for: .initialOffset)
         .scrollPosition(id: $scrollPosition)
         .scrollDisabled(disableHorizontalScroll)
         .scrollIndicators(.hidden)
-        .brightHaptic(.impact, trigger: scrollPosition)
+        .brightHaptic(.impact, trigger: swipeTick)
         .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, new in
             state.scrollOffset = new
         }
         .onScrollGeometryChange(for: CGFloat.self) { $0.containerSize.width } action: { _, new in
             state.containerWidth = new
+            if !hasSettledInitialPage, new > 0 {
+                hasSettledInitialPage = true
+                proxy.scrollTo(selectedIndex)
+            }
         }
         .onChange(of: scrollPosition) { _, newValue in
+            // A swipe clicks into place; a pill tap already buzzed in the
+            // tag, so the change it drives is silent here.
+            if pillTapPending {
+                pillTapPending = false
+            } else {
+                swipeTick += 1
+            }
             if let newValue, newValue != selectedIndex {
                 // Animate so anything bound to selectedIndex (e.g. conditional
                 // toolbar items) transitions on swipe, matching the tab-tap path.
@@ -394,12 +417,16 @@ struct BrightSwipePageView<Content: View>: View {
     private var inlineTabPillRow: some View {
         HStack(spacing: SwipePageConstants.inlineTabSpacing) {
             ForEach(pages.indices, id: \.self) { i in
-                InlineTabPill(
+                BrightTag(
                     title: pages[i].title,
-                    systemImage: pages[i].systemImage,
                     image: pages[i].image,
+                    systemImage: pages[i].systemImage,
                     isSelected: (scrollPosition ?? selectedIndex) == i,
                     action: {
+                        // Only a tap that moves the page is followed by a
+                        // change to keep quiet for; one on the selected
+                        // pill would leave the flag set for the next swipe.
+                        if (scrollPosition ?? selectedIndex) != i { pillTapPending = true }
                         withAnimation(.brightBouncy) {
                             scrollPosition = i
                             selectedIndex = i
@@ -481,75 +508,10 @@ private struct OptionalRefresh: ViewModifier {
     }
 }
 
-// MARK: - Inline pill tab
-
-private struct InlineTabPill: View {
-    let title: String
-    let systemImage: String?
-    let image: String?
-    let isSelected: Bool
-    let action: () -> Void
-
-    @State private var popTrigger: Int = 0
-    @State private var suppressNextPop: Bool = false
-
-    var body: some View {
-        Button {
-            suppressNextPop = true
-            action()
-        } label: {
-            HStack(spacing: .spacing1x) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: SwipePageConstants.pillIconSize, weight: .medium))
-                        .foregroundStyle(isSelected ? Color.textColor : Color.lightTextColor)
-                } else if let image {
-                    Image(image)
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: SwipePageConstants.pillIconSize, height: SwipePageConstants.pillIconSize)
-                        .foregroundStyle(isSelected ? Color.textColor : Color.lightTextColor)
-                }
-
-                BrightText(title, size: .body1, color: isSelected ? .textColor : .lightTextColor)
-            }
-            .padding(.horizontal, .spacing105x)
-            .frame(height: SwipePageConstants.pillHeight)
-            .modifier(GlassEffect(shape: .capsule))
-            .opacity(isSelected ? 1 : .semiLowOpacity)
-            .keyframeAnimator(initialValue: 1.0, trigger: popTrigger) { content, scale in
-                content.scaleEffect(scale)
-            } keyframes: { _ in
-                KeyframeTrack {
-                    CubicKeyframe(1.15, duration: 0.12)
-                    CubicKeyframe(1.0, duration: 0.22)
-                }
-            }
-            .padding(.vertical, .spacing1x)
-            .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .zIndex(isSelected ? 1 : 0)
-        .onChange(of: isSelected) { _, newValue in
-            if newValue {
-                if suppressNextPop {
-                    suppressNextPop = false
-                } else {
-                    popTrigger += 1
-                }
-            } else {
-                suppressNextPop = false
-            }
-        }
-    }
-}
-
 // Not `private`: `pillFollowMaxShift` is the default for an initialiser parameter,
 // so it has to be at least as visible as the initialiser itself.
 enum SwipePageConstants {
     static let pillHeight: CGFloat = BrightButtonSizes.small.rawValue
-    static let pillIconSize: CGFloat = 16
     static let inlineTabSpacing: CGFloat = .spacing1x
     // Max upward distance the floating pill travels as the big title scrolls away,
     // stopping it just below the nav bar.

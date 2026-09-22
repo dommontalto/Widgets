@@ -64,13 +64,7 @@ struct VaultTestCategoryView: View {
     private var hero: some View {
         Color.clear
             .frame(height: Constants.heroHeight)
-            .background {
-                Image(category.backgroundName)
-                    .resizable()
-                    .scaledToFill()
-                    .scaleEffect(Constants.backgroundOverscan)
-                    .blur(radius: Constants.backgroundBlur)
-            }
+            .background { heroImage }
             .clipped()
             .overlay(alignment: .top) {
                 VStack(spacing: .spacing2x) {
@@ -84,17 +78,37 @@ struct VaultTestCategoryView: View {
                 .blendMode(.overlay)
                 .padding(.top, Constants.heroContentTop)
             }
-            .mask {
-                LinearGradient(
-                    stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black, location: Constants.fadeStart),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
+            .mask { fade }
+    }
+
+    private var heroImage: some View {
+        ZStack {
+            background(blur: Constants.backgroundBlur)
+
+            background(blur: Constants.fadeBlur)
+                .mask {
+                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                }
+        }
+    }
+
+    private func background(blur: CGFloat) -> some View {
+        Image(category.backgroundName)
+            .resizable()
+            .scaledToFill()
+            .scaleEffect(Constants.backgroundOverscan)
+            .blur(radius: blur)
+    }
+
+    private var fade: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .black, location: Constants.fadeStart),
+                .init(color: .clear, location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     private enum Constants {
@@ -102,9 +116,10 @@ struct VaultTestCategoryView: View {
         static let heroContentTop: CGFloat = 98
         static let iconSize: CGFloat = 46
         static let backgroundBlur: CGFloat = 8
+        static let fadeBlur: CGFloat = 22
         // Blur feathers the image's edges, so it runs past the clip.
         static let backgroundOverscan: CGFloat = 1.2
-        static let fadeStart: CGFloat = 0.75
+        static let fadeStart: CGFloat = 0.25
     }
 }
 

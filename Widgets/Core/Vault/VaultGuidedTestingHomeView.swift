@@ -11,6 +11,7 @@ struct VaultGuidedTestingHomeView: View {
     let orders: [VaultTestOrder]
     @Binding var selectedPage: Int
     let onSelectClinic: (VaultTestingClinic) -> Void
+    let onSelectOrder: (VaultTestOrder) -> Void
 
     @State private var sortOrder = VaultTestingSortOrder.proximity
     @State private var selectedCategory: VaultTestCategory?
@@ -168,31 +169,102 @@ struct VaultGuidedTestingHomeView: View {
 
     private func orderCard(_ order: VaultTestOrder) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(spacing: .spacing105x) {
-                Image(systemName: order.test.type.systemImage)
-                    .font(.standard(size: .heading, weight: .light))
-                    .foregroundStyle(Color.semiLightTextColor)
-
-                BrightText(order.test.name, size: .heading, color: .semiLightTextColor, weight: .regular)
+            HStack(alignment: .top, spacing: .spacing2x) {
+                VaultClinicLogo()
 
                 Spacer(minLength: .spacing0x)
 
-                BrightChip(title: "Processing", tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
+                HStack(spacing: .spacing1x) {
+                    Image(systemName: order.type.systemImage)
+                        .font(.standard(size: .body1, weight: .light))
+
+                    BrightText(order.type.rawValue, size: .body1, weight: .regular)
+                }
             }
 
-            BrightText(order.clinic.name, size: .body1, weight: .regular)
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                BrightText(order.clinic.name, size: .subheading, color: .semiLightTextColor, weight: .regular)
 
-            BrightText("Ordered \(order.placedAt.formatted(.brightTimestamp))", size: .body1, color: .lightTextColor)
+                BrightText(order.test.name, size: .body1, color: .lightTextColor)
+            }
+
+            BrightDivider()
+
+            if let delivery = order.delivery {
+                BrightText(delivery.status, size: .body1, weight: .regular)
+
+                VaultOrderDeliveryTrack(progress: delivery.progress)
+            } else {
+                if let address = order.address {
+                    orderDetail("mappin.and.ellipse", address)
+                }
+
+                if let scheduledAt = order.scheduledAt {
+                    orderDetail("clock", scheduledAt.formatted(.brightTimestamp))
+                }
+            }
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
+        .contentShape(Rectangle())
+        .onTapGesture { onSelectOrder(order) }
+    }
+
+    private func orderDetail(_ systemImage: String, _ title: String) -> some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: systemImage)
+                .font(.standard(size: .body1, weight: .light))
+                .foregroundStyle(Color.semiLightTextColor)
+
+            BrightText(title, size: .body1, weight: .regular)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private enum Constants {
         static let edgeFade: CGFloat = .spacing6x
         // Matches the row's content margin, so the first card is untouched at rest.
         static let leadingFade: CGFloat = .spacing3x
+    }
+}
+
+// MARK: - Delivery track
+
+struct VaultOrderDeliveryTrack: View {
+    let progress: Double
+
+    @State private var trackWidth: CGFloat = .spacing0x
+
+    var body: some View {
+        HStack(spacing: .spacing2x) {
+            Image(systemName: "shippingbox")
+                .font(.standard(size: .heading, weight: .light))
+                .foregroundStyle(Color.semiLightTextColor)
+
+            Capsule()
+                .fill(Color.textColor.opacity(.ultraLowOpacity))
+                .frame(height: Constants.height)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { width in
+                    trackWidth = width
+                }
+                .overlay(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.defaultGreen)
+                        .frame(width: trackWidth * min(max(progress, 0), 1))
+                }
+
+            Image(systemName: "house")
+                .font(.standard(size: .heading, weight: .light))
+                .foregroundStyle(Color.semiLightTextColor)
+        }
+        .animation(.brightEaseInOut, value: progress)
+    }
+
+    private enum Constants {
+        static let height: CGFloat = .spacing105x
     }
 }
 
@@ -340,6 +412,11 @@ struct VaultClinicLogo: View {
     @Previewable @State var page = 0
 
     NavigationStack {
-        VaultGuidedTestingHomeView(orders: [], selectedPage: $page, onSelectClinic: { _ in })
+        VaultGuidedTestingHomeView(
+            orders: [],
+            selectedPage: $page,
+            onSelectClinic: { _ in },
+            onSelectOrder: { _ in }
+        )
     }
 }

@@ -40,10 +40,6 @@ struct BrightComparisonsGraphWidget: View {
 
     @State private var selectedSecond: Double?
 
-    private var labelWidth: CGFloat {
-        ExerciseCompletePerformanceGraphWidget.MetricGraphComponent.Constants.labelWidth
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
@@ -55,12 +51,12 @@ struct BrightComparisonsGraphWidget: View {
 
             BrightDivider()
 
-            ExerciseGraphTimeAxis(
+            TimeAxis(
                 startLabel: timeLabel(heartData.data?.first?.heartDate),
                 endLabel: timeLabel(heartData.data?.last?.heartDate),
                 scrub: scrub
             )
-            .padding(.leading, labelWidth)
+            .padding(.leading, Constants.labelWidth)
             .padding(.top, .spacing1x)
         }
         .padding(.spacing3x)
@@ -83,12 +79,30 @@ struct BrightComparisonsGraphWidget: View {
         return Date.brightTimeRange(from: first.isoStringToDate(), to: last.isoStringToDate())
     }
 
+    var durationSeconds: Double {
+        guard let firstStr = heartData.data?.first?.heartDate,
+              let lastStr = heartData.data?.last?.heartDate
+        else { return 0 }
+        return lastStr.isoStringToDate().timeIntervalSince(firstStr.isoStringToDate())
+    }
+
+    private func heldLabel(at second: Double) -> String {
+        guard let startString = heartData.data?.first?.heartDate else { return "" }
+
+        return startString.isoStringToDate().addingTimeInterval(second).formatted(.brightTime)
+    }
+
+    private func timeLabel(_ iso: String?) -> String {
+        guard let iso else { return "-" }
+        return iso.isoStringToDate().formatted(.brightTime)
+    }
+
     private var rows: some View {
         VStack(spacing: .spacing0x) {
             ForEach(Array(metrics.enumerated()), id: \.element.title) { index, metric in
-                ExerciseCompletePerformanceGraphWidget.MetricGraphComponent(
+                MetricGraph(
                     selectedSecond: $selectedSecond,
-                    duration: duration,
+                    durationSeconds: durationSeconds,
                     title: metric.title,
                     color: metric.color,
                     values: metric.values,
@@ -99,10 +113,15 @@ struct BrightComparisonsGraphWidget: View {
 
                 if index < metrics.count - 1 {
                     BrightDivider()
-                        .padding(.leading, labelWidth)
+                        .padding(.leading, Constants.labelWidth)
                 }
             }
         }
+    }
+
+    enum Constants {
+        static let labelWidth: CGFloat = 92
+        static let graphHeight: CGFloat = 70
     }
 }
 
@@ -164,7 +183,7 @@ extension BrightComparisonsGraphWidget {
 
     private func readout(for metric: Metric) -> String {
         if let selectedSecond,
-           let value = interpolatedValue(values: metric.values, at: selectedSecond) {
+           let value = metric.values.interpolated(at: selectedSecond, over: durationSeconds) {
             return String(Int(value.rounded()))
         }
 
@@ -173,53 +192,206 @@ extension BrightComparisonsGraphWidget {
         return String(Int(avg.rounded()))
     }
 
-    private func interpolatedValue(values: [Double], at second: Double) -> Double? {
-        guard !values.isEmpty else { return nil }
-        let position = (second / max(durationSeconds, 1)) * Double(values.count - 1)
-        let lowerIndex = max(0, min(values.count - 1, Int(floor(position))))
-        let upperIndex = max(0, min(values.count - 1, Int(ceil(position))))
-        let fraction = position - Double(lowerIndex)
-        return values[lowerIndex] + (values[upperIndex] - values[lowerIndex]) * fraction
-    }
-}
-
-// MARK: - Duration & Time Helpers
-
-extension BrightComparisonsGraphWidget {
-    var durationSeconds: Double {
-        guard let firstStr = heartData.data?.first?.heartDate,
-              let lastStr = heartData.data?.last?.heartDate
-        else { return 0 }
-        return lastStr.isoStringToDate().timeIntervalSince(firstStr.isoStringToDate())
-    }
-
-    private var duration: TimeDuration {
-        let total = Int(durationSeconds.rounded())
-        return TimeDuration(hour: total / 3600, minute: (total % 3600) / 60, second: total % 60)
-    }
-
-    private var scrub: ExerciseGraphTimeAxis.Scrub? {
+    private var scrub: TimeAxis.Scrub? {
         guard let selectedSecond else { return nil }
 
-        return ExerciseGraphTimeAxis.Scrub(
+        return TimeAxis.Scrub(
             fraction: selectedSecond / max(durationSeconds, 1),
             label: heldLabel(at: selectedSecond)
         )
     }
+}
 
-    private func heldLabel(at second: Double) -> String {
-        guard let startString = heartData.data?.first?.heartDate else { return "" }
+// MARK: - Metric graph
 
-        return startString.isoStringToDate().addingTimeInterval(second).formatted(.brightTime)
+extension BrightComparisonsGraphWidget {
+    struct MetricGraph: View {
+        @Binding var selectedSecond: Double?
+        let durationSeconds: Double
+        let title: String
+        let color: Color
+        let values: [Double]
+        let yTicks: [Int]?
+        let graphHeight: CGFloat
+        let readout: (value: String, unit: String)
+
+        var body: some View {
+            HStack(spacing: .spacing0x) {
+                label
+                    .frame(width: Constants.labelWidth, height: graphHeight, alignment: .leading)
+
+                BrightVerticalDivider(height: graphHeight)
+
+                chart
+                    .frame(height: graphHeight)
+            }
+            .frame(height: graphHeight)
+        }
+
+        private var label: some View {
+            VStack(alignment: .leading, spacing: .spacing1x) {
+                BrightText(title, size: .body4)
+
+                HStack(alignment: .lastTextBaseline, spacing: .spacing05x) {
+                    BrightText(readout.value, size: .standout3, color: color)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.brightEaseInOut, value: readout.value)
+
+                    BrightText(readout.unit, size: .body1, color: .semiLightTextColor)
+                }
+            }
+        }
+
+        private var chart: some View {
+            Chart {
+                ForEach(values.indices, id: \.self) { index in
+                    LineMark(
+                        x: .value("Second", xSecond(for: index)),
+                        y: .value(title, values[index])
+                    )
+                    .interpolationMethod(.cardinal(tension: 1.1))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .foregroundStyle(color)
+                }
+
+                if let selectedSecond, let selectedValue = values.interpolated(at: selectedSecond, over: durationSeconds) {
+                    RuleMark(x: .value("Selected", selectedSecond))
+                        .foregroundStyle(Color.textColor.opacity(.lowOpacity))
+                        .lineStyle(StrokeStyle(lineWidth: 1))
+
+                    PointMark(
+                        x: .value("Selected", selectedSecond),
+                        y: .value(title, selectedValue)
+                    )
+                    .symbolSize(20)
+                    .foregroundStyle(color)
+                }
+            }
+            .chartXScale(domain: 0 ... max(durationSeconds, 1))
+            .chartYScale(domain: yDomain)
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartXSelection(value: chartSelectionBinding)
+            .background { fill }
+        }
+
+        private var fill: some View {
+            LinearGradient(
+                colors: [color.opacity(.veryMinimalOpacity), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .mask {
+                Chart {
+                    ForEach(values.indices, id: \.self) { index in
+                        AreaMark(
+                            x: .value("Second", xSecond(for: index)),
+                            y: .value(title, values[index])
+                        )
+                        .interpolationMethod(.cardinal(tension: 1.1))
+                        .foregroundStyle(.black)
+                    }
+                }
+                .chartXScale(domain: 0 ... max(durationSeconds, 1))
+                .chartYScale(domain: yDomain)
+                .chartXAxis(.hidden)
+                .chartYAxis(.hidden)
+            }
+        }
+
+        private var yDomain: ClosedRange<Double> {
+            Double(yTicks?.first ?? 80) ... Double(yTicks?.last ?? 150)
+        }
+
+        private var chartSelectionBinding: Binding<Double?> {
+            Binding(
+                get: { selectedSecond },
+                set: { newValue in
+                    if let newValue, newValue != selectedSecond {
+                        BrightHaptic.light.play()
+                    }
+                    selectedSecond = newValue
+                }
+            )
+        }
+
+        private func xSecond(for index: Int) -> Double {
+            guard values.count > 1 else { return 0 }
+            return (Double(index) / Double(values.count - 1)) * durationSeconds
+        }
+
+        private enum Constants {
+            static let labelWidth: CGFloat = BrightComparisonsGraphWidget.Constants.labelWidth
+        }
     }
+}
 
-    private func timeLabel(_ iso: String?) -> String {
-        guard let iso else { return "-" }
-        return iso.isoStringToDate().formatted(.brightTime)
+// MARK: - Time axis
+
+extension BrightComparisonsGraphWidget {
+    struct TimeAxis: View {
+        struct Scrub {
+            let fraction: Double
+            let label: String
+        }
+
+        let startLabel: String
+        let endLabel: String
+        var scrub: Scrub?
+
+        var body: some View {
+            HStack(spacing: .spacing0x) {
+                BrightText(startLabel, size: .body1, color: .lightTextColor)
+
+                Spacer(minLength: .spacing2x)
+
+                BrightText(endLabel, size: .body1, color: .lightTextColor)
+            }
+            .opacity(scrub == nil ? .opaque : 0)
+            .overlay(alignment: .leading) {
+                if let scrub {
+                    held(scrub)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.brightEaseInOut, value: scrub == nil)
+        }
+
+        private func held(_ scrub: Scrub) -> some View {
+            GeometryReader { proxy in
+                BrightText(scrub.label, size: .body1, color: .lightTextColor)
+                    .monospacedDigit()
+                    .frame(width: Constants.heldWidth)
+                    .multilineTextAlignment(.center)
+                    .offset(x: offset(for: scrub.fraction, in: proxy.size.width))
+            }
+        }
+
+        private func offset(for fraction: Double, in width: CGFloat) -> CGFloat {
+            let clamped = CGFloat(min(max(fraction, 0), 1))
+            let centred = width * clamped - Constants.heldWidth / 2
+            return min(max(centred, 0), max(width - Constants.heldWidth, 0))
+        }
+
+        private enum Constants {
+            static let heldWidth: CGFloat = 80
+        }
     }
+}
 
-    private enum Constants {
-        static let graphHeight: CGFloat = 70
+// MARK: - Interpolation
+
+extension [Double] {
+    fileprivate func interpolated(at second: Double, over duration: Double) -> Double? {
+        guard !isEmpty else { return nil }
+
+        let position = (second / Swift.max(duration, 1)) * Double(count - 1)
+        let lowerIndex = Swift.max(0, Swift.min(count - 1, Int(position.rounded(.down))))
+        let upperIndex = Swift.max(0, Swift.min(count - 1, Int(position.rounded(.up))))
+        let fraction = position - Double(lowerIndex)
+
+        return self[lowerIndex] + (self[upperIndex] - self[lowerIndex]) * fraction
     }
 }
 

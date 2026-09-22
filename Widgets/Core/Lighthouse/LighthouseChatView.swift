@@ -14,6 +14,7 @@ typealias LighthouseChatMessage = BrightChatMessage<[LighthouseStoryItem]>
 struct LighthouseChatView: View {
     @Binding var isThinking: Bool
     @Binding var selectedModel: LighthouseModel
+    var usesApiKey = false
     @Binding var showingModelSelector: Bool
     var isTyping: FocusState<Bool>.Binding
     @Binding var attachments: [BrightChatAttachment]
@@ -113,14 +114,24 @@ struct LighthouseChatView: View {
             guard !isThinking else { return }
             showingModelSelector = true
         } label: {
-            Image(selectedModel.tierImageName)
-                .resizable()
-                .scaledToFit()
-                .frame(height: BrightButtonSizes.small.rawValue)
+            modelGlyph
                 .frame(height: BrightButtonSizes.large.rawValue)
                 // The glyph is narrow, so the target reaches past it without
                 // widening the gap to the pill.
                 .contentShape(Rectangle().inset(by: -.spacing105x))
+        }
+    }
+
+    // The key stands in for the model logo while a bring-your-own key is in use.
+    @ViewBuilder
+    private var modelGlyph: some View {
+        if usesApiKey {
+            LighthouseApiKeyGlyph(size: BrightButtonSizes.small.rawValue)
+        } else {
+            Image(selectedModel.tierImageName)
+                .resizable()
+                .scaledToFit()
+                .frame(height: BrightButtonSizes.small.rawValue)
         }
     }
 
