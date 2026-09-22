@@ -5,7 +5,6 @@
 //  Created by Gangajaliya Sandeep on 21/5/2024.
 //  Copyright © 2024 Bryan Jordan. All rights reserved.
 //
-
 import SwiftUI
 
 struct BrightStatus: View {
@@ -38,10 +37,13 @@ struct BrightStatus: View {
             .padding(isNoData ? .zero : .spacing1x)
             .padding(.vertical, isNumber ? -.spacing05x : .zero)
         }
+        // The fill is drawn in the shape rather than the view clipped to it:
+        // a clip is an offscreen pass per pill, a shaped fill is not, and
+        // the text never overflows the capsule anyway.
         .background(
-            isNoData || isRPE ? Color.clear : color.opacity(.minimalOpacity)
+            isNoData || isRPE ? Color.clear : color.opacity(.minimalOpacity),
+            in: shape
         )
-        .clipShape(shape)
         .overlay(
             shape
                 .stroke(strokeColor, lineWidth: strokeWidth)

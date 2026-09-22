@@ -126,7 +126,7 @@ struct VaultTestPaymentView: View {
 
     private var shipToCard: some View {
         card(.shipTo) {
-            removableRows(addresses, onRemove: remove) { address in
+            VaultSwipeList(items: addresses, onDelete: remove) { address in
                 selectableRow(isSelected: selectedAddress == address.id) {
                     selectedAddress = address.id
                 } label: {
@@ -185,7 +185,7 @@ struct VaultTestPaymentView: View {
 
     private var paymentCard: some View {
         card(.payment) {
-            removableRows(methods, onRemove: remove) { method in
+            VaultSwipeList(items: methods, onDelete: remove) { method in
                 selectableRow(isSelected: selectedPayment == method.id) {
                     selectedPayment = method.id
                 } label: {
@@ -300,28 +300,6 @@ struct VaultTestPaymentView: View {
         .buttonStyle(.plain)
     }
 
-    private func removableRows<Item: Identifiable, Row: View>(
-        _ items: [Item],
-        onRemove: @escaping (Item) -> Void,
-        @ViewBuilder row: @escaping (Item) -> Row
-    ) -> some View {
-        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-            row(item)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        withAnimation(.brightSnappy) { onRemove(item) }
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                    .tint(.defaultRed)
-                }
-
-            if index < items.count - 1 {
-                BrightDivider()
-            }
-        }
-    }
-
     private func addRow(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: .spacing2x) {
@@ -396,6 +374,64 @@ struct VaultTestPaymentView: View {
             return VaultTestDelivery(arrivesOn: arrives, progress: startingProgress)
         }
     }
+}
+
+// MARK: - Swipe-to-delete list
+
+private struct VaultSwipeList<Item: Identifiable, Row: View>: View {
+    let items: [Item]
+    let onDelete: (Item) -> Void
+    @ViewBuilder let row: (Item) -> Row
+
+    @State private var heights = [Item.ID: CGFloat]()
+
+    var body: some View {
+        List {
+            ForEach(items) { item in
+                row(item)
+                    .onGeometryChange(for: CGFloat.self) { proxy in
+                        proxy.size.height
+                    } action: { height in
+                        heights[item.id] = height
+                    }
+                    .listRowInsets(EdgeInsets(
+                        top: .spacing0x,
+                        leading: .spacing0x,
+                        bottom: .spacing0x,
+                        trailing: .spacing0x
+                    ))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            withAnimation(.brightSnappy) { onDelete(item) }
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .tint(.defaultRed)
+                    }
+            }
+        }
+        .listStyle(.plain)
+        .listRowSpacing(.spacing3x)
+        .scrollContentBackground(.hidden)
+        .scrollDisabled(true)
+        .contentMargins(.vertical, .spacing0x, for: .scrollContent)
+        .environment(\.defaultMinListRowHeight, VaultSwipeListConstants.minRowHeight)
+        .frame(height: listHeight)
+        .animation(.brightSnappy, value: listHeight)
+    }
+
+    private var listHeight: CGFloat {
+        let rows = items.reduce(CGFloat.spacing0x) { total, item in
+            total + max(heights[item.id] ?? VaultSwipeListConstants.minRowHeight, VaultSwipeListConstants.minRowHeight)
+        }
+        return rows + CGFloat(max(items.count - 1, 0)) * .spacing3x
+    }
+}
+
+private enum VaultSwipeListConstants {
+    static let minRowHeight: CGFloat = .spacing6x
 }
 
 #Preview {

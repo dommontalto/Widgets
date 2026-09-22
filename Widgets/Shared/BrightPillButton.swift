@@ -5,7 +5,6 @@
 //  Created by Zoe Friedman on 8/8/2023.
 //  Copyright © 2023 Bryan Jordan. All rights reserved.
 //
-
 import SwiftUI
 
 struct BrightPillButton: View {
@@ -21,6 +20,10 @@ struct BrightPillButton: View {
     // to true, so a plain button is full strength. `BrightTag` and the page
     // pills in `BrightSwipePageView` are this button at `.small`.
     let isSelected: Bool
+    // Glass by default. `false` gives the capsule a flat fill instead — the
+    // colour a chip takes on a sheet — for a rail of many tags, where each
+    // glass capsule is a backdrop pass of its own every frame.
+    let isGlass: Bool
     let onTapCallback: () -> Void
 
     init(
@@ -33,6 +36,7 @@ struct BrightPillButton: View {
         buttonSize: BrightButtonSizes = .medium,
         isClear: Bool = false,
         isSelected: Bool = true,
+        isGlass: Bool = true,
         onTapCallback: @escaping (() -> Void)
     ) {
         self.title = title
@@ -44,6 +48,7 @@ struct BrightPillButton: View {
         self.buttonSize = buttonSize
         self.isClear = isClear
         self.isSelected = isSelected
+        self.isGlass = isGlass
         self.onTapCallback = onTapCallback
     }
 
@@ -79,12 +84,32 @@ struct BrightPillButton: View {
             .padding(.horizontal, buttonSize == .large ? .spacing3x : .spacing105x)
             .frame(height: buttonSize.rawValue)
         }
-        .background((color ?? .clear).opacity(.veryHighOpacity), in: Capsule())
-        .modifier(GlassEffect(shape: .capsule, isClear: isClear))
+        .background((color ?? flatFill).opacity(.veryHighOpacity), in: Capsule())
+        .modifier(OptionalGlass(isOn: isGlass, isClear: isClear))
         .opacity(isSelected ? .opaque : .semiLowOpacity)
+    }
+
+    // Under glass the capsule is clear and the glass is the fill; without
+    // it, the flat chip colour stands in.
+    private var flatFill: Color {
+        isGlass ? .clear : .defaultSheetModalCards
     }
 
     private enum Constants {
         static let imageSize: CGFloat = 16
+    }
+}
+
+// Glass only when asked, so a flat pill is left exactly as it draws itself.
+private struct OptionalGlass: ViewModifier {
+    let isOn: Bool
+    let isClear: Bool
+
+    func body(content: Content) -> some View {
+        if isOn {
+            content.modifier(GlassEffect(shape: .capsule, isClear: isClear))
+        } else {
+            content
+        }
     }
 }

@@ -4,7 +4,6 @@
 //
 //  Created by Dom Montalto on 13/7/2026.
 //
-
 import SwiftUI
 
 struct BrightCarouselTier: Identifiable, Hashable {

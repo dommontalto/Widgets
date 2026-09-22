@@ -4,17 +4,18 @@
 //
 //  Created by Dom Montalto on 25/3/2026.
 //
-
 import SwiftUI
 
-/// A filter tag, and the page pill in `BrightSwipePageView`: a small
-/// `BrightPillButton` that selects, with a haptic on the tap, a pop when the
-/// selection arrives from elsewhere, and room to hit above and below.
+// A filter tag, and the page pill in `BrightSwipePageView`: a small
+// `BrightPillButton` that selects, with a haptic on the tap, a pop when the
+// selection arrives from elsewhere, and room to hit above and below.
 struct BrightTag: View {
     let title: String
     let image: String?
     let systemImage: String?
     let isSelected: Bool
+    // Glass by default; `false` for a flat capsule (see `BrightPillButton`).
+    let isGlass: Bool
     let action: () -> Void
 
     init(
@@ -22,12 +23,14 @@ struct BrightTag: View {
         image: String? = nil,
         systemImage: String? = nil,
         isSelected: Bool,
+        isGlass: Bool = true,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.image = image
         self.systemImage = systemImage
         self.isSelected = isSelected
+        self.isGlass = isGlass
         self.action = action
     }
 
@@ -42,7 +45,8 @@ struct BrightTag: View {
             systemImage: systemImage,
             size: .body1,
             buttonSize: .small,
-            isSelected: isSelected
+            isSelected: isSelected,
+            isGlass: isGlass
         ) {
             tapTick += 1
             // A tap carries its own haptic; the pop is for a selection that
