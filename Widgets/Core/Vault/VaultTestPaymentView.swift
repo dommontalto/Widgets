@@ -78,7 +78,7 @@ struct VaultTestPaymentView: View {
                     }
 
                     paymentCard
-                    total
+                    totalCard
                 }
                 .padding(.horizontal, .spacing3x)
                 .padding(.bottom, .spacing12x)
@@ -125,9 +125,13 @@ struct VaultTestPaymentView: View {
     // MARK: - Ship to
 
     private var shipToCard: some View {
-        card(.shipTo) {
-            VaultSwipeList(items: addresses, onDelete: remove) { address in
-                selectableRow(isSelected: selectedAddress == address.id) {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            sectionTitle(.shipTo)
+
+            BrightDivider()
+
+            ForEach(addresses) { address in
+                optionRow(isSelected: selectedAddress == address.id) {
                     selectedAddress = address.id
                 } label: {
                     VStack(alignment: .leading, spacing: .spacing05x) {
@@ -137,20 +141,26 @@ struct VaultTestPaymentView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-            }
+                .contextMenu { removeButton { remove(address) } }
 
-            BrightDivider()
+                BrightDivider()
+            }
 
             addRow(Constants.addAddressTitle) { isAddingAddress = true }
         }
+        .modifier(SectionCard(nudge: nudges[.shipTo, default: 0]))
     }
 
     // MARK: - Shipping
 
     private var shippingCard: some View {
-        card(.shipping) {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            sectionTitle(.shipping)
+
+            BrightDivider()
+
             ForEach(Array(shipping.enumerated()), id: \.element.id) { index, option in
-                selectableRow(isSelected: selectedShipping == option.id) {
+                optionRow(isSelected: selectedShipping == option.id) {
                     selectedShipping = option.id
                 } label: {
                     VStack(alignment: .leading, spacing: .spacing05x) {
@@ -165,38 +175,47 @@ struct VaultTestPaymentView: View {
                 }
             }
         }
+        .modifier(SectionCard(nudge: nudges[.shipping, default: 0]))
     }
 
     // MARK: - Service location
 
     private var locationCard: some View {
-        card(.location) {
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(clinic.name, size: .body1, weight: .regular)
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            sectionTitle(.location)
 
-                BrightText(clinic.address, size: .body1, color: .lightTextColor)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            BrightDivider()
+
+            BrightText(clinic.name, size: .body1, weight: .regular)
+
+            BrightText(clinic.address, size: .body1, color: .lightTextColor)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .modifier(SectionCard(nudge: nudges[.location, default: 0]))
     }
 
     // MARK: - Payment
 
     private var paymentCard: some View {
-        card(.payment) {
-            VaultSwipeList(items: methods, onDelete: remove) { method in
-                selectableRow(isSelected: selectedPayment == method.id) {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            sectionTitle(.payment)
+
+            BrightDivider()
+
+            ForEach(methods) { method in
+                optionRow(isSelected: selectedPayment == method.id) {
                     selectedPayment = method.id
                 } label: {
                     methodLabel(method)
                 }
-            }
+                .contextMenu { removeButton { remove(method) } }
 
-            BrightDivider()
+                BrightDivider()
+            }
 
             addRow(Constants.addCardTitle) { isAddingCard = true }
         }
+        .modifier(SectionCard(nudge: nudges[.payment, default: 0]))
     }
 
     private func methodLabel(_ method: VaultPaymentMethod) -> some View {
@@ -206,13 +225,9 @@ struct VaultTestPaymentView: View {
                     .lineLimit(1)
 
                 if let last4 = method.last4 {
-                    HStack(spacing: .spacing05x) {
-                        Image(systemName: "ellipsis")
-                            .font(.standard(size: .body1, weight: .regular))
-
-                        BrightText(last4, size: .body1, weight: .regular)
-                            .monospacedDigit()
-                    }
+                    BrightText("\(Constants.mask) \(last4)", size: .body1, weight: .regular)
+                        .monospacedDigit()
+                        .fixedSize()
                 }
 
                 Spacer(minLength: .spacing1x)
@@ -226,63 +241,41 @@ struct VaultTestPaymentView: View {
             if let billing = method.billing {
                 BrightText(billing, size: .body1, color: .lightTextColor)
                     .lineLimit(1)
-                    .truncationMode(.tail)
             }
         }
     }
 
     // MARK: - Total
 
-    private var total: some View {
+    private var totalCard: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(Constants.totalTitle, size: .standout3, weight: .regular)
+            BrightText(Constants.totalTitle, size: .body1, weight: .regular)
 
             Spacer(minLength: .spacing2x)
 
             BrightChip(title: Constants.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
 
-            BrightText(test.priceText, size: .standout3, weight: .regular)
+            BrightText(test.priceText, size: .body1, weight: .regular)
                 .monospacedDigit()
         }
-        .padding(.horizontal, .spacing2x)
-        .padding(.top, .spacing1x)
+        .modifier(SectionCard(nudge: 0))
     }
 
-    // MARK: - Card scaffolding
+    // MARK: - Rows
 
-    private func card<Content: View>(
-        _ section: Section,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            headerLabel(section)
-
-            BrightDivider()
-
-            content()
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
-        .brightWiggle(trigger: nudges[section, default: 0])
-    }
-
-    private func headerLabel(_ section: Section) -> some View {
+    private func sectionTitle(_ section: Section) -> some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: section.systemImage)
                 .font(.standard(size: .heading, weight: .light))
+                .foregroundStyle(Color.semiLightTextColor)
 
             BrightText(section.title, size: .body1, color: .semiLightTextColor, weight: .regular)
 
             Spacer(minLength: .spacing2x)
-
-            Image(systemName: "chevron.down")
-                .font(.standard(size: .body1, weight: .regular))
-                .foregroundStyle(Color.semiLightTextColor)
         }
     }
 
-    private func selectableRow<Label: View>(
+    private func optionRow<Label: View>(
         isSelected: Bool,
         select: @escaping () -> Void,
         @ViewBuilder label: () -> Label
@@ -313,6 +306,15 @@ struct VaultTestPaymentView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private func removeButton(_ action: @escaping () -> Void) -> some View {
+        Button(role: .destructive) {
+            withAnimation(.brightSnappy) { action() }
+        } label: {
+            Label(Constants.removeTitle, systemImage: "trash")
+        }
+        .tint(.defaultRed)
     }
 
     // MARK: - Actions
@@ -359,8 +361,10 @@ struct VaultTestPaymentView: View {
         static let payTitle = "Pay"
         static let totalTitle = "Total"
         static let currency = "AUD"
+        static let mask = "•••"
         static let addAddressTitle = "Add an address"
         static let addCardTitle = "Add a card"
+        static let removeTitle = "Remove"
         static let appointmentDays = 2
         static let deliveryDays = 3
         static let startingProgress = 0.25
@@ -376,62 +380,16 @@ struct VaultTestPaymentView: View {
     }
 }
 
-// MARK: - Swipe-to-delete list
+private struct SectionCard: ViewModifier {
+    let nudge: Int
 
-private struct VaultSwipeList<Item: Identifiable, Row: View>: View {
-    let items: [Item]
-    let onDelete: (Item) -> Void
-    @ViewBuilder let row: (Item) -> Row
-
-    @State private var heights = [Item.ID: CGFloat]()
-
-    var body: some View {
-        List {
-            ForEach(items) { item in
-                row(item)
-                    .onGeometryChange(for: CGFloat.self) { proxy in
-                        proxy.size.height
-                    } action: { height in
-                        heights[item.id] = height
-                    }
-                    .listRowInsets(EdgeInsets(
-                        top: .spacing0x,
-                        leading: .spacing0x,
-                        bottom: .spacing0x,
-                        trailing: .spacing0x
-                    ))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            withAnimation(.brightSnappy) { onDelete(item) }
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .tint(.defaultRed)
-                    }
-            }
-        }
-        .listStyle(.plain)
-        .listRowSpacing(.spacing3x)
-        .scrollContentBackground(.hidden)
-        .scrollDisabled(true)
-        .contentMargins(.vertical, .spacing0x, for: .scrollContent)
-        .environment(\.defaultMinListRowHeight, VaultSwipeListConstants.minRowHeight)
-        .frame(height: listHeight)
-        .animation(.brightSnappy, value: listHeight)
+    func body(content: Content) -> some View {
+        content
+            .padding(.spacing3x)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .modifier(CardModifier(color: .defaultSheetModalCards))
+            .brightWiggle(trigger: nudge)
     }
-
-    private var listHeight: CGFloat {
-        let rows = items.reduce(CGFloat.spacing0x) { total, item in
-            total + max(heights[item.id] ?? VaultSwipeListConstants.minRowHeight, VaultSwipeListConstants.minRowHeight)
-        }
-        return rows + CGFloat(max(items.count - 1, 0)) * .spacing3x
-    }
-}
-
-private enum VaultSwipeListConstants {
-    static let minRowHeight: CGFloat = .spacing6x
 }
 
 #Preview {
