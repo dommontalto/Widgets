@@ -10,7 +10,7 @@ import SwiftUI
 // Guided Testing pushed into the host stack: the splash on first run, then the
 // clinics home, with each clinic opening in a sheet over it.
 struct VaultGuidedTestingScreen: View {
-    @Binding var showSplash: Bool
+    @State private var showSplash = true
 
     @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
@@ -69,9 +69,7 @@ struct VaultGuidedTestingScreen: View {
 }
 
 #Preview {
-    @Previewable @State var showSplash = true
-
     NavigationStack {
-        VaultGuidedTestingScreen(showSplash: $showSplash)
+        VaultGuidedTestingScreen()
     }
 }

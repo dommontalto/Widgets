@@ -54,15 +54,7 @@ nonisolated class ImageNames {
 
     // MARK: - Exercise
 
-    static let exerciseWeeklyPlanV5 = "Exercise/exercise_weekly_plan_v5"
-    static let exerciseBodymapV5    = "Exercise/exercise_bodymap_v5"
-    static let exerciseCalendarV5     = "Exercise/exercise_calendar_v5"
-    static let exerciseTrainingLoadV5 = "Exercise/exercise_training_load_v5"
-    static let exerciseRecoveryV5   = "Exercise/exercise_recovery_v5"
-    static let exerciseStressV5     = "Exercise/exercise_stress_v5"
-    static let exerciseStrainV5     = "Exercise/exercise_strain_v5"
-    static let exerciseRecordHexagonV5     = "Exercise/exercise_record_hexagon_v5"
-    static let exerciseRecordHexagonGoldV5 = "Exercise/exercise_record_hexagon_gold_v5"
+    static let exerciseCalendarV5 = "Exercise/exercise_calendar_v5"
 
     // MARK: - Scores
 
@@ -116,4 +108,30 @@ nonisolated class ImageNames {
     static let cycleTrackingMainSymptomsV5 = "CycleTracking/cycle_tracking_main_symptoms_v5"
     static let cycleTrackingTickV5         = "CycleTracking/cycle_tracking_tick_v5"
     static let cycleTrackingExclamationV5  = "CycleTracking/cycle_tracking_exclamation_v5"
+
+    // MARK: - Explore
+
+    static let exploreNutritionBackgroundV5    = "Explore/explore_nutrition_background_v5"
+    static let exploreSleepBackgroundV5        = "Explore/explore_sleep_background_v5"
+    static let exploreCommonsHealthClubV5      = "Explore/explore_commons_health_club_v5"
+    static let exploreSkinHospitalV5           = "Explore/explore_skin_hospital_v5"
+    static let exploreMicrobiomeClinicAdV5     = "Explore/explore_microbiome_clinic_ad_v5"
+    static let exploreLittleLungsLogoV5        = "Explore/explore_little_lungs_logo_v5"
+    static let exploreMoveClinicLogoV5         = "Explore/explore_move_clinic_logo_v5"
+    static let exploreNutritionClinicLogoV5    = "Explore/explore_nutrition_clinic_logo_v5"
+    static let exploreFxnlRehabLogoV5          = "Explore/explore_fxnl_rehab_logo_v5"
+    static let exploreEastPointRecoveryLogoV5  = "Explore/explore_east_point_recovery_logo_v5"
+    static let exploreServiceAgentBackgroundV5 = "Explore/explore_service_agent_background_v5"
+    static let exploreAgentStickerV5           = "Explore/explore_agent_sticker_v5"
+
+    // MARK: - Main Tab
+
+    static let homeTabIconSelectedV5           = "MainTab/home_tab_icon_selected_v5"
+    static let homeTabIconUnselectedV5         = "MainTab/home_tab_icon_unselected_v5"
+    static let vaultTabIconSelectedV5          = "MainTab/vault_tab_icon_selected_v5"
+    static let vaultTabIconUnselectedV5        = "MainTab/vault_tab_icon_unselected_v5"
+    static let atlasTabIconSelectedV5          = "MainTab/atlas_tab_icon_selected_v5"
+    static let atlasTabIconUnselectedV5        = "MainTab/atlas_tab_icon_unselected_v5"
+    static let logTabIconSelectedV5            = "MainTab/log_tab_icon_selected_v5"
+    static let logTabIconUnselectedV5          = "MainTab/log_tab_icon_unselected_v5"
 }

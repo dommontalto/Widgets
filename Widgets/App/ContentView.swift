@@ -8,125 +8,40 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showingSession = false
-    @State private var showingProgram = false
-    @State private var showingGuidedProgram = false
-    @State private var showingLighthouse = false
+    var onOpenLighthouse: () -> Void = {}
+
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
     @State private var showingGuidedTesting = false
-    @AppStorage("vaultGuidedTestingShowsSplash") private var showingGuidedTestingSplash = true
     @State private var showingBeam = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
-    @State private var builder = ExerciseBuilder()
-    @State private var sessionStage: ExerciseSessionStage?
-    @State private var openedExerciseName: String?
-    @State private var showingRecordSession = false
-    @State private var recordSessionPart = 0
+    @State private var selectedPage = HomePage.health.rawValue
 
     var body: some View {
         NavigationStack {
             content
                 .navigationDestination(isPresented: $showingGuidedTesting) {
-                    VaultGuidedTestingScreen(showSplash: $showingGuidedTestingSplash)
+                    VaultGuidedTestingScreen()
                 }
         }
-        .environment(builder)
-        .fullScreenCover(isPresented: $showingLighthouse) {
-            LighthouseScreen(showOnboarding: $showingLighthouseOnboarding)
-        }
-    }
-
-    private var sessions: [ExerciseQuickSession] {
-        builder.saved
-    }
-
-    private func start(_ session: ExerciseQuickSession) {
-        sessionStage = .setup(for: session, leg: 0)
     }
 
     private var content: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                section("Vault") {
-                    widgetLabel("VaultGuidedTestingCard")
-                    VaultGuidedTestingCard {
-                        showingGuidedTesting = true
-                    }
-                        .padding(.bottom, .spacing3x)
-                }
-
-                section("Exercise") {
-                    widgetLabel("ExerciseScoresWidget")
-                    ExerciseScoresWidget()
-                        .padding(.top, .spacing2x)
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseCalendarWidget")
-                    ExerciseWidgetSection(icon: .symbol("checklist"), title: "Schedule") {
-                        ExerciseCalendarWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseProgramPhaseWidget (empty)")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
-                        ExerciseProgramPhaseWidget(onCreate: { showingProgram = true })
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseProgramPhaseWidget")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Program Phase") {
-                        ExerciseProgramPhaseWidget(phase: .demo)
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseTrainingLoadWidget")
-                    ExerciseWidgetSection(icon: .asset(ImageNames.exerciseTrainingLoadV5), title: "Training load") {
-                        ExerciseTrainingLoadWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseHistoryWidget")
-                    ExerciseWidgetSection(icon: .symbol("backward.end.alt"), title: "Session history") {
-                        ExerciseHistoryWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExercisePersonalRecordsWidget")
-                    ExerciseWidgetSection(
-                        icon: .symbol("star.square.on.square.fill"),
-                        title: "Personal Records"
-                    ) {
-                        ExercisePersonalRecordsWidget(
-                            records: Array(
-                                (ExerciseDemoComplete.strength.records + ExerciseDemoComplete.cardio.records)
-                                    .prefix(4)
-                            ),
-                            cardColor: .defaultCards,
-                            onSelectExercise: { openedExerciseName = $0 },
-                            onSelectSession: { record in
-                                recordSessionPart = record.logId == "demo-cardio" ? 1 : 0
-                                showingRecordSession = true
-                            }
-                        )
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseConsistencyWidget")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Consistency") {
-                        ExerciseConsistencyWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-
-                    widgetLabel("ExerciseBodymapWidget")
-                    ExerciseWidgetSection(icon: .symbol("list.bullet.indent"), title: "Bodymap") {
-                        ExerciseBodymapWidget()
-                    }
-                        .padding(.bottom, .spacing3x)
-                }
+        BrightSwipePageView(
+            pages: HomePage.allCases.map { SwipePage(title: $0.title, systemImage: $0.systemImage) },
+            fakeLargeTitle: "",
+            scrollDismissesKeyboardMode: .interactively,
+            selectedIndex: $selectedPage
+        ) { index in
+            switch HomePage(rawValue: index) ?? .health {
+            case .health:
+                healthPage
+            case .waypoint:
+                WaypointView(onCheckIn: onOpenLighthouse)
+            case .explore:
+                ExploreView()
             }
-            .padding(.spacing3x)
         }
         .background(Color.defaultBackground.ignoresSafeArea())
         .toolbar {
@@ -138,77 +53,30 @@ struct ContentView: View {
                         .labelStyle(.iconOnly)
                 }
 
-                Button {
-                    showingGuidedProgram = true
-                } label: {
-                    Label("Guided", systemImage: "hand.wave")
-                        .labelStyle(.iconOnly)
-                }
-
-                Button {
-                    showingLighthouse = true
-                } label: {
-                    Label("Lighthouse", systemImage: "sparkles")
-                        .labelStyle(.iconOnly)
-                }
-
                 Toggle(isOn: $showingLighthouseOnboarding) {
-                    Label("Lighthouse onboarding", systemImage: "graduationcap")
+                    Label("Lighthouse onboarding", systemImage: "sparkles")
                         .labelStyle(.iconOnly)
                 }
                 .toggleStyle(.button)
-
-                Toggle(isOn: $showingGuidedTestingSplash) {
-                    Label("Guided testing splash", systemImage: "heart.text.square")
-                        .labelStyle(.iconOnly)
-                }
-                .toggleStyle(.button)
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Section("My Sessions") {
-                        ForEach(sessions) { session in
-                            Button(session.name, systemImage: session.symbol) {
-                                start(session)
-                            }
-                        }
-                    }
-                    .tint(.primary)
-                } label: {
-                    Label("Start session", systemImage: "play.fill")
-                        .labelStyle(.iconOnly)
-                } primaryAction: {
-                    showingSession = true
-                }
-            }
-        }
-        .sheet(isPresented: $showingSession) {
-            ExerciseSheet()
-        }
-        .sheet(isPresented: $showingProgram) {
-            ExerciseCreateProgramSheet()
-        }
-        .sheet(isPresented: $showingGuidedProgram) {
-            ExerciseCreateProgramSheet(startsGuided: true)
-        }
-        .sheet(isPresented: $showingRecordSession) {
-            ExerciseCompleteSheet(
-                sessions: [ExerciseDemoComplete.strength, ExerciseDemoComplete.cardio],
-                initialPart: recordSessionPart
-            )
-        }
-        .navigationDestination(item: $openedExerciseName) { name in
-            if let exercise = ExerciseDemoLibrary.exercise(named: name) {
-                ExerciseDetailSheet(exercise: exercise, cardColor: .defaultCards)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .background(Color.defaultBackground.ignoresSafeArea())
+                .brightHaptic(.light, trigger: showingLighthouseOnboarding)
             }
         }
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
         }
-        .exerciseSessionFlow($sessionStage)
+    }
+
+    private var healthPage: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            section("Vault") {
+                widgetLabel("VaultGuidedTestingCard")
+                VaultGuidedTestingCard {
+                    showingGuidedTesting = true
+                }
+                    .padding(.bottom, .spacing3x)
+            }
+        }
+        .padding(.spacing3x)
     }
 
     private var beamScreen: some View {
@@ -302,6 +170,28 @@ struct ContentView: View {
 
     private enum Constants {
         static let beamCardHeight: CGFloat = 68
+    }
+}
+
+private enum HomePage: Int, CaseIterable {
+    case health
+    case waypoint
+    case explore
+
+    var title: String {
+        switch self {
+        case .health: "Health"
+        case .waypoint: "Waypoint"
+        case .explore: "Explore"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .health: "heart.fill"
+        case .waypoint: "safari.fill"
+        case .explore: "map.fill"
+        }
     }
 }
 

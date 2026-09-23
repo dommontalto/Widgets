@@ -8,8 +8,7 @@
 import SwiftUI
 
 // A ruler dragged under a fixed centre: a fine tick per step, a heavier one on
-// the majors, and the picked step drawn solid. Ported from the cycle-tracking
-// onboarding ruler in the Bright iOS app.
+// the majors, and the picked step drawn solid.
 struct BrightPicker: View {
     @Binding var value: Int
     let range: ClosedRange<Int>

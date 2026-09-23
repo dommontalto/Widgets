@@ -61,6 +61,7 @@ nonisolated extension Color {
     
     static let defaultRed = Color(hex: "#FF3939")
     static let defaultOrange = Color(hex: "#FF512D")
+    static let defaultAmber = Color(hex: "#FF9D00")
     static let defaultYellow = Color(hex: "#FFBD13")
     
     // MARK: -- File private

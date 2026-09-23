@@ -44,13 +44,13 @@ struct LighthouseChatView: View {
             showsThinkingOrb: false,
             focusesOnAppear: false,
             suggestions: BrightChatSuggestions(
-                prompts: Constants.prompts,
+                prompts: Constants.quickActions,
                 custom: customPrompts,
                 onTap: send,
-                onAdd: { customPrompts.append($0) },
+                // TODO: Decide whether to delete custom prompt creation.
+//                onAdd: { customPrompts.append($0) },
                 onDelete: { prompt in customPrompts.removeAll { $0 == prompt } }
             ),
-            quickActions: Constants.quickActions,
             onSend: send,
             onStop: stopThinking,
             onSwipeDismiss: onDismiss,
@@ -73,8 +73,6 @@ struct LighthouseChatView: View {
         .overlay {
             if messages.isEmpty {
                 welcome
-                    .opacity(isTyping.wrappedValue ? 0 : 1)
-                    .animation(.brightEaseInOut, value: isTyping.wrappedValue)
                     .allowsHitTesting(false)
                     .transition(.opacity)
             }
@@ -297,11 +295,6 @@ struct LighthouseChatView: View {
         ]
         static let welcome = "Welcome to Lighthouse. What would you like to do?"
         static let thinkingRange = 6.0...9.0
-        static let prompts = [
-            "Why is my sleep bad?",
-            "What should I focus on?",
-            "Any trends I should know?",
-        ]
         static let replies = [
             "Your deep sleep dropped to 48 minutes last night, about 30% under your monthly average. The two late meals this week line up with the worst nights.",
             "Recovery is trending up. Keep the easy cardio on rest days and hold strength volume where it is for another week before adding load.",

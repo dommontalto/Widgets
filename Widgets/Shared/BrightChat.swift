@@ -67,17 +67,17 @@ nonisolated struct BrightChatEmptyState {
     }
 }
 
-// The chips above the input bar. `onAdd` is what enables the "+" — leave it
-// nil for a thread whose suggestions are fixed.
+// The chips above the input bar.
 struct BrightChatSuggestions {
-    var prompts: [String] = []
+    var prompts: [BrightChatExample] = []
     var custom: [String] = []
     var onTap: (String) -> Void
-    var onAdd: ((String) -> Void)?
+    // TODO: Decide whether to delete custom prompt creation.
+//    var onAdd: ((String) -> Void)?
     var onDelete: ((String) -> Void)?
 
     var isEmpty: Bool {
-        prompts.isEmpty && custom.isEmpty && onAdd == nil
+        prompts.isEmpty && custom.isEmpty
     }
 }
 
@@ -98,9 +98,6 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     var focusesOnAppear = true
     var emptyState: BrightChatEmptyState?
     var suggestions: BrightChatSuggestions?
-    // Starters listed above the input while the thread is empty; tapping one
-    // sends its prompt.
-    var quickActions: [BrightChatExample] = []
     var onSend: (String) -> Void
     var onStop: () -> Void
     var onRetry: () -> Void = {}
@@ -122,12 +119,12 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     @State private var flight = BrightSendFlight()
     @Namespace private var sendNamespace
     @State private var promptIndex = 0
-    @State private var isAddingPrompt = false
-    @State private var newPromptText = ""
+    // TODO: Decide whether to delete custom prompt creation.
+//    @State private var isAddingPrompt = false
+//    @State private var newPromptText = ""
     @State private var chipsScrollProgress: CGFloat = 0
     @State private var chipsScrollable = false
-    @State private var showsQuickActions = false
-    @FocusState private var isNewPromptFocused: Bool
+//    @FocusState private var isNewPromptFocused: Bool
     // True when the drag in flight began with the keyboard up, so the swipe
     // that puts it away can't also dismiss the chat.
     @State private var dragStartedFocused = false
@@ -461,14 +458,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private var inputCard: some View {
         VStack(spacing: .spacing0x) {
-            if messages.isEmpty, !quickActions.isEmpty {
-                quickActionList
-                    .transition(.opacity)
-            }
-
-            // With the chips out of service the strip is an empty horizontal
-            // scroll view, which would still drag sideways under the finger.
-            if let suggestions, !suggestions.isEmpty, isAddingPrompt {
+            if let suggestions, !suggestions.isEmpty {
                 suggestionChips(suggestions)
                     .padding(.leading, .spacing2x)
             }
@@ -496,37 +486,6 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
-    }
-
-    private var quickActionList: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            ForEach(Array(quickActions.enumerated()), id: \.offset) { index, action in
-                Button {
-                    send(action.prompt)
-                } label: {
-                    HStack(spacing: .spacing1x) {
-                        Image(systemName: action.symbol)
-                            .font(.standard(size: .body1, weight: .light))
-                            .foregroundStyle(Color.semiLightTextColor)
-
-                        BrightText(action.prompt, size: .body1, color: .semiLightTextColor)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .opacity(showsQuickActions ? 1 : 0)
-                .offset(y: showsQuickActions ? 0 : Constants.quickActionRise)
-                .animation(
-                    .brightBouncy.delay(Double(quickActions.count - 1 - index) * Constants.quickActionStagger),
-                    value: showsQuickActions
-                )
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, .spacing5x)
-        .padding(.bottom, .spacing3x)
-        .onAppear { showsQuickActions = true }
-        .onDisappear { showsQuickActions = false }
     }
 
     @ViewBuilder
@@ -574,54 +533,39 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private func suggestionChips(_ suggestions: BrightChatSuggestions) -> some View {
         HStack(spacing: .spacing0x) {
-//            if suggestions.onAdd != nil, !isAddingPrompt {
-//                Button {
-//                    withAnimation(.brightBouncy) {
-//                        isAddingPrompt = true
-//                    }
-//                } label: {
-//                    Image(ImageNames.lighthouseCirclePlusV5)
-//                        .resizable()
-//                        .renderingMode(.template)
-//                        .scaledToFit()
-//                        .frame(width: Constants.addPromptSize, height: Constants.addPromptSize)
-//                        .foregroundStyle(Color.defaultBlue)
-//                }
-//                .padding(.top, .spacing1x)
-//            }
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: .spacing105x) {
-//                    ForEach(suggestions.prompts, id: \.self) { prompt in
-//                        BrightTag(title: prompt, systemImage: "sparkles", isSelected: true) {
-//                            suggestions.onTap(prompt)
-//                        }
-//                        .disabled(isBusy)
-//                    }
-
-//                    ForEach(suggestions.custom, id: \.self) { prompt in
-//                        BrightTag(title: prompt, systemImage: "bookmark", isSelected: true) {
-//                            suggestions.onTap(prompt)
-//                        }
-//                        .disabled(isBusy)
-//                        .transition(.scale.combined(with: .opacity))
-//                        .contextMenu {
-//                            if let onDelete = suggestions.onDelete {
-//                                Button(role: .destructive) {
-//                                    withAnimation(.brightBouncy) {
-//                                        onDelete(prompt)
-//                                    }
-//                                } label: {
-//                                    Label("Delete", systemImage: "trash")
-//                                }
-//                                .tint(.defaultRed)
-//                            }
-//                        }
-//                    }
-
-                    if isAddingPrompt, let onAdd = suggestions.onAdd {
-                        newPromptField(onAdd: onAdd)
+                    ForEach(suggestions.prompts, id: \.prompt) { prompt in
+                        BrightTag(title: prompt.prompt, systemImage: prompt.symbol, isSelected: true) {
+                            suggestions.onTap(prompt.prompt)
+                        }
+                        .disabled(isBusy)
                     }
+
+                    ForEach(suggestions.custom, id: \.self) { prompt in
+                        BrightTag(title: prompt, systemImage: "bookmark", isSelected: true) {
+                            suggestions.onTap(prompt)
+                        }
+                        .disabled(isBusy)
+                        .transition(.scale.combined(with: .opacity))
+                        .contextMenu {
+                            if let onDelete = suggestions.onDelete {
+                                Button(role: .destructive) {
+                                    withAnimation(.brightBouncy) {
+                                        onDelete(prompt)
+                                    }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.defaultRed)
+                            }
+                        }
+                    }
+
+                    // TODO: Decide whether to delete custom prompt creation.
+//                    if isAddingPrompt, let onAdd = suggestions.onAdd {
+//                        newPromptField(onAdd: onAdd)
+//                    }
                 }
                 .padding(.leading, .spacing2x)
                 .padding(.trailing, .spacing3x)
@@ -665,39 +609,40 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         }
     }
 
-    private func newPromptField(onAdd: @escaping (String) -> Void) -> some View {
-        ZStack(alignment: .leading) {
-            if newPromptText.isEmpty {
-                BrightText("New prompt", size: .body1, color: .semiLightTextColor)
-            }
-            TextField("", text: $newPromptText)
-                .font(.standard(size: .body1, weight: .light))
-                .focused($isNewPromptFocused)
-        }
-        .padding(.horizontal, .spacing3x)
-        .padding(.vertical, .spacing1x + .spacing05x)
-        .modifier(GlassEffect(shape: .capsule))
-        .frame(minWidth: Constants.newPromptMinWidth)
-        .onAppear { isNewPromptFocused = true }
-        // Tapping outside with nothing typed dismisses the new chip.
-        .onChange(of: isNewPromptFocused) { _, focused in
-            guard !focused,
-                  newPromptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            else { return }
-            withAnimation(.brightBouncy) { isAddingPrompt = false }
-        }
-        .submitLabel(.done)
-        .onSubmit {
-            let trimmed = newPromptText.trimmingCharacters(in: .whitespacesAndNewlines)
-            withAnimation(.brightBouncy) {
-                if !trimmed.isEmpty {
-                    onAdd(trimmed)
-                }
-                newPromptText = ""
-                isAddingPrompt = false
-            }
-        }
-    }
+    // TODO: Decide whether to delete custom prompt creation.
+//    private func newPromptField(onAdd: @escaping (String) -> Void) -> some View {
+//        ZStack(alignment: .leading) {
+//            if newPromptText.isEmpty {
+//                BrightText("New prompt", size: .body1, color: .semiLightTextColor)
+//            }
+//            TextField("", text: $newPromptText)
+//                .font(.standard(size: .body1, weight: .light))
+//                .focused($isNewPromptFocused)
+//        }
+//        .padding(.horizontal, .spacing3x)
+//        .padding(.vertical, .spacing1x + .spacing05x)
+//        .modifier(GlassEffect(shape: .capsule))
+//        .frame(minWidth: Constants.newPromptMinWidth)
+//        .onAppear { isNewPromptFocused = true }
+//        // Tapping outside with nothing typed dismisses the new chip.
+//        .onChange(of: isNewPromptFocused) { _, focused in
+//            guard !focused,
+//                  newPromptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+//            else { return }
+//            withAnimation(.brightBouncy) { isAddingPrompt = false }
+//        }
+//        .submitLabel(.done)
+//        .onSubmit {
+//            let trimmed = newPromptText.trimmingCharacters(in: .whitespacesAndNewlines)
+//            withAnimation(.brightBouncy) {
+//                if !trimmed.isEmpty {
+//                    onAdd(trimmed)
+//                }
+//                newPromptText = ""
+//                isAddingPrompt = false
+//            }
+//        }
+//    }
 
     private func send() {
         send(draft)
@@ -734,11 +679,8 @@ private enum Constants {
     static let sentImageSize: CGFloat = .spacing12x + .spacing8x
     static let exampleSwapEvery: TimeInterval = 3
 
-    static let addPromptSize: CGFloat = 30
     static let chipsFadeWidth: CGFloat = 30
-    static let quickActionRise: CGFloat = .spacing4x
-    static let quickActionStagger: TimeInterval = 0.05
-    static let newPromptMinWidth: CGFloat = 120
+//    static let newPromptMinWidth: CGFloat = 120
     static let dismissDragDistance: CGFloat = 20
     static let dismissThreshold: CGFloat = 50
     static let dismissVelocity: CGFloat = 300

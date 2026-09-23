@@ -345,9 +345,7 @@ private struct DayCell: View {
 
 #Preview {
     @Previewable @State var selectedDate = Calendar.current.startOfDay(for: Date())
-    BrightCalendar(selectedDate: $selectedDate) { date in
-        ExerciseCalendarDemo.dotStyle(on: date)
-    }
+    BrightCalendar(selectedDate: $selectedDate)
     .frame(maxHeight: .infinity, alignment: .top)
     .background(Color.defaultBackground.ignoresSafeArea())
 }
