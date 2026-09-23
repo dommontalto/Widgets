@@ -93,31 +93,17 @@ struct VaultGuidedTestingHomeView: View {
     }
 
     private var categoryRow: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: .spacing2x) {
-                ForEach(categories) { category in
-                    VaultTestCategoryCard(
-                        category: category,
-                        clinicCount: VaultTestingClinic.count(offering: category.id)
-                    ) {
-                        selectedCategory = category
-                    }
+        BrightTileRow {
+            ForEach(categories) { category in
+                BrightTile(
+                    category.name,
+                    subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
+                    backgroundImage: category.backgroundName
+                ) {
+                    selectedCategory = category
+                } icon: {
+                    VaultTestCategoryIcon(category: category, symbolSize: .standout1)
                 }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollIndicators(.hidden)
-        .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
-        .mask {
-            HStack(spacing: .spacing0x) {
-                LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
-                    .frame(width: Constants.leadingFade)
-
-                Color.black
-
-                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
-                    .frame(width: Constants.edgeFade)
             }
         }
     }
@@ -222,11 +208,6 @@ struct VaultGuidedTestingHomeView: View {
         }
     }
 
-    private enum Constants {
-        static let edgeFade: CGFloat = .spacing6x
-        // Matches the row's content margin, so the first card is untouched at rest.
-        static let leadingFade: CGFloat = .spacing3x
-    }
 }
 
 // MARK: - Delivery track
@@ -313,59 +294,6 @@ struct VaultClinicCard: View {
         .modifier(CardModifier())
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
-    }
-}
-
-// MARK: - Category card
-
-private struct VaultTestCategoryCard: View {
-    let category: VaultTestCategory
-    let clinicCount: Int
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: .spacing0x) {
-                VaultTestCategoryIcon(category: category, symbolSize: .standout1)
-                    .foregroundStyle(.white)
-                    .blendMode(.overlay)
-                    .frame(width: .spacing6x, height: .spacing6x)
-
-                Spacer(minLength: .spacing0x)
-
-                BrightText(category.name, size: .subheading, color: .white, weight: .regular)
-
-                BrightText("\(clinicCount) clinics", size: .body1, color: .white)
-                    .blendMode(.overlay)
-            }
-            .padding(.horizontal, .spacing3x)
-            .padding(.vertical, .spacing2x)
-            .frame(width: Constants.width, height: Constants.height, alignment: .leading)
-            .background {
-                Image(category.backgroundName)
-                    .resizable()
-                    .scaledToFill()
-                    .scaleEffect(Constants.backgroundOverscan)
-                    .blur(radius: Constants.backgroundBlur)
-            }
-            .overlay(Color.white.opacity(.ultraLowOpacity))
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
-                    .strokeBorder(Color.black.opacity(.minimalOpacity), lineWidth: Constants.stroke)
-            }
-            .contentShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private enum Constants {
-        static let width: CGFloat = 159
-        static let height: CGFloat = 107
-        static let stroke: CGFloat = 0.5
-        static let backgroundBlur: CGFloat = 8
-        // Blur feathers the image's edges, so it runs past the clip.
-        static let backgroundOverscan: CGFloat = 1.2
     }
 }
 
