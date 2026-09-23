@@ -107,8 +107,8 @@ struct BrightTileRow<Content: View>: View {
 
 // Outside the structs: a generic type cannot hold static stored properties.
 private enum Constants {
-    static let width: CGFloat = 159
-    static let height: CGFloat = 107
+    static let width: CGFloat = 160
+    static let height: CGFloat = 110
     static let stroke: CGFloat = 0.5
     static let backgroundBlur: CGFloat = 8
     static let backgroundOverscan: CGFloat = 1.2
