@@ -208,18 +208,19 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     if (mask <= 0.001) return half4(0.0);
 
     // Blob stack. The blobs only lend their colour: each pixel takes the
-    // coverage-weighted mix of the blobs reaching it (or the nearest blob's
-    // colour where none does) at one flat alpha, the strongest in the stack.
-    // Compositing them with their own falloffs made the beam flare where it
-    // crossed a blob and fade in the gaps between.
+    // coverage-weighted mix of the blobs reaching it at one flat alpha, the
+    // strongest in the stack. Compositing them with their own falloffs made
+    // the beam flare where it crossed a blob and fade in the gaps between.
+    // In the gaps no blob reaches, an inverse-distance blend of every blob
+    // takes over — a nearest-blob pick there cut hard lines between colours.
     float4 acc = float4(0.0);
     int nBlobs = blobCount / 8;
     if (nBlobs > 0) {
         float3 rgbSum = float3(0.0);
         float wSum = 0.0;
+        float3 idwSum = float3(0.0);
+        float idwWeight = 0.0;
         float aMax = 0.0;
-        float nearest = FLT_MAX;
-        float3 nearestRGB = float3(0.0);
         for (int i = 0; i < nBlobs; i++) {
             device const float *e = blobs + i * 8;
             float2 radii = float2(max(e[0], 0.001), max(e[1], 0.001));
@@ -229,10 +230,15 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
             float w = e[7] * clamp(1.0 - d, 0.0, 1.0);
             rgbSum += rgb * w;
             wSum += w;
+            float d2 = max(d * d, 0.0001);
+            float iw = e[7] / (d2 * d2);
+            idwSum += rgb * iw;
+            idwWeight += iw;
             aMax = max(aMax, e[7]);
-            if (d < nearest) { nearest = d; nearestRGB = rgb; }
         }
-        float3 rgb = wSum > 0.0 ? rgbSum / wSum : nearestRGB;
+        float3 idwRGB = idwWeight > 0.0 ? idwSum / idwWeight : float3(0.0);
+        float3 blobRGB = wSum > 0.0 ? rgbSum / wSum : idwRGB;
+        float3 rgb = mix(idwRGB, blobRGB, smoothstep(0.0, 0.15, wSum));
         acc = float4(rgb * aMax, aMax);
     }
 

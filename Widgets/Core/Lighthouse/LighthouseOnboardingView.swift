@@ -92,15 +92,6 @@ struct LighthouseOnboardingView: View {
             onApiKeySaved(key)
             onFinish()
         }
-        .toolbar {
-            // In the bar beside the close button, so the second page's title
-            // reads as the screen's own.
-            ToolbarItem(placement: .principal) {
-                BrightText(Constants.capabilitiesTitle, size: .heading, color: .semiLightTextColor)
-                    .opacity(page == 1 ? 1 : 0)
-                    .animation(.brightEaseInOut, value: page)
-            }
-        }
     }
 
     // MARK: - Pages
@@ -118,7 +109,7 @@ struct LighthouseOnboardingView: View {
                 .multilineTextAlignment(.center)
                 .opacity(introPhase >= .subtitle ? 1 : 0)
                 .offset(y: introPhase >= .subtitle ? 0 : Constants.subtitleRise)
-                .animation(.brightChartReveal, value: introPhase >= .subtitle)
+                .animation(.easeInOut(duration: Constants.revealDuration), value: introPhase >= .subtitle)
 
             Spacer(minLength: .spacing0x)
             Spacer(minLength: .spacing0x)
@@ -165,19 +156,23 @@ struct LighthouseOnboardingView: View {
     }
 
     private var capabilities: some View {
-        VStack(alignment: .leading, spacing: .spacing8x) {
-            ForEach(Array(Constants.capabilities.enumerated()), id: \.element.id) { index, capability in
-                capabilityRow(
-                    capability,
-                    isRevealed: index < revealedCapabilities,
-                    hasSettled: index < settledCapabilities
-                )
+        ScrollView {
+            VStack(alignment: .leading, spacing: .spacing5x) {
+                ForEach(Array(Constants.capabilities.enumerated()), id: \.element.id) { index, capability in
+                    capabilityRow(
+                        capability,
+                        isRevealed: index < revealedCapabilities,
+                        hasSettled: index < settledCapabilities
+                    )
+                }
             }
-
-            Spacer(minLength: .spacing0x)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, .spacing8x)
+            .padding(.bottom, .spacing4x)
+            .padding(.horizontal, .spacing5x)
         }
-        .padding(.top, .spacing8x)
-        .padding(.horizontal, .spacing5x)
+        .scrollIndicators(.hidden)
+        .brightSoftScrollEdges()
         .task(id: page) { await revealCapabilities() }
     }
 
@@ -209,7 +204,7 @@ struct LighthouseOnboardingView: View {
         .blur(radius: isRevealed ? 0 : Constants.capabilityBlur)
         .scaleEffect(isRevealed ? 1 : Constants.capabilityStartScale, anchor: .leading)
         .offset(y: isRevealed ? 0 : Constants.capabilityRise)
-        .animation(.brightChartReveal, value: isRevealed)
+        .animation(.easeInOut(duration: Constants.revealDuration), value: isRevealed)
     }
 
     // Older systems have no draw-on, so the icon condenses in like its row.
@@ -229,12 +224,18 @@ struct LighthouseOnboardingView: View {
             .animation(.brightEaseInOut, value: hasSettled)
 
         switch capability.flourish {
+        case .ring:
+            image.symbolEffect(.wiggle.clockwise, value: hasSettled)
         case .nudge:
-            image.symbolEffect(.wiggle, value: hasSettled)
-        case .bob:
-            image.symbolEffect(.wiggle.up, value: hasSettled)
+            image.symbolEffect(.wiggle.left, value: hasSettled)
         case .spring:
-            image.symbolEffect(.bounce.up, value: hasSettled)
+            image.symbolEffect(.bounce.up.byLayer, value: hasSettled)
+        case .spin:
+            image.symbolEffect(.rotate.clockwise, value: hasSettled)
+        case .breathe:
+            image.symbolEffect(.breathe.pulse.byLayer, value: hasSettled)
+        case .climb:
+            image.symbolEffect(.wiggle.forward, value: hasSettled)
         case .clatter:
             image.symbolEffect(.wiggle.byLayer, value: hasSettled)
         }
@@ -247,18 +248,12 @@ struct LighthouseOnboardingView: View {
     // MARK: - Footer
 
     private var footer: some View {
-        VStack(spacing: .spacing5x) {
-            BrightPageIndicator(total: Constants.pageCount, activeIndex: pageIndicatorIndex)
-                .opacity(isLastPage ? 0 : 1)
-                .animation(.brightEaseInOut, value: isLastPage)
-
-            BrightPillButton(buttonTitle, buttonSize: .large, onTapCallback: advance)
-                .animation(.brightEaseInOut, value: page)
-        }
-        .padding(.bottom, .spacing2x)
-        .opacity(isIntroDone ? 1 : 0)
-        .offset(y: isIntroDone ? 0 : Constants.footerRise)
-        .animation(.brightChartReveal, value: isIntroDone)
+        BrightPillButton(buttonTitle, buttonSize: .large, onTapCallback: advance)
+            .animation(.brightEaseInOut, value: page)
+            .padding(.bottom, .spacing2x)
+            .opacity(isIntroDone ? 1 : 0)
+            .offset(y: isIntroDone ? 0 : Constants.footerRise)
+            .animation(.easeInOut(duration: Constants.revealDuration), value: isIntroDone)
     }
 
     private var buttonTitle: String {
@@ -267,18 +262,6 @@ struct LighthouseOnboardingView: View {
         case 1: Constants.getStartedTitle
         default: Constants.chooseTitle
         }
-    }
-
-    // The indicator wants an optional it can clear; the flow always has a page.
-    private var pageIndicatorIndex: Binding<Int?> {
-        Binding(
-            get: { page },
-            set: { newValue in
-                if let newValue {
-                    withAnimation(.brightEaseInOut) { page = newValue }
-                }
-            }
-        )
     }
 
     // The rows land one after another as the page arrives, and clear
@@ -344,13 +327,17 @@ struct LighthouseOnboardingView: View {
         var id: String { title }
     }
 
-    // What each icon does once its row has landed, chosen to suit the glyph:
-    // a reminder's nudge, the 3D graph bobbing up and down, the runner
-    // springing off, cutlery knocking together.
+    // What each icon does once its row has landed, chosen to suit the glyph
+    // and never repeated: the bell rings, the checkin nudges, the cyclist
+    // springs off, the waypoint spins, the 3D graph breathes, the forecast
+    // climbs, the cutlery knocks together.
     private enum Flourish {
+        case ring
         case nudge
-        case bob
         case spring
+        case spin
+        case breathe
+        case climb
         case clatter
     }
 
@@ -364,32 +351,32 @@ struct LighthouseOnboardingView: View {
         static let pageCount = 3
         static let beaconSize: CGFloat = 176
         static let introBeats = [
-            IntroBeat(phase: .bang, after: 1.6),
-            IntroBeat(phase: .title, after: 0.55),
-            IntroBeat(phase: .subtitle, after: 0.5),
-            IntroBeat(phase: .done, after: 0.5),
-            IntroBeat(phase: .faded, after: 3.45),
+            IntroBeat(phase: .bang, after: 1),
+            IntroBeat(phase: .title, after: 0.35),
+            IntroBeat(phase: .subtitle, after: 0.3),
+            IntroBeat(phase: .done, after: 0.3),
+            IntroBeat(phase: .faded, after: 2.05),
         ]
-        static let afterglowFade: TimeInterval = 1.2
+        static let afterglowFade: TimeInterval = 0.8
         static let beaconBurstScale: CGFloat = 2.6
         static let beaconBurstBlur: CGFloat = 40
-        static let beaconLandDuration: TimeInterval = 1.4
+        static let beaconLandDuration: TimeInterval = 0.9
         static let letterBlur: CGFloat = 8
         static let letterRise: CGFloat = .spacing2x
-        static let letterDuration: TimeInterval = 0.6
-        static let letterStagger: TimeInterval = 0.04
-        static let titleTightenDuration: TimeInterval = 0.9
+        static let letterDuration: TimeInterval = 0.4
+        static let letterStagger: TimeInterval = 0.03
+        static let titleTightenDuration: TimeInterval = 0.6
         static let subtitleRise: CGFloat = .spacing2x
         static let footerRise: CGFloat = .spacing4x
         static let welcomeTitle = "Lighthouse"
         static let welcomeSubtitle = "Welcome to your personal health coach."
-        static let capabilitiesTitle = "What Lighthouse can do"
         static let nextTitle = "Next"
         static let getStartedTitle = "Get Started"
         static let chooseTitle = "Choose"
-        static let capabilityRevealEvery: TimeInterval = 1
-        // Matches the row's chart-reveal ease, so the bow lands as the text does.
-        static let capabilitySettleAfter: TimeInterval = 1.1
+        static let capabilityRevealEvery: TimeInterval = 0.45
+        static let revealDuration: TimeInterval = 0.6
+        // Matches the row's reveal ease, so the bow lands as the text does.
+        static let capabilitySettleAfter: TimeInterval = revealDuration
         static let capabilityBlur: CGFloat = 12
         static let capabilityStartScale: CGFloat = 0.92
         static let capabilityRise: CGFloat = .spacing3x
@@ -397,31 +384,52 @@ struct LighthouseOnboardingView: View {
         static let capabilityDetail = "Reminders daily, weekly or monthly to keep you on track with your goals"
         static let capabilities = [
             Capability(
+                symbol: "bell.badge.waveform",
+                title: "Create alerts",
+                detail: capabilityDetail,
+                color: .defaultBrightViolet,
+                flourish: .ring
+            ),
+            Capability(
                 symbol: "person.fill.checkmark.and.xmark",
-                title: "Create checkins",
+                title: "Create checkin",
                 detail: capabilityDetail,
                 color: .defaultCyan,
                 flourish: .nudge
             ),
             Capability(
-                symbol: "graph.3d",
-                title: "Trend Analysis",
-                detail: capabilityDetail,
-                color: .defaultYellow,
-                flourish: .bob
-            ),
-            Capability(
-                symbol: "figure.run.square.stack.fill",
-                title: "Custom Programs",
+                symbol: "figure.indoor.cycle",
+                title: "Create workout program",
                 detail: capabilityDetail,
                 color: .defaultPink,
                 flourish: .spring
             ),
             Capability(
-                symbol: "fork.knife",
-                title: "Log Food",
+                symbol: "chevron.compact.up.chevron.compact.right.chevron.compact.down.chevron.compact.left",
+                title: "Create waypoint",
                 detail: capabilityDetail,
                 color: .defaultOrange,
+                flourish: .spin
+            ),
+            Capability(
+                symbol: "graph.3d",
+                title: "Trend analysis",
+                detail: capabilityDetail,
+                color: .defaultYellow,
+                flourish: .breathe
+            ),
+            Capability(
+                symbol: "graph.2d",
+                title: "Forecast metrics",
+                detail: capabilityDetail,
+                color: .defaultSkyBlue,
+                flourish: .climb
+            ),
+            Capability(
+                symbol: "fork.knife",
+                title: "Log food",
+                detail: capabilityDetail,
+                color: .defaultGreen,
                 flourish: .clatter
             ),
         ]

@@ -200,6 +200,7 @@ extension BeamColorVariant: Identifiable {
         case .defaultSkyBlue: "Sky Blue"
         case .defaultCyan: "Cyan"
         case .skyBlueCyan: "Sky Blue / Cyan"
+        case .multicoloured: "Multicoloured"
         }
     }
 }

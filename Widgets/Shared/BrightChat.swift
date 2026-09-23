@@ -94,8 +94,13 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     // Off when the caller draws the orb somewhere of its own — Lighthouse
     // hangs it off the Dynamic Island instead of the thread.
     var showsThinkingOrb = true
+    // Off to leave the keyboard down until the field is tapped.
+    var focusesOnAppear = true
     var emptyState: BrightChatEmptyState?
     var suggestions: BrightChatSuggestions?
+    // Starters listed above the input while the thread is empty; tapping one
+    // sends its prompt.
+    var quickActions: [BrightChatExample] = []
     var onSend: (String) -> Void
     var onStop: () -> Void
     var onRetry: () -> Void = {}
@@ -121,6 +126,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     @State private var newPromptText = ""
     @State private var chipsScrollProgress: CGFloat = 0
     @State private var chipsScrollable = false
+    @State private var showsQuickActions = false
     @FocusState private var isNewPromptFocused: Bool
     // True when the drag in flight began with the keyboard up, so the swipe
     // that puts it away can't also dismiss the chat.
@@ -163,7 +169,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             // gap — rather than stacking the sheet's bottom insets under it.
             .ignoresSafeArea(.container, edges: .bottom)
             .brightHaptic(.light, trigger: messages.count)
-            .onAppear { isTyping.wrappedValue = true }
+            .onAppear {
+                if focusesOnAppear {
+                    isTyping.wrappedValue = true
+                }
+            }
             .onDisappear { onStop() }
     }
 
@@ -451,6 +461,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
 
     private var inputCard: some View {
         VStack(spacing: .spacing0x) {
+            if messages.isEmpty, !quickActions.isEmpty {
+                quickActionList
+                    .transition(.opacity)
+            }
+
             // With the chips out of service the strip is an empty horizontal
             // scroll view, which would still drag sideways under the finger.
             if let suggestions, !suggestions.isEmpty, isAddingPrompt {
@@ -481,6 +496,37 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
         .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
+    }
+
+    private var quickActionList: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            ForEach(Array(quickActions.enumerated()), id: \.offset) { index, action in
+                Button {
+                    send(action.prompt)
+                } label: {
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: action.symbol)
+                            .font(.standard(size: .body1, weight: .light))
+                            .foregroundStyle(Color.semiLightTextColor)
+
+                        BrightText(action.prompt, size: .body1, color: .semiLightTextColor)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .opacity(showsQuickActions ? 1 : 0)
+                .offset(y: showsQuickActions ? 0 : Constants.quickActionRise)
+                .animation(
+                    .brightBouncy.delay(Double(quickActions.count - 1 - index) * Constants.quickActionStagger),
+                    value: showsQuickActions
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, .spacing5x)
+        .padding(.bottom, .spacing3x)
+        .onAppear { showsQuickActions = true }
+        .onDisappear { showsQuickActions = false }
     }
 
     @ViewBuilder
@@ -654,7 +700,11 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
     }
 
     private func send() {
-        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        send(draft)
+    }
+
+    private func send(_ prompt: String) {
+        let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty || !attachments.wrappedValue.isEmpty else { return }
 
         flight.begin(text: text, attachments: attachments.wrappedValue, after: messages.last?.id)
@@ -686,6 +736,8 @@ private enum Constants {
 
     static let addPromptSize: CGFloat = 30
     static let chipsFadeWidth: CGFloat = 30
+    static let quickActionRise: CGFloat = .spacing4x
+    static let quickActionStagger: TimeInterval = 0.05
     static let newPromptMinWidth: CGFloat = 120
     static let dismissDragDistance: CGFloat = 20
     static let dismissThreshold: CGFloat = 50

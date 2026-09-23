@@ -247,6 +247,13 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
             case .dictate: "mic.fill"
             }
         }
+
+        var color: Color? {
+            switch self {
+            case .send: .defaultGreen
+            case .stop, .dictating, .dictate: nil
+            }
+        }
     }
 
     private var action: Action {
@@ -269,7 +276,8 @@ struct BrightPromptInputBar<ModelPicker: View>: View {
         BrightRoundButton(
             systemImage: action.symbol,
             size: .large,
-            imageColor: action == .dictating ? .defaultRed : nil
+            color: action.color,
+            imageColor: action == .dictating || action == .stop ? .defaultRed : nil
         ) {
             switch action {
             case .stop: onStop()

@@ -47,7 +47,11 @@ struct LighthouseIntro: View {
                 .animation(.easeOut(duration: Constants.veilLift), value: phase)
 
             // Lit by the bang, then dwindling steadily the whole way to gone.
-            BrightScreenEdgeBeam(isActive: phase >= .bang && phase < .faded, duration: Constants.beamLap)
+            BrightScreenEdgeBeam(
+                isActive: phase >= .bang && phase < .faded,
+                colorVariant: .multicoloured,
+                duration: Constants.beamLap
+            )
                 .opacity(beamOpacity)
 
             GeometryReader { proxy in
@@ -76,9 +80,9 @@ struct LighthouseIntro: View {
     }
 
     private enum Constants {
-        static let veilLift: TimeInterval = 0.8
+        static let veilLift: TimeInterval = 0.5
         // Matches the beats from the bang to the afterglow's end.
-        static let beamDwindle: TimeInterval = 5
+        static let beamDwindle: TimeInterval = 3
         // A single trip round the screen over the whole afterglow, pinned
         // rather than paced so it always lands as the glow goes.
         static let beamLap: TimeInterval = beamDwindle

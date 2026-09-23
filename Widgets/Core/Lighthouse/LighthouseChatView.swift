@@ -42,6 +42,7 @@ struct LighthouseChatView: View {
             isBusy: isThinking,
             isTyping: isTyping,
             showsThinkingOrb: false,
+            focusesOnAppear: false,
             suggestions: BrightChatSuggestions(
                 prompts: Constants.prompts,
                 custom: customPrompts,
@@ -49,6 +50,7 @@ struct LighthouseChatView: View {
                 onAdd: { customPrompts.append($0) },
                 onDelete: { prompt in customPrompts.removeAll { $0 == prompt } }
             ),
+            quickActions: Constants.quickActions,
             onSend: send,
             onStop: stopThinking,
             onSwipeDismiss: onDismiss,
@@ -71,6 +73,8 @@ struct LighthouseChatView: View {
         .overlay {
             if messages.isEmpty {
                 welcome
+                    .opacity(isTyping.wrappedValue ? 0 : 1)
+                    .animation(.brightEaseInOut, value: isTyping.wrappedValue)
                     .allowsHitTesting(false)
                     .transition(.opacity)
             }
@@ -279,6 +283,18 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
+        static let quickActions = [
+            BrightChatExample("bell.badge.waveform", "Create alerts"),
+            BrightChatExample("person.fill.checkmark.and.xmark", "Create checkin"),
+            BrightChatExample("figure.indoor.cycle", "Create workout program"),
+            BrightChatExample(
+                "chevron.compact.up.chevron.compact.right.chevron.compact.down.chevron.compact.left",
+                "Create waypoint"
+            ),
+            BrightChatExample("graph.3d", "Trend analysis"),
+            BrightChatExample("graph.2d", "Forecast metrics"),
+            BrightChatExample("fork.knife", "Log food"),
+        ]
         static let welcome = "Welcome to Lighthouse. What would you like to do?"
         static let thinkingRange = 6.0...9.0
         static let prompts = [

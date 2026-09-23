@@ -26,6 +26,8 @@ public enum BeamTheme: String, CaseIterable, Sendable {
 // per blob so the ring still reads as a sweep; the raw value keys the spec's
 // palettes.
 public enum BeamColorVariant: String, CaseIterable, Sendable {
+    // Brand colours in hue order round the ring, so the last flows into the first.
+    case multicoloured
     case defaultOrange
     case defaultSkyBlue
     case defaultCyan
@@ -37,7 +39,7 @@ public enum BeamColorVariant: String, CaseIterable, Sendable {
     // The offerable variants: sky blue and cyan exist only as the palettes
     // `skyBlueCyan` resolves to, so they stay out of the list.
     public static var allCases: [BeamColorVariant] {
-        [.defaultCyan, .defaultOrange, .skyBlueCyan]
+        [.defaultCyan, .defaultOrange, .skyBlueCyan, .multicoloured]
     }
 
 
