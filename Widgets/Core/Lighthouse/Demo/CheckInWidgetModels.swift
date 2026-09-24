@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+ 
 struct ExerciseWeekLoad {
     let name: String
     let strengthFraction: CGFloat
