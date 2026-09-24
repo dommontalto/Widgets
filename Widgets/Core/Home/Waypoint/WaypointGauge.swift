@@ -58,6 +58,11 @@ struct WaypointGauge: View {
             }
         }
         .frame(width: Constants.diameter, height: Constants.diameter)
+        .background {
+            WaypointAura(color: bearing.color)
+                .id(bearing)
+                .transition(.opacity)
+        }
         .frame(width: Constants.frameSize, height: Constants.diameter + Constants.lineWidth)
     }
 
@@ -66,6 +71,13 @@ struct WaypointGauge: View {
             .fill(bearing == .north ? Color.defaultBackground : bearing.color)
             .overlay(Circle().strokeBorder(bearing.color, lineWidth: Constants.ringWidth))
             .frame(width: Constants.dotSize, height: Constants.dotSize)
+            .background {
+                Circle()
+                    .fill(bearing.color)
+                    .frame(width: Constants.dotGlowSize, height: Constants.dotGlowSize)
+                    .blur(radius: Constants.dotGlowBlur)
+                    .opacity(.lowOpacity)
+            }
     }
 
     private var stroke: StrokeStyle {
@@ -97,6 +109,8 @@ struct WaypointGauge: View {
         static let bounceAngle: Double = 14
         static let bounceStep: Double = 0.1
         static let bounceSettle: Double = 0.5
+        static let dotGlowSize: CGFloat = 26
+        static let dotGlowBlur: CGFloat = 6
     }
 }
 
