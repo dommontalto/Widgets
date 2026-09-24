@@ -163,21 +163,21 @@ enum LighthouseDemo {
 
     static let weeklyClimbingReview = LighthouseCheckInReview(
         title: "Weekly Climbing Review",
-        summary: "This week shows a balanced climbing journey. Your sleep quality has improved to an average of 7 hours per night, aiding recovery. You've maintained a steady intake of protein and carbs, effectively fuelling your workouts. Your sessions are consistent, focusing on strength and endurance, while stress and fatigue levels are manageable. Keep it up!",
+        summary: "This week shows a solid climbing block. You logged every session, though your training has leaned further into strength each week. Intake held steady at around 2,600 Cal a day, with dinner doing most of the work. Sleep averaged 7 hours 6 minutes, a little under your 28-day average, so recovery has lagged behind the load. Keep it up!",
         sections: [
             LighthouseCheckInReview.Section(kind: .workouts, findings: [
                 .init(text: "12/12 sessions completed", detail: "Every planned session this week was logged, including both board sessions.", isOnTrack: true),
-                .init(text: "Quality of sessions dropped", detail: "Average grade sent fell from V6 to V5 across the last three sessions.", isOnTrack: false),
+                .init(text: "Cardio has dropped to 22%", detail: "Your split has moved from 60/40 to 78/22 over four weeks as board sessions replaced easy runs.", isOnTrack: false),
                 .init(text: "High Fatigue", detail: "Training load sits 18% above your four-week average.", isOnTrack: false),
                 .init(text: "Low Readiness", detail: "Readiness has stayed under 60 since Thursday.", isOnTrack: false),
             ]),
             LighthouseCheckInReview.Section(kind: .nutrition, findings: [
-                .init(text: "Nutrition is on point this week", detail: "You hit your protein target on six of seven days.", isOnTrack: true),
-                .init(text: "Fat could drop by 10%", detail: "Fat averaged 52g against a 45g target, mostly from evening snacks.", isOnTrack: false),
+                .init(text: "Meals are well spread through the day", detail: "Breakfast, lunch and dinner carry 78% of your 2,620 Cal daily average.", isOnTrack: true),
+                .init(text: "Snacks make up 15% of intake", detail: "Snacks averaged 390 Cal a day, mostly in the evening after sessions.", isOnTrack: false),
             ]),
             LighthouseCheckInReview.Section(kind: .sleep, findings: [
-                .init(text: "Sleep quality has been average this week", detail: "Deep sleep averaged 52 minutes, down from 68 last week.", isOnTrack: false),
-                .init(text: "Lower recovery as a result", detail: "Recovery averaged 61, eight points under your usual week.", isOnTrack: false),
+                .init(text: "Sleep is 18 minutes under your average", detail: "You averaged 7 hours 6 minutes this week against 7 hours 24 minutes over the past 28 days.", isOnTrack: false),
+                .init(text: "Tuesday was your shortest night", detail: "5 hours 54 minutes after a late board session, and readiness hasn't recovered since.", isOnTrack: false),
             ]),
         ],
         followUps: [
@@ -186,4 +186,48 @@ enum LighthouseDemo {
             "Flexible with with my routine",
         ]
     )
+
+    static let trainingLoad = ExerciseTrainingLoad(
+        strengthPercent: 68,
+        cardioPercent: 32,
+        weeks: [
+            ExerciseWeekLoad(name: "Week 1", strengthFraction: 0.60, cardioFraction: 0.40, ratio: "60/40"),
+            ExerciseWeekLoad(name: "Week 2", strengthFraction: 0.64, cardioFraction: 0.36, ratio: "64/36"),
+            ExerciseWeekLoad(name: "Week 3", strengthFraction: 0.70, cardioFraction: 0.30, ratio: "70/30"),
+            ExerciseWeekLoad(name: "Week 4", strengthFraction: 0.78, cardioFraction: 0.22, ratio: "78/22"),
+        ]
+    )
+
+    static var intakeBreakdown: IntakeBreakdownWidgetViewState {
+        let breakdown = IntakeBreakdownResponseData()
+        breakdown.breakfast = 520
+        breakdown.lunch = 710
+        breakdown.dinner = 820
+        breakdown.snack = 390
+        breakdown.drink = 180
+        breakdown.unit = "kcal"
+        return IntakeBreakdownWidgetViewState(title: "Daily average, past 7 days", breakdown: breakdown, showIntakeBar: true)
+    }
+
+    static let sleepSevenDays: [SleepSummaryDataPoint] = zip(
+        ["2026-09-18", "2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24"],
+        [7.4, 7.6, 7.2, 7.0, 5.9, 7.3, 7.3]
+    ).map { SleepSummaryDataPoint(date: $0, value: $1) }
+
+    static let sleepTwentyEightDays: [SleepSummaryDataPoint] = zip(
+        (0..<28).map { "2026-\($0 < 4 ? "08" : "09")-\(String(format: "%02d", $0 < 4 ? 28 + $0 : $0 - 3))" },
+        [
+            7.8, 7.5, 7.9, 7.4, 7.6, 7.2, 7.7,
+            7.6, 7.3, 7.8, 7.1, 7.6, 7.4, 7.7,
+            7.5, 7.2, 7.6, 7.3, 7.4, 7.6, 7.2,
+            7.4, 7.6, 7.2, 7.0, 5.9, 7.3, 7.3,
+        ]
+    ).map { SleepSummaryDataPoint(date: $0, value: $1) }
+
+    static let sleepWeeklyAverages = [
+        WeeklyAverage(week: 1, value: 7.6),
+        WeeklyAverage(week: 2, value: 7.5),
+        WeeklyAverage(week: 3, value: 7.4),
+        WeeklyAverage(week: 4, value: 7.1),
+    ]
 }

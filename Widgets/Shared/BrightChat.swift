@@ -200,6 +200,7 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
                         .frame(height: .spacing0x)
                         .id(Constants.bottomID)
                 }
+                .containerRelativeFrame(.horizontal)
             }
             .defaultScrollAnchor(.bottom)
             .onScrollGeometryChange(for: Bool.self) { geo in

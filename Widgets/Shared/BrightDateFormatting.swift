@@ -109,6 +109,59 @@ extension Date {
     }
 }
 
+extension Date {
+    var brightDayKey: String { formatted(Date.dayKeyStyle) }
+    var brightISOZoned: String { formatted(Date.isoZonedStyle) }
+
+    init?(brightDayKey: String) {
+        guard let date = try? Date.dayKeyStyle.parse(brightDayKey) else { return nil }
+        self = date
+    }
+
+    init?(brightISOZoned: String) {
+        for style in Date.isoZonedParseStyles {
+            if let date = try? style.parse(brightISOZoned) {
+                self = date
+                return
+            }
+        }
+        return nil
+    }
+
+    private static var dayKeyStyle: Date.ISO8601FormatStyle {
+        Date.ISO8601FormatStyle(timeZone: .current).year().month().day().dateSeparator(.dash)
+    }
+
+    private static var isoStyle: Date.ISO8601FormatStyle {
+        Date.ISO8601FormatStyle(timeZone: .current)
+            .year().month().day()
+            .dateSeparator(.dash)
+            .dateTimeSeparator(.standard)
+            .time(includingFractionalSeconds: false)
+    }
+
+    private static var isoZonedStyle: Date.ISO8601FormatStyle {
+        isoStyle.timeZone(separator: .colon)
+    }
+
+    private static var isoZonedParseStyles: [Date.ISO8601FormatStyle] {
+        [
+            isoStyle.timeZone(separator: .colon),
+            isoStyle.timeZone(separator: .omitted),
+            isoFractionalStyle.timeZone(separator: .colon),
+            isoFractionalStyle.timeZone(separator: .omitted),
+        ]
+    }
+
+    private static var isoFractionalStyle: Date.ISO8601FormatStyle {
+        Date.ISO8601FormatStyle(timeZone: .current)
+            .year().month().day()
+            .dateSeparator(.dash)
+            .dateTimeSeparator(.standard)
+            .time(includingFractionalSeconds: true)
+    }
+}
+
 extension Double {
     var toString: String {
         let formatter = NumberFormatter()

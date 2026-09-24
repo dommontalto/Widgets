@@ -68,11 +68,22 @@ struct LighthouseCheckInReviewView: View {
     private func widget(for kind: LighthouseCheckInReview.Section.Kind) -> some View {
         switch kind {
         case .workouts:
-            LighthouseTrainingTrendsWidget()
+            ExerciseTrainingLoadContent(load: LighthouseDemo.trainingLoad, title: "Split", subtitle: "Past 4 weeks")
+                .padding(.spacing3x)
+                .modifier(CardModifier())
         case .nutrition:
-            LighthouseIntakeWidget()
+            IntakeBreakdownWidget(viewState: LighthouseDemo.intakeBreakdown)
         case .sleep:
-            LighthouseSleepTimeWidget()
+            SleepSummaryWidget(
+                title: "Sleep Duration",
+                label: "Good",
+                sevenDayAvg: Amount(unit: "hr", value: 7.1),
+                sevenDayData: LighthouseDemo.sleepSevenDays,
+                sevenDayDateRange: "18 – 24 Sep",
+                twentyEightDayAvg: Amount(unit: "hr", value: 7.4),
+                twentyEightDayData: LighthouseDemo.sleepTwentyEightDays,
+                weeklyAverages: LighthouseDemo.sleepWeeklyAverages
+            )
         }
     }
 
