@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    var onOpenLighthouse: () -> Void = {}
+    var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
 
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
     @State private var showingGuidedTesting = false
@@ -38,7 +38,7 @@ struct ContentView: View {
             case .health:
                 healthPage
             case .waypoint:
-                WaypointView(onCheckIn: onOpenLighthouse)
+                WaypointView(onCheckIn: { onOpenLighthouse(.createCheckIn) })
             case .explore:
                 ExploreView()
             }

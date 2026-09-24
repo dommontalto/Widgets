@@ -264,13 +264,11 @@ struct LighthouseOnboardingView: View {
         }
     }
 
-    // The rows land one after another as the page arrives, and clear
-    // off-screen so they do it again next time.
+    // The rows land one after another the first time the page arrives and
+    // stay put after that; leaving mid-reveal picks up where it stopped.
     private func revealCapabilities() async {
-        revealedCapabilities = 0
-        settledCapabilities = 0
         guard page == 1 else { return }
-        for _ in Constants.capabilities {
+        while revealedCapabilities < Constants.capabilities.count {
             do {
                 try await Task.sleep(for: .seconds(Constants.capabilityRevealEvery))
             } catch {
@@ -279,7 +277,6 @@ struct LighthouseOnboardingView: View {
             revealedCapabilities += 1
             Task {
                 try? await Task.sleep(for: .seconds(Constants.capabilitySettleAfter))
-                guard page == 1 else { return }
                 settledCapabilities += 1
             }
         }

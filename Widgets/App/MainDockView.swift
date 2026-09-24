@@ -17,7 +17,7 @@ enum MainDockTab: Int {
 
 struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
-    @State private var showingLighthouse = false
+    @State private var lighthouse: LighthousePresentation?
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
 
     private var tabSelection: Binding<MainDockTab> {
@@ -37,16 +37,16 @@ struct MainDockView: View {
             addTabOverlayButton
         }
         .ignoresSafeArea(.keyboard)
-        .fullScreenCover(isPresented: $showingLighthouse) {
-            LighthouseScreen(showOnboarding: $showingLighthouseOnboarding)
+        .fullScreenCover(item: $lighthouse) { presentation in
+            LighthouseScreen(showOnboarding: $showingLighthouseOnboarding, action: presentation.action)
         }
     }
 
     private var tabView: some View {
         TabView(selection: tabSelection) {
             Tab(value: MainDockTab.home) {
-                ContentView {
-                    showingLighthouse = true
+                ContentView { action in
+                    lighthouse = LighthousePresentation(action: action)
                 }
             } label: {
                 tabLabel("Home", selected: ImageNames.homeTabIconSelectedV5, unselected: ImageNames.homeTabIconUnselectedV5, tab: .home)
@@ -97,7 +97,7 @@ struct MainDockView: View {
             LongPressGesture(minimumDuration: Constants.longPressDuration)
                 .onEnded { _ in
                     BrightHaptic.medium.play()
-                    showingLighthouse = true
+                    lighthouse = LighthousePresentation(action: nil)
                 }
         )
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -135,4 +135,9 @@ struct MainDockView: View {
 
 #Preview {
     MainDockView()
+}
+
+private struct LighthousePresentation: Identifiable {
+    let id = UUID()
+    let action: LighthouseAction?
 }

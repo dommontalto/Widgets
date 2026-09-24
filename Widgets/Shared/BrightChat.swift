@@ -18,6 +18,7 @@ nonisolated struct BrightChatMessage<Payload>: Identifiable, Equatable {
     }
 
     let id = UUID()
+    let date = Date()
     let kind: Kind
     let text: String
     var payload: Payload?

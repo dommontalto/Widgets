@@ -13,6 +13,7 @@ struct VaultClinicSheet: View {
 
     @State private var selectedCategoryId: String?
     @State private var selectedTest: VaultClinicTest?
+    @State private var showsWebsite = false
 
     private var tests: [VaultClinicTest] {
         guard let selectedCategoryId else { return clinic.tests }
@@ -24,7 +25,7 @@ struct VaultClinicSheet: View {
             horizontalPadding: .spacing0x,
             trailing: {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Visit Website") {}
+                    Button("Visit") { showsWebsite = true }
                 }
             },
             content: {
@@ -49,6 +50,10 @@ struct VaultClinicSheet: View {
                 }
             }
         )
+        .sheet(isPresented: $showsWebsite) {
+            SafariView(url: clinic.website) { showsWebsite = false }
+                .ignoresSafeArea()
+        }
     }
 
     private var header: some View {

@@ -42,7 +42,8 @@ struct WaypointGauge: View {
                 }
 
             dot
-                .offset(point(radius: Constants.radius))
+                .offset(y: -Constants.radius)
+                .rotationEffect(.degrees(bearing.degrees))
 
             BrightText(bearing.label, size: .standout3, color: bearing.color)
                 .offset(point(radius: Constants.radius + Constants.labelGap))
@@ -60,17 +61,11 @@ struct WaypointGauge: View {
         .frame(width: Constants.frameSize, height: Constants.diameter + Constants.lineWidth)
     }
 
-    @ViewBuilder private var dot: some View {
-        if bearing == .north {
-            Circle()
-                .strokeBorder(bearing.color, lineWidth: Constants.ringWidth)
-                .background(Circle().fill(Color.defaultBackground))
-                .frame(width: Constants.dotSize, height: Constants.dotSize)
-        } else {
-            Circle()
-                .fill(bearing.color)
-                .frame(width: Constants.dotSize, height: Constants.dotSize)
-        }
+    private var dot: some View {
+        Circle()
+            .fill(bearing == .north ? Color.defaultBackground : bearing.color)
+            .overlay(Circle().strokeBorder(bearing.color, lineWidth: Constants.ringWidth))
+            .frame(width: Constants.dotSize, height: Constants.dotSize)
     }
 
     private var stroke: StrokeStyle {

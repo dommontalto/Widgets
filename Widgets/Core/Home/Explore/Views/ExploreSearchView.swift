@@ -43,6 +43,8 @@ struct ExploreSearchView: View {
 private struct ExploreSuggestionRow: View {
     let clinic: ExploreSearchClinic
 
+    @State private var showsWebsite = false
+
     var body: some View {
         HStack(spacing: .spacing105x) {
             ExploreClinicLogo(clinic: clinic)
@@ -58,7 +60,11 @@ private struct ExploreSuggestionRow: View {
 
             Spacer(minLength: .spacing0x)
 
-            BrightPillButton("Visit", buttonSize: .small) {}
+            BrightPillButton("Visit", buttonSize: .small) { showsWebsite = true }
+                .sheet(isPresented: $showsWebsite) {
+                    SafariView(url: clinic.website) { showsWebsite = false }
+                        .ignoresSafeArea()
+                }
         }
         .padding(.leading, .spacing1x)
         .padding(.trailing, .spacing2x)

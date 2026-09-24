@@ -19,6 +19,7 @@ struct LighthouseScreen: View {
     // by the screen underneath, so it stays off across launches until switched
     // back on.
     @Binding var showOnboarding: Bool
+    var action: LighthouseAction?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -211,6 +212,7 @@ struct LighthouseScreen: View {
             attachments: $attachments,
             dictation: dictation,
             resetCount: chatResetCount,
+            action: action,
             onDismiss: { dismiss() },
             onThoughtProcess: showThoughtProcess,
             onAttach: { attachmentSource = $0 }

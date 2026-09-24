@@ -10,6 +10,7 @@ import SwiftUI
 struct ExploreView: View {
     @State private var searchText = ""
     @State private var selectedAgent: ExploreAgent?
+    @State private var shownClinic: ExploreClinic?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
@@ -91,30 +92,46 @@ struct ExploreView: View {
     private var clinics: some View {
         HStack(alignment: .top, spacing: .spacing2x) {
             ForEach(ExploreClinic.demo) { clinic in
-                VStack(alignment: .leading, spacing: .spacing1x) {
-                    clinic.background
-                        .aspectRatio(1, contentMode: .fit)
-                        .overlay {
-                            Image(clinic.logo)
-                                .resizable()
-                                .scaledToFit()
-                                .padding(.spacing3x)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
-
-                    BrightText(clinic.name, size: .body1, color: .semiLightTextColor)
-                        .lineLimit(1)
-                        .padding(.leading, .spacing1x)
+                Button {
+                    shownClinic = clinic
+                } label: {
+                    clinicTile(clinic)
                 }
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.plain)
             }
         }
+        .sheet(item: $shownClinic) { clinic in
+            SafariView(url: clinic.website) { shownClinic = nil }
+                .ignoresSafeArea()
+        }
+    }
+
+    private func clinicTile(_ clinic: ExploreClinic) -> some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            clinic.background
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    Image(clinic.logo)
+                        .resizable()
+                        .scaledToFit()
+                        .padding(.spacing3x)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+
+            BrightText(clinic.name, size: .body1, color: .semiLightTextColor)
+                .lineLimit(1)
+                .padding(.leading, .spacing1x)
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
     }
 }
 
 // A sponsored clinic: its artwork, an Ad badge, and a frosted footer to visit it.
 private struct ExploreAdCard: View {
     let ad: ExploreAd
+
+    @State private var showsWebsite = false
 
     var body: some View {
         Color.clear
@@ -144,13 +161,17 @@ private struct ExploreAdCard: View {
 
             Spacer(minLength: .spacing0x)
 
-            BrightPillButton("Visit", buttonSize: .small) {}
+            BrightPillButton("Visit", buttonSize: .small) { showsWebsite = true }
         }
         .padding(.horizontal, .spacing3x)
         .frame(height: Constants.footerHeight)
         .background(.ultraThinMaterial.opacity(.veryHighOpacity))
         .background(Color.black.opacity(.veryLowOpacity))
         .environment(\.colorScheme, .dark)
+        .sheet(isPresented: $showsWebsite) {
+            SafariView(url: ad.website) { showsWebsite = false }
+                .ignoresSafeArea()
+        }
     }
 
     private enum Constants {

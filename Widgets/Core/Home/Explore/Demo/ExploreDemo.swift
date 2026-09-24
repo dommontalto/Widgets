@@ -7,25 +7,7 @@
 
 import SwiftUI
 
-struct ExploreAgent: Identifiable {
-    enum Mark {
-        case asset(String)
-        case symbol(String)
-    }
-
-    let title: String
-    let systemImage: String
-    let name: String
-    let blurb: String
-    let mark: Mark
-    let background: String
-    let tint: Color
-    let examples: [ExerciseProgramChatExample]
-    let suggestions: [String]
-    let reply: String
-
-    var id: String { title }
-
+extension ExploreAgent {
     static let demo = [
         ExploreAgent(
             title: "Find Products",
@@ -40,7 +22,12 @@ struct ExploreAgent: Identifiable {
                 ExerciseProgramChatExample("applewatch", "Compare wearables that track HRV."),
                 ExerciseProgramChatExample("takeoutbag.and.cup.and.straw", "Meal delivery that fits my macros."),
             ],
-            suggestions: ["Supplements", "Wearables", "Meal services", "Under $50"],
+            suggestions: [
+                ExerciseProgramChatExample("pills", "Supplements"),
+                ExerciseProgramChatExample("applewatch", "Wearables"),
+                ExerciseProgramChatExample("takeoutbag.and.cup.and.straw", "Meal services"),
+                ExerciseProgramChatExample("dollarsign.circle", "Under $50"),
+            ],
             reply: "Here are a few places that stock what you're after, based on your goals:"
         ),
         ExploreAgent(
@@ -50,13 +37,18 @@ struct ExploreAgent: Identifiable {
             blurb: "This agent will help you find health services in your area.",
             mark: .asset(ImageNames.exploreAgentStickerV5),
             background: ImageNames.exploreServiceAgentBackgroundV5,
-            tint: .defaultOrange,
+            tint: .defaultYellow,
             examples: [
                 ExerciseProgramChatExample("figure.run", "Find a sports physio near me."),
                 ExerciseProgramChatExample("bed.double", "Find a sleep specialist in Sydney."),
                 ExerciseProgramChatExample("drop", "Compare blood testing options nearby."),
             ],
-            suggestions: ["Near me", "Bulk billed", "Telehealth", "This week"],
+            suggestions: [
+                ExerciseProgramChatExample("location", "Near me"),
+                ExerciseProgramChatExample("creditcard", "Bulk billed"),
+                ExerciseProgramChatExample("video", "Telehealth"),
+                ExerciseProgramChatExample("calendar", "This week"),
+            ],
             reply: "I found these clinics near you that match what you asked for:"
         ),
         ExploreAgent(
@@ -72,24 +64,18 @@ struct ExploreAgent: Identifiable {
                 ExerciseProgramChatExample("heart.text.square", "Track studies on resting heart rate."),
                 ExerciseProgramChatExample("moon.zzz", "Alert me to new sleep research."),
             ],
-            suggestions: ["Weekly digest", "My genome", "My biomarkers", "Trusted sources"],
+            suggestions: [
+                ExerciseProgramChatExample("newspaper", "Weekly digest"),
+                ExerciseProgramChatExample("dna", "My genome"),
+                ExerciseProgramChatExample("drop", "My biomarkers"),
+                ExerciseProgramChatExample("checkmark.seal", "Trusted sources"),
+            ],
             reply: "Got it. While I watch for new studies, these clinics work in that area:"
         ),
     ]
 }
 
-struct ExploreBrowseCategory: Identifiable {
-    enum Mark {
-        case symbol(String)
-        case testing(VaultTestCategory)
-    }
-
-    let id: String
-    let name: String
-    let clinicCount: Int
-    let backgroundImage: String
-    let mark: Mark
-
+extension ExploreBrowseCategory {
     static let demo: [ExploreBrowseCategory] = ([
         ExploreBrowseCategory(
             id: "nutrition",
@@ -123,12 +109,8 @@ struct ExploreBrowseCategory: Identifiable {
     }
 }
 
-struct ExploreClinic: Identifiable {
-    let name: String
-    let logo: String
-    let background: Color
-
-    var id: String { name }
+extension ExploreClinic {
+    var website: URL { .demoWebsite(for: name) }
 
     static let demo = [
         ExploreClinic(name: "Commons Health Club", logo: ImageNames.exploreCommonsHealthClubV5, background: Color(hex: "#296712")),
@@ -136,10 +118,8 @@ struct ExploreClinic: Identifiable {
     ]
 }
 
-struct ExploreAd {
-    let title: String
-    let subtitle: String
-    let image: String
+extension ExploreAd {
+    var website: URL { .demoWebsite(for: title) }
 
     static let demo = ExploreAd(
         title: "The Microbiome Clinic",
@@ -148,19 +128,8 @@ struct ExploreAd {
     )
 }
 
-struct ExploreSearchClinic: Identifiable {
-    let name: String
-    let address: String
-    let logo: String
-    let logoBackground: Color
-    var isAd = false
-    var services: [String] = []
-
-    var id: String { name }
-
-    func matches(_ query: String) -> Bool {
-        ([name, address] + services).contains { $0.localizedStandardContains(query) }
-    }
+extension ExploreSearchClinic {
+    var website: URL { .demoWebsite(for: name) }
 
     static let suggestions = [
         ExploreSearchClinic(
@@ -207,5 +176,23 @@ struct ExploreSearchClinic: Identifiable {
             logoBackground: .black,
             services: ["Osteopathy", "Enhanced Primary Care", "Telehealth", "Musculoskeletal", "Orthopaedic"]
         ),
+    ]
+}
+
+extension URL {
+    static func demoWebsite(for name: String) -> URL {
+        URL(string: demoWebsites[name] ?? "https://thebrightapp.xyz")!
+    }
+
+    private static let demoWebsites = [
+        "Commons Health Club": "https://thecommonshealthclub.com.au",
+        "The Skin Hospital": "https://www.skinhospital.edu.au",
+        "The Microbiome Clinic": "https://themicrobiomeclinic.com.au",
+        "Little Lungs Sleep Clinic": "https://www.littlelungs.com.au",
+        "Move Clinic": "https://moveclinic.com.au/waterloo/",
+        "The Nutrition Clinic": "https://www.nutritionclinic.com.au",
+        "FXNL Rehab": "https://www.fxnlrehab.com.au",
+        "East Point Recovery": "https://www.eprecovery.com.au",
+        "Longevity Clinic": "https://www.progressivespecialists.com.au/longevity-consultation",
     ]
 }

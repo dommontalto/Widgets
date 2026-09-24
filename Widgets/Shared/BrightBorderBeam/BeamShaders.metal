@@ -92,6 +92,44 @@ static float borderPathFraction(float2 rel, float2 halfSize, float2 radii) {
 }
 
 // src-over composite of premultiplied colors.
+static float3 srgbToLinear(float3 c) {
+    return select(pow((c + 0.055) / 1.055, 2.4), c / 12.92, c <= 0.04045);
+}
+
+static float3 linearToSrgb(float3 c) {
+    c = clamp(c, 0.0, 1.0);
+    return select(1.055 * pow(c, 1.0 / 2.4) - 0.055, c * 12.92, c <= 0.0031308);
+}
+
+static float3 srgbToOklab(float3 c) {
+    float3 l = srgbToLinear(c);
+    float3 lms = float3(
+        0.4122214708 * l.r + 0.5363325363 * l.g + 0.0514459929 * l.b,
+        0.2119034982 * l.r + 0.6806995451 * l.g + 0.1073969566 * l.b,
+        0.0883024619 * l.r + 0.2817188376 * l.g + 0.6299787005 * l.b
+    );
+    lms = pow(max(lms, 0.0), 1.0 / 3.0);
+    return float3(
+        0.2104542553 * lms.x + 0.7936177850 * lms.y - 0.0040720468 * lms.z,
+        1.9779984951 * lms.x - 2.4285922050 * lms.y + 0.4505937099 * lms.z,
+        0.0259040371 * lms.x + 0.7827717662 * lms.y - 0.8086757660 * lms.z
+    );
+}
+
+static float3 oklabToSrgb(float3 lab) {
+    float3 lms = float3(
+        lab.x + 0.3963377774 * lab.y + 0.2158037573 * lab.z,
+        lab.x - 0.1055613458 * lab.y - 0.0638541728 * lab.z,
+        lab.x - 0.0894841775 * lab.y - 1.2914855480 * lab.z
+    );
+    lms = lms * lms * lms;
+    return linearToSrgb(float3(
+        4.0767416621 * lms.x - 3.3077115913 * lms.y + 0.2309699292 * lms.z,
+        -1.2684380046 * lms.x + 2.6097574011 * lms.y - 0.3413193965 * lms.z,
+        -0.0041960863 * lms.x - 0.5003569950 * lms.y + 1.7076912954 * lms.z
+    ));
+}
+
 static float4 srcOver(float4 src, float4 dst) {
     return src + dst * (1.0 - src.a);
 }
@@ -207,38 +245,27 @@ static float3 borderPathCoord(float2 rel, float2 halfSize, float r) {
     }
     if (mask <= 0.001) return half4(0.0);
 
-    // Blob stack. The blobs only lend their colour: each pixel takes the
-    // coverage-weighted mix of the blobs reaching it at one flat alpha, the
-    // strongest in the stack. Compositing them with their own falloffs made
-    // the beam flare where it crossed a blob and fade in the gaps between.
-    // In the gaps no blob reaches, an inverse-distance blend of every blob
-    // takes over — a nearest-blob pick there cut hard lines between colours.
+    // Blob stack. The blobs only lend their colour, at one flat alpha — the
+    // strongest in the stack. The colour is an inverse-square blend of every
+    // blob, mixed in OKLab so neighbouring hues fade through each other
+    // rather than meeting at a line or dipping through mud.
     float4 acc = float4(0.0);
     int nBlobs = blobCount / 8;
     if (nBlobs > 0) {
-        float3 rgbSum = float3(0.0);
+        float3 labSum = float3(0.0);
         float wSum = 0.0;
-        float3 idwSum = float3(0.0);
-        float idwWeight = 0.0;
         float aMax = 0.0;
         for (int i = 0; i < nBlobs; i++) {
             device const float *e = blobs + i * 8;
             float2 radii = float2(max(e[0], 0.001), max(e[1], 0.001));
             float2 c = float2(e[2], e[3]) * size;
-            float d = length((position - c) / radii);
-            float3 rgb = float3(e[4], e[5], e[6]);
-            float w = e[7] * clamp(1.0 - d, 0.0, 1.0);
-            rgbSum += rgb * w;
+            float2 q = (position - c) / radii;
+            float w = e[7] / max(dot(q, q), 0.0001);
+            labSum += srgbToOklab(float3(e[4], e[5], e[6])) * w;
             wSum += w;
-            float d2 = max(d * d, 0.0001);
-            float iw = e[7] / (d2 * d2);
-            idwSum += rgb * iw;
-            idwWeight += iw;
             aMax = max(aMax, e[7]);
         }
-        float3 idwRGB = idwWeight > 0.0 ? idwSum / idwWeight : float3(0.0);
-        float3 blobRGB = wSum > 0.0 ? rgbSum / wSum : idwRGB;
-        float3 rgb = mix(idwRGB, blobRGB, smoothstep(0.0, 0.15, wSum));
+        float3 rgb = wSum > 0.0 ? oklabToSrgb(labSum / wSum) : float3(0.0);
         acc = float4(rgb * aMax, aMax);
     }
 

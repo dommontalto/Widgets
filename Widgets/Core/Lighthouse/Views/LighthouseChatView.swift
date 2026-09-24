@@ -7,7 +7,17 @@
 
 import SwiftUI
 
-typealias LighthouseChatMessage = BrightChatMessage<[LighthouseStoryItem]>
+typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
+
+enum LighthouseAction {
+    case createCheckIn
+
+    var prompt: String {
+        switch self {
+        case .createCheckIn: "Create checkin"
+        }
+    }
+}
 
 // A demo of Lighthouse as a chat: the shared thread over a frosted wash, the
 // suggestion chips above the input, and canned replies after a beat.
@@ -21,6 +31,7 @@ struct LighthouseChatView: View {
     let dictation: BrightDictation
     // Each change clears the thread for a new chat.
     var resetCount = 0
+    var action: LighthouseAction?
     let onDismiss: () -> Void
     let onThoughtProcess: () -> Void
     let onAttach: (BrightChatAttachmentSource) -> Void
@@ -59,7 +70,7 @@ struct LighthouseChatView: View {
             onAttach: onAttach,
             dictation: dictation,
             response: { message in
-                LighthouseChatResponse(text: message.text, items: message.payload ?? [], onSubmit: send)
+                LighthouseChatResponse(text: message.text, items: message.payload?.items ?? [], checkIn: message.payload?.checkIn, date: message.date, onSubmit: send)
             },
             modelPicker: {
                 HStack(spacing: .spacing1x) {
@@ -84,6 +95,7 @@ struct LighthouseChatView: View {
             Color.clear.frame(height: .spacing2x)
         }
         .onDisappear { replyTask?.cancel() }
+        .task { run(action) }
         .onChange(of: resetCount) { _, _ in
             replyTask?.cancel()
             replyTask = nil
@@ -241,7 +253,14 @@ struct LighthouseChatView: View {
             attachments = []
             isThinking = true
         }
-        replyTask = Task { await reply() }
+        let isCheckIn = text.trimmingCharacters(in: .whitespacesAndNewlines) == LighthouseAction.createCheckIn.prompt
+        replyTask = Task {
+            if isCheckIn {
+                await replyToCheckIn()
+            } else {
+                await reply()
+            }
+        }
     }
 
     private func reply() async {
@@ -257,13 +276,13 @@ struct LighthouseChatView: View {
             LighthouseChatMessage(
                 kind: .response,
                 text: LighthouseDemo.sleepPartOne,
-                payload: LighthouseDemo.sleepItems,
+                payload: LighthouseResponsePayload(items: LighthouseDemo.sleepItems),
                 thoughtSeconds: Int(thinkingSeconds.rounded())
             )
         } else {
             LighthouseChatMessage(
                 kind: .assistant,
-                text: Constants.replies[(replyIndex - 1) % Constants.replies.count],
+                text: LighthouseDemo.replies[(replyIndex - 1) % LighthouseDemo.replies.count],
                 thoughtSeconds: Int(thinkingSeconds.rounded())
             )
         }
@@ -271,6 +290,30 @@ struct LighthouseChatView: View {
         withAnimation(.brightSnappy) {
             isThinking = false
             messages.append(message)
+        }
+    }
+
+    private func run(_ action: LighthouseAction?) {
+        guard let action, messages.isEmpty else { return }
+        send(action.prompt)
+    }
+
+    private func replyToCheckIn() async {
+        let thinkingSeconds = Double.random(in: Constants.thinkingRange)
+        do {
+            try await Task.sleep(for: .seconds(thinkingSeconds))
+        } catch {
+            return
+        }
+        let review = LighthouseDemo.weeklyClimbingReview
+        withAnimation(.brightSnappy) {
+            isThinking = false
+            messages.append(LighthouseChatMessage(
+                kind: .response,
+                text: review.title,
+                payload: LighthouseResponsePayload(checkIn: review),
+                thoughtSeconds: Int(thinkingSeconds.rounded())
+            ))
         }
     }
 
@@ -295,11 +338,6 @@ struct LighthouseChatView: View {
         ]
         static let welcome = "Welcome to Lighthouse. What would you like to do?"
         static let thinkingRange = 6.0...9.0
-        static let replies = [
-            "Your deep sleep dropped to 48 minutes last night, about 30% under your monthly average. The two late meals this week line up with the worst nights.",
-            "Recovery is trending up. Keep the easy cardio on rest days and hold strength volume where it is for another week before adding load.",
-            "Resting heart rate has been climbing since Tuesday. That usually shows up two days before you feel run down, so an early night tonight would help.",
-        ]
     }
 }
 

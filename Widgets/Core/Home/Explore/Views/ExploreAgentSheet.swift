@@ -23,8 +23,6 @@ struct ExploreAgentSheet: View {
     var body: some View {
         BrightPageSheetView(
             horizontalPadding: .spacing0x,
-            showBackButton: isConfiguring,
-            backButtonCallback: { withAnimation(.brightEaseInOut) { isConfiguring = false } },
             trailing: {
                 ToolbarItem(placement: .principal) {
                     ExerciseInlineTitle(file: #file)
@@ -108,8 +106,12 @@ struct ExploreAgentSheet: View {
             isThinking: isThinking,
             isBusy: isThinking,
             isTyping: $isTyping,
-            emptyState: ExerciseProgramChatEmptyState(title: agent.name, examples: agent.examples),
-            suggestions: ExerciseProgramChatSuggestions(prompts: agent.suggestions, onTap: send),
+            emptyState: ExerciseProgramChatEmptyState(title: agent.name, examples: agent.examples, tint: .textColor),
+            suggestions: ExerciseProgramChatSuggestions(
+                prompts: agent.suggestions.map(\.prompt),
+                symbols: Dictionary(uniqueKeysWithValues: agent.suggestions.map { ($0.prompt, $0.symbol) }),
+                onTap: send
+            ),
             onSend: send,
             onStop: stop,
             bubbleTint: agent.tint

@@ -23,7 +23,7 @@ struct WaypointView: View {
             adjustments
         }
         .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing3x)
+        .padding(.top, .spacing4x)
         .padding(.bottom, .spacing12x)
     }
 
@@ -115,6 +115,11 @@ struct WaypointView: View {
                 }
             } label: {
                 HStack(spacing: .spacing1x) {
+                    Image(systemName: group.symbol)
+                        .font(.standardSFPro(size: .subheading2, weight: .regular))
+                        .foregroundStyle(Color.textColor)
+                        .frame(width: Constants.titleIconSize, height: Constants.titleIconSize)
+
                     BrightText(group.title, size: .body1, weight: .regular)
 
                     Spacer()
@@ -149,7 +154,7 @@ struct WaypointView: View {
 
                 Spacer()
 
-                BrightPillButton("View", buttonSize: .small) {}
+                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {}
             }
 
             switch adjustment.detail {
@@ -226,6 +231,7 @@ struct WaypointView: View {
 
     private enum Constants {
         static let countSize: CGFloat = 25
+        static let titleIconSize: CGFloat = .spacing4x
         static let cardHeight: CGFloat = 136
         static let activitySize: CGFloat = 36
         static let activityBorder: CGFloat = 3
@@ -269,10 +275,11 @@ private struct WaypointAdjustment: Identifiable {
 private struct WaypointAdjustmentGroup: Identifiable {
     let id: String
     let title: String
+    let symbol: String
     let adjustments: [WaypointAdjustment]
 
     static let demo: [WaypointAdjustmentGroup] = [
-        WaypointAdjustmentGroup(id: "exercise", title: "Exercise", adjustments: [
+        WaypointAdjustmentGroup(id: "exercise", title: "Exercise", symbol: "figure.walk", adjustments: [
             WaypointAdjustment(
                 id: "session",
                 title: "S&C session 1",
@@ -286,7 +293,7 @@ private struct WaypointAdjustmentGroup: Identifiable {
                 change: "Increased distance by 1.2 KM"
             ),
         ]),
-        WaypointAdjustmentGroup(id: "nutrition", title: "Nutrition", adjustments: [
+        WaypointAdjustmentGroup(id: "nutrition", title: "Nutrition", symbol: "fork.knife", adjustments: [
             WaypointAdjustment(
                 id: "protein",
                 title: "Protein goal Increased",

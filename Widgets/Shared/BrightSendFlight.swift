@@ -134,8 +134,8 @@ private struct BrightSendDestination: ViewModifier {
         .compositingGroup()
         // The thread takes the bubble's weight as it arrives: it dips and
         // springs back, so the message reads as having been dropped in.
-        .keyframeAnimator(initialValue: CGFloat.zero, trigger: isHeld) { [height = flight.fieldFrame.height] content, progress in
-            content.offset(y: height * Constants.pushFraction * progress)
+        .keyframeAnimator(initialValue: CGFloat.zero, trigger: isHeld) { [height = flight.fieldFrame.height, push = Constants.pushFraction] content, progress in
+            content.offset(y: height * push * progress)
         } keyframes: { _ in
             CubicKeyframe(1, duration: Constants.pushDuration)
             CubicKeyframe(0, duration: Constants.pushDuration)

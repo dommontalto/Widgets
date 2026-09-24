@@ -7,70 +7,8 @@
 
 import SwiftUI
 
-nonisolated struct LighthouseHistoryEntry: Identifiable {
-    let id = UUID()
-    var title: String
-    let when: String
-}
-
-nonisolated enum LighthouseCheckInFrequency: String, CaseIterable, Identifiable, Hashable {
-    case daily = "Daily"
-    case weekly = "Weekly"
-    case monthly = "Monthly"
-
-    var id: String { rawValue }
-    var title: String { rawValue }
-}
-
-nonisolated enum LighthouseWeekday: Int, CaseIterable, Identifiable, Hashable {
-    case sunday = 1
-    case monday, tuesday, wednesday, thursday, friday, saturday
-
-    var id: Int { rawValue }
-
-    var title: String { date.formatted(.brightWeekdayShort) }
-
-    private var date: Date {
-        let calendar = Calendar.autoupdatingCurrent
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: .now)?.start ?? .now
-        return calendar.date(bySetting: .weekday, value: rawValue, of: weekStart) ?? weekStart
-    }
-}
-
-nonisolated struct LighthouseCheckIn: Identifiable, Hashable {
-    let id = UUID()
-    var title: String
-    var frequency: LighthouseCheckInFrequency
-    var weekday: LighthouseWeekday
-    var dayOfMonth: Int
-    var time: Date
-    var detail: String
-    var isOn: Bool
-}
-
-nonisolated struct LighthouseConfiguration: Identifiable {
-    let id = UUID()
-    let title: String
-    let created: String
-    let widgets: [String]
-    var isOn: Bool
-}
-
 // Hard-coded Lighthouse content — a sleep reply, past chats and check-ins — so
 // the screens fill without a backend.
-// One step of a reply's reasoning. `depth` nests it under the step before,
-// and the waypoint is the goal the chain arrives at.
-nonisolated struct LighthouseThoughtStep: Identifiable {
-    let id = UUID()
-    let symbol: String
-    let title: String
-    // What the model was doing at this step, in its own words.
-    let detail: String
-    var tint: Color = .semiLightTextColor
-    var depth = 0
-    var isWaypoint = false
-}
-
 enum LighthouseDemo {
     static let thoughtSteps = [
         LighthouseThoughtStep(
@@ -210,4 +148,42 @@ enum LighthouseDemo {
         LighthouseStoryItem(text: "Your heart rate was high while you poorly slept, meaning your body didn't have time to rest."),
         LighthouseStoryItem(text: "And now it's 11am and you haven't properly rested."),
     ]
+
+    static let followUpOptions = [
+        "No consistent workout routine",
+        "Following a set weekly schedule with specific days and muscle groups",
+        "Flexible with with my routine",
+    ]
+
+    static let replies = [
+        "Your deep sleep dropped to 48 minutes last night, about 30% under your monthly average. The two late meals this week line up with the worst nights.",
+        "Recovery is trending up. Keep the easy cardio on rest days and hold strength volume where it is for another week before adding load.",
+        "Resting heart rate has been climbing since Tuesday. That usually shows up two days before you feel run down, so an early night tonight would help.",
+    ]
+
+    static let weeklyClimbingReview = LighthouseCheckInReview(
+        title: "Weekly Climbing Review",
+        summary: "This week shows a balanced climbing journey. Your sleep quality has improved to an average of 7 hours per night, aiding recovery. You've maintained a steady intake of protein and carbs, effectively fuelling your workouts. Your sessions are consistent, focusing on strength and endurance, while stress and fatigue levels are manageable. Keep it up!",
+        sections: [
+            LighthouseCheckInReview.Section(title: "Workouts", findings: [
+                .init(text: "12/12 sessions completed", isOnTrack: true),
+                .init(text: "Quality of sessions dropped", isOnTrack: false),
+                .init(text: "High Fatigue", isOnTrack: false),
+                .init(text: "Low Readiness", isOnTrack: false),
+            ]),
+            LighthouseCheckInReview.Section(title: "Nutrition", findings: [
+                .init(text: "Nutrition is on point this week", isOnTrack: true),
+                .init(text: "Fat could drop by 10%", isOnTrack: false),
+            ]),
+            LighthouseCheckInReview.Section(title: "Sleep", findings: [
+                .init(text: "Sleep quality has been average this week", isOnTrack: false),
+                .init(text: "Lower recovery as a result", isOnTrack: false),
+            ]),
+        ],
+        followUps: [
+            "How can I adjust my schedule to improve results for next week?",
+            "What are some adjustments I can make to increase my recovery",
+            "Flexible with with my routine",
+        ]
+    )
 }

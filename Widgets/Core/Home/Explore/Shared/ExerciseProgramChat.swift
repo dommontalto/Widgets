@@ -52,10 +52,12 @@ nonisolated struct ExerciseProgramChatExample {
 nonisolated struct ExerciseProgramChatEmptyState {
     let title: String
     let examples: [ExerciseProgramChatExample]
+    let tint: Color?
 
-    init(title: String, examples: [ExerciseProgramChatExample]) {
+    init(title: String, examples: [ExerciseProgramChatExample], tint: Color? = nil) {
         self.title = title
         self.examples = examples
+        self.tint = tint
     }
 }
 
@@ -64,6 +66,7 @@ nonisolated struct ExerciseProgramChatEmptyState {
 struct ExerciseProgramChatSuggestions {
     var prompts: [String] = []
     var custom: [String] = []
+    var symbols: [String: String] = [:]
     var onTap: (String) -> Void
     var onAdd: ((String) -> Void)?
     var onDelete: ((String) -> Void)?
@@ -210,6 +213,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
     // prompt under the glyph for what it asks about, cycling together and
     // fading away with the first message.
     private func emptyStateView(_ state: ExerciseProgramChatEmptyState) -> some View {
+        let tint = state.tint ?? .defaultSlateBlue
         let example = state.examples.isEmpty
             ? nil
             : state.examples[promptIndex % state.examples.count]
@@ -218,12 +222,12 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             if let example {
                 Image(systemName: example.symbol)
                     .font(.system(size: Constants.exampleIconSize, weight: .light))
-                    .foregroundStyle(Color.defaultSlateBlue)
+                    .foregroundStyle(tint)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(height: Constants.exampleIconSize)
             }
 
-            BrightText(state.title, size: .huge205, color: .defaultSlateBlue)
+            BrightText(state.title, size: .huge205, color: tint)
                 .multilineTextAlignment(.center)
 
             if let example {
@@ -423,7 +427,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: .spacing105x) {
                     ForEach(suggestions.prompts, id: \.self) { prompt in
-                        BrightTag(title: prompt, systemImage: "sparkles", isSelected: true) {
+                        BrightTag(title: prompt, systemImage: suggestions.symbols[prompt] ?? "sparkles", isSelected: true) {
                             suggestions.onTap(prompt)
                         }
                         .disabled(isBusy)
