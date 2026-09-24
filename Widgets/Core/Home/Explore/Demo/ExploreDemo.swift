@@ -28,7 +28,14 @@ extension ExploreAgent {
                 ExerciseProgramChatExample("takeoutbag.and.cup.and.straw", "Meal services"),
                 ExerciseProgramChatExample("dollarsign.circle", "Under $50"),
             ],
-            reply: "Here are a few places that stock what you're after, based on your goals:"
+            reply: "Here are a few places that stock what you're after, based on your goals:",
+            steps: [
+                "Reading your request",
+                "Checking your goals and allergies",
+                "Searching stockists near you",
+                "Comparing prices and reviews",
+            ],
+            animation: .shelf
         ),
         ExploreAgent(
             title: "Find Services",
@@ -49,7 +56,14 @@ extension ExploreAgent {
                 ExerciseProgramChatExample("video", "Telehealth"),
                 ExerciseProgramChatExample("calendar", "This week"),
             ],
-            reply: "I found these clinics near you that match what you asked for:"
+            reply: "I found these clinics near you that match what you asked for:",
+            steps: [
+                "Reading your request",
+                "Checking your location",
+                "Searching clinics near you",
+                "Matching services to your goals",
+            ],
+            animation: .radar
         ),
         ExploreAgent(
             title: "Monitor Research",
@@ -70,43 +84,16 @@ extension ExploreAgent {
                 ExerciseProgramChatExample("drop", "My biomarkers"),
                 ExerciseProgramChatExample("checkmark.seal", "Trusted sources"),
             ],
-            reply: "Got it. While I watch for new studies, these clinics work in that area:"
+            reply: "Got it. While I watch for new studies, these clinics work in that area:",
+            steps: [
+                "Reading your request",
+                "Choosing journals to follow",
+                "Setting up weekly study alerts",
+                "Finding clinics in that area",
+            ],
+            animation: .scan
         ),
     ]
-}
-
-extension ExploreBrowseCategory {
-    static let demo: [ExploreBrowseCategory] = ([
-        ExploreBrowseCategory(
-            id: "nutrition",
-            name: "Nutrition",
-            clinicCount: 10,
-            backgroundImage: ImageNames.exploreNutritionBackgroundV5,
-            mark: .symbol("fork.knife")
-        ),
-        testing("gut", named: "Gut"),
-        testing("hormones", named: "Hormones"),
-        testing("metabolic", named: "Metabolic"),
-        testing("fertility", named: "Fertility"),
-        ExploreBrowseCategory(
-            id: "sleep",
-            name: "Sleep",
-            clinicCount: 15,
-            backgroundImage: ImageNames.exploreSleepBackgroundV5,
-            mark: .symbol("moon.fill")
-        ),
-    ] as [ExploreBrowseCategory?]).compactMap { $0 }
-
-    private static func testing(_ id: String, named name: String) -> ExploreBrowseCategory? {
-        guard let category = VaultTestCategory.named(id) else { return nil }
-        return ExploreBrowseCategory(
-            id: id,
-            name: name,
-            clinicCount: VaultTestingClinic.count(offering: id),
-            backgroundImage: category.backgroundName,
-            mark: .testing(category)
-        )
-    }
 }
 
 extension ExploreClinic {

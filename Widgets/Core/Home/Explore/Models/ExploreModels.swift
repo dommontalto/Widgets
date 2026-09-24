@@ -23,21 +23,15 @@ struct ExploreAgent: Identifiable {
     let examples: [ExerciseProgramChatExample]
     let suggestions: [ExerciseProgramChatExample]
     let reply: String
+    let steps: [String]
+    let animation: ExploreAgentAnimation.Style
 
     var id: String { title }
 }
 
-struct ExploreBrowseCategory: Identifiable {
-    enum Mark {
-        case symbol(String)
-        case testing(VaultTestCategory)
-    }
-
-    let id: String
-    let name: String
-    let clinicCount: Int
-    let backgroundImage: String
-    let mark: Mark
+struct ExploreAgentReply {
+    let query: String
+    let clinics: [ExploreSearchClinic]
 }
 
 struct ExploreClinic: Identifiable {

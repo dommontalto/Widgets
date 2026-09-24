@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-typealias ExploreAgentMessage = ExerciseProgramChatMessage<[ExploreSearchClinic]>
+typealias ExploreAgentMessage = ExerciseProgramChatMessage<ExploreAgentReply>
 
 // Setting up an agent: its intro over the agent's own wash, then Configure
 // opens a chat with it, the way a guided program is built.
@@ -17,8 +17,8 @@ struct ExploreAgentSheet: View {
     @FocusState private var isTyping: Bool
     @State private var isConfiguring = false
     @State private var messages = [ExploreAgentMessage]()
-    @State private var isThinking = false
-    @State private var replyTask: Task<Void, Never>?
+    @State private var creatingCall: UUID?
+    @State private var finishedCalls = Set<UUID>()
 
     var body: some View {
         BrightPageSheetView(
@@ -44,7 +44,6 @@ struct ExploreAgentSheet: View {
                 .animation(.brightEaseInOut, value: isConfiguring)
             }
         )
-        .onDisappear { replyTask?.cancel() }
     }
 
     // The artwork stays behind both steps, dimmed under the chat so its text reads.
@@ -103,8 +102,8 @@ struct ExploreAgentSheet: View {
     private var chat: some View {
         ExerciseProgramChat(
             messages: messages,
-            isThinking: isThinking,
-            isBusy: isThinking,
+            isThinking: false,
+            isBusy: creatingCall != nil,
             isTyping: $isTyping,
             emptyState: ExerciseProgramChatEmptyState(title: agent.name, examples: agent.examples, tint: .textColor),
             suggestions: ExerciseProgramChatSuggestions(
@@ -121,51 +120,64 @@ struct ExploreAgentSheet: View {
     }
 
     private func response(_ message: ExploreAgentMessage) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(message.text, size: .body1)
-                .lineSpacing(.lineSpacingMedium)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        let isFinished = finishedCalls.contains(message.id)
+        return VStack(alignment: .leading, spacing: .spacing3x) {
+            if let reply = message.payload {
+                ExploreAgentCallCard(agent: agent, query: reply.query, isFinished: isFinished) {
+                    finish(message.id)
+                }
 
-            ForEach(message.payload ?? []) { clinic in
-                ExploreResultCard(clinic: clinic)
+                if isFinished {
+                    VStack(alignment: .leading, spacing: .spacing2x) {
+                        BrightText(message.text, size: .body1)
+                            .lineSpacing(.lineSpacingMedium)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        ForEach(reply.clinics) { clinic in
+                            ExploreResultCard(clinic: clinic, chipTint: agent.tint, chipFill: agent.tint.opacity(.ultraLowOpacity))
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
             }
+        }
+        .animation(.brightSnappy, value: isFinished)
+    }
+
+    private func finish(_ id: UUID) {
+        finishedCalls.insert(id)
+        if creatingCall == id {
+            creatingCall = nil
         }
     }
 
-    // The demo answers after a beat with the clinics that match what was asked,
-    // or all of them when nothing does.
+    // The demo creates the agent straight away, then shows the clinics that
+    // match what was asked, or all of them when nothing does.
     private func send(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isThinking else { return }
+        guard !trimmed.isEmpty, creatingCall == nil else { return }
+        let hits = ExploreSearchClinic.results.filter { $0.matches(trimmed) }
+        let reply = ExploreAgentMessage(
+            kind: .response,
+            text: agent.reply,
+            payload: ExploreAgentReply(query: trimmed, clinics: hits.isEmpty ? ExploreSearchClinic.results : hits),
+            dismissesKeyboard: true
+        )
         messages.append(ExploreAgentMessage(kind: .user, text: trimmed))
-        isThinking = true
-        replyTask = Task {
-            do {
-                try await Task.sleep(for: .seconds(Constants.replyDelay))
-            } catch {
-                return
-            }
-            let hits = ExploreSearchClinic.results.filter { $0.matches(trimmed) }
-            withAnimation(.brightSnappy) {
-                isThinking = false
-                messages.append(ExploreAgentMessage(
-                    kind: .response,
-                    text: agent.reply,
-                    payload: hits.isEmpty ? ExploreSearchClinic.results : hits,
-                    dismissesKeyboard: true
-                ))
-            }
+        withAnimation(.brightSnappy) {
+            creatingCall = reply.id
+            messages.append(reply)
         }
     }
 
     private func stop() {
-        replyTask?.cancel()
-        isThinking = false
+        if let creatingCall {
+            finish(creatingCall)
+        }
     }
 
     private enum Constants {
         static let blurbWidth: CGFloat = 256
-        static let replyDelay: TimeInterval = 1.6
         static let washBlur: CGFloat = .spacing4x
         static let washOverscan: CGFloat = 1.2
     }

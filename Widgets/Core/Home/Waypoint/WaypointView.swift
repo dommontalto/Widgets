@@ -14,6 +14,7 @@ struct WaypointView: View {
     @State private var collapsedGroups: Set<String> = []
     @State private var bounce = WaypointBounce()
     @State private var stepsBack = false
+    @State private var shownAdjustment: WaypointAdjustment?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing4x) {
@@ -25,6 +26,10 @@ struct WaypointView: View {
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing4x)
         .padding(.bottom, .spacing12x)
+        .sheet(item: $shownAdjustment) { adjustment in
+            WaypointAdjustmentSheet(adjustment: adjustment)
+                .presentationDetents([.large])
+        }
     }
 
     private var header: some View {
@@ -154,7 +159,9 @@ struct WaypointView: View {
 
                 Spacer()
 
-                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {}
+                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward") {
+                    shownAdjustment = adjustment
+                }
             }
 
             switch adjustment.detail {
@@ -270,6 +277,17 @@ private struct WaypointAdjustment: Identifiable {
     let title: String
     let detail: Detail
     let change: String?
+    let before: String
+    let after: String
+    let reason: String
+    let rows: [WaypointDetailRow]
+}
+
+private struct WaypointDetailRow: Identifiable {
+    let label: String
+    let value: String
+
+    var id: String { label }
 }
 
 private struct WaypointAdjustmentGroup: Identifiable {
@@ -284,13 +302,32 @@ private struct WaypointAdjustmentGroup: Identifiable {
                 id: "session",
                 title: "S&C session 1",
                 detail: .activities([.strength, .run]),
-                change: "Increased distance by 1.2 KM"
+                change: "Increased distance by 1.2 KM",
+                before: "3.8 KM",
+                after: "5.0 KM",
+                reason: "You finished last week's runs with your heart rate well inside zone 2 and recovery above 70 every morning, so there's room to build distance towards 20 KM without adding fatigue.",
+                rows: [
+                    WaypointDetailRow(label: "Day", value: "Tuesday"),
+                    WaypointDetailRow(label: "Strength", value: "Lower body, 45 min"),
+                    WaypointDetailRow(label: "Run", value: "5.0 KM easy"),
+                    WaypointDetailRow(label: "Target pace", value: "6:10 /KM"),
+                    WaypointDetailRow(label: "Heart rate", value: "Zone 2"),
+                ]
             ),
             WaypointAdjustment(
                 id: "cycle",
                 title: "Long Cycle",
                 detail: .activities([.cycle]),
-                change: "Increased distance by 1.2 KM"
+                change: "Increased distance by 1.2 KM",
+                before: "28.8 KM",
+                after: "30.0 KM",
+                reason: "Your long cycle is building the aerobic base the 20 KM run needs. A small bump keeps the weekly load rising by under 10%, which is the safe rate for your recent training.",
+                rows: [
+                    WaypointDetailRow(label: "Day", value: "Saturday"),
+                    WaypointDetailRow(label: "Distance", value: "30.0 KM"),
+                    WaypointDetailRow(label: "Duration", value: "About 1 h 25 min"),
+                    WaypointDetailRow(label: "Heart rate", value: "Zone 2"),
+                ]
             ),
         ]),
         WaypointAdjustmentGroup(id: "nutrition", title: "Nutrition", symbol: "fork.knife", adjustments: [
@@ -298,7 +335,16 @@ private struct WaypointAdjustmentGroup: Identifiable {
                 id: "protein",
                 title: "Protein goal Increased",
                 detail: .value("103", unit: "G"),
-                change: "Increased by 10g"
+                change: "Increased by 10g",
+                before: "93 G",
+                after: "103 G",
+                reason: "Your running volume went up this week, so your muscles need a little more protein to recover. 103 g works out at 1.6 g per kilo of body weight.",
+                rows: [
+                    WaypointDetailRow(label: "Per meal", value: "About 30 G"),
+                    WaypointDetailRow(label: "Body weight", value: "64 KG"),
+                    WaypointDetailRow(label: "Ratio", value: "1.6 G / KG"),
+                    WaypointDetailRow(label: "Last week average", value: "88 G"),
+                ]
             ),
             WaypointAdjustment(
                 id: "mealPlan",
@@ -308,10 +354,142 @@ private struct WaypointAdjustmentGroup: Identifiable {
                     WaypointMeal(id: "lunch", slot: "Lunch", name: "Chicken & quinoa bowl", systemImage: "sun.max", color: .defaultYellow, protein: 42),
                     WaypointMeal(id: "dinner", slot: "Dinner", name: "Salmon, greens & rice", systemImage: "moon", color: .defaultBlue, protein: 37),
                 ]),
-                change: "Swapped 2 meals for higher protein"
+                change: "Swapped 2 meals for higher protein",
+                before: "76 G",
+                after: "103 G",
+                reason: "Breakfast and lunch were light on protein, so they've been swapped for options that hit your new target without adding calories.",
+                rows: [
+                    WaypointDetailRow(label: "Breakfast", value: "Toast → Greek yoghurt & berries"),
+                    WaypointDetailRow(label: "Lunch", value: "Pasta salad → Chicken & quinoa bowl"),
+                    WaypointDetailRow(label: "Dinner", value: "No change"),
+                    WaypointDetailRow(label: "Calories", value: "2,180 → 2,160"),
+                ]
             ),
         ]),
     ]
+}
+
+private struct WaypointAdjustmentSheet: View {
+    let adjustment: WaypointAdjustment
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        BrightPageSheetView(title: adjustment.title) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: .spacing4x) {
+                    comparison
+
+                    BrightWidgetTitle(icon: .symbol("sparkles"), title: "Why it changed") {
+                        BrightText(adjustment.reason, size: .body1, color: .semiLightTextColor)
+                            .lineSpacing(.lineSpacingMedium)
+                            .padding(.horizontal, .spacing2x)
+                    }
+
+                    BrightWidgetTitle(icon: .symbol("list.bullet"), title: "Details") {
+                        details
+                    }
+                }
+                .padding(.top, .spacing2x)
+                .padding(.bottom, .spacing4x)
+            }
+            .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .bottom, spacing: .spacing0x) {
+                actions
+            }
+        }
+    }
+
+    private var comparison: some View {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            HStack(spacing: .spacing2x) {
+                value("Before", adjustment.before, color: .lightTextColor)
+
+                Image(systemName: "arrow.right")
+                    .font(.standardSFPro(size: .subheading, weight: .regular))
+                    .foregroundStyle(Color.lightTextColor)
+
+                value("After", adjustment.after, color: .defaultGreen)
+            }
+
+            if let change = adjustment.change {
+                HStack(spacing: .spacing05x) {
+                    Image(systemName: "arrow.up")
+                        .font(.standardSFPro(size: .body1, weight: .regular))
+
+                    BrightText(change, size: .body1, color: .defaultGreen)
+                }
+                .foregroundStyle(Color.defaultGreen)
+                .opacity(.mediumOpacity)
+            }
+        }
+        .padding(.spacing3x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(CardModifier(color: .defaultSheetModalCards))
+    }
+
+    private func value(_ label: String, _ value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: .spacing05x) {
+            BrightText(label, size: .body1, color: .lightTextColor)
+
+            BrightText(value, size: .standout1, color: color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var details: some View {
+        VStack(spacing: .spacing0x) {
+            ForEach(Array(adjustment.rows.enumerated()), id: \.element.id) { index, row in
+                detailRow(row, isLast: index == adjustment.rows.count - 1)
+            }
+        }
+        .padding(.horizontal, .spacing3x)
+        .modifier(CardModifier(color: .defaultSheetModalCards))
+    }
+
+    private func detailRow(_ row: WaypointDetailRow, isLast: Bool) -> some View {
+        VStack(spacing: .spacing0x) {
+            HStack(alignment: .firstTextBaseline, spacing: .spacing2x) {
+                BrightText(row.label, size: .body1, color: .lightTextColor)
+
+                Spacer(minLength: .spacing2x)
+
+                BrightText(row.value, size: .body1)
+                    .multilineTextAlignment(.trailing)
+            }
+            .padding(.vertical, .spacing2x)
+
+            if !isLast {
+                BrightDivider()
+            }
+        }
+    }
+
+    private var actions: some View {
+        HStack(spacing: .spacing2x) {
+            BrightPillButton(
+                "Revert",
+                systemImage: "arrow.uturn.backward",
+                color: .defaultRed.opacity(.minimalOpacity),
+                textColor: .defaultRed,
+                buttonSize: .large
+            ) {
+                dismiss()
+            }
+
+            BrightPillButton(
+                "Keep change",
+                systemImage: "checkmark",
+                color: .defaultGreen.opacity(.minimalOpacity),
+                textColor: .defaultGreen,
+                buttonSize: .large
+            ) {
+                dismiss()
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, .spacing2x)
+    }
 }
 
 #Preview {

@@ -11,6 +11,9 @@ struct ExploreView: View {
     @State private var searchText = ""
     @State private var selectedAgent: ExploreAgent?
     @State private var shownClinic: ExploreClinic?
+    @State private var testCategory: VaultTestCategory?
+    @State private var selectedClinic: VaultTestingClinic?
+    @State private var receipt: VaultTestOrder?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
@@ -33,6 +36,15 @@ struct ExploreView: View {
         .sheet(item: $selectedAgent) { agent in
             ExploreAgentSheet(agent: agent)
         }
+        .navigationDestination(item: $testCategory) { category in
+            VaultTestCategoryView(category: category, sortOrder: .proximity) { selectedClinic = $0 }
+        }
+        .sheet(item: $selectedClinic) { clinic in
+            VaultClinicSheet(clinic: clinic, onOrder: place)
+        }
+        .sheet(item: $receipt) { order in
+            VaultTestReceiptSheet(order: order)
+        }
     }
 
     private var home: some View {
@@ -41,13 +53,7 @@ struct ExploreView: View {
                 agents
             }
 
-            BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Browse") {
-                BrightTileRow {
-                    ForEach(ExploreBrowseCategory.demo) { category in
-                        browseTile(category)
-                    }
-                }
-            }
+            VaultTestBrowse { testCategory = $0 }
 
             BrightWidgetTitle(icon: .symbol("globe"), title: "Explore all") {
                 clinics
@@ -73,19 +79,12 @@ struct ExploreView: View {
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
     }
 
-    private func browseTile(_ category: ExploreBrowseCategory) -> some View {
-        BrightTile(
-            category.name,
-            subtitle: "\(category.clinicCount) clinics",
-            backgroundImage: category.backgroundImage
-        ) {} icon: {
-            switch category.mark {
-            case let .symbol(name):
-                Image(systemName: name)
-                    .font(.standardSFPro(size: .standout2, weight: .medium))
-            case let .testing(testCategory):
-                VaultTestCategoryIcon(category: testCategory, symbolSize: .standout1)
-            }
+    // The clinic sheet has to be down before the receipt comes up over it.
+    private func place(_ order: VaultTestOrder) {
+        selectedClinic = nil
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
+            receipt = order
         }
     }
 
@@ -124,6 +123,10 @@ struct ExploreView: View {
         }
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
+    }
+
+    private enum Constants {
+        static let sheetDismissDuration: TimeInterval = 0.35
     }
 }
 

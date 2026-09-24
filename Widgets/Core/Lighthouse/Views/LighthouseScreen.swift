@@ -190,11 +190,12 @@ struct LighthouseScreen: View {
             menu
         } content: {
             chat
-                .background { LighthouseChatBackground() }
                 // Fixed where the bar's buttons would sit, so their glass
                 // can't fold together or stretch to fit a glyph, and riding
                 // on the chat page so they slide over with it.
-                .overlay(alignment: .top) { topButtons }
+                .safeAreaBar(edge: .top, spacing: .spacing0x) { topButtons }
+                .brightSoftScrollEdges()
+                .background { LighthouseChatBackground() }
         }
         .onChange(of: isMenuOpen) { _, isMenuOpen in
             guard isMenuOpen else { return }

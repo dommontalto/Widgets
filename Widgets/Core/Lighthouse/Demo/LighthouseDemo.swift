@@ -165,19 +165,19 @@ enum LighthouseDemo {
         title: "Weekly Climbing Review",
         summary: "This week shows a balanced climbing journey. Your sleep quality has improved to an average of 7 hours per night, aiding recovery. You've maintained a steady intake of protein and carbs, effectively fuelling your workouts. Your sessions are consistent, focusing on strength and endurance, while stress and fatigue levels are manageable. Keep it up!",
         sections: [
-            LighthouseCheckInReview.Section(title: "Workouts", findings: [
-                .init(text: "12/12 sessions completed", isOnTrack: true),
-                .init(text: "Quality of sessions dropped", isOnTrack: false),
-                .init(text: "High Fatigue", isOnTrack: false),
-                .init(text: "Low Readiness", isOnTrack: false),
+            LighthouseCheckInReview.Section(kind: .workouts, findings: [
+                .init(text: "12/12 sessions completed", detail: "Every planned session this week was logged, including both board sessions.", isOnTrack: true),
+                .init(text: "Quality of sessions dropped", detail: "Average grade sent fell from V6 to V5 across the last three sessions.", isOnTrack: false),
+                .init(text: "High Fatigue", detail: "Training load sits 18% above your four-week average.", isOnTrack: false),
+                .init(text: "Low Readiness", detail: "Readiness has stayed under 60 since Thursday.", isOnTrack: false),
             ]),
-            LighthouseCheckInReview.Section(title: "Nutrition", findings: [
-                .init(text: "Nutrition is on point this week", isOnTrack: true),
-                .init(text: "Fat could drop by 10%", isOnTrack: false),
+            LighthouseCheckInReview.Section(kind: .nutrition, findings: [
+                .init(text: "Nutrition is on point this week", detail: "You hit your protein target on six of seven days.", isOnTrack: true),
+                .init(text: "Fat could drop by 10%", detail: "Fat averaged 52g against a 45g target, mostly from evening snacks.", isOnTrack: false),
             ]),
-            LighthouseCheckInReview.Section(title: "Sleep", findings: [
-                .init(text: "Sleep quality has been average this week", isOnTrack: false),
-                .init(text: "Lower recovery as a result", isOnTrack: false),
+            LighthouseCheckInReview.Section(kind: .sleep, findings: [
+                .init(text: "Sleep quality has been average this week", detail: "Deep sleep averaged 52 minutes, down from 68 last week.", isOnTrack: false),
+                .init(text: "Lower recovery as a result", detail: "Recovery averaged 61, eight points under your usual week.", isOnTrack: false),
             ]),
         ],
         followUps: [

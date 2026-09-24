@@ -85,6 +85,8 @@ private struct ExploreSuggestionRow: View {
 
 struct ExploreResultCard: View {
     let clinic: ExploreSearchClinic
+    var chipTint: Color = .defaultCyan
+    var chipFill: Color = .defaultCyan.opacity(.veryMinimalOpacity)
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -119,8 +121,8 @@ struct ExploreResultCard: View {
                 ForEach(clinic.services, id: \.self) { service in
                     BrightChip(
                         title: service,
-                        tint: .defaultCyan,
-                        fill: .defaultCyan.opacity(.veryMinimalOpacity)
+                        tint: chipTint,
+                        fill: chipFill
                     )
                 }
             }

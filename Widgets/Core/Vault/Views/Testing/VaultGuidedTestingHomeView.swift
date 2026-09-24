@@ -17,8 +17,6 @@ struct VaultGuidedTestingHomeView: View {
     @State private var selectedCategory: VaultTestCategory?
     @State private var showingMap = false
 
-    private let categories = VaultTestCategory.demo
-
     private var clinics: [VaultTestingClinic] {
         sortOrder.sorted(VaultTestingClinic.demo)
     }
@@ -61,11 +59,8 @@ struct VaultGuidedTestingHomeView: View {
 
     private var explore: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("Testing Categories", size: .heading, weight: .regular)
-                .padding(.horizontal, .spacing3x)
+            VaultTestBrowse { selectedCategory = $0 }
                 .padding(.top, .spacing3x)
-
-            categoryRow
 
             HStack(spacing: .spacing2x) {
                 Image(systemName: "location")
@@ -90,22 +85,6 @@ struct VaultGuidedTestingHomeView: View {
         }
         .padding(.bottom, .spacing10x)
         .animation(.brightEaseInOut, value: sortOrder)
-    }
-
-    private var categoryRow: some View {
-        BrightTileRow {
-            ForEach(categories) { category in
-                BrightTile(
-                    category.name,
-                    subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
-                    backgroundImage: category.backgroundName
-                ) {
-                    selectedCategory = category
-                } icon: {
-                    VaultTestCategoryIcon(category: category, symbolSize: .standout1)
-                }
-            }
-        }
     }
 
     private var sortMenu: some View {
@@ -346,5 +325,27 @@ struct VaultClinicLogo: View {
             onSelectClinic: { _ in },
             onSelectOrder: { _ in }
         )
+    }
+}
+
+struct VaultTestBrowse: View {
+    let onSelect: (VaultTestCategory) -> Void
+
+    var body: some View {
+        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Browse") {
+            BrightTileRow {
+                ForEach(VaultTestCategory.demo) { category in
+                    BrightTile(
+                        category.name,
+                        subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
+                        backgroundImage: category.backgroundName
+                    ) {
+                        onSelect(category)
+                    } icon: {
+                        VaultTestCategoryIcon(category: category, symbolSize: .standout1)
+                    }
+                }
+            }
+        }
     }
 }

@@ -139,7 +139,7 @@ enum WaypointBearing: CaseIterable {
 
     var color: Color {
         switch self {
-        case .southWest, .southEast: .defaultYellow
+        case .southWest, .southEast: .defaultRed
         case .northWest, .northEast: .defaultCyan
         case .north: .defaultGreen
         }

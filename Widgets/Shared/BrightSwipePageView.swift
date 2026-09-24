@@ -68,14 +68,6 @@ struct BrightSwipePageView<Content: View>: View {
     let pages: [SwipePage]
     let fakeLargeTitle: String?
     let titleAccessory: AnyView?
-    // How deep a page's content fades out at its top edge, under the pills,
-    // in points. A screen leaves it at 0 and lets the nav bar's own edge
-    // effect hide what scrolls under the pills; a sheet has no bar, so it
-    // fades its own edge.
-    let pageEdgeFade: CGFloat
-    // What the edge fade fades to: the colour under the page. A sheet passes
-    // its background; the default is the system's.
-    let pageEdgeFadeColor: Color
     // Sits at the trailing end of the pill row — a filter or an action that
     // belongs to the page rather than to a nav bar. It travels with the
     // pills, so it stays beside them as they follow the title up.
@@ -156,8 +148,6 @@ struct BrightSwipePageView<Content: View>: View {
         fakeLargeTitle: String? = nil,
         titleAccessory: AnyView? = nil,
         pillAccessory: AnyView? = nil,
-        pageEdgeFade: CGFloat = 0,
-        pageEdgeFadeColor: Color = Color(uiColor: .systemBackground),
         titleSize: FontSizes = .huge205,
         titleWeight: Font.Weight = .light,
         titleSubtitle: AnyView? = nil,
@@ -185,8 +175,6 @@ struct BrightSwipePageView<Content: View>: View {
         self.fakeLargeTitle = fakeLargeTitle
         self.titleAccessory = titleAccessory
         self.pillAccessory = pillAccessory
-        self.pageEdgeFade = pageEdgeFade
-        self.pageEdgeFadeColor = pageEdgeFadeColor
         self.titleSize = titleSize
         self.titleWeight = titleWeight
         self.titleSubtitle = titleSubtitle
@@ -390,7 +378,6 @@ struct BrightSwipePageView<Content: View>: View {
                     position: i == scrollControlledPageIndex ? verticalScrollPosition : nil
                 ))
                 .modifier(PageScrollTracking { handlePageScroll(at: i, metrics: $0) })
-                .modifier(EdgeFade(depth: pageEdgeFade, color: pageEdgeFadeColor))
             } else if showInlineTabs {
                 content(i)
                     .frame(maxHeight: .infinity)
@@ -489,47 +476,6 @@ private struct OptionalScrollPosition: ViewModifier {
         } else {
             content
         }
-    }
-}
-
-// Fades a page's content out at its top edge, under the pills: a gradient
-// of the page's background colour laid over it, so the fade stays at the
-// edge while the content moves through it — no measurement, so it cannot
-// resize the page under it. An overlay rather than a mask: a mask renders
-// the whole page to an offscreen buffer and composites it back every frame
-// the sheet moves, at full sheet size and 3x. One thin gradient is a
-// fraction of the pixels and stays an on-screen pass. The bottom edge is
-// left alone: the content simply runs off the sheet.
-private struct EdgeFade: ViewModifier {
-    let depth: CGFloat
-    let color: Color
-
-    func body(content: Content) -> some View {
-        if depth > 0 {
-            content
-                .overlay(alignment: .top) { gradient(startPoint: .top, endPoint: .bottom) }
-        } else {
-            content
-        }
-    }
-
-    // The same curve the mask drew, inverted: fully covered at the edge,
-    // 65% at just past halfway, clear at `depth`.
-    private func gradient(startPoint: UnitPoint, endPoint: UnitPoint) -> some View {
-        LinearGradient(
-            stops: [
-                .init(color: color, location: 0),
-                .init(color: color.opacity(0.65), location: 0.55),
-                .init(color: color.opacity(0), location: 1)
-            ],
-            startPoint: startPoint,
-            endPoint: endPoint
-        )
-        .frame(height: depth)
-        // An overlay is inset by the safe area where the view it sits on
-        // is not; the mask was not, so the fade must reach the same edge.
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
     }
 }
 

@@ -21,12 +21,35 @@ nonisolated struct LighthouseCheckInReview: Equatable {
     nonisolated struct Finding: Identifiable, Equatable {
         let id = UUID()
         let text: String
+        let detail: String
         let isOnTrack: Bool
     }
 
     nonisolated struct Section: Identifiable, Equatable {
+        nonisolated enum Kind: Equatable {
+            case workouts
+            case nutrition
+            case sleep
+
+            var title: String {
+                switch self {
+                case .workouts: "Workouts"
+                case .nutrition: "Nutrition"
+                case .sleep: "Sleep"
+                }
+            }
+
+            var symbol: String {
+                switch self {
+                case .workouts: "figure.climbing"
+                case .nutrition: "fork.knife"
+                case .sleep: "bed.double.fill"
+                }
+            }
+        }
+
         let id = UUID()
-        let title: String
+        let kind: Kind
         let findings: [Finding]
     }
 
@@ -53,15 +76,19 @@ struct LighthouseChatResponse: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing5x) {
-            BrightText(text, size: .body1)
-                .lineSpacing(.lineSpacingMedium)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            ForEach(items) { item in
-                BrightText(item.text, size: .body1, color: .lightTextColor)
+            if let checkIn {
+                LighthouseCheckInReviewView(review: checkIn)
+            } else {
+                BrightText(text, size: .body1)
                     .lineSpacing(.lineSpacingMedium)
                     .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ForEach(items) { item in
+                    BrightText(item.text, size: .body1, color: .lightTextColor)
+                        .lineSpacing(.lineSpacingMedium)
+                        .multilineTextAlignment(.leading)
+                }
             }
 
             actions
@@ -82,9 +109,9 @@ struct LighthouseChatResponse: View {
             return ([text] + items.map(\.text)).joined(separator: "\n\n")
         }
         let sections = checkIn.sections.map { section in
-            ([section.title] + section.findings.map(\.text)).joined(separator: "\n")
+            ([section.kind.title] + section.findings.map(\.text)).joined(separator: "\n")
         }
-        return ([checkIn.title, checkIn.summary] + sections).joined(separator: "\n\n")
+        return ([checkIn.summary] + sections).joined(separator: "\n\n")
     }
 
     private var actions: some View {
