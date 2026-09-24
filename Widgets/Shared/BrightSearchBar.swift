@@ -28,6 +28,29 @@ struct BrightSearchBar: View {
     }
 
     var body: some View {
+        HStack(spacing: .spacing2x) {
+            field
+
+            if isFocused {
+                BrightRoundButton(systemImage: "xmark", size: .large) {
+                    text = ""
+                    isFocused = false
+                }
+                .transition(
+                    .asymmetric(
+                        insertion: .scale.combined(with: .opacity).animation(.smooth.delay(0.2)),
+                        removal: .scale.combined(with: .opacity)
+                    )
+                )
+            }
+        }
+        .animation(.smooth, value: isFocused)
+        .onAppear {
+            if autoFocuses { isFocused = true }
+        }
+    }
+
+    private var field: some View {
         HStack(spacing: .spacing1x) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 16))
@@ -53,8 +76,5 @@ struct BrightSearchBar: View {
         .modifier(GlassEffect())
         .contentShape(Capsule())
         .onTapGesture { isFocused = true }
-        .onAppear {
-            if autoFocuses { isFocused = true }
-        }
     }
 }
