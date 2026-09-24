@@ -34,6 +34,7 @@ struct LighthouseCheckInReviewView: View {
             BrightText(review.summary, size: .body1, color: .lightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -51,6 +52,7 @@ struct LighthouseCheckInReviewView: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightWidgetTitle(icon: .symbol(section.kind.symbol), title: section.kind.title) {
                 widget(for: section.kind)
+                    .frame(maxWidth: .infinity)
             }
 
             VStack(spacing: .spacing0x) {
@@ -58,8 +60,8 @@ struct LighthouseCheckInReviewView: View {
                     findingRow(finding, isLast: index == section.findings.count - 1)
                 }
             }
-            .padding(.horizontal, .spacing1x)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -90,9 +92,9 @@ struct LighthouseCheckInReviewView: View {
                         .foregroundStyle(finding.isOnTrack ? Color.defaultGreen : Color.defaultYellow)
 
                     BrightText(finding.text, size: .body1, color: .semiLightTextColor)
+                        .lineSpacing(.lineSpacingMedium)
                         .multilineTextAlignment(.leading)
-
-                    Spacer(minLength: .spacing2x)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                     Image(systemName: "chevron.down")
                         .font(.standardSFPro(size: .body1, weight: .light))
@@ -105,6 +107,7 @@ struct LighthouseCheckInReviewView: View {
                         .lineSpacing(.lineSpacingMedium)
                         .multilineTextAlignment(.leading)
                         .padding(.leading, Constants.detailIndent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .transition(.opacity)
                 }
             }
