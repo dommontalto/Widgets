@@ -74,13 +74,13 @@ extension ExploreAgent {
             background: ImageNames.exploreSleepBackgroundV5,
             tint: .defaultSkyBlue,
             examples: [
-                ExerciseProgramChatExample("dna", "Monitor new research on APOE4."),
+                ExerciseProgramChatExample("allergens", "Monitor new research on APOE4."),
                 ExerciseProgramChatExample("heart.text.square", "Track studies on resting heart rate."),
                 ExerciseProgramChatExample("moon.zzz", "Alert me to new sleep research."),
             ],
             suggestions: [
                 ExerciseProgramChatExample("newspaper", "Weekly digest"),
-                ExerciseProgramChatExample("dna", "My genome"),
+                ExerciseProgramChatExample("allergens", "My genome"),
                 ExerciseProgramChatExample("drop", "My biomarkers"),
                 ExerciseProgramChatExample("checkmark.seal", "Trusted sources"),
             ],
