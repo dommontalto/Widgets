@@ -118,9 +118,11 @@ nonisolated class ImageNames {
     static let exploreMicrobiomeClinicAdV5     = "Explore/explore_microbiome_clinic_ad_v5"
     static let exploreLittleLungsLogoV5        = "Explore/explore_little_lungs_logo_v5"
     static let exploreMoveClinicLogoV5         = "Explore/explore_move_clinic_logo_v5"
-    static let exploreNutritionClinicLogoV5    = "Explore/explore_nutrition_clinic_logo_v5"
+    static let exploreFourSeasonsDieteticsLogoV5 = "Explore/explore_four_seasons_dietetics_logo_v5"
     static let exploreFxnlRehabLogoV5          = "Explore/explore_fxnl_rehab_logo_v5"
     static let exploreEastPointRecoveryLogoV5  = "Explore/explore_east_point_recovery_logo_v5"
+    static let exploreLongevityClinicLogoV5    = "Explore/explore_longevity_clinic_logo_v5"
+    static let exploreLavertyPathologyLogoV5   = "Explore/explore_laverty_pathology_logo_v5"
     static let exploreServiceAgentBackgroundV5 = "Explore/explore_service_agent_background_v5"
     static let exploreAgentStickerV5           = "Explore/explore_agent_sticker_v5"
 

@@ -106,13 +106,13 @@ extension ExploreClinic {
 
     static let all = demo + [
         ExploreClinic(name: "The Microbiome Clinic", logo: ImageNames.exploreMicrobiomeClinicAdV5, background: .black, fillsLogo: true),
-        ExploreClinic(name: "Move Clinic", logo: ImageNames.exploreMoveClinicLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
-        ExploreClinic(name: "Little Lungs Sleep Clinic", logo: ImageNames.exploreLittleLungsLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
-        ExploreClinic(name: "The Nutrition Clinic", logo: ImageNames.exploreNutritionClinicLogoV5, background: .white, fillsLogo: true),
-        ExploreClinic(name: "FXNL Rehab", logo: ImageNames.exploreFxnlRehabLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
+        ExploreClinic(name: "Move Clinic", logo: ImageNames.exploreMoveClinicLogoV5, background: .white, fillsLogo: true),
+        ExploreClinic(name: "Little Lungs Sleep Clinic", logo: ImageNames.exploreLittleLungsLogoV5, background: Color(hex: "#1C2F54"), fillsLogo: true),
+        ExploreClinic(name: "Four Seasons Dietetics", logo: ImageNames.exploreFourSeasonsDieteticsLogoV5, background: .white, fillsLogo: true),
+        ExploreClinic(name: "FXNL Rehab", logo: ImageNames.exploreFxnlRehabLogoV5, background: .black, fillsLogo: true),
         ExploreClinic(name: "East Point Recovery", logo: ImageNames.exploreEastPointRecoveryLogoV5, background: .black, fillsLogo: true),
-        ExploreClinic(name: "Longevity Clinic", logo: ImageNames.vaultTestLongevityCategoryV5, background: .black, fillsLogo: true),
-        ExploreClinic(name: "Laverty Pathology", logo: ImageNames.vaultTestHormonesCategoryV5, background: .black, fillsLogo: true),
+        ExploreClinic(name: "Longevity Clinic", logo: ImageNames.exploreLongevityClinicLogoV5, background: .white, fillsLogo: true),
+        ExploreClinic(name: "Laverty Pathology", logo: ImageNames.exploreLavertyPathologyLogoV5, background: .white, fillsLogo: true),
     ]
 }
 
@@ -134,19 +134,19 @@ extension ExploreSearchClinic {
             name: "Little Lungs Sleep Clinic",
             address: "Sleep",
             logo: ImageNames.exploreLittleLungsLogoV5,
-            logoBackground: Color(hex: "#D9D9D9"),
+            logoBackground: Color(hex: "#1C2F54"),
             isAd: true
         ),
         ExploreSearchClinic(
             name: "Move Clinic",
             address: "21 Danks St, Waterloo NSW 2017",
             logo: ImageNames.exploreMoveClinicLogoV5,
-            logoBackground: Color(hex: "#D9D9D9")
+            logoBackground: .white
         ),
         ExploreSearchClinic(
-            name: "The Nutrition Clinic",
+            name: "Four Seasons Dietetics",
             address: "Nutrition",
-            logo: ImageNames.exploreNutritionClinicLogoV5,
+            logo: ImageNames.exploreFourSeasonsDieteticsLogoV5,
             logoBackground: .white
         ),
     ]
@@ -156,7 +156,7 @@ extension ExploreSearchClinic {
             name: "Move Clinic",
             address: "21 Danks St, Waterloo NSW 2017",
             logo: ImageNames.exploreMoveClinicLogoV5,
-            logoBackground: Color(hex: "#D9D9D9"),
+            logoBackground: .white,
             isAd: true,
             services: ["Physiotherapy", "Exercise Physiology", "Women's health", "NDIS - Disability", "Performance Management"]
         ),
@@ -164,7 +164,7 @@ extension ExploreSearchClinic {
             name: "FXNL Rehab",
             address: "shop 5/289 Liverpool Rd, Strathfield NSW 2135",
             logo: ImageNames.exploreFxnlRehabLogoV5,
-            logoBackground: Color(hex: "#D9D9D9"),
+            logoBackground: .black,
             services: ["Manual Therapy", "Movement based rehab", "Telehealth", "Musculoskeletal", "Orthopaedic"]
         ),
         ExploreSearchClinic(
@@ -188,7 +188,7 @@ extension URL {
         "The Microbiome Clinic": "https://themicrobiomeclinic.com.au",
         "Little Lungs Sleep Clinic": "https://www.littlelungs.com.au",
         "Move Clinic": "https://moveclinic.com.au/waterloo/",
-        "The Nutrition Clinic": "https://www.nutritionclinic.com.au",
+        "Four Seasons Dietetics": "https://www.fourseasonsdietetics.com",
         "FXNL Rehab": "https://www.fxnlrehab.com.au",
         "East Point Recovery": "https://www.eprecovery.com.au",
         "Longevity Clinic": "https://www.progressivespecialists.com.au/longevity-consultation",
