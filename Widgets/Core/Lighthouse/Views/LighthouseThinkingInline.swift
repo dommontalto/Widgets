@@ -18,6 +18,10 @@ struct LighthouseThinkingInline: View {
     @State private var revealedCount = 0
     @State private var isExpanded = true
     @State private var toggleCount = 0
+    @State private var openStepIDs: Set<LighthouseThoughtStep.ID> = []
+    @State private var stepToggleCount = 0
+
+    @Environment(\.openURL) private var openURL
 
     private var isFinished: Bool {
         thoughtSeconds != nil
@@ -30,10 +34,13 @@ struct LighthouseThinkingInline: View {
             VStack(alignment: .leading, spacing: .spacing0x) {
                 if isExpanded {
                     stepList
-                        .transition(.move(edge: .top))
+                        .transition(.softDrop)
                 }
             }
-            .clipped()
+            .mask {
+                Rectangle()
+                    .padding(isFinished ? .spacing0x : -Constants.landingOverscan)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task { await reveal() }
@@ -49,15 +56,21 @@ struct LighthouseThinkingInline: View {
             ForEach(Array(steps.prefix(revealedCount).enumerated()), id: \.element.id) { index, step in
                 let startX = index == 0 ? headerIconCenter : iconCenter(for: steps[index - 1])
                 let endX = iconCenter(for: step)
-                ThoughtConnector(
-                    startX: startX,
-                    endX: endX,
-                    height: startX == endX ? Constants.connectorHeight : Constants.bentConnectorHeight,
-                    cornerRadius: Constants.connectorCornerRadius
-                )
+                let height = startX == endX ? Constants.connectorHeight : Constants.bentConnectorHeight
+                if index == 0, !isFinished {
+                    Color.clear.frame(height: height)
+                } else {
+                    ThoughtConnector(
+                        startX: startX,
+                        endX: endX,
+                        height: height,
+                        cornerRadius: Constants.connectorCornerRadius,
+                        drawsIn: !isFinished
+                    )
+                }
 
                 row(step)
-                    .transition(.offset(y: -.spacing1x).combined(with: .opacity))
+                    .transition(.offset(y: -.spacing1x).combined(with: .opacity).combined(with: .softBlur))
             }
         }
     }
@@ -105,6 +118,7 @@ struct LighthouseThinkingInline: View {
         }
         .buttonStyle(.plain)
         .brightHaptic(.light, trigger: toggleCount)
+        .brightHaptic(.light, trigger: stepToggleCount)
     }
 
     private var thinkingTitle: some View {
@@ -113,20 +127,120 @@ struct LighthouseThinkingInline: View {
     }
 
     private func row(_ step: LighthouseThoughtStep) -> some View {
-        HStack(spacing: .spacing2x) {
-            Image(systemName: step.symbol)
-                .font(.standard(size: .body1, weight: .light))
-                .foregroundStyle(Color.semiLightTextColor)
-                .frame(width: Constants.column, height: Constants.column)
-                .transition(.symbolEffect(.drawOn))
+        let isOpen = openStepIDs.contains(step.id)
 
-            BrightText(step.title, size: .body1, color: .semiLightTextColor)
-                .lineLimit(1)
-                .brightTextReveal()
+        return VStack(alignment: .leading, spacing: .spacing0x) {
+            Button {
+                guard step.isExpandable else { return }
+                stepToggleCount += 1
+                withAnimation(.brightSpring) {
+                    if isOpen {
+                        openStepIDs.remove(step.id)
+                    } else {
+                        openStepIDs.insert(step.id)
+                    }
+                }
+            } label: {
+                HStack(spacing: .spacing2x) {
+                    Image(systemName: step.symbol)
+                        .font(.standard(size: .body1, weight: .light))
+                        .foregroundStyle(Color.semiLightTextColor)
+                        .frame(width: Constants.column, height: Constants.column)
+                        .transition(.symbolEffect(.drawOn))
 
-            Spacer(minLength: .spacing0x)
+                    BrightText(step.title, size: .body1, color: .semiLightTextColor)
+                        .lineLimit(1)
+                        .brightTextReveal(isActive: !isFinished)
+
+                    if step.isExpandable {
+                        Image(systemName: "chevron.forward")
+                            .font(.standard(size: .body1, weight: .light))
+                            .foregroundStyle(Color.lightTextColor)
+                            .rotationEffect(.degrees(isOpen ? Constants.openChevronDegrees : 0))
+                    }
+
+                    Spacer(minLength: .spacing0x)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .allowsHitTesting(step.isExpandable)
+
+            VStack(alignment: .leading, spacing: .spacing0x) {
+                if isOpen {
+                    detail(step)
+                        .transition(.softDrop)
+                }
+            }
+            .mask { detailMask }
         }
         .padding(.leading, Constants.iconInset + indent(for: step.depth))
+    }
+
+    // The tree line keeps running down the icon column beside the detail, so
+    // the next step still hangs off this one.
+    private func detail(_ step: LighthouseThoughtStep) -> some View {
+        HStack(alignment: .top, spacing: .spacing2x) {
+            Rectangle()
+                .fill(Color.semiLightTextColor.opacity(.semiLowOpacity))
+                .frame(width: 1)
+                .frame(width: Constants.column)
+
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                BrightText(step.detail, size: .body1, color: .lightTextColor)
+                    .lineSpacing(.lineSpacingMedium)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ForEach(step.references) { reference in
+                    referenceRow(reference)
+                }
+            }
+            .padding(.vertical, .spacing105x)
+        }
+    }
+
+    private var detailMask: some View {
+        HStack(spacing: .spacing0x) {
+            Rectangle()
+                .frame(width: Constants.column + .spacing2x)
+
+            VStack(spacing: .spacing0x) {
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                    .frame(height: Constants.featherHeight)
+
+                Rectangle()
+            }
+        }
+    }
+
+    private func referenceRow(_ reference: LighthouseThoughtReference) -> some View {
+        Button {
+            openURL(reference.url)
+        } label: {
+            HStack(alignment: .top, spacing: .spacing105x) {
+                Image(systemName: "doc.text")
+                    .font(.standard(size: .body1, weight: .light))
+                    .foregroundStyle(Color.semiLightTextColor)
+
+                VStack(alignment: .leading, spacing: .spacing025x) {
+                    BrightText(reference.title, size: .body1, color: .semiLightTextColor)
+                        .lineLimit(2)
+
+                    BrightText(reference.source, size: .body1, color: .lightTextColor)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: .spacing0x)
+
+                Image(systemName: "arrow.up.right")
+                    .font(.standard(size: .body1, weight: .light))
+                    .foregroundStyle(Color.lightTextColor)
+            }
+            .padding(.spacing2x)
+            .background(Color.defaultCards, in: RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var headerIconCenter: CGFloat {
@@ -171,7 +285,22 @@ struct LighthouseThinkingInline: View {
         static let connectorCornerRadius: CGFloat = .spacing1x
         static let openChevronDegrees: Double = 90
         static let revealEvery: TimeInterval = 1.1
+        static let featherHeight: CGFloat = .spacing105x
+        static let landingOverscan: CGFloat = .spacing6x
     }
+}
+
+private struct SoftBlur: ViewModifier {
+    let radius: CGFloat
+
+    func body(content: Content) -> some View {
+        content.blur(radius: radius)
+    }
+}
+
+private extension AnyTransition {
+    static let softBlur = AnyTransition.modifier(active: SoftBlur(radius: .spacing05x), identity: SoftBlur(radius: .spacing0x))
+    static let softDrop = AnyTransition.move(edge: .top).combined(with: .opacity).combined(with: .softBlur)
 }
 
 // Drawn along its own length as it lands: down from the step above, and when
@@ -181,6 +310,7 @@ private struct ThoughtConnector: View {
     let endX: CGFloat
     let height: CGFloat
     let cornerRadius: CGFloat
+    var drawsIn = true
 
     @State private var isDrawn = false
 
@@ -208,6 +338,10 @@ private struct ThoughtConnector: View {
         .stroke(Color.semiLightTextColor.opacity(.semiLowOpacity), style: StrokeStyle(lineWidth: 1, lineCap: .round))
         .frame(height: height)
         .onAppear {
+            guard drawsIn else {
+                isDrawn = true
+                return
+            }
             withAnimation(.brightSpring) { isDrawn = true }
         }
     }

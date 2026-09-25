@@ -11,6 +11,7 @@ nonisolated struct LighthouseHistoryEntry: Identifiable {
     let id = UUID()
     var title: String
     let when: String
+    var isPinned = false
 }
 
 nonisolated enum LighthouseCheckInFrequency: String, CaseIterable, Identifiable, Hashable {
@@ -67,4 +68,13 @@ nonisolated struct LighthouseThoughtStep: Identifiable {
     var tint: Color = .semiLightTextColor
     var depth = 0
     var isWaypoint = false
+    var isExpandable = false
+    var references: [LighthouseThoughtReference] = []
+}
+
+nonisolated struct LighthouseThoughtReference: Identifiable {
+    let id = UUID()
+    let title: String
+    let source: String
+    let url: URL
 }

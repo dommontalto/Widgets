@@ -184,21 +184,31 @@ struct LighthouseMenuView: View {
         let matching = query.isEmpty
             ? entries
             : entries.filter { $0.title.localizedCaseInsensitiveContains(query) }
-        switch historySort {
+        let sorted = switch historySort {
         case .newest:
-            return matching
+            matching
         case .alphabetical:
-            return matching.sorted {
+            matching.sorted {
                 $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
             }
         }
+        return sorted.filter(\.isPinned) + sorted.filter { !$0.isPinned }
     }
 
     private func historyRow(_ entry: LighthouseHistoryEntry) -> some View {
         HStack(spacing: .spacing2x) {
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(entry.title, size: .body1, color: .semiLightTextColor)
-                    .lineLimit(1)
+                HStack(spacing: .spacing1x) {
+                    if entry.isPinned {
+                        Image(systemName: "pin.fill")
+                            .font(.standard(size: .body1, weight: .regular))
+                            .foregroundStyle(Color.lightTextColor)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+
+                    BrightText(entry.title, size: .body1, color: .semiLightTextColor)
+                        .lineLimit(1)
+                }
 
                 BrightText(entry.when, size: .body1, color: .lightTextColor)
             }
@@ -206,6 +216,13 @@ struct LighthouseMenuView: View {
             Spacer(minLength: .spacing2x)
 
             Menu {
+                Button(
+                    entry.isPinned ? Constants.unpinAction : Constants.pinAction,
+                    systemImage: entry.isPinned ? "pin.slash" : "pin"
+                ) {
+                    togglePin(entry)
+                }
+
                 Button(Constants.renameAction, systemImage: "pencil") {
                     newTitle = entry.title
                     renaming = entry
@@ -226,6 +243,13 @@ struct LighthouseMenuView: View {
             }
         }
         .padding(.vertical, .spacing2x)
+    }
+
+    private func togglePin(_ entry: LighthouseHistoryEntry) {
+        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        withAnimation(.brightSnappy) {
+            entries[index].isPinned.toggle()
+        }
     }
 
     private var isRenaming: Binding<Bool> {
@@ -291,6 +315,8 @@ struct LighthouseMenuView: View {
         static let renamePlaceholder = "Chat name"
         static let saveTitle = "Save"
         static let cancelTitle = "Cancel"
+        static let pinAction = "Pin"
+        static let unpinAction = "Unpin"
         static let renameAction = "Rename"
         static let deleteAction = "Delete"
         static let newChatTitle = "New Chat"

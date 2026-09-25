@@ -15,32 +15,56 @@ enum LighthouseDemo {
             symbol: "rays",
             title: "Evaluating next steps",
             detail: "You've asked how to get fitter for the football season. Before I answer I'm working out what a good answer needs: your current training, how long the season is, and what fitness means for your position.",
-            tint: .defaultOrange
+            tint: .defaultOrange,
+            isExpandable: true
         ),
         LighthouseThoughtStep(
             symbol: "globe",
             title: "Researching effectiveness",
             detail: "I'm checking what the evidence says about pre-season conditioning for amateur footballers, with an eye on programmes that mix strength, repeated sprints and aerobic base work.",
-            tint: .defaultBlue
+            tint: .defaultBlue,
+            isExpandable: true,
+            references: [
+                LighthouseThoughtReference(
+                    title: "High-intensity training in football",
+                    source: "Int J Sports Physiol Perform, 2009",
+                    url: URL(string: "https://pubmed.ncbi.nlm.nih.gov/?term=High-intensity+training+in+football+Iaia")!
+                ),
+                LighthouseThoughtReference(
+                    title: "Repeated-sprint ability – part II: recommendations for training",
+                    source: "Sports Medicine, 2011",
+                    url: URL(string: "https://pubmed.ncbi.nlm.nih.gov/?term=Repeated-sprint+ability+part+II+recommendations+for+training")!
+                ),
+            ]
         ),
         LighthouseThoughtStep(
             symbol: "globe",
             title: "Researching effectiveness",
             detail: "Now I'm comparing how much of each quality to train each week, and how recent studies balance intensity against recovery over a six-week block.",
-            tint: .defaultBlue
+            tint: .defaultBlue,
+            isExpandable: true,
+            references: [
+                LighthouseThoughtReference(
+                    title: "The training–injury prevention paradox",
+                    source: "British Journal of Sports Medicine, 2016",
+                    url: URL(string: "https://pubmed.ncbi.nlm.nih.gov/?term=training+injury+prevention+paradox+Gabbett")!
+                ),
+            ]
         ),
         LighthouseThoughtStep(
             symbol: "brain",
             title: "Defining Goal",
             detail: "Right now, I'm focusing on your question about getting fit for football. I've pinpointed repeated-sprint ability as the biggest gap between where you are and match fitness. My next step will be to lay out a plan that builds it without dropping your strength work.",
-            tint: .defaultPink
+            tint: .defaultPink,
+            isExpandable: true
         ),
         LighthouseThoughtStep(
             symbol: "filemenu.and.selection",
             title: "Generating Plan",
             detail: "I'm shaping a six-week plan: two strength sessions, two conditioning sessions and one easy run each week, with load rising for three weeks before a lighter one.",
             tint: .defaultGreen,
-            depth: 1
+            depth: 1,
+            isExpandable: true
         ),
         LighthouseThoughtStep(
             symbol: "figure.strengthtraining.traditional",

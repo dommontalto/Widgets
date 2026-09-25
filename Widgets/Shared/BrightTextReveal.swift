@@ -11,6 +11,7 @@ import SwiftUI
 // after the one before it, wrapped lines and all.
 struct BrightTextReveal: ViewModifier {
     var delay: TimeInterval = 0
+    var isActive = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -20,6 +21,10 @@ struct BrightTextReveal: ViewModifier {
         content
             .textRenderer(BrightTextRevealRenderer(elapsed: reduceMotion ? .infinity : elapsed))
             .onAppear {
+                guard isActive else {
+                    elapsed = BrightTextRevealConstants.totalDuration
+                    return
+                }
                 elapsed = 0
                 withAnimation(.linear(duration: BrightTextRevealConstants.totalDuration).delay(delay)) {
                     elapsed = BrightTextRevealConstants.totalDuration
@@ -62,7 +67,7 @@ private enum BrightTextRevealConstants {
 }
 
 extension View {
-    func brightTextReveal(delay: TimeInterval = 0) -> some View {
-        modifier(BrightTextReveal(delay: delay))
+    func brightTextReveal(delay: TimeInterval = 0, isActive: Bool = true) -> some View {
+        modifier(BrightTextReveal(delay: delay, isActive: isActive))
     }
 }
