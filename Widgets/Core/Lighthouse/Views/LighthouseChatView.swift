@@ -34,6 +34,8 @@ struct LighthouseChatView: View {
     var action: LighthouseAction?
     let onDismiss: () -> Void
     let onAttach: (BrightChatAttachmentSource) -> Void
+    // The welcome beacon's centre in global coordinates, for the opening burst.
+    var onBeaconCentre: (CGPoint) -> Void = { _ in }
 
     @State private var messages = [LighthouseChatMessage]()
     @State private var speed = LighthouseSpeed.adaptive
@@ -113,10 +115,20 @@ struct LighthouseChatView: View {
         VStack(spacing: .spacing2x) {
             Spacer(minLength: .spacing0x)
 
-            LighthouseBeacon()
+            LighthouseBeacon(isLit: true)
+                .onGeometryChange(for: CGPoint.self) { proxy in
+                    let frame = proxy.frame(in: .global)
+                    return CGPoint(x: frame.midX, y: frame.midY)
+                } action: { onBeaconCentre($0) }
 
-            BrightText(Constants.welcome, size: .subheading, color: .semiLightTextColor)
-                .multilineTextAlignment(.center)
+            VStack(spacing: .spacing1x) {
+                BrightText(Constants.welcomeTitle, size: .standout3)
+                    .brightTextReveal()
+
+                BrightText(Constants.welcomePrompt, size: .subheading, color: .semiLightTextColor)
+                    .brightTextReveal(delay: Constants.welcomePromptDelay)
+            }
+            .multilineTextAlignment(.center)
 
             Spacer(minLength: .spacing0x)
             Spacer(minLength: .spacing0x)
@@ -362,7 +374,9 @@ struct LighthouseChatView: View {
             BrightChatExample("graph.2d", "Forecast metrics"),
             BrightChatExample("fork.knife", "Log food"),
         ]
-        static let welcome = "Welcome to Lighthouse. What would you like to do?"
+        static let welcomeTitle = "Welcome to Lighthouse."
+        static let welcomePrompt = "What would you like to do?"
+        static let welcomePromptDelay: TimeInterval = 0.5
         static let thinkingSeconds: TimeInterval = 10
         static let thinkingDelay: TimeInterval = 0.4
     }

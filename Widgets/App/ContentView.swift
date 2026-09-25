@@ -44,6 +44,14 @@ struct ContentView: View {
             }
         }
         .background(Color.defaultBackground.ignoresSafeArea())
+        .onChange(of: selectedPage) {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarLeading) {
                 Button {

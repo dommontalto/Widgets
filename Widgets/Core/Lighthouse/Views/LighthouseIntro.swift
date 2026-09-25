@@ -92,9 +92,11 @@ struct LighthouseIntro: View {
 // The bang itself, drawn analytically from the time since it went off: a
 // full-screen flash and a flare that swells and thins to nothing.
 // One canvas per frame keeps it cheap; the intro takes it down once done.
-private struct LighthouseIntroBurst: View {
+struct LighthouseIntroBurst: View {
     let start: Date
     let centre: CGPoint
+
+    static let duration = Constants.flareDuration
 
     var body: some View {
         TimelineView(.animation) { context in

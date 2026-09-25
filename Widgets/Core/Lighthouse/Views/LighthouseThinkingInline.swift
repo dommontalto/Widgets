@@ -17,6 +17,7 @@ struct LighthouseThinkingInline: View {
 
     @State private var revealedCount = 0
     @State private var isExpanded = true
+    @State private var toggleCount = 0
 
     private var isFinished: Bool {
         thoughtSeconds != nil
@@ -46,14 +47,16 @@ struct LighthouseThinkingInline: View {
     private var stepList: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             ForEach(Array(steps.prefix(revealedCount).enumerated()), id: \.element.id) { index, step in
+                let startX = index == 0 ? headerIconCenter : iconCenter(for: steps[index - 1])
+                let endX = iconCenter(for: step)
                 ThoughtConnector(
-                    startX: index == 0 ? headerIconCenter : iconCenter(for: steps[index - 1]),
-                    endX: iconCenter(for: step),
-                    height: Constants.connectorHeight,
+                    startX: startX,
+                    endX: endX,
+                    height: startX == endX ? Constants.connectorHeight : Constants.bentConnectorHeight,
                     cornerRadius: Constants.connectorCornerRadius
                 )
 
-                row(step, isLatest: index == revealedCount - 1)
+                row(step)
                     .transition(.offset(y: -.spacing1x).combined(with: .opacity))
             }
         }
@@ -62,6 +65,7 @@ struct LighthouseThinkingInline: View {
     private var header: some View {
         Button {
             guard isFinished else { return }
+            toggleCount += 1
             withAnimation(.brightSpring) { isExpanded.toggle() }
         } label: {
             HStack(spacing: isFinished ? .spacing105x : .spacing2x) {
@@ -100,31 +104,25 @@ struct LighthouseThinkingInline: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: isExpanded)
+        .brightHaptic(.light, trigger: toggleCount)
     }
 
     private var thinkingTitle: some View {
         BrightText(Constants.thinkingTitle, size: .body1)
-            .phaseAnimator([false, true]) { title, isLit in
-                title
-                    .opacity(isLit ? .opaque : .semiLowOpacity)
-                    .shadow(color: Color.textColor.opacity(isLit ? .semiLowOpacity : 0), radius: Constants.glowRadius)
-            } animation: { _ in
-                .easeInOut(duration: Constants.glowDuration)
-            }
+            .brightShimmer()
     }
 
-    private func row(_ step: LighthouseThoughtStep, isLatest: Bool) -> some View {
+    private func row(_ step: LighthouseThoughtStep) -> some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: step.symbol)
                 .font(.standard(size: .body1, weight: .light))
                 .foregroundStyle(Color.semiLightTextColor)
                 .frame(width: Constants.column, height: Constants.column)
-                .symbolEffect(.pulse, isActive: isLatest && !isFinished)
                 .transition(.symbolEffect(.drawOn))
 
             BrightText(step.title, size: .body1, color: .semiLightTextColor)
                 .lineLimit(1)
+                .brightTextReveal()
 
             Spacer(minLength: .spacing0x)
         }
@@ -162,23 +160,22 @@ struct LighthouseThinkingInline: View {
 
     private enum Constants {
         static let thinkingTitle = "Thinking…"
-        static let orbSize: CGFloat = .spacing8x
+        static let orbSize: CGFloat = .spacing7x
         static let column: CGFloat = .spacing4x
         static let brainSize: CGFloat = column
         // Centres the step icons under the orb.
         static let iconInset: CGFloat = (orbSize - column) / 2
         static let indent: CGFloat = .spacing2x
         static let connectorHeight: CGFloat = .spacing2x
+        static let bentConnectorHeight: CGFloat = .spacing3x
         static let connectorCornerRadius: CGFloat = .spacing1x
         static let openChevronDegrees: Double = 90
-        static let glowRadius: CGFloat = .spacing1x
-        static let glowDuration: TimeInterval = 0.9
         static let revealEvery: TimeInterval = 1.1
     }
 }
 
-// Drawn along its own length as it lands, so it runs down from the step above
-// and round into the next one rather than sweeping in from the side.
+// Drawn along its own length as it lands: down from the step above, and when
+// the next one nests, round and across, then down again into its icon.
 private struct ThoughtConnector: View {
     let startX: CGFloat
     let endX: CGFloat
@@ -193,10 +190,16 @@ private struct ThoughtConnector: View {
             if startX == endX {
                 path.addLine(to: CGPoint(x: endX, y: height))
             } else {
-                path.addLine(to: CGPoint(x: startX, y: height - cornerRadius))
+                let middle = height / 2
+                path.addLine(to: CGPoint(x: startX, y: middle - cornerRadius))
                 path.addQuadCurve(
-                    to: CGPoint(x: startX + cornerRadius, y: height),
-                    control: CGPoint(x: startX, y: height)
+                    to: CGPoint(x: startX + cornerRadius, y: middle),
+                    control: CGPoint(x: startX, y: middle)
+                )
+                path.addLine(to: CGPoint(x: endX - cornerRadius, y: middle))
+                path.addQuadCurve(
+                    to: CGPoint(x: endX, y: middle + cornerRadius),
+                    control: CGPoint(x: endX, y: middle)
                 )
                 path.addLine(to: CGPoint(x: endX, y: height))
             }

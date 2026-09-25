@@ -8,15 +8,15 @@
 import SwiftUI
 
 // The Lighthouse mark: a dim lens ring with the lamp banked on one side and
-// the glow it throws across the inside. The lamp sits still unless lit, when
-// it makes a single turn and comes to rest.
+// the glow it throws across the inside. Lit, the lamp opens out left to
+// right like a book, its beam widening with it.
 struct LighthouseBeacon: View {
     var size: CGFloat = Constants.size
     var isLit = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var isSweeping = false
+    @State private var openness: CGFloat = 1
 
     var body: some View {
         ZStack {
@@ -25,8 +25,6 @@ struct LighthouseBeacon: View {
                 .frame(width: ringDiameter, height: ringDiameter)
 
             lamp
-                .rotationEffect(.degrees(isSweeping ? 360 : 0))
-                .animation(sweep, value: isSweeping)
         }
         .frame(width: size, height: size)
         .onAppear(perform: light)
@@ -35,11 +33,20 @@ struct LighthouseBeacon: View {
 
     private func light() {
         guard isLit, !reduceMotion else { return }
-        isSweeping = true
+        var closed = Transaction()
+        closed.disablesAnimations = true
+        withTransaction(closed) { openness = 0 }
+        Task { @MainActor in
+            withAnimation(.easeOut(duration: Constants.openDuration)) { openness = 1 }
+        }
     }
 
-    private var sweep: Animation {
-        .easeOut(duration: Constants.sweepDuration)
+    private var lampFrom: CGFloat {
+        Constants.lampStart
+    }
+
+    private var lampTo: CGFloat {
+        Constants.lampStart + (Constants.lampEnd - Constants.lampStart) * openness
     }
 
     private var lamp: some View {
@@ -58,12 +65,12 @@ struct LighthouseBeacon: View {
                 // through the ends of the lit ring rather than squaring off at
                 // 3 and 9 o'clock.
                 .mask {
-                    Sector(from: Constants.lampStart - capFraction, to: Constants.lampEnd + capFraction)
+                    Sector(from: lampFrom - capFraction, to: lampTo + capFraction)
                         .frame(width: glowDiameter, height: glowDiameter)
                 }
 
             Circle()
-                .trim(from: Constants.lampStart, to: Constants.lampEnd)
+                .trim(from: lampFrom, to: lampTo)
                 .stroke(Color.white, style: StrokeStyle(lineWidth: band, lineCap: .round))
                 .frame(width: ringDiameter - band, height: ringDiameter - band)
         }
@@ -97,15 +104,23 @@ struct LighthouseBeacon: View {
         // side of 0.75.
         static let lampStart: CGFloat = 0.586
         static let lampEnd: CGFloat = 0.914
-        static let sweepDuration: TimeInterval = 4
+        static let openDuration: TimeInterval = 1.2
     }
 }
 
 // The pie slice between two circle-trim fractions, matching the trim's own
 // clockwise sweep from 3 o'clock.
 private struct Sector: Shape {
-    let from: CGFloat
-    let to: CGFloat
+    var from: CGFloat
+    var to: CGFloat
+
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(from, to) }
+        set {
+            from = newValue.first
+            to = newValue.second
+        }
+    }
 
     func path(in rect: CGRect) -> Path {
         let centre = CGPoint(x: rect.midX, y: rect.midY)

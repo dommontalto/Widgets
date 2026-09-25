@@ -33,6 +33,15 @@ struct ExploreView: View {
         }
         .padding(.top, .spacing2x)
         .padding(.bottom, .spacing12x)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        }
         .sheet(item: $selectedAgent) { agent in
             ExploreAgentSheet(agent: agent)
         }

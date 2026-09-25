@@ -14,6 +14,8 @@ struct BrightSearchBar: View {
     @Binding var text: String
 
     @FocusState private var isFocused: Bool
+    @State private var reservesClear = false
+    @State private var showsClearButton = false
 
     init(
         _ placeholder: String,
@@ -31,21 +33,37 @@ struct BrightSearchBar: View {
         HStack(spacing: .spacing2x) {
             field
 
-            if showsClear {
-                BrightRoundButton(systemImage: "xmark", size: .large) {
-                    text = ""
-                    isFocused = false
+            if reservesClear {
+                ZStack {
+                    if showsClearButton {
+                        BrightRoundButton(systemImage: "xmark", size: .large) {
+                            text = ""
+                            isFocused = false
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
-                .transition(
-                    .asymmetric(
-                        insertion: .scale.combined(with: .opacity).animation(.smooth.delay(0.2)),
-                        removal: .scale.combined(with: .opacity)
-                    )
-                )
+                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
             }
         }
-        .animation(.smooth, value: showsClear)
+        .onChange(of: showsClear) { _, showsClear in
+            if showsClear {
+                withAnimation(.smooth) {
+                    reservesClear = true
+                } completion: {
+                    guard self.showsClear else { return }
+                    withAnimation(.smooth) { showsClearButton = true }
+                }
+            } else {
+                withAnimation(.smooth) {
+                    showsClearButton = false
+                    reservesClear = false
+                }
+            }
+        }
         .onAppear {
+            reservesClear = showsClear
+            showsClearButton = showsClear
             if autoFocuses { isFocused = true }
         }
     }

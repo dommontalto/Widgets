@@ -42,6 +42,8 @@ struct LighthouseScreen: View {
     @State private var attachmentSource: BrightChatAttachmentSource?
     @State private var pickedPhotos = [PhotosPickerItem]()
     @State private var isMenuOpen = false
+    @State private var openingBurst: Date?
+    @State private var beaconCentre = CGPoint.zero
     @FocusState private var isTyping: Bool
 
     var body: some View {
@@ -52,6 +54,7 @@ struct LighthouseScreen: View {
         }
         .presentationBackground(.clear)
         .animation(.brightEaseInOut, value: showOnboarding)
+        .task { await runOpeningBurst() }
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
         }
@@ -113,7 +116,7 @@ struct LighthouseScreen: View {
     }
 
     private var closeButton: some View {
-        BrightRoundButton(systemImage: "xmark", size: .large) { dismiss() }
+        BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: close)
             .accessibilityLabel("Close")
     }
 
@@ -134,6 +137,20 @@ struct LighthouseScreen: View {
             // Speaking to it lights the orb up: it listens to the mic and swells
             // with your voice.
             island
+
+            if let openingBurst {
+                // Identity, so it never animates out inside the dismissing cover — that freezes touches app-wide.
+                GeometryReader { proxy in
+                    let origin = proxy.frame(in: .global).origin
+                    LighthouseIntroBurst(
+                        start: openingBurst,
+                        centre: CGPoint(x: beaconCentre.x - origin.x, y: beaconCentre.y - origin.y)
+                    )
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .transition(.identity)
+            }
         }
     }
 
@@ -202,8 +219,9 @@ struct LighthouseScreen: View {
             dictation: dictation,
             resetCount: chatResetCount,
             action: action,
-            onDismiss: { dismiss() },
-            onAttach: { attachmentSource = $0 }
+            onDismiss: close,
+            onAttach: { attachmentSource = $0 },
+            onBeaconCentre: { beaconCentre = $0 }
         )
     }
 
@@ -221,6 +239,18 @@ struct LighthouseScreen: View {
             onSettings: { showingSettings = true },
             onNewChat: startNewChat
         )
+    }
+
+    private func runOpeningBurst() async {
+        guard !showOnboarding else { return }
+        openingBurst = .now
+        try? await Task.sleep(for: .seconds(LighthouseIntroBurst.duration))
+        openingBurst = nil
+    }
+
+    private func close() {
+        openingBurst = nil
+        dismiss()
     }
 
     private func startNewChat() {

@@ -166,13 +166,18 @@ struct BrightChat<Payload, Response: View, ModelPicker: View>: View {
             // The input bar hugs the true bottom edge — its own padding is the
             // gap — rather than stacking the sheet's bottom insets under it.
             .ignoresSafeArea(.container, edges: .bottom)
-            .brightHaptic(.light, trigger: messages.count)
+            .brightHaptic(.light, trigger: readableCount)
             .onAppear {
                 if focusesOnAppear {
                     isTyping.wrappedValue = true
                 }
             }
             .onDisappear { onStop() }
+    }
+
+    // A row with nothing to read yet — a caller's placeholder — lands silently.
+    private var readableCount: Int {
+        messages.filter { !$0.text.isEmpty || !$0.attachments.isEmpty }.count
     }
 
     // MARK: - Thread
