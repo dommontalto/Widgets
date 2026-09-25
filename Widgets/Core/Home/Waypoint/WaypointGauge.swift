@@ -60,16 +60,22 @@ struct WaypointGauge: View {
                 .animation(WaypointPop.travel, value: bearing)
 
             BrightText(bearing.label, size: .standout3, color: bearing.color)
+                .brightTextReveal()
                 .offset(point(radius: Constants.radius + Constants.labelGap))
+                .id(bearing)
+                .transition(.asymmetric(insertion: .identity, removal: .opacity))
 
-            if let badge = bearing.badge {
-                Image(systemName: badge)
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(bearing.color, bearing.color.opacity(.veryLowOpacity))
-                    .font(.standardSFPro(size: .standout3, weight: .regular))
-                    .offset(y: Constants.badgeOffset)
-                    .transition(.scale.combined(with: .opacity))
+            ZStack {
+                if let badge = bearing.badge {
+                    Image(systemName: badge)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(bearing.color, bearing.color.opacity(.veryLowOpacity))
+                        .font(.standardSFPro(size: .standout3, weight: .regular))
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
+            .animation(.brightBouncy, value: bearing.badge)
+            .offset(y: Constants.badgeOffset)
         }
         .frame(width: Constants.diameter, height: Constants.diameter)
         .background {

@@ -118,7 +118,8 @@ struct ExploreAgentSheet: View {
             onSend: send,
             onStop: stop,
             bubbleTint: agent.tint,
-            sendTint: agent.tint
+            sendTint: agent.tint,
+            placeholder: "What would you like this agent to do?"
         ) { message in
             response(message)
         }

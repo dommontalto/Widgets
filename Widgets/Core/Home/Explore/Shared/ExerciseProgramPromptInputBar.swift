@@ -19,6 +19,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
     // laid over the field it flies out of.
     var fieldFrame: Binding<CGRect>
     var sendTint: Color?
+    var placeholder: String
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
@@ -34,6 +35,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         onAttach: @escaping () -> Void = {},
         fieldFrame: Binding<CGRect> = .constant(.zero),
         sendTint: Color? = nil,
+        placeholder: String = "Ask Lighthouse",
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -45,6 +47,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         self.onAttach = onAttach
         self.fieldFrame = fieldFrame
         self.sendTint = sendTint
+        self.placeholder = placeholder
         self.modelPicker = modelPicker()
     }
 
@@ -88,7 +91,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
     private var field: some View {
         ZStack(alignment: .leading) {
             if text.isEmpty {
-                BrightText("Ask Lighthouse", size: .subheading2, color: .lightTextColor)
+                BrightText(placeholder, size: .subheading2, color: .lightTextColor)
                     .lineLimit(1)
                     .allowsHitTesting(false)
                     .brightWiggle(trigger: nudge)
