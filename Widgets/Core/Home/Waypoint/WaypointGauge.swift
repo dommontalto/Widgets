@@ -244,9 +244,9 @@ enum WaypointBearing: CaseIterable {
     var degrees: Double {
         switch self {
         case .southWest: -135
-        case .northWest: -45
+        case .northWest: -55
         case .north: 0
-        case .northEast: 45
+        case .northEast: 55
         case .southEast: 135
         }
     }
