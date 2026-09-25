@@ -60,14 +60,7 @@ struct WaypointView: View {
             .padding(.top, .spacing7x)
             .padding(.bottom, .spacing2x)
 
-            BrightPillButton(
-                "Check In",
-                systemImage: "person.badge.clock",
-                color: .defaultGreen.opacity(.minimalOpacity),
-                textColor: .defaultGreen,
-                buttonSize: .large,
-                onTapCallback: onCheckIn
-            )
+            BrightPillButton("Check In", systemImage: "person.badge.clock", buttonSize: .large, onTapCallback: onCheckIn)
 
             BrightText("TODAY, 9 AM", size: .body1, color: .lightTextColor)
         }

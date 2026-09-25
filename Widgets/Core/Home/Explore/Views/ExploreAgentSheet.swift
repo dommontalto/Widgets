@@ -48,12 +48,14 @@ struct ExploreAgentSheet: View {
 
     // The artwork stays behind both steps, dimmed under the chat so its text reads.
     private var wash: some View {
-        Image(agent.background)
-            .resizable()
-            .scaledToFill()
-            // Blur feathers the image's edges, so it runs past the sheet.
+        BrightRipple(size: 2.26, caustic: 0.18, waves: 0.21, layering: 0.15, edges: 0.36, highlights: 0.35) {
+            Image(agent.background)
+                .resizable()
+                .scaledToFill()
+                .blur(radius: Constants.washBlur)
+        }
+            // Zoomed after the ripple, so its warped edges and the blur's feathering fall past the sheet.
             .scaleEffect(Constants.washOverscan)
-            .blur(radius: Constants.washBlur)
             .overlay(Color.white.opacity(.ultraLowOpacity))
             .overlay(Color.defaultSheetBackground.opacity(isConfiguring ? .mediumOpacity : 0))
             .ignoresSafeArea()
@@ -63,24 +65,26 @@ struct ExploreAgentSheet: View {
         VStack(spacing: .spacing2x) {
             Spacer(minLength: .spacing0x)
 
-            mark
-                .frame(width: .spacing10x, height: .spacing10x)
-                .padding(.bottom, .spacing1x)
+            VStack(spacing: .spacing2x) {
+                mark
+                    .frame(width: .spacing10x, height: .spacing10x)
+                    .padding(.bottom, .spacing1x)
 
-            BrightText(agent.name, size: .standout1, color: .white, weight: .regular)
+                BrightText(agent.name, size: .standout1, color: .white, weight: .regular)
 
-            BrightText(agent.blurb, size: .body1, color: .white, weight: .regular)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: Constants.blurbWidth)
+                BrightText(agent.blurb, size: .body1, color: .white, weight: .regular)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: Constants.blurbWidth)
+            }
+            .blendMode(.overlay)
 
             Spacer(minLength: .spacing0x)
 
-            BrightPillButton("Configure", systemImage: "hammer.fill", buttonSize: .large, isClear: true) {
+            BrightPillButton("Configure", systemImage: "hammer.fill", buttonSize: .large) {
                 isConfiguring = true
             }
             .padding(.bottom, .spacing4x)
         }
-        .blendMode(.overlay)
         .padding(.horizontal, .spacing3x)
     }
 
@@ -179,6 +183,6 @@ struct ExploreAgentSheet: View {
     private enum Constants {
         static let blurbWidth: CGFloat = 256
         static let washBlur: CGFloat = .spacing4x
-        static let washOverscan: CGFloat = 1.2
+        static let washOverscan: CGFloat = 1.35
     }
 }

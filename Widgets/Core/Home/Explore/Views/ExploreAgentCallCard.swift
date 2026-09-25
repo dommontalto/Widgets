@@ -40,7 +40,7 @@ struct ExploreAgentCallCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier())
     }
 
     private var steps: some View {

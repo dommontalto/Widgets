@@ -23,10 +23,11 @@ struct WaypointGauge: View {
                 .stroke(bearing.color.opacity(.minimalOpacity), style: stroke)
                 .rotationEffect(.degrees(Constants.arcRotation))
 
-            Circle()
-                .trim(from: min(Constants.northFraction, bearingFraction), to: max(Constants.northFraction, bearingFraction))
-                .stroke(bearing.color.opacity(.lowOpacity), style: stroke)
-                .rotationEffect(.degrees(Constants.arcRotation))
+            WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
+                .blur(radius: Constants.cometGlowBlur)
+                .opacity(.lowOpacity)
+
+            WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
 
             Image(systemName: "arrow.up")
                 .font(.standardSFPro(size: .giant, weight: .semibold))
@@ -62,6 +63,15 @@ struct WaypointGauge: View {
             WaypointAura(color: bearing.color)
                 .id(bearing)
                 .transition(.opacity)
+
+            Circle()
+                .fill(bearing.color)
+                .frame(width: Constants.headingGlowSize, height: Constants.headingGlowSize)
+                .blur(radius: Constants.headingGlowBlur)
+                .opacity(.veryLowOpacity)
+                .offset(y: -Constants.headingGlowReach)
+                .rotationEffect(.degrees(bearing.degrees))
+                .allowsHitTesting(false)
         }
         .frame(width: Constants.frameSize, height: Constants.diameter + Constants.lineWidth)
     }
@@ -110,7 +120,39 @@ struct WaypointGauge: View {
         static let bounceStep: Double = 0.1
         static let bounceSettle: Double = 0.5
         static let dotGlowSize: CGFloat = 26
+        static let headingGlowSize: CGFloat = 130
+        static let headingGlowBlur: CGFloat = 40
+        static let headingGlowReach: CGFloat = 70
+        static let cometGlowBlur: CGFloat = 8
         static let dotGlowBlur: CGFloat = 6
+    }
+}
+
+private struct WaypointCometArc: View, Animatable {
+    var fraction: CGFloat
+    let northFraction: CGFloat
+    let rotation: Double
+    let color: Color
+    let style: StrokeStyle
+
+    var animatableData: CGFloat {
+        get { fraction }
+        set { fraction = newValue }
+    }
+
+    var body: some View {
+        let low = min(northFraction, fraction)
+        let high = max(northFraction, fraction)
+        let tail = color.opacity(.ultraLowOpacity)
+        let colors = fraction < northFraction ? [color, tail] : [tail, color]
+
+        Circle()
+            .trim(from: low, to: high)
+            .stroke(
+                AngularGradient(colors: colors, center: .center, startAngle: .degrees(low * 360), endAngle: .degrees(high * 360)),
+                style: style
+            )
+            .rotationEffect(.degrees(rotation))
     }
 }
 

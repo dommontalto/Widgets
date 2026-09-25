@@ -61,9 +61,9 @@ struct WaypointAura: View {
     }
 
     private enum Constants {
-        static let size: CGFloat = 260
-        static let swirlSize: CGFloat = 170
-        static let swirlBlur: CGFloat = 32
+        static let size: CGFloat = 440
+        static let swirlSize: CGFloat = 280
+        static let swirlBlur: CGFloat = 54
         static let swirlSpeed: Double = 14
         static let breathDepth: Double = 0.06
         static let breathSpeed: Double = 0.9

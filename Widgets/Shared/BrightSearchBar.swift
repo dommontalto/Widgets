@@ -31,7 +31,7 @@ struct BrightSearchBar: View {
         HStack(spacing: .spacing2x) {
             field
 
-            if isFocused {
+            if showsClear {
                 BrightRoundButton(systemImage: "xmark", size: .large) {
                     text = ""
                     isFocused = false
@@ -44,10 +44,14 @@ struct BrightSearchBar: View {
                 )
             }
         }
-        .animation(.smooth, value: isFocused)
+        .animation(.smooth, value: showsClear)
         .onAppear {
             if autoFocuses { isFocused = true }
         }
+    }
+
+    private var showsClear: Bool {
+        isFocused || !text.isEmpty
     }
 
     private var field: some View {

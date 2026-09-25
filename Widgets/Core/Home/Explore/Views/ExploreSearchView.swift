@@ -79,7 +79,7 @@ private struct ExploreSuggestionRow: View {
                 .opacity(.veryLowOpacity)
             }
         }
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier())
     }
 }
 
@@ -129,7 +129,7 @@ struct ExploreResultCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(CardModifier())
     }
 }
 

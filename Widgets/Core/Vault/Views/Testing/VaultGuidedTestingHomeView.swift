@@ -332,7 +332,7 @@ struct VaultTestBrowse: View {
     let onSelect: (VaultTestCategory) -> Void
 
     var body: some View {
-        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Browse") {
+        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Lab Tests Nearby") {
             BrightTileRow {
                 ForEach(VaultTestCategory.demo) { category in
                     BrightTile(
