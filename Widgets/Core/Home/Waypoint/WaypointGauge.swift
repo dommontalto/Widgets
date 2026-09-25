@@ -60,10 +60,6 @@ struct WaypointGauge: View {
         }
         .frame(width: Constants.diameter, height: Constants.diameter)
         .background {
-            WaypointAura(color: bearing.color)
-                .id(bearing)
-                .transition(.opacity)
-
             Circle()
                 .fill(bearing.color)
                 .frame(width: Constants.headingGlowSize, height: Constants.headingGlowSize)

@@ -37,10 +37,6 @@ struct LighthouseScreen: View {
     // Bumped to have the chat view clear its thread in place, so the input
     // field survives and keeps the keyboard.
     @State private var chatResetCount = 0
-    @State private var showingThoughtProcess = false
-    // Presenting the thought process takes the keyboard with it, so this
-    // remembers whether it was up to bring it straight back after.
-    @State private var wasTypingBeforeThoughtProcess = false
     @State private var attachments = [BrightChatAttachment]()
     @State private var dictation = BrightDictation()
     @State private var attachmentSource: BrightChatAttachmentSource?
@@ -64,13 +60,6 @@ struct LighthouseScreen: View {
         }
         .sheet(isPresented: $showingConfigurations) {
             LighthouseConfigurationsSheet()
-        }
-        .sheet(isPresented: $showingThoughtProcess) {
-            if wasTypingBeforeThoughtProcess {
-                isTyping = true
-            }
-        } content: {
-            LighthouseThoughtProcessSheet(steps: LighthouseDemo.thoughtSteps)
         }
         .photosPicker(
             isPresented: attaching(.photos),
@@ -142,8 +131,8 @@ struct LighthouseScreen: View {
                     .transition(.opacity)
             }
 
-            // Speaking to it lights the orb up too: it listens to the mic
-            // and swells with your voice until the reply is being worked out.
+            // Speaking to it lights the orb up: it listens to the mic and swells
+            // with your voice.
             island
         }
     }
@@ -154,10 +143,10 @@ struct LighthouseScreen: View {
     // has nothing to animate on.
     private var island: some View {
         ZStack(alignment: .top) {
-            if isThinking || dictation.isListening {
-                BrightIslandIndicator(onTap: islandTap) {
+            if dictation.isListening {
+                BrightIslandIndicator {
                     BrightSolvingStars(
-                        state: dictation.isListening ? .listening : .thinking,
+                        state: .listening,
                         audioLevel: dictation.audioLevel,
                         ambientMotion: .off
                     )
@@ -166,11 +155,10 @@ struct LighthouseScreen: View {
                         width * Constants.orbWidthFraction
                     }
                 } footer: {
-                    LighthouseThinkingStatus(isListening: dictation.isListening)
+                    LighthouseThinkingStatus(isListening: true)
                 }
             }
         }
-        .animation(.brightEaseInOut, value: isThinking)
         .animation(.brightEaseInOut, value: dictation.isListening)
     }
 
@@ -215,7 +203,6 @@ struct LighthouseScreen: View {
             resetCount: chatResetCount,
             action: action,
             onDismiss: { dismiss() },
-            onThoughtProcess: showThoughtProcess,
             onAttach: { attachmentSource = $0 }
         )
     }
@@ -234,18 +221,6 @@ struct LighthouseScreen: View {
             onSettings: { showingSettings = true },
             onNewChat: startNewChat
         )
-    }
-
-    // Tapping the island while a reply is being worked out opens the thought
-    // process; while listening it stays out of the way.
-    private var islandTap: (() -> Void)? {
-        guard isThinking, !dictation.isListening else { return nil }
-        return { showThoughtProcess() }
-    }
-
-    private func showThoughtProcess() {
-        wasTypingBeforeThoughtProcess = isTyping
-        showingThoughtProcess = true
     }
 
     private func startNewChat() {

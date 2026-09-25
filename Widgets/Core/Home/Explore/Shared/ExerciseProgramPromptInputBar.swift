@@ -15,13 +15,13 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
     var onSend: () -> Void
     var onStop: () -> Void
     var onAttach: () -> Void
-    var onDictate: () -> Void
     // Reported in the chat's input coordinate space, so a sent bubble can be
     // laid over the field it flies out of.
     var fieldFrame: Binding<CGRect>
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
+    @State private var dictation = BrightDictation()
 
     init(
         text: Binding<String>,
@@ -31,7 +31,6 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
         onAttach: @escaping () -> Void = {},
-        onDictate: @escaping () -> Void = {},
         fieldFrame: Binding<CGRect> = .constant(.zero),
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
@@ -42,7 +41,6 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         self.onSend = onSend
         self.onStop = onStop
         self.onAttach = onAttach
-        self.onDictate = onDictate
         self.fieldFrame = fieldFrame
         self.modelPicker = modelPicker()
     }
@@ -60,15 +58,14 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
 
                 Spacer(minLength: .spacing2x)
 
-                HStack(spacing: .spacing0x) {
-                    glyphButton("plus", action: onAttach)
-                    glyphButton("mic.fill", action: onDictate)
-                }
+                glyphButton("plus", action: onAttach)
 
-                sendOrStopButton
+                actionButton
             }
         }
         .animation(.brightBouncy, value: isBusy)
+        .animation(.brightSnappy, value: action)
+        .onDisappear { dictation.stop() }
         .padding(.spacing2x)
         .frame(maxWidth: .infinity)
         .contentShape(.rect)
@@ -122,23 +119,75 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         }
     }
 
-    private var sendOrStopButton: some View {
-        BrightRoundButton(systemImage: isBusy ? "stop.fill" : "arrow.up", size: .large) {
-            if isBusy {
-                onStop()
-            } else {
-                send()
+    private enum Action {
+        case stop
+        case dictating
+        case send
+        case dictate
+
+        var symbol: String {
+            switch self {
+            case .stop: "stop.fill"
+            case .dictating: "waveform"
+            case .send: "arrow.up"
+            case .dictate: "mic.fill"
             }
         }
+
+        var color: Color? {
+            self == .send ? .textColor : nil
+        }
+
+        var imageColor: Color? {
+            switch self {
+            case .send: .defaultBlackWhite
+            case .dictating, .stop: .defaultRed
+            case .dictate: nil
+            }
+        }
+    }
+
+    private var action: Action {
+        if isBusy {
+            .stop
+        } else if dictation.isListening {
+            .dictating
+        } else if hasContent {
+            .send
+        } else {
+            .dictate
+        }
+    }
+
+    private var hasContent: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var actionButton: some View {
+        BrightRoundButton(
+            systemImage: action.symbol,
+            size: .medium,
+            color: action.color,
+            imageColor: action.imageColor
+        ) {
+            switch action {
+            case .stop: onStop()
+            case .dictating, .dictate: dictation.toggle($text)
+            case .send: send()
+            }
+        }
+        .symbolEffect(.variableColor.iterative, isActive: action == .dictating)
         .contentTransition(.symbolEffect(.replace.upUp))
+        .brightHaptic(.light, trigger: dictation.isListening)
     }
 
     private func send() {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard hasContent else {
             nudge += 1
             return
         }
 
+        dictation.stop()
         onSend()
     }
 }
@@ -158,7 +207,6 @@ extension ExerciseProgramPromptInputBar where ModelPicker == EmptyView {
         onSend: @escaping () -> Void,
         onStop: @escaping () -> Void,
         onAttach: @escaping () -> Void = {},
-        onDictate: @escaping () -> Void = {},
         fieldFrame: Binding<CGRect> = .constant(.zero)
     ) {
         self.init(
@@ -169,7 +217,6 @@ extension ExerciseProgramPromptInputBar where ModelPicker == EmptyView {
             onSend: onSend,
             onStop: onStop,
             onAttach: onAttach,
-            onDictate: onDictate,
             fieldFrame: fieldFrame
         ) {
             EmptyView()

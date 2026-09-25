@@ -15,6 +15,10 @@ nonisolated struct LighthouseStoryItem: Identifiable, Equatable {
 nonisolated struct LighthouseResponsePayload: Equatable {
     var items: [LighthouseStoryItem] = []
     var checkIn: LighthouseCheckInReview?
+    // Marks the thought-process row that sits above an answer; its seconds
+    // stay nil while the answer is still being worked out.
+    var isThoughtProcess = false
+    var thoughtSeconds: Int?
 }
 
 nonisolated struct LighthouseCheckInReview: Equatable {

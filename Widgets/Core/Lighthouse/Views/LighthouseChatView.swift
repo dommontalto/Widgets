@@ -33,7 +33,6 @@ struct LighthouseChatView: View {
     var resetCount = 0
     var action: LighthouseAction?
     let onDismiss: () -> Void
-    let onThoughtProcess: () -> Void
     let onAttach: (BrightChatAttachmentSource) -> Void
 
     @State private var messages = [LighthouseChatMessage]()
@@ -65,12 +64,15 @@ struct LighthouseChatView: View {
             onSend: send,
             onStop: stopThinking,
             onSwipeDismiss: onDismiss,
-            onThoughtTap: { _ in onThoughtProcess() },
             attachments: $attachments,
             onAttach: onAttach,
             dictation: dictation,
             response: { message in
-                LighthouseChatResponse(text: message.text, items: message.payload?.items ?? [], checkIn: message.payload?.checkIn, date: message.date, onSubmit: send)
+                if let payload = message.payload, payload.isThoughtProcess {
+                    LighthouseThinkingInline(steps: LighthouseDemo.thoughtSteps, thoughtSeconds: payload.thoughtSeconds)
+                } else {
+                    LighthouseChatResponse(text: message.text, items: message.payload?.items ?? [], checkIn: message.payload?.checkIn, date: message.date, onSubmit: send)
+                }
             },
             modelPicker: {
                 HStack(spacing: .spacing1x) {
@@ -101,6 +103,7 @@ struct LighthouseChatView: View {
             replyTask = nil
             messages = []
             replyIndex = 0
+            isThinking = false
         }
     }
 
@@ -264,33 +267,57 @@ struct LighthouseChatView: View {
     }
 
     private func reply() async {
-        let thinkingSeconds = Double.random(in: Constants.thinkingRange)
-        do {
-            try await Task.sleep(for: .seconds(thinkingSeconds))
-        } catch {
-            return
-        }
+        let thinkingSeconds = Constants.thinkingSeconds
+        guard await think(for: thinkingSeconds) else { return }
         // The first answer is the demo story with its widgets; later ones are
         // plain text.
         let message: LighthouseChatMessage = if replyIndex == 0 {
             LighthouseChatMessage(
                 kind: .response,
                 text: LighthouseDemo.sleepPartOne,
-                payload: LighthouseResponsePayload(items: LighthouseDemo.sleepItems),
-                thoughtSeconds: Int(thinkingSeconds.rounded())
+                payload: LighthouseResponsePayload(items: LighthouseDemo.sleepItems)
             )
         } else {
             LighthouseChatMessage(
                 kind: .assistant,
-                text: LighthouseDemo.replies[(replyIndex - 1) % LighthouseDemo.replies.count],
-                thoughtSeconds: Int(thinkingSeconds.rounded())
+                text: LighthouseDemo.replies[(replyIndex - 1) % LighthouseDemo.replies.count]
             )
         }
         replyIndex += 1
         withAnimation(.brightSnappy) {
             isThinking = false
+            finishThinking(after: thinkingSeconds)
             messages.append(message)
         }
+    }
+
+    // The thinking row lands a beat after the sent message, so the send
+    // flight still sees the user's bubble as the newest arrival.
+    private func think(for seconds: TimeInterval) async -> Bool {
+        do {
+            try await Task.sleep(for: .seconds(Constants.thinkingDelay))
+            withAnimation(.brightSnappy) {
+                messages.append(LighthouseChatMessage(kind: .response, text: "", payload: LighthouseResponsePayload(isThoughtProcess: true)))
+            }
+            try await Task.sleep(for: .seconds(seconds - Constants.thinkingDelay))
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func finishThinking(after seconds: TimeInterval) {
+        guard let index = messages.lastIndex(where: isStillThinking) else { return }
+        messages[index].payload?.thoughtSeconds = Int(seconds.rounded())
+    }
+
+    private func removeThinking() {
+        messages.removeAll(where: isStillThinking)
+    }
+
+    private func isStillThinking(_ message: LighthouseChatMessage) -> Bool {
+        guard let payload = message.payload else { return false }
+        return payload.isThoughtProcess && payload.thoughtSeconds == nil
     }
 
     private func run(_ action: LighthouseAction?) {
@@ -299,20 +326,16 @@ struct LighthouseChatView: View {
     }
 
     private func replyToCheckIn() async {
-        let thinkingSeconds = Double.random(in: Constants.thinkingRange)
-        do {
-            try await Task.sleep(for: .seconds(thinkingSeconds))
-        } catch {
-            return
-        }
+        let thinkingSeconds = Constants.thinkingSeconds
+        guard await think(for: thinkingSeconds) else { return }
         let review = LighthouseDemo.weeklyClimbingReview
         withAnimation(.brightSnappy) {
             isThinking = false
+            finishThinking(after: thinkingSeconds)
             messages.append(LighthouseChatMessage(
                 kind: .response,
                 text: review.title,
-                payload: LighthouseResponsePayload(checkIn: review),
-                thoughtSeconds: Int(thinkingSeconds.rounded())
+                payload: LighthouseResponsePayload(checkIn: review)
             ))
         }
     }
@@ -320,7 +343,10 @@ struct LighthouseChatView: View {
     private func stopThinking() {
         replyTask?.cancel()
         replyTask = nil
-        withAnimation(.brightSnappy) { isThinking = false }
+        withAnimation(.brightSnappy) {
+            isThinking = false
+            removeThinking()
+        }
     }
 
     private enum Constants {
@@ -337,7 +363,8 @@ struct LighthouseChatView: View {
             BrightChatExample("fork.knife", "Log food"),
         ]
         static let welcome = "Welcome to Lighthouse. What would you like to do?"
-        static let thinkingRange = 6.0...9.0
+        static let thinkingSeconds: TimeInterval = 10
+        static let thinkingDelay: TimeInterval = 0.4
     }
 }
 
@@ -359,7 +386,6 @@ struct LighthouseChatView: View {
                 attachments: $attachments,
                 dictation: BrightDictation(),
                 onDismiss: {},
-                onThoughtProcess: {},
                 onAttach: { _ in }
             )
             .background { LighthouseChatBackground() }
