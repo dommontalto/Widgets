@@ -209,7 +209,11 @@ struct LighthouseThinkingInline: View {
                     .frame(height: Constants.featherHeight)
 
                 Rectangle()
+
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: Constants.featherHeight)
             }
+            .padding(.trailing, -Constants.landingOverscan)
         }
     }
 
