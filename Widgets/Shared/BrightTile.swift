@@ -68,39 +68,67 @@ struct BrightTile<Icon: View>: View {
     }
 }
 
-// A horizontally scrolling row of tiles, faded at both edges to hint there's more.
+// A horizontally scrolling row of tiles, optionally blurred and faded at the trailing edge to hint there's more.
 struct BrightTileRow<Content: View>: View {
+    var blur = false
     @ViewBuilder let content: Content
 
     var body: some View {
         ScrollView(.horizontal) {
-            HStack(spacing: .spacing2x) {
+            HStack(spacing: .spacing3x) {
                 content
             }
+            .padding(.vertical, blurBleed)
             .scrollTargetLayout()
+            .visualEffect { [blur] effect, proxy in
+                let visible = proxy.bounds(of: .scrollView) ?? proxy.frame(in: .local)
+                return effect.layerEffect(
+                    ShaderLibrary.brightEdgeBlur(
+                        .float(visible.maxX - Constants.trailingBlur),
+                        .float(visible.maxX),
+                        .float(Constants.maxBlur)
+                    ),
+                    maxSampleOffset: CGSize(width: Constants.maxBlur, height: Constants.maxBlur),
+                    isEnabled: blur
+                )
+            }
         }
         .scrollTargetBehavior(.viewAligned)
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
-        .mask {
-            HStack(spacing: .spacing0x) {
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        // Fully clear over the sliver a snapped scroll leaves of the tile before.
-                        .init(color: .clear, location: Constants.leadingClear),
-                        .init(color: .black, location: 1),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(width: Constants.leadingFade)
+        .modifier(BrightTileRowEdge(fades: blur))
+        .padding(.vertical, -blurBleed)
+    }
 
-                Color.black
+    private var blurBleed: CGFloat {
+        blur ? Constants.maxBlur : .spacing0x
+    }
+}
 
-                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
-                    .frame(width: Constants.trailingFade)
-            }
+private struct BrightTileRowEdge: ViewModifier {
+    let fades: Bool
+
+    func body(content: Content) -> some View {
+        if fades {
+            hideSystemEdges(content)
+                .mask {
+                    HStack(spacing: .spacing0x) {
+                        Color.black
+
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: Constants.trailingFade)
+                    }
+                }
+        } else {
+            hideSystemEdges(content)
+        }
+    }
+
+    @ViewBuilder private func hideSystemEdges(_ content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .horizontal)
+        } else {
+            content
         }
     }
 }
@@ -112,7 +140,7 @@ private enum Constants {
     static let stroke: CGFloat = 0.5
     static let backgroundBlur: CGFloat = 8
     static let backgroundOverscan: CGFloat = 1.2
-    static let leadingFade: CGFloat = .spacing3x
-    static let leadingClear: CGFloat = .spacing1x / leadingFade
-    static let trailingFade: CGFloat = .spacing7x
+    static let trailingFade: CGFloat = .spacing4x
+    static let trailingBlur: CGFloat = .spacing8x
+    static let maxBlur: CGFloat = .spacing1x
 }

@@ -16,7 +16,7 @@ extension ExploreAgent {
             blurb: "This agent will help you find health products that fit your goals.",
             mark: .symbol("shippingbox.fill"),
             background: ImageNames.exploreNutritionBackgroundV5,
-            tint: .defaultGreen,
+            tint: .defaultDarkGreen,
             examples: [
                 ExerciseProgramChatExample("pills", "Find a magnesium supplement for better sleep."),
                 ExerciseProgramChatExample("applewatch", "Compare wearables that track HRV."),
@@ -103,6 +103,17 @@ extension ExploreClinic {
         ExploreClinic(name: "Commons Health Club", logo: ImageNames.exploreCommonsHealthClubV5, background: Color(hex: "#296712")),
         ExploreClinic(name: "The Skin Hospital", logo: ImageNames.exploreSkinHospitalV5, background: .white),
     ]
+
+    static let all = demo + [
+        ExploreClinic(name: "The Microbiome Clinic", logo: ImageNames.exploreMicrobiomeClinicAdV5, background: .black, fillsLogo: true),
+        ExploreClinic(name: "Move Clinic", logo: ImageNames.exploreMoveClinicLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
+        ExploreClinic(name: "Little Lungs Sleep Clinic", logo: ImageNames.exploreLittleLungsLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
+        ExploreClinic(name: "The Nutrition Clinic", logo: ImageNames.exploreNutritionClinicLogoV5, background: .white, fillsLogo: true),
+        ExploreClinic(name: "FXNL Rehab", logo: ImageNames.exploreFxnlRehabLogoV5, background: Color(hex: "#D9D9D9"), fillsLogo: true),
+        ExploreClinic(name: "East Point Recovery", logo: ImageNames.exploreEastPointRecoveryLogoV5, background: .black, fillsLogo: true),
+        ExploreClinic(name: "Longevity Clinic", logo: ImageNames.vaultTestLongevityCategoryV5, background: .black, fillsLogo: true),
+        ExploreClinic(name: "Laverty Pathology", logo: ImageNames.vaultTestHormonesCategoryV5, background: .black, fillsLogo: true),
+    ]
 }
 
 extension ExploreAd {
@@ -181,5 +192,6 @@ extension URL {
         "FXNL Rehab": "https://www.fxnlrehab.com.au",
         "East Point Recovery": "https://www.eprecovery.com.au",
         "Longevity Clinic": "https://www.progressivespecialists.com.au/longevity-consultation",
+        "Laverty Pathology": "https://www.laverty.com.au",
     ]
 }

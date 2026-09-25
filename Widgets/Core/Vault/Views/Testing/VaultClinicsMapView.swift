@@ -14,6 +14,7 @@ struct VaultClinicsMapView: View {
     let onSelectClinic: (VaultTestingClinic) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedClinic: VaultTestingClinic?
     @State private var viewport: Viewport = .camera(center: Constants.sydney, zoom: Constants.zoom)
 
@@ -32,6 +33,7 @@ struct VaultClinicsMapView: View {
                 .allowOverlap(true)
             }
         }
+        .mapStyle(.standard(lightPreset: colorScheme == .dark ? .night : .day))
         .ornamentOptions(OrnamentOptions(
             scaleBar: ScaleBarViewOptions(visibility: .hidden),
             compass: CompassViewOptions(visibility: .hidden)

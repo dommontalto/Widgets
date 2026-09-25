@@ -11,6 +11,7 @@ struct ExploreView: View {
     @State private var searchText = ""
     @State private var selectedAgent: ExploreAgent?
     @State private var shownClinic: ExploreClinic?
+    @State private var showsAllClinics = false
     @State private var testCategory: VaultTestCategory?
     @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
@@ -54,6 +55,9 @@ struct ExploreView: View {
         .sheet(item: $receipt) { order in
             VaultTestReceiptSheet(order: order)
         }
+        .sheet(isPresented: $showsAllClinics) {
+            ExploreClinicsSheet()
+        }
     }
 
     private var home: some View {
@@ -64,7 +68,7 @@ struct ExploreView: View {
 
             VaultTestBrowse { testCategory = $0 }
 
-            BrightWidgetTitle(icon: .symbol("globe"), title: "Explore all") {
+            BrightWidgetTitle(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
                 clinics
                     .padding(.horizontal, .spacing3x)
             }
@@ -98,12 +102,12 @@ struct ExploreView: View {
     }
 
     private var clinics: some View {
-        HStack(alignment: .top, spacing: .spacing2x) {
+        HStack(alignment: .top, spacing: .spacing3x) {
             ForEach(ExploreClinic.demo) { clinic in
                 Button {
                     shownClinic = clinic
                 } label: {
-                    clinicTile(clinic)
+                    ExploreClinicTile(clinic: clinic)
                 }
                 .buttonStyle(.plain)
             }
@@ -112,26 +116,6 @@ struct ExploreView: View {
             SafariView(url: clinic.website) { shownClinic = nil }
                 .ignoresSafeArea()
         }
-    }
-
-    private func clinicTile(_ clinic: ExploreClinic) -> some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            clinic.background
-                .aspectRatio(1, contentMode: .fit)
-                .overlay {
-                    Image(clinic.logo)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(.spacing3x)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
-
-            BrightText(clinic.name, size: .body1, color: .semiLightTextColor)
-                .lineLimit(1)
-                .padding(.leading, .spacing1x)
-        }
-        .frame(maxWidth: .infinity)
-        .contentShape(Rectangle())
     }
 
     private enum Constants {

@@ -18,6 +18,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
     // Reported in the chat's input coordinate space, so a sent bubble can be
     // laid over the field it flies out of.
     var fieldFrame: Binding<CGRect>
+    var sendTint: Color?
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
@@ -32,6 +33,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         onStop: @escaping () -> Void,
         onAttach: @escaping () -> Void = {},
         fieldFrame: Binding<CGRect> = .constant(.zero),
+        sendTint: Color? = nil,
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -42,6 +44,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         self.onStop = onStop
         self.onAttach = onAttach
         self.fieldFrame = fieldFrame
+        self.sendTint = sendTint
         self.modelPicker = modelPicker()
     }
 
@@ -167,8 +170,8 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         BrightRoundButton(
             systemImage: action.symbol,
             size: .medium,
-            color: action.color,
-            imageColor: action.imageColor
+            color: action == .send ? sendTint ?? action.color : action.color,
+            imageColor: action == .send && sendTint != nil ? .white : action.imageColor
         ) {
             switch action {
             case .stop: onStop()

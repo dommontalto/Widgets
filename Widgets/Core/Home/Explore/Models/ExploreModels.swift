@@ -38,6 +38,7 @@ struct ExploreClinic: Identifiable {
     let name: String
     let logo: String
     let background: Color
+    var fillsLogo = false
 
     var id: String { name }
 }

@@ -59,29 +59,20 @@ struct VaultGuidedTestingHomeView: View {
 
     private var explore: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            VaultTestBrowse { selectedCategory = $0 }
+            VaultTestBrowse(blur: true) { selectedCategory = $0 }
                 .padding(.top, .spacing3x)
 
-            HStack(spacing: .spacing2x) {
-                Image(systemName: "location")
-                    .font(.standard(size: .heading, weight: .light))
-
-                BrightText("All Clinics Near Me", size: .body1, color: .semiLightTextColor, weight: .regular)
-
-                Spacer(minLength: .spacing2x)
-
+            BrightWidgetTitle(icon: .symbol("location"), title: "All Clinics Near Me") {
                 sortMenu
-            }
-            .padding(.leading, .spacing5x)
-            .padding(.trailing, .spacing3x)
-            .padding(.top, .spacing2x)
-
-            VStack(spacing: .spacing3x) {
-                ForEach(clinics) { clinic in
-                    VaultClinicCard(clinic: clinic) { onSelectClinic(clinic) }
+                    .padding(.trailing, .spacing3x)
+            } content: {
+                VStack(spacing: .spacing3x) {
+                    ForEach(clinics) { clinic in
+                        VaultClinicCard(clinic: clinic) { onSelectClinic(clinic) }
+                    }
                 }
+                .padding(.horizontal, .spacing3x)
             }
-            .padding(.horizontal, .spacing3x)
         }
         .padding(.bottom, .spacing10x)
         .animation(.brightEaseInOut, value: sortOrder)
@@ -329,11 +320,12 @@ struct VaultClinicLogo: View {
 }
 
 struct VaultTestBrowse: View {
+    var blur = false
     let onSelect: (VaultTestCategory) -> Void
 
     var body: some View {
         BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Lab Tests Nearby") {
-            BrightTileRow {
+            BrightTileRow(blur: blur) {
                 ForEach(VaultTestCategory.demo) { category in
                     BrightTile(
                         category.name,

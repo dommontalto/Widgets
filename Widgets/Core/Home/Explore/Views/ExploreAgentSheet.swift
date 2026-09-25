@@ -109,7 +109,7 @@ struct ExploreAgentSheet: View {
             isThinking: false,
             isBusy: creatingCall != nil,
             isTyping: $isTyping,
-            emptyState: ExerciseProgramChatEmptyState(title: agent.name, examples: agent.examples, tint: .textColor),
+            emptyState: ExerciseProgramChatEmptyState(title: agent.name, examples: agent.examples, tint: agent.tint),
             suggestions: ExerciseProgramChatSuggestions(
                 prompts: agent.suggestions.map(\.prompt),
                 symbols: Dictionary(uniqueKeysWithValues: agent.suggestions.map { ($0.prompt, $0.symbol) }),
@@ -117,7 +117,8 @@ struct ExploreAgentSheet: View {
             ),
             onSend: send,
             onStop: stop,
-            bubbleTint: agent.tint
+            bubbleTint: agent.tint,
+            sendTint: agent.tint
         ) { message in
             response(message)
         }

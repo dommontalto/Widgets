@@ -245,8 +245,8 @@ private struct WaypointActivity: Identifiable {
     let color: Color
 
     static let strength = WaypointActivity(id: "strength", systemImage: "figure.strengthtraining.traditional", color: .defaultPink)
-    static let run = WaypointActivity(id: "run", systemImage: "figure.run", color: .defaultBlue)
-    static let cycle = WaypointActivity(id: "cycle", systemImage: "figure.outdoor.cycle", color: .defaultBlue)
+    static let run = WaypointActivity(id: "run", systemImage: "figure.run", color: .defaultSkyBlue)
+    static let cycle = WaypointActivity(id: "cycle", systemImage: "figure.outdoor.cycle", color: .defaultSkyBlue)
 }
 
 private struct WaypointMeal: Identifiable {

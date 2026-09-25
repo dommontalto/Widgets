@@ -95,6 +95,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
     // dismiss the whole chat.
     var onSwipeDismiss: (() -> Void)?
     var bubbleTint: Color = .defaultCyan
+    var sendTint: Color?
     @ViewBuilder var response: (ExerciseProgramChatMessage<Payload>) -> Response
     @ViewBuilder var modelPicker: ModelPicker
 
@@ -348,7 +349,8 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
                 showsModelPicker: ModelPicker.self != EmptyView.self,
                 onSend: send,
                 onStop: onStop,
-                fieldFrame: $flight.fieldFrame
+                fieldFrame: $flight.fieldFrame,
+                sendTint: sendTint
             ) {
                 modelPicker
             }
@@ -593,6 +595,7 @@ extension ExerciseProgramChat where ModelPicker == EmptyView {
         onRetry: @escaping () -> Void = {},
         onSwipeDismiss: (() -> Void)? = nil,
         bubbleTint: Color = .defaultCyan,
+        sendTint: Color? = nil,
         @ViewBuilder response: @escaping (ExerciseProgramChatMessage<Payload>) -> Response
     ) {
         self.init(
@@ -607,6 +610,7 @@ extension ExerciseProgramChat where ModelPicker == EmptyView {
             onRetry: onRetry,
             onSwipeDismiss: onSwipeDismiss,
             bubbleTint: bubbleTint,
+            sendTint: sendTint,
             response: response
         ) {
             EmptyView()
