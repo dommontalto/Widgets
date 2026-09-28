@@ -11,6 +11,7 @@ struct VaultTestCategory: Identifiable, Hashable {
     let id: String
     let name: String
     let backgroundName: String
+    let tileName: String
     let systemImage: String
     var iconName: String?
 }

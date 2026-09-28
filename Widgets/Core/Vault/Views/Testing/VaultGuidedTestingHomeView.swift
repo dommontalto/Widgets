@@ -14,7 +14,6 @@ struct VaultGuidedTestingHomeView: View {
     let onSelectOrder: (VaultTestOrder) -> Void
 
     @State private var sortOrder = VaultTestingSortOrder.proximity
-    @State private var selectedCategory: VaultTestCategory?
     @State private var showingMap = false
 
     private var clinics: [VaultTestingClinic] {
@@ -50,16 +49,13 @@ struct VaultGuidedTestingHomeView: View {
         .navigationDestination(isPresented: $showingMap) {
             VaultClinicsMapView(clinics: clinics, onSelectClinic: onSelectClinic)
         }
-        .navigationDestination(item: $selectedCategory) { category in
-            VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
-        }
     }
 
     // MARK: - Explore
 
     private var explore: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            VaultTestBrowse(blur: true) { selectedCategory = $0 }
+            VaultTestBrowse(blur: true, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
                 .padding(.top, .spacing3x)
 
             BrightWidgetTitle(icon: .symbol("location"), title: "All Clinics Near Me") {
@@ -321,23 +317,65 @@ struct VaultClinicLogo: View {
 
 struct VaultTestBrowse: View {
     var blur = false
-    let onSelect: (VaultTestCategory) -> Void
+    var sortOrder = VaultTestingSortOrder.proximity
+    let onSelectClinic: (VaultTestingClinic) -> Void
+
+    @State private var showsAllCategories = false
+    @State private var selectedCategory: VaultTestCategory?
 
     var body: some View {
-        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Lab Tests Nearby") {
+        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
             BrightTileRow(blur: blur) {
                 ForEach(VaultTestCategory.demo) { category in
-                    BrightTile(
-                        category.name,
-                        subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
-                        backgroundImage: category.backgroundName
-                    ) {
-                        onSelect(category)
-                    } icon: {
-                        VaultTestCategoryIcon(category: category, symbolSize: .standout1)
-                    }
+                    VaultTestCategoryTile(category: category) { selectedCategory = category }
                 }
             }
+        }
+        .navigationDestination(isPresented: $showsAllCategories) {
+            VaultTestCategoriesView(sortOrder: sortOrder, onSelectClinic: onSelectClinic)
+        }
+        .navigationDestination(item: $selectedCategory) { category in
+            VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
+        }
+    }
+}
+
+struct VaultTestCategoryTile: View {
+    let category: VaultTestCategory
+    var fillsWidth = false
+    let onTap: () -> Void
+
+    var body: some View {
+        BrightTile(
+            category.name,
+            subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
+            backgroundImage: category.tileName,
+            fillsWidth: fillsWidth,
+            onTap: onTap
+        ) {
+            VaultTestCategoryIcon(category: category, symbolSize: .standout1)
+        }
+    }
+}
+
+// Every test category at once, laid out like Genome's categories.
+struct VaultTestCategoriesView: View {
+    let sortOrder: VaultTestingSortOrder
+    let onSelectClinic: (VaultTestingClinic) -> Void
+
+    @State private var selectedCategory: VaultTestCategory?
+
+    var body: some View {
+        BrightPageView(title: "Guided Testing") {
+            BrightCardGrid {
+                ForEach(VaultTestCategory.demo) { category in
+                    VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }
+                }
+            }
+            .padding(.bottom, .spacing4x)
+        }
+        .navigationDestination(item: $selectedCategory) { category in
+            VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
         }
     }
 }

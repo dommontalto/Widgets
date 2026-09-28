@@ -1,5 +1,5 @@
 //
-//  ExploreClinicsSheet.swift
+//  ExploreClinicsView.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 25/9/2026.
@@ -7,25 +7,22 @@
 
 import SwiftUI
 
-struct ExploreClinicsSheet: View {
+struct ExploreClinicsView: View {
     @State private var shownClinic: ExploreClinic?
 
     var body: some View {
-        BrightPageSheetView(title: "Explore all") {
-            ScrollView {
-                LazyVGrid(columns: Constants.columns, spacing: .spacing3x) {
-                    ForEach(ExploreClinic.all) { clinic in
-                        Button {
-                            shownClinic = clinic
-                        } label: {
-                            ExploreClinicTile(clinic: clinic)
-                        }
-                        .buttonStyle(.plain)
+        BrightPageView(title: "Explore all") {
+            LazyVGrid(columns: Constants.columns, spacing: .spacing3x) {
+                ForEach(ExploreClinic.all) { clinic in
+                    Button {
+                        shownClinic = clinic
+                    } label: {
+                        ExploreClinicTile(clinic: clinic)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, .spacing2x)
             }
-            .scrollIndicators(.hidden)
+            .padding(.bottom, .spacing4x)
         }
         .sheet(item: $shownClinic) { clinic in
             SafariView(url: clinic.website) { shownClinic = nil }
@@ -70,5 +67,7 @@ struct ExploreClinicTile: View {
 }
 
 #Preview {
-    ExploreClinicsSheet()
+    NavigationStack {
+        ExploreClinicsView()
+    }
 }

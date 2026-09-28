@@ -13,7 +13,6 @@ struct ExploreView: View {
     @State private var selectedAgent: ExploreAgent?
     @State private var shownClinic: ExploreClinic?
     @State private var showsAllClinics = false
-    @State private var testCategory: VaultTestCategory?
     @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
 
@@ -47,17 +46,14 @@ struct ExploreView: View {
         .sheet(item: $selectedAgent) { agent in
             ExploreAgentSheet(agent: agent)
         }
-        .navigationDestination(item: $testCategory) { category in
-            VaultTestCategoryView(category: category, sortOrder: .proximity) { selectedClinic = $0 }
-        }
         .sheet(item: $selectedClinic) { clinic in
             VaultClinicSheet(clinic: clinic, onOrder: place)
         }
         .sheet(item: $receipt) { order in
             VaultTestReceiptSheet(order: order)
         }
-        .sheet(isPresented: $showsAllClinics) {
-            ExploreClinicsSheet()
+        .navigationDestination(isPresented: $showsAllClinics) {
+            ExploreClinicsView()
         }
     }
 
@@ -71,7 +67,7 @@ struct ExploreView: View {
                 agents
             }
 
-            VaultTestBrowse { testCategory = $0 }
+            VaultTestBrowse { selectedClinic = $0 }
 
             BrightWidgetTitle(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
                 clinics

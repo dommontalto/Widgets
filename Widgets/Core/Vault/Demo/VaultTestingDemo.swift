@@ -13,12 +13,14 @@ extension VaultTestCategory {
             id: "longevity",
             name: "Longevity",
             backgroundName: ImageNames.vaultTestLongevityCategoryV5,
+            tileName: ImageNames.vaultTestLongevityTileV5,
             systemImage: "figure"
         ),
         VaultTestCategory(
             id: "hormones",
             name: "Hormones",
             backgroundName: ImageNames.vaultTestHormonesCategoryV5,
+            tileName: ImageNames.vaultTestHormonesTileV5,
             systemImage: "bolt.heart",
             iconName: ImageNames.vaultTestHormonesIconV5
         ),
@@ -26,6 +28,7 @@ extension VaultTestCategory {
             id: "gut",
             name: "Gut Health",
             backgroundName: ImageNames.vaultTestGutHealthCategoryV5,
+            tileName: ImageNames.vaultTestGutHealthTileV5,
             systemImage: "allergens",
             iconName: ImageNames.vaultTestGutHealthIconV5
         ),
@@ -33,6 +36,7 @@ extension VaultTestCategory {
             id: "metabolic",
             name: "Metabolic Health",
             backgroundName: ImageNames.vaultTestMetabolicHealthBackgroundV5,
+            tileName: ImageNames.vaultTestMetabolicHealthTileV5,
             systemImage: "flame",
             iconName: ImageNames.vaultTestMetabolicHealthIconV5
         ),
@@ -40,8 +44,30 @@ extension VaultTestCategory {
             id: "fertility",
             name: "Fertility",
             backgroundName: ImageNames.vaultTestFertilityBackgroundV5,
+            tileName: ImageNames.vaultTestFertilityTileV5,
             systemImage: "heart.circle",
             iconName: ImageNames.vaultTestFertilityIconV5
+        ),
+        VaultTestCategory(
+            id: "heart",
+            name: "Heart Health",
+            backgroundName: ImageNames.vaultTestHeartHealthCategoryV5,
+            tileName: ImageNames.vaultTestHeartHealthTileV5,
+            systemImage: "heart"
+        ),
+        VaultTestCategory(
+            id: "sleep",
+            name: "Sleep",
+            backgroundName: ImageNames.vaultTestSleepCategoryV5,
+            tileName: ImageNames.vaultTestSleepTileV5,
+            systemImage: "moon.fill"
+        ),
+        VaultTestCategory(
+            id: "vitamins",
+            name: "Vitamins",
+            backgroundName: ImageNames.vaultTestVitaminsCategoryV5,
+            tileName: ImageNames.vaultTestVitaminsTileV5,
+            systemImage: "pills"
         ),
     ]
 
@@ -107,6 +133,14 @@ extension VaultTestingClinic {
             services: ["Blood / CBC", "Electrolytes", "Liver", "Lipids", "Metabolic Health", "Inflammation"],
             tests: [
                 VaultClinicTest(
+                    id: "heart-panel-0",
+                    name: "Heart Health Panel",
+                    detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
+                    categoryId: "heart",
+                    included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
+                    availability: [.inPerson, .homeVisit]
+                ),
+                VaultClinicTest(
                     id: "longevity-panel",
                     name: "Longevity Panel",
                     detail: "A broad blood panel covering the markers most linked to biological ageing and long-term disease risk.",
@@ -165,6 +199,22 @@ extension VaultTestingClinic {
             longitude: 151.1948,
             services: ["Hormones", "Thyroid", "Vitamin D", "Iron Studies", "Cortisol"],
             tests: [
+                VaultClinicTest(
+                    id: "sleep-study-1",
+                    name: "Sleep Study",
+                    detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
+                    categoryId: "sleep",
+                    included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
+                    availability: [.inPerson, .atHomeKit]
+                ),
+                VaultClinicTest(
+                    id: "vitamin-panel-1",
+                    name: "Vitamins & Minerals",
+                    detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
+                    categoryId: "vitamins",
+                    included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
+                ),
                 VaultClinicTest(
                     id: "hormone-panel",
                     name: "Hormone Panel",
@@ -233,6 +283,14 @@ extension VaultTestingClinic {
             services: ["Genomics", "Microbiome", "Food Sensitivity", "Heavy Metals"],
             tests: [
                 VaultClinicTest(
+                    id: "vitamin-panel-2",
+                    name: "Vitamins & Minerals",
+                    detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
+                    categoryId: "vitamins",
+                    included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
+                ),
+                VaultClinicTest(
                     id: "microbiome-map",
                     name: "Microbiome Map",
                     detail: "Sequences the bacteria in a stool sample to score diversity and screen for pathogens.",
@@ -275,6 +333,14 @@ extension VaultTestingClinic {
             longitude: 151.2113,
             services: ["Cardiac", "Lipids", "Glucose / HbA1c", "Blood Pressure", "ECG"],
             tests: [
+                VaultClinicTest(
+                    id: "heart-panel-3",
+                    name: "Heart Health Panel",
+                    detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
+                    categoryId: "heart",
+                    included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
+                    availability: [.inPerson, .homeVisit]
+                ),
                 VaultClinicTest(
                     id: "heart-health",
                     name: "Heart Health",
@@ -319,6 +385,14 @@ extension VaultTestingClinic {
             services: ["Fertility", "Hormones", "Vitamin Panel", "AMH", "Semen Analysis"],
             tests: [
                 VaultClinicTest(
+                    id: "sleep-study-4",
+                    name: "Sleep Study",
+                    detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
+                    categoryId: "sleep",
+                    included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
+                    availability: [.inPerson, .atHomeKit]
+                ),
+                VaultClinicTest(
                     id: "fertility-panel",
                     name: "Fertility Panel",
                     detail: "Ovarian reserve and the cycle hormones that matter most when planning to conceive.",
@@ -362,6 +436,14 @@ extension VaultTestingClinic {
             services: ["Blood / CBC", "Iron Studies", "Thyroid", "Vitamin D"],
             tests: [
                 VaultClinicTest(
+                    id: "vitamin-panel-5",
+                    name: "Vitamins & Minerals",
+                    detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
+                    categoryId: "vitamins",
+                    included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
+                ),
+                VaultClinicTest(
                     id: "full-blood-screen",
                     name: "Full Blood Screen",
                     detail: "The standard screen most GPs start with, covering blood cells, iron and the common deficiencies.",
@@ -388,6 +470,22 @@ extension VaultTestingClinic {
             longitude: 151.2169,
             services: ["Hormones", "Cortisol", "Sleep", "Vitamin Panel"],
             tests: [
+                VaultClinicTest(
+                    id: "heart-panel-6",
+                    name: "Heart Health Panel",
+                    detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
+                    categoryId: "heart",
+                    included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
+                    availability: [.inPerson, .homeVisit]
+                ),
+                VaultClinicTest(
+                    id: "sleep-study-6",
+                    name: "Sleep Study",
+                    detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
+                    categoryId: "sleep",
+                    included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
+                    availability: [.inPerson, .atHomeKit]
+                ),
                 VaultClinicTest(
                     id: "sleep-and-stress",
                     name: "Sleep and Stress Panel",
@@ -416,6 +514,14 @@ extension VaultTestingClinic {
             services: ["Metabolic Health", "Glucose / HbA1c", "Liver", "Kidney"],
             tests: [
                 VaultClinicTest(
+                    id: "vitamin-panel-7",
+                    name: "Vitamins & Minerals",
+                    detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
+                    categoryId: "vitamins",
+                    included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
+                    availability: [.inPerson, .atHomeKit, .homeVisit]
+                ),
+                VaultClinicTest(
                     id: "liver-kidney-panel",
                     name: "Liver and Kidney Panel",
                     detail: "How well the two organs clearing your bloodstream are keeping up.",
@@ -442,6 +548,14 @@ extension VaultTestingClinic {
             longitude: 151.2743,
             services: ["Microbiome", "Food Sensitivity", "Vitamin Panel", "Omega-3"],
             tests: [
+                VaultClinicTest(
+                    id: "heart-panel-8",
+                    name: "Heart Health Panel",
+                    detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
+                    categoryId: "heart",
+                    included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
+                    availability: [.inPerson, .homeVisit]
+                ),
                 VaultClinicTest(
                     id: "gut-repair-panel",
                     name: "Gut Repair Panel",

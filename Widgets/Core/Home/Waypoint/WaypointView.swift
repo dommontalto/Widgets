@@ -68,6 +68,7 @@ struct WaypointView: View {
             summary
 
             BrightPillButton("View Check-in", systemImage: "doc.text.magnifyingglass", onTapCallback: checkIn)
+                .frame(maxWidth: .infinity)
 
             adjustments
         }
@@ -207,7 +208,7 @@ struct WaypointView: View {
             }
             .padding(.horizontal, .spacing2x)
             .frame(height: Constants.rowHeight)
-            .modifier(CardModifier())
+            .modifier(CardModifier(cornerRadius: .cornerRadius24))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -350,6 +351,7 @@ private struct WaypointEvidence: Identifiable {
     let title: String
     let date: String
     let source: String
+    var sourceSymbol = "arrow.uturn.backward"
     let rows: [Row]
     let note: String
 }
@@ -367,7 +369,7 @@ private struct WaypointAdjustment: Identifiable, Hashable {
     let label: String
     let trend: WaypointTrend
     let reason: String
-    let evidence: [WaypointEvidence]
+    let evidence: [[WaypointEvidence]]
 
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -516,23 +518,31 @@ private struct WaypointAdjustmentDetailView: View {
                 }
                 .padding(.horizontal, .spacing3x)
 
-                ScrollView(.horizontal) {
-                    HStack(alignment: .top, spacing: .spacing3x) {
-                        ForEach(adjustment.evidence) { evidence in
-                            evidenceCard(evidence)
-                                .containerRelativeFrame(.horizontal) { width, _ in
-                                    width - Constants.cardPeek
-                                }
-                        }
+                VStack(spacing: .spacing3x) {
+                    ForEach(Array(adjustment.evidence.enumerated()), id: \.offset) { _, pair in
+                        carousel(pair)
                     }
-                    .scrollTargetLayout()
                 }
-                .scrollTargetBehavior(.viewAligned)
-                .scrollIndicators(.hidden)
-                .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
             }
             .padding(.bottom, .spacing4x)
         }
+    }
+
+    private func carousel(_ pair: [WaypointEvidence]) -> some View {
+        ScrollView(.horizontal) {
+            HStack(alignment: .top, spacing: .spacing3x) {
+                ForEach(pair) { evidence in
+                    evidenceCard(evidence)
+                        .containerRelativeFrame(.horizontal) { width, _ in
+                            width - Constants.cardPeek
+                        }
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollIndicators(.hidden)
+        .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
     }
 
     private func evidenceCard(_ evidence: WaypointEvidence) -> some View {
@@ -547,7 +557,7 @@ private struct WaypointAdjustmentDetailView: View {
                 Spacer(minLength: .spacing1x)
 
                 HStack(spacing: .spacing05x) {
-                    Image(systemName: "arrow.uturn.backward")
+                    Image(systemName: evidence.sourceSymbol)
                         .font(.standardSFPro(size: .body1, weight: .regular))
 
                     BrightText(evidence.source, size: .body1, color: .semiLightTextColor)
@@ -611,7 +621,7 @@ private struct WaypointAdjustmentDetailView: View {
                 .font(.standardSFPro(size: .body1, weight: .regular))
                 .foregroundStyle(color)
                 .frame(width: Constants.markerSize, height: Constants.markerSize)
-                .background(Color.defaultBackground, in: Circle())
+                .background(color.opacity(.veryLowOpacity), in: Circle())
         case let .index(number):
             BrightText("\(number)", size: .body1)
                 .frame(width: Constants.markerSize, height: Constants.markerSize)
@@ -654,16 +664,25 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Your running volume went up this week, so your muscles need a little more protein to recover. 103 g works out at 1.6 g per kilo of body weight.",
                 evidence: [
-                    WaypointEvidence(title: "Daily protein", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .index(1), value: "Mon · 96 g", tag: "Goal 93", tagColor: .defaultGreen, passed: true),
-                        WaypointEvidence.Row(marker: .index(2), value: "Wed · 82 g", tag: "Goal 93", tagColor: .defaultOrange, passed: false),
-                        WaypointEvidence.Row(marker: .index(3), value: "Fri · 78 g", tag: "Goal 93", tagColor: .defaultRed, passed: false),
-                        WaypointEvidence.Row(marker: .index(4), value: "Sun · 99 g", tag: "Goal 93", tagColor: .defaultGreen, passed: true),
-                    ], note: "You missed your protein goal on both long-run days, right when your muscles needed it most."),
-                    WaypointEvidence(title: "Recovery", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .symbol("figure.run", .defaultSkyBlue), value: "Run volume 18 KM", tag: "+22%", tagColor: .defaultCyan, passed: nil),
-                        WaypointEvidence.Row(marker: .symbol("heart", .defaultPink), value: "Recovery avg 64", tag: "−8", tagColor: .defaultOrange, passed: nil),
-                    ], note: "More distance with the same protein left recovery trailing. The new goal closes that gap."),
+                    [
+                        WaypointEvidence(title: "Daily protein", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .index(1), value: "Mon · 96 g", tag: "Goal 93", tagColor: .defaultGreen, passed: true),
+                            WaypointEvidence.Row(marker: .index(2), value: "Wed · 82 g", tag: "Goal 93", tagColor: .defaultOrange, passed: false),
+                            WaypointEvidence.Row(marker: .index(3), value: "Fri · 78 g", tag: "Goal 93", tagColor: .defaultRed, passed: false),
+                            WaypointEvidence.Row(marker: .index(4), value: "Sun · 99 g", tag: "Goal 93", tagColor: .defaultGreen, passed: true),
+                        ], note: "You missed your protein goal on both long-run days, right when your muscles needed it most."),
+                        WaypointEvidence(title: "New daily goal", date: "From Mon, 5 Oct", source: "This week", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Breakfast · 30 g", tag: "+21 g", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("sun.max", .defaultYellow), value: "Lunch · 35 g", tag: "+14 g", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Dinner · 38 g", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                        ], note: "Aim for about 30 g at each meal and top up with a snack after runs."),
+                    ],
+                    [
+                        WaypointEvidence(title: "Recovery", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .symbol("figure.run", .defaultSkyBlue), value: "Run volume 18 KM", tag: "+22%", tagColor: .defaultCyan, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("heart", .defaultPink), value: "Recovery avg 64", tag: "−8", tagColor: .defaultOrange, passed: nil),
+                        ], note: "More distance with the same protein left recovery trailing. The new goal closes that gap."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -678,11 +697,18 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Breakfast and lunch were light on protein, so they've been swapped for options that hit your new target without adding calories.",
                 evidence: [
-                    WaypointEvidence(title: "Protein by meal", date: "Average this week", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Breakfast · 9 g", tag: "Low", tagColor: .defaultRed, passed: false),
-                        WaypointEvidence.Row(marker: .symbol("sun.max", .defaultYellow), value: "Lunch · 21 g", tag: "Low", tagColor: .defaultOrange, passed: false),
-                        WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Dinner · 38 g", tag: "Good", tagColor: .defaultGreen, passed: true),
-                    ], note: "Most of your protein landed at dinner. Spreading it across the day helps you recover between sessions."),
+                    [
+                        WaypointEvidence(title: "Protein by meal", date: "Average this week", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Breakfast · 9 g", tag: "Low", tagColor: .defaultRed, passed: false),
+                            WaypointEvidence.Row(marker: .symbol("sun.max", .defaultYellow), value: "Lunch · 21 g", tag: "Low", tagColor: .defaultOrange, passed: false),
+                            WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Dinner · 38 g", tag: "Good", tagColor: .defaultGreen, passed: true),
+                        ], note: "Most of your protein landed at dinner. Spreading it across the day helps you recover between sessions."),
+                        WaypointEvidence(title: "New meals", date: "From Mon, 5 Oct", source: "This week", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Breakfast · 24 g", tag: "+15 g", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("sun.max", .defaultYellow), value: "Lunch · 42 g", tag: "+21 g", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Dinner · 37 g", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                        ], note: "Two swaps lift your daily protein to 103 g without changing your calories."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -693,11 +719,18 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Longer runs and warmer mornings mean you're losing more through sweat, so your daily water target rises to match.",
                 evidence: [
-                    WaypointEvidence(title: "Water intake", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .index(1), value: "Tue · 2.5 L", tag: "Goal 2.4", tagColor: .defaultGreen, passed: true),
-                        WaypointEvidence.Row(marker: .index(2), value: "Thu · 1.9 L", tag: "Goal 2.4", tagColor: .defaultOrange, passed: false),
-                        WaypointEvidence.Row(marker: .index(3), value: "Sat · 2.0 L", tag: "Goal 2.4", tagColor: .defaultOrange, passed: false),
-                    ], note: "You fell short on both run days. The extra 400 ml is timed around your sessions."),
+                    [
+                        WaypointEvidence(title: "Water intake", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .index(1), value: "Tue · 2.5 L", tag: "Goal 2.4", tagColor: .defaultGreen, passed: true),
+                            WaypointEvidence.Row(marker: .index(2), value: "Thu · 1.9 L", tag: "Goal 2.4", tagColor: .defaultOrange, passed: false),
+                            WaypointEvidence.Row(marker: .index(3), value: "Sat · 2.0 L", tag: "Goal 2.4", tagColor: .defaultOrange, passed: false),
+                        ], note: "You fell short on both run days. The extra 400 ml is timed around your sessions."),
+                        WaypointEvidence(title: "New water target", date: "From Mon, 5 Oct", source: "This week", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Morning · 1.0 L", tag: "+0.2 L", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("figure.run", .defaultSkyBlue), value: "Around runs · 0.8 L", tag: "+0.2 L", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Evening · 1.0 L", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                        ], note: "Most of the extra water lands around your runs, when you lose the most."),
+                    ],
                 ]
             ),
         ]),
@@ -710,11 +743,18 @@ private extension WaypointAdjustmentGroup {
                 trend: .down,
                 reason: "Your deep sleep has been short on nights before early runs. Heading to bed half an hour earlier gives you a full 8 hours before your 6:15 alarm.",
                 evidence: [
-                    WaypointEvidence(title: "Nights before runs", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .index(1), value: "Mon · 6 h 40 min", tag: "Deep 52m", tagColor: .defaultOrange, passed: false),
-                        WaypointEvidence.Row(marker: .index(2), value: "Thu · 7 h 55 min", tag: "Deep 1h 24m", tagColor: .defaultGreen, passed: true),
-                        WaypointEvidence.Row(marker: .index(3), value: "Sat · 6 h 20 min", tag: "Deep 48m", tagColor: .defaultRed, passed: false),
-                    ], note: "Two of three pre-run nights came up short. An earlier start protects your deep sleep."),
+                    [
+                        WaypointEvidence(title: "Nights before runs", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .index(1), value: "Mon · 6 h 40 min", tag: "Deep 52m", tagColor: .defaultOrange, passed: false),
+                            WaypointEvidence.Row(marker: .index(2), value: "Thu · 7 h 55 min", tag: "Deep 1h 24m", tagColor: .defaultGreen, passed: true),
+                            WaypointEvidence.Row(marker: .index(3), value: "Sat · 6 h 20 min", tag: "Deep 48m", tagColor: .defaultRed, passed: false),
+                        ], note: "Two of three pre-run nights came up short. An earlier start protects your deep sleep."),
+                        WaypointEvidence(title: "New schedule", date: "From tonight", source: "This week", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .symbol("moon", .defaultBlue), value: "Wind-down · 9:45 PM", tag: "−30 min", tagColor: .defaultYellow, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("bed.double", .defaultCyan), value: "Bedtime · 10:15 PM", tag: "−30 min", tagColor: .defaultYellow, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("sunrise", .defaultOrange), value: "Wake up · 6:15 AM", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                        ], note: "Same alarm, earlier start. That's a full 8 hours before every run."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -725,10 +765,16 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Training load is climbing towards race week, and an extra half hour of sleep is the cheapest recovery you can add.",
                 evidence: [
-                    WaypointEvidence(title: "Sleep duration", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
-                        WaypointEvidence.Row(marker: .symbol("bed.double", .defaultCyan), value: "Average 7 h 12 min", tag: "Goal 7.5 h", tagColor: .defaultOrange, passed: false),
-                        WaypointEvidence.Row(marker: .symbol("heart", .defaultPink), value: "HRV avg 58 ms", tag: "−6", tagColor: .defaultOrange, passed: nil),
-                    ], note: "Your HRV has dipped as training ramps up. More sleep is the quickest way to bring it back."),
+                    [
+                        WaypointEvidence(title: "Sleep duration", date: "Mon, 21 – Sun, 27 Sep", source: "Last week", rows: [
+                            WaypointEvidence.Row(marker: .symbol("bed.double", .defaultCyan), value: "Average 7 h 12 min", tag: "Goal 7.5 h", tagColor: .defaultOrange, passed: false),
+                            WaypointEvidence.Row(marker: .symbol("heart", .defaultPink), value: "HRV avg 58 ms", tag: "−6", tagColor: .defaultOrange, passed: nil),
+                        ], note: "Your HRV has dipped as training ramps up. More sleep is the quickest way to bring it back."),
+                        WaypointEvidence(title: "New target", date: "From tonight", source: "This week", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .symbol("bed.double", .defaultCyan), value: "Sleep · 8 h", tag: "+30 min", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .symbol("heart", .defaultPink), value: "HRV goal · 64 ms", tag: "+6", tagColor: .defaultGreen, passed: nil),
+                        ], note: "An extra half hour a night should bring your HRV back up within a fortnight."),
+                    ],
                 ]
             ),
         ]),
@@ -741,18 +787,48 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Your program is off course based off your intake & nutrition, sleep and exercise data. Lighthouse has provided suggestions below on how to bring your goal back on course.",
                 evidence: [
-                    WaypointEvidence(title: "Bench Press", date: "Mon, 28 Sep 2026", source: "Prev. session", rows: [
-                        .rpe(warmup, "40 kg x 5", 4, passed: true),
-                        .rpe(.index(1), "70 kg x 5", 6, passed: true),
-                        .rpe(.index(2), "85 kg x 5", 7, passed: true),
-                        .rpe(.index(3), "85 kg x 5", 9, passed: false),
-                    ], note: "Set 3 failed at RPE 9. This indicates that we are progressively overloading too fast."),
-                    WaypointEvidence(title: "Back Squat", date: "Mon, 28 Sep 2026", source: "Prev. session", rows: [
-                        .rpe(warmup, "60 kg x 5", 3, passed: true),
-                        .rpe(.index(1), "90 kg x 5", 5, passed: true),
-                        .rpe(.index(2), "100 kg x 5", 6, passed: true),
-                        .rpe(.index(3), "100 kg x 5", 7, passed: true),
-                    ], note: "We've seen easy reps from your squats, so there's room to add weight next session."),
+                    [
+                        WaypointEvidence(title: "Bench Press", date: "Mon, 28 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(warmup, "40 kg x 5", 4, passed: true),
+                            .rpe(.index(1), "70 kg x 5", 6, passed: true),
+                            .rpe(.index(2), "85 kg x 5", 7, passed: true),
+                            .rpe(.index(3), "85 kg x 5", 9, passed: false),
+                        ], note: "Set 3 failed at RPE 9. This indicates that we are progressively overloading too fast."),
+                        WaypointEvidence(title: "Bench Press", date: "Mon, 5 Oct 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: warmup, value: "40 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(1), value: "72.5 kg x 5", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .index(2), value: "85 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(3), value: "85 kg x 4", tag: "−1 rep", tagColor: .defaultYellow, passed: nil),
+                        ], note: "A little heavier up front and one less rep on the last set, so you finish strong."),
+                    ],
+                    [
+                        WaypointEvidence(title: "Back Squat", date: "Mon, 28 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(warmup, "60 kg x 5", 3, passed: true),
+                            .rpe(.index(1), "90 kg x 5", 5, passed: true),
+                            .rpe(.index(2), "100 kg x 5", 6, passed: true),
+                            .rpe(.index(3), "100 kg x 5", 7, passed: true),
+                        ], note: "We've seen easy reps from your squats, so there's room to add weight next session."),
+                        WaypointEvidence(title: "Back Squat", date: "Mon, 5 Oct 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: warmup, value: "60 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(1), value: "92.5 kg x 5", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .index(2), value: "102.5 kg x 5", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .index(3), value: "102.5 kg x 5", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                        ], note: "Easy reps last time, so every working set goes up 2.5 kg."),
+                    ],
+                    [
+                        WaypointEvidence(title: "Bent-over Row", date: "Mon, 28 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(warmup, "30 kg x 8", 3, passed: true),
+                            .rpe(.index(1), "50 kg x 8", 5, passed: true),
+                            .rpe(.index(2), "55 kg x 8", 6, passed: true),
+                            .rpe(.index(3), "55 kg x 8", 7, passed: true),
+                        ], note: "Solid reps across the board with room left in the tank."),
+                        WaypointEvidence(title: "Bent-over Row", date: "Mon, 5 Oct 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: warmup, value: "30 kg x 8", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(1), value: "52.5 kg x 8", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .index(2), value: "57.5 kg x 8", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                            WaypointEvidence.Row(marker: .index(3), value: "57.5 kg x 8", tag: "+2.5 kg", tagColor: .defaultGreen, passed: nil),
+                        ], note: "A small bump on each working set keeps your pulling in step with your pressing."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -763,11 +839,18 @@ private extension WaypointAdjustmentGroup {
                 trend: .down,
                 reason: "Your recovery dipped below 60 on two mornings this week, so the long ride comes down a notch to keep your legs fresh for Sunday's run.",
                 evidence: [
-                    WaypointEvidence(title: "Long ride", date: "Sat, 26 Sep 2026", source: "Prev. session", rows: [
-                        .rpe(.index(1), "0 – 10 KM", 5, passed: true),
-                        .rpe(.index(2), "10 – 20 KM", 7, passed: true),
-                        .rpe(.index(3), "20 – 30 KM", 9, passed: false),
-                    ], note: "The last third of the ride pushed you to RPE 9, so the distance drops to 25 KM."),
+                    [
+                        WaypointEvidence(title: "Long ride", date: "Sat, 26 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(.index(1), "0 – 10 KM", 5, passed: true),
+                            .rpe(.index(2), "10 – 20 KM", 7, passed: true),
+                            .rpe(.index(3), "20 – 30 KM", 9, passed: false),
+                        ], note: "The last third of the ride pushed you to RPE 9, so the distance drops to 25 KM."),
+                        WaypointEvidence(title: "Long ride", date: "Sat, 3 Oct 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .index(1), value: "0 – 10 KM", tag: "Zone 2", tagColor: .defaultCyan, passed: nil),
+                            WaypointEvidence.Row(marker: .index(2), value: "10 – 20 KM", tag: "Zone 2", tagColor: .defaultCyan, passed: nil),
+                            WaypointEvidence.Row(marker: .index(3), value: "20 – 25 KM", tag: "−5 KM", tagColor: .defaultYellow, passed: nil),
+                        ], note: "25 KM held in zone 2 the whole way keeps your legs fresh for Sunday."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -778,11 +861,19 @@ private extension WaypointAdjustmentGroup {
                 trend: .up,
                 reason: "Your squat reps stayed smooth at the top of your range last week, so an extra set builds the leg strength longer runs lean on.",
                 evidence: [
-                    WaypointEvidence(title: "Deadlift", date: "Thu, 24 Sep 2026", source: "Prev. session", rows: [
-                        .rpe(warmup, "60 kg x 5", 3, passed: true),
-                        .rpe(.index(1), "100 kg x 5", 5, passed: true),
-                        .rpe(.index(2), "110 kg x 5", 6, passed: true),
-                    ], note: "Every set finished with reps in reserve. A third working set adds volume safely."),
+                    [
+                        WaypointEvidence(title: "Deadlift", date: "Thu, 24 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(warmup, "60 kg x 5", 3, passed: true),
+                            .rpe(.index(1), "100 kg x 5", 5, passed: true),
+                            .rpe(.index(2), "110 kg x 5", 6, passed: true),
+                        ], note: "Every set finished with reps in reserve. A third working set adds volume safely."),
+                        WaypointEvidence(title: "Deadlift", date: "Thu, 1 Oct 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: warmup, value: "60 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(1), value: "100 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(2), value: "110 kg x 5", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                            WaypointEvidence.Row(marker: .index(3), value: "110 kg x 5", tag: "New set", tagColor: .defaultGreen, passed: nil),
+                        ], note: "One extra working set at the same weight builds volume without the risk."),
+                    ],
                 ]
             ),
             WaypointAdjustment(
@@ -793,9 +884,14 @@ private extension WaypointAdjustmentGroup {
                 trend: .steady,
                 reason: "Your mobility work is doing its job. Keeping it steady gives your body one easy session between harder days.",
                 evidence: [
-                    WaypointEvidence(title: "Flow", date: "Wed, 23 Sep 2026", source: "Prev. session", rows: [
-                        .rpe(.index(1), "30 min", 3, passed: true),
-                    ], note: "An easy session that did what it should. Nothing to change."),
+                    [
+                        WaypointEvidence(title: "Flow", date: "Wed, 23 Sep 2026", source: "Prev. session", rows: [
+                            .rpe(.index(1), "30 min", 3, passed: true),
+                        ], note: "An easy session that did what it should. Nothing to change."),
+                        WaypointEvidence(title: "Flow", date: "Wed, 30 Sep 2026", source: "Next session", sourceSymbol: "arrow.forward", rows: [
+                            WaypointEvidence.Row(marker: .index(1), value: "30 min", tag: "Same", tagColor: .lightTextColor, passed: nil),
+                        ], note: "Same flow, same time. Keep it as your easy day."),
+                    ],
                 ]
             ),
         ]),

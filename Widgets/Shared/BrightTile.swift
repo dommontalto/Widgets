@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-// A fixed-size tappable tile over a blurred image: an icon up top, a title
+// A fixed-size tappable tile over an image: an icon up top, a title
 // and subtitle at the foot, the icon and subtitle overlaid onto the image.
 struct BrightTile<Icon: View>: View {
     let title: String
     let subtitle: String
     let backgroundImage: String
+    let fillsWidth: Bool
     let onTap: () -> Void
     let icon: Icon
 
@@ -20,12 +21,14 @@ struct BrightTile<Icon: View>: View {
         _ title: String,
         subtitle: String,
         backgroundImage: String,
+        fillsWidth: Bool = false,
         onTap: @escaping () -> Void,
         @ViewBuilder icon: () -> Icon
     ) {
         self.title = title
         self.subtitle = subtitle
         self.backgroundImage = backgroundImage
+        self.fillsWidth = fillsWidth
         self.onTap = onTap
         self.icon = icon()
     }
@@ -47,14 +50,12 @@ struct BrightTile<Icon: View>: View {
             }
             .padding(.horizontal, .spacing3x)
             .padding(.vertical, .spacing2x)
-            .frame(width: Constants.width, height: Constants.height, alignment: .leading)
+            .frame(width: fillsWidth ? nil : Constants.width, height: Constants.height, alignment: .leading)
+            .frame(maxWidth: fillsWidth ? .infinity : nil, alignment: .leading)
             .background {
                 Image(backgroundImage)
                     .resizable()
                     .scaledToFill()
-                    // Blur feathers the image's edges, so it runs past the clip.
-                    .scaleEffect(Constants.backgroundOverscan)
-                    .blur(radius: Constants.backgroundBlur)
             }
             .overlay(Color.white.opacity(.ultraLowOpacity))
             .clipShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
@@ -138,8 +139,6 @@ private enum Constants {
     static let width: CGFloat = 160
     static let height: CGFloat = 110
     static let stroke: CGFloat = 0.5
-    static let backgroundBlur: CGFloat = 8
-    static let backgroundOverscan: CGFloat = 1.2
     static let trailingFade: CGFloat = .spacing4x
     static let trailingBlur: CGFloat = .spacing8x
     static let maxBlur: CGFloat = .spacing1x
