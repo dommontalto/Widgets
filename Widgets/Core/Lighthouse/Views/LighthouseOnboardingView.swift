@@ -389,7 +389,7 @@ struct LighthouseOnboardingView: View {
             ),
             Capability(
                 symbol: "person.fill.checkmark.and.xmark",
-                title: "Create checkin",
+                title: "Check In",
                 detail: capabilityDetail,
                 color: .defaultCyan,
                 flourish: .nudge

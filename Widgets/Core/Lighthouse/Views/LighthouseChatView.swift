@@ -10,11 +10,11 @@ import SwiftUI
 typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
 
 enum LighthouseAction {
-    case createCheckIn
+    case checkIn
 
     var prompt: String {
         switch self {
-        case .createCheckIn: "Create checkin"
+        case .checkIn: "Check In"
         }
     }
 }
@@ -268,7 +268,7 @@ struct LighthouseChatView: View {
             attachments = []
             isThinking = true
         }
-        let isCheckIn = text.trimmingCharacters(in: .whitespacesAndNewlines) == LighthouseAction.createCheckIn.prompt
+        let isCheckIn = text.trimmingCharacters(in: .whitespacesAndNewlines) == LighthouseAction.checkIn.prompt
         replyTask = Task {
             if isCheckIn {
                 await replyToCheckIn()
@@ -364,7 +364,7 @@ struct LighthouseChatView: View {
     private enum Constants {
         static let quickActions = [
             BrightChatExample("bell.badge.waveform", "Create alerts"),
-            BrightChatExample("person.fill.checkmark.and.xmark", "Create checkin"),
+            BrightChatExample("person.fill.checkmark.and.xmark", "Check In"),
             BrightChatExample("figure.indoor.cycle", "Create workout program"),
             BrightChatExample(
                 "chevron.compact.up.chevron.compact.right.chevron.compact.down.chevron.compact.left",

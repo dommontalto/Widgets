@@ -7,39 +7,22 @@
 
 import SwiftUI
 
-// Guided Testing pushed into the host stack: the splash on first run, then the
-// clinics home, with each clinic opening in a sheet over it.
+// Guided Testing pushed into the host stack: the clinics home, with each clinic
+// opening in a sheet over it.
 struct VaultGuidedTestingScreen: View {
-    @State private var showSplash = true
-
     @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
     @State private var orders = [VaultTestOrder]()
     @State private var homePage = 0
 
     var body: some View {
-        ZStack {
-            if showSplash {
-                splash
-                    .transition(.opacity)
-            } else {
-                home
-                    .transition(.opacity)
+        home
+            .sheet(item: $selectedClinic) { clinic in
+                VaultClinicSheet(clinic: clinic, onOrder: place)
             }
-        }
-        .animation(.brightEaseInOut, value: showSplash)
-        .sheet(item: $selectedClinic) { clinic in
-            VaultClinicSheet(clinic: clinic, onOrder: place)
-        }
-        .sheet(item: $receipt) { order in
-            VaultTestReceiptSheet(order: order)
-        }
-    }
-
-    private var splash: some View {
-        VaultGuidedTestingSplashView { showSplash = false }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(item: $receipt) { order in
+                VaultTestReceiptSheet(order: order)
+            }
     }
 
     private var home: some View {

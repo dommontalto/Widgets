@@ -11,8 +11,8 @@ struct ContentView: View {
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
 
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
-    @State private var showingGuidedTesting = false
     @State private var showingBeam = false
+    @State private var showingGraphWorkbench = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
@@ -21,9 +21,6 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationDestination(isPresented: $showingGuidedTesting) {
-                    VaultGuidedTestingScreen()
-                }
         }
     }
 
@@ -38,7 +35,7 @@ struct ContentView: View {
             case .health:
                 healthPage
             case .waypoint:
-                WaypointView(onCheckIn: { onOpenLighthouse(.createCheckIn) })
+                WaypointView(onCheckIn: { onOpenLighthouse(.checkIn) })
             case .explore:
                 ExploreView()
             }
@@ -52,38 +49,34 @@ struct ContentView: View {
                 for: nil
             )
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarLeading) {
-                Button {
-                    showingBeam = true
-                } label: {
-                    Label("Show beam", systemImage: "wand.and.stars")
-                        .labelStyle(.iconOnly)
-                }
-
-                Toggle(isOn: $showingLighthouseOnboarding) {
-                    Label("Lighthouse onboarding", systemImage: "sparkles")
-                        .labelStyle(.iconOnly)
-                }
-                .toggleStyle(.button)
-                .brightHaptic(.light, trigger: showingLighthouseOnboarding)
-            }
-        }
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
+        }
+        .fullScreenCover(isPresented: $showingGraphWorkbench) {
+            GraphWorkbenchScreen()
         }
     }
 
     private var healthPage: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            section("Vault") {
-                widgetLabel("VaultGuidedTestingCard")
-                VaultGuidedTestingCard {
-                    showingGuidedTesting = true
-                }
-                    .padding(.bottom, .spacing3x)
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            BrightPillButton("Show beam", systemImage: "wand.and.stars") {
+                showingBeam = true
+            }
+
+            BrightPillButton(
+                showingLighthouseOnboarding ? "Lighthouse onboarding: On" : "Lighthouse onboarding: Off",
+                systemImage: "sparkles",
+                isSelected: showingLighthouseOnboarding
+            ) {
+                showingLighthouseOnboarding.toggle()
+            }
+            .brightHaptic(.light, trigger: showingLighthouseOnboarding)
+
+            BrightPillButton("GraphRAG Workbench", systemImage: "point.3.connected.trianglepath.dotted") {
+                showingGraphWorkbench = true
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.spacing3x)
     }
 

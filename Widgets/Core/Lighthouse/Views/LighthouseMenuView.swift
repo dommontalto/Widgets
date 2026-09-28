@@ -95,6 +95,7 @@ struct LighthouseMenuView: View {
         VStack(spacing: .spacing0x) {
             shortcutRow(symbol: "person.badge.clock.fill", title: Constants.checkInTitle, action: onCheckIns)
             shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle, action: onConfigurations)
+            shortcutRow(symbol: "gearshape.fill", title: Constants.settingsTitle, action: onSettings)
         }
         .padding(.horizontal, .spacing1x)
     }
@@ -277,8 +278,6 @@ struct LighthouseMenuView: View {
             )
 
             Spacer()
-
-            BrightRoundButton(systemImage: "gear", size: .large, onTapCallback: onSettings)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
@@ -310,6 +309,7 @@ struct LighthouseMenuView: View {
         static let switchTitle = "Switch"
         static let checkInTitle = "Check in"
         static let configurationsTitle = "Configurations"
+        static let settingsTitle = "Settings"
         static let historyTitle = "History"
         static let renameTitle = "Rename chat"
         static let renamePlaceholder = "Chat name"

@@ -16,7 +16,7 @@ extension ExploreAgent {
             blurb: "This agent will help you find health products that fit your goals.",
             mark: .symbol("shippingbox.fill"),
             background: ImageNames.exploreNutritionBackgroundV5,
-            tint: .defaultDarkGreen,
+            tint: .defaultGreen,
             examples: [
                 ExerciseProgramChatExample("pills", "Find a magnesium supplement for better sleep."),
                 ExerciseProgramChatExample("applewatch", "Compare wearables that track HRV."),

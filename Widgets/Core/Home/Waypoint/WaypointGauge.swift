@@ -15,6 +15,7 @@ struct WaypointBounce: Equatable {
 struct WaypointGauge: View {
     let bearing: WaypointBearing
     let bounce: WaypointBounce
+    var isActive = true
 
     @State private var swing: Double = 1
     @State private var wiggleRun = 0
@@ -24,20 +25,22 @@ struct WaypointGauge: View {
         ZStack {
             Circle()
                 .trim(from: 0, to: Constants.arcFraction)
-                .stroke(bearing.color.opacity(.minimalOpacity), style: stroke)
+                .stroke(tint.opacity(.minimalOpacity), style: stroke)
                 .rotationEffect(.degrees(Constants.arcRotation))
 
-            WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
-                .blur(radius: Constants.cometGlowBlur)
-                .opacity(.lowOpacity)
-                .animation(WaypointPop.travel, value: bearing)
+            if isActive {
+                WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
+                    .blur(radius: Constants.cometGlowBlur)
+                    .opacity(.lowOpacity)
+                    .animation(WaypointPop.travel, value: bearing)
 
-            WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
-                .animation(WaypointPop.travel, value: bearing)
+                WaypointCometArc(fraction: bearingFraction, northFraction: Constants.northFraction, rotation: Constants.arcRotation, color: bearing.color, style: stroke)
+                    .animation(WaypointPop.travel, value: bearing)
+            }
 
             Image(systemName: "arrow.up")
                 .font(.standardSFPro(size: .giant, weight: .semibold))
-                .foregroundStyle(bearing.color)
+                .foregroundStyle(tint)
                 .animation(Constants.colorFade, value: bearing)
                 .scaleEffect(Constants.arrowScale)
                 .rotationEffect(.degrees(bearing.degrees))
@@ -59,23 +62,25 @@ struct WaypointGauge: View {
                 .rotationEffect(.degrees(bearing.degrees))
                 .animation(WaypointPop.travel, value: bearing)
 
-            BrightText(bearing.label, size: .standout3, color: bearing.color)
-                .brightTextReveal()
-                .offset(point(radius: Constants.radius + Constants.labelGap))
-                .id(bearing)
-                .transition(.asymmetric(insertion: .identity, removal: .opacity))
+            if isActive {
+                BrightText(bearing.label, size: .standout3, color: bearing.color)
+                    .brightTextReveal()
+                    .offset(point(radius: Constants.radius + Constants.labelGap))
+                    .id(bearing)
+                    .transition(.asymmetric(insertion: .identity, removal: .opacity))
 
-            ZStack {
-                if let badge = bearing.badge {
-                    Image(systemName: badge)
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(bearing.color, bearing.color.opacity(.veryLowOpacity))
-                        .font(.standardSFPro(size: .standout3, weight: .regular))
-                        .transition(.scale.combined(with: .opacity))
+                ZStack {
+                    if let badge = bearing.badge {
+                        Image(systemName: badge)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(bearing.color, bearing.color.opacity(.veryLowOpacity))
+                            .font(.standardSFPro(size: .standout3, weight: .regular))
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
+                .animation(.brightBouncy, value: bearing.badge)
+                .offset(y: Constants.badgeOffset)
             }
-            .animation(.brightBouncy, value: bearing.badge)
-            .offset(y: Constants.badgeOffset)
         }
         .frame(width: Constants.diameter, height: Constants.diameter)
         .background {
@@ -83,7 +88,7 @@ struct WaypointGauge: View {
                 .fill(bearing.color)
                 .frame(width: Constants.headingGlowSize, height: Constants.headingGlowSize)
                 .blur(radius: Constants.headingGlowBlur)
-                .opacity(.veryLowOpacity)
+                .opacity(isActive ? .veryLowOpacity : .zero)
                 .offset(y: -Constants.headingGlowReach)
                 .rotationEffect(.degrees(bearing.degrees))
                 .allowsHitTesting(false)
@@ -109,7 +114,22 @@ struct WaypointGauge: View {
         }
     }
 
+    @ViewBuilder
     private var dot: some View {
+        if isActive {
+            activeDot
+        } else {
+            Circle()
+                .fill(Color.lightTextColor)
+                .frame(width: Constants.dotSize, height: Constants.dotSize)
+        }
+    }
+
+    private var tint: Color {
+        isActive ? bearing.color : .textColor
+    }
+
+    private var activeDot: some View {
         Circle()
             .fill(Color.defaultBackground)
             .overlay(Circle().strokeBorder(bearing.color, lineWidth: Constants.ringWidth))
@@ -267,13 +287,13 @@ enum WaypointBearing: CaseIterable {
         }
     }
 
-    var subtitle: String {
+    var status: String {
         switch self {
-        case .southWest: "Progress is too slow. Goal will be moved back."
-        case .northWest: "Progress is slower than usual"
-        case .north: "You are on target with your goals"
-        case .northEast: "Progress is faster than usual"
-        case .southEast: "Progress is too fast. Proceed with caution."
+        case .southWest: "BEARING SOUTH-WEST"
+        case .northWest: "BEARING NORTH-WEST"
+        case .north: "BEARING TRUE"
+        case .northEast: "BEARING NORTH-EAST"
+        case .southEast: "BEARING SOUTH-EAST"
         }
     }
 

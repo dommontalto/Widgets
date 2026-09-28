@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ExploreView: View {
     @State private var searchText = ""
+    @State private var isSearchFocused = false
     @State private var selectedAgent: ExploreAgent?
     @State private var shownClinic: ExploreClinic?
     @State private var showsAllClinics = false
@@ -18,11 +19,11 @@ struct ExploreView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightSearchBar("What would you like me to find?", text: $searchText)
+            BrightSearchBar("What would you like me to find?", text: $searchText) { isSearchFocused = $0 }
                 .padding(.horizontal, .spacing3x)
 
             ZStack(alignment: .top) {
-                if searchText.isEmpty {
+                if !isSearching {
                     home
                         .transition(.opacity)
                 } else {
@@ -30,7 +31,7 @@ struct ExploreView: View {
                         .transition(.opacity)
                 }
             }
-            .animation(.brightEaseInOut, value: searchText.isEmpty)
+            .animation(.brightEaseInOut, value: isSearching)
         }
         .padding(.top, .spacing2x)
         .padding(.bottom, .spacing12x)
@@ -60,6 +61,10 @@ struct ExploreView: View {
         }
     }
 
+    private var isSearching: Bool {
+        isSearchFocused || !searchText.isEmpty
+    }
+
     private var home: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             BrightWidgetTitle(icon: .symbol("sparkles"), title: "Agents") {
@@ -78,6 +83,14 @@ struct ExploreView: View {
         }
     }
 
+    private func place(_ order: VaultTestOrder) {
+        selectedClinic = nil
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
+            receipt = order
+        }
+    }
+
     private var agents: some View {
         ScrollView(.horizontal) {
             HStack(spacing: .spacing1x) {
@@ -93,14 +106,6 @@ struct ExploreView: View {
     }
 
     // The clinic sheet has to be down before the receipt comes up over it.
-    private func place(_ order: VaultTestOrder) {
-        selectedClinic = nil
-        Task {
-            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
-            receipt = order
-        }
-    }
-
     private var clinics: some View {
         HStack(alignment: .top, spacing: .spacing3x) {
             ForEach(ExploreClinic.demo) { clinic in
@@ -171,7 +176,7 @@ private struct ExploreAdCard: View {
     }
 
     private enum Constants {
-        static let height: CGFloat = 197
+        static let height: CGFloat = 200
         static let footerHeight: CGFloat = 68
     }
 }

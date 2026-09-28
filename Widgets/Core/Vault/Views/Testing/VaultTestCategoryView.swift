@@ -13,6 +13,7 @@ struct VaultTestCategoryView: View {
     let onSelectClinic: (VaultTestingClinic) -> Void
 
     @State private var showingMap = false
+    @State private var pull: CGFloat = 0
 
     private var clinics: [VaultTestingClinic] {
         sortOrder.sorted(VaultTestingClinic.demo).filter { $0.offers(category.id) }
@@ -41,6 +42,11 @@ struct VaultTestCategoryView: View {
             .padding(.bottom, .spacing10x)
         }
         .scrollIndicators(.hidden)
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            pull = max(0, -offset)
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.defaultBackground.ignoresSafeArea())
         .ignoresSafeArea(edges: .top)
@@ -66,6 +72,8 @@ struct VaultTestCategoryView: View {
             .frame(height: Constants.heroHeight)
             .background { heroImage }
             .clipped()
+            .mask { fade }
+            .scaleEffect(1 + pull / Constants.heroHeight, anchor: .bottom)
             .overlay(alignment: .top) {
                 VStack(spacing: .spacing2x) {
                     VaultTestCategoryIcon(category: category, symbolSize: .huge)
@@ -78,7 +86,6 @@ struct VaultTestCategoryView: View {
                 .blendMode(.overlay)
                 .padding(.top, Constants.heroContentTop)
             }
-            .mask { fade }
     }
 
     private var heroImage: some View {
