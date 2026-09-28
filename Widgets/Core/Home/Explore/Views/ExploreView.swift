@@ -105,12 +105,8 @@ struct ExploreView: View {
     private var clinics: some View {
         HStack(alignment: .top, spacing: .spacing3x) {
             ForEach(ExploreClinic.demo) { clinic in
-                Button {
-                    shownClinic = clinic
-                } label: {
-                    ExploreClinicTile(clinic: clinic)
-                }
-                .buttonStyle(.plain)
+                ExploreClinicTile(clinic: clinic)
+                    .onTapGesture { shownClinic = clinic }
             }
         }
         .sheet(item: $shownClinic) { clinic in

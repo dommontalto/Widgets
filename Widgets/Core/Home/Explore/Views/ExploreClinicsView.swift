@@ -14,12 +14,8 @@ struct ExploreClinicsView: View {
         BrightPageView(title: "Explore all") {
             LazyVGrid(columns: Constants.columns, spacing: .spacing3x) {
                 ForEach(ExploreClinic.all) { clinic in
-                    Button {
-                        shownClinic = clinic
-                    } label: {
-                        ExploreClinicTile(clinic: clinic)
-                    }
-                    .buttonStyle(.plain)
+                    ExploreClinicTile(clinic: clinic)
+                        .onTapGesture { shownClinic = clinic }
                 }
             }
             .padding(.bottom, .spacing4x)
