@@ -81,15 +81,15 @@ struct BrightTileRow<Content: View>: View {
             }
             .padding(.vertical, blurBleed)
             .scrollTargetLayout()
-            .visualEffect { [blur] effect, proxy in
+            .visualEffect { [blur, trailingBlur = Constants.trailingBlur, maxBlur = Constants.maxBlur] effect, proxy in
                 let visible = proxy.bounds(of: .scrollView) ?? proxy.frame(in: .local)
                 return effect.layerEffect(
                     ShaderLibrary.brightEdgeBlur(
-                        .float(visible.maxX - Constants.trailingBlur),
+                        .float(visible.maxX - trailingBlur),
                         .float(visible.maxX),
-                        .float(Constants.maxBlur)
+                        .float(maxBlur)
                     ),
-                    maxSampleOffset: CGSize(width: Constants.maxBlur, height: Constants.maxBlur),
+                    maxSampleOffset: CGSize(width: maxBlur, height: maxBlur),
                     isEnabled: blur
                 )
             }

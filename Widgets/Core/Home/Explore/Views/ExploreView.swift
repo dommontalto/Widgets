@@ -34,6 +34,7 @@ struct ExploreView: View {
         }
         .padding(.top, .spacing2x)
         .padding(.bottom, .spacing12x)
+        .background { BrightHomeGradient() }
         .contentShape(Rectangle())
         .onTapGesture {
             UIApplication.shared.sendAction(
