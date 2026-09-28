@@ -367,7 +367,7 @@ struct VaultTestCategoriesView: View {
 
     var body: some View {
         BrightPageView(title: "Guided Testing") {
-            BrightCardGrid {
+            BrightCardGrid(spacing: .spacing3x) {
                 ForEach(VaultTestCategory.demo) { category in
                     VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }
                 }

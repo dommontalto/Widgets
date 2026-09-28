@@ -9,10 +9,11 @@ import SwiftUI
 
 // Two columns of small cards, each tapped or held by the screen that lays it out.
 struct BrightCardGrid<Content: View>: View {
+    var spacing: CGFloat = .spacing2x
     @ViewBuilder let content: Content
 
     var body: some View {
-        LazyVGrid(columns: Constants.columns, spacing: .spacing2x) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing), count: 2), spacing: spacing) {
             content
         }
     }
@@ -77,7 +78,6 @@ extension BrightCardGridItem where Accessory == EmptyView {
 // Outside the structs: a generic type cannot hold static stored properties.
 private enum Constants {
     static let iconSize: CGFloat = .spacing6x
-    static let columns = Array(repeating: GridItem(.flexible(), spacing: .spacing2x), count: 2)
 }
 
 #Preview {

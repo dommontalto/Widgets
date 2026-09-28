@@ -14,6 +14,8 @@ struct VaultTestCategoryView: View {
 
     @State private var showingMap = false
     @State private var pull: CGFloat = 0
+    @State private var shownAd: ExploreSearchClinic?
+    @Namespace private var adZoom
 
     private var clinics: [VaultTestingClinic] {
         sortOrder.sorted(VaultTestingClinic.demo).filter { $0.offers(category.id) }
@@ -23,6 +25,16 @@ struct VaultTestCategoryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: .spacing3x) {
                 hero
+
+                VStack(spacing: .spacing3x) {
+                    ForEach(ExploreSearchClinic.sponsored) { clinic in
+                        BrightAd(clinic: clinic) { shownAd = clinic }
+                            .matchedTransitionSource(id: clinic.id, in: adZoom) { source in
+                                source.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+                            }
+                    }
+                }
+                .padding(.horizontal, .spacing3x)
 
                 HStack(spacing: .spacing2x) {
                     Image(systemName: "location")
@@ -61,6 +73,10 @@ struct VaultTestCategoryView: View {
                         .labelStyle(.iconOnly)
                 }
             }
+        }
+        .fullScreenCover(item: $shownAd) { clinic in
+            ExploreAdDetailView(clinic: clinic)
+                .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
         }
         .navigationDestination(isPresented: $showingMap) {
             VaultClinicsMapView(clinics: clinics, onSelectClinic: onSelectClinic)

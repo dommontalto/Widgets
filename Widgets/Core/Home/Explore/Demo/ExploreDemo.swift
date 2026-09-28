@@ -151,6 +151,27 @@ extension ExploreSearchClinic {
         ),
     ]
 
+    static let sponsored = [
+        ExploreSearchClinic(
+            name: "Move Clinic",
+            address: "21 Danks St, Waterloo NSW 2017",
+            logo: ImageNames.exploreMoveClinicLogoV5,
+            logoBackground: .white,
+            isAd: true,
+            services: ["Physiotherapy", "Exercise Physiology", "Women's health", "NDIS - Disability", "Performance Management"],
+            blurb: "Physiotherapy and Exercise Physiology clinic. Our qualified practitioners offer specialised treatment and advice. Katoomba | Waterloo."
+        ),
+        ExploreSearchClinic(
+            name: "Little Lungs Sleep Clinic",
+            address: "Sydney, NSW",
+            logo: ImageNames.exploreLittleLungsLogoV5,
+            logoBackground: Color(hex: "#1C2F54"),
+            isAd: true,
+            services: ["Sleep Studies", "Paediatric Respiratory", "Asthma Care", "Snoring & Apnoea", "Allergy Testing"],
+            blurb: "A paediatric respiratory and sleep clinic helping kids breathe easy and sleep well, with sleep studies, asthma and allergy care under one roof."
+        ),
+    ]
+
     static let results = [
         ExploreSearchClinic(
             name: "Move Clinic",
@@ -158,21 +179,24 @@ extension ExploreSearchClinic {
             logo: ImageNames.exploreMoveClinicLogoV5,
             logoBackground: .white,
             isAd: true,
-            services: ["Physiotherapy", "Exercise Physiology", "Women's health", "NDIS - Disability", "Performance Management"]
+            services: ["Physiotherapy", "Exercise Physiology", "Women's health", "NDIS - Disability", "Performance Management"],
+            blurb: "Physiotherapy and Exercise Physiology clinic. Our qualified practitioners offer specialised treatment and advice. Katoomba | Waterloo."
         ),
         ExploreSearchClinic(
             name: "FXNL Rehab",
             address: "shop 5/289 Liverpool Rd, Strathfield NSW 2135",
             logo: ImageNames.exploreFxnlRehabLogoV5,
             logoBackground: .black,
-            services: ["Manual Therapy", "Movement based rehab", "Telehealth", "Musculoskeletal", "Orthopaedic"]
+            services: ["Manual Therapy", "Movement based rehab", "Telehealth", "Musculoskeletal", "Orthopaedic"],
+            blurb: "Manual therapy and movement-based rehab to get you back to training, in the clinic or over telehealth."
         ),
         ExploreSearchClinic(
             name: "East Point Recovery",
             address: "Level 1/318 Liverpool St, Darlinghurst NSW 2010",
             logo: ImageNames.exploreEastPointRecoveryLogoV5,
             logoBackground: .black,
-            services: ["Osteopathy", "Enhanced Primary Care", "Telehealth", "Musculoskeletal", "Orthopaedic"]
+            services: ["Osteopathy", "Enhanced Primary Care", "Telehealth", "Musculoskeletal", "Orthopaedic"],
+            blurb: "Osteopathy and recovery care for sore backs, stiff joints and sporting injuries, in the heart of Darlinghurst."
         ),
     ]
 }
@@ -194,4 +218,18 @@ extension URL {
         "Longevity Clinic": "https://www.progressivespecialists.com.au/longevity-consultation",
         "Laverty Pathology": "https://www.laverty.com.au",
     ]
+}
+
+extension BrightAd {
+    init(clinic: ExploreSearchClinic, onTap: @escaping () -> Void) {
+        self.init(
+            title: clinic.name,
+            subtitle: clinic.address,
+            logo: clinic.logo,
+            logoBackground: clinic.logoBackground,
+            blurb: clinic.blurb,
+            services: clinic.services,
+            onTap: onTap
+        )
+    }
 }

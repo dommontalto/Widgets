@@ -56,6 +56,7 @@ struct ExploreSearchClinic: Identifiable {
     let logoBackground: Color
     var isAd = false
     var services: [String] = []
+    var blurb = ""
 
     var id: String { name }
 
