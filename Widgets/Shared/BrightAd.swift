@@ -18,6 +18,7 @@ struct BrightAd: View {
     var image: UIImage? = nil
     let blurb: String
     let services: [String]
+    var showsBadge = true
     let onTap: () -> Void
 
     var body: some View {
@@ -31,8 +32,10 @@ struct BrightAd: View {
         .frame(maxWidth: .infinity)
         .background { BrightAdBackdrop(logo: logo, image: image) }
         .overlay(alignment: .topTrailing) {
-            adBadge
-                .padding(.spacing3x)
+            if showsBadge {
+                adBadge
+                    .padding(.spacing3x)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))

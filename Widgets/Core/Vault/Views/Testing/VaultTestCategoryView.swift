@@ -28,7 +28,7 @@ struct VaultTestCategoryView: View {
 
                 VStack(spacing: .spacing3x) {
                     ForEach(ExploreSearchClinic.sponsored) { clinic in
-                        BrightAd(clinic: clinic) { shownAd = clinic }
+                        BrightAd(clinic: clinic, showsBadge: false) { shownAd = clinic }
                             .matchedTransitionSource(id: clinic.id, in: adZoom) { source in
                                 source.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
                             }
