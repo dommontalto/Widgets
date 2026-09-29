@@ -131,6 +131,7 @@ struct BrightSwipePageView<Content: View>: View {
     // selection change itself carries the haptic, so a tap on the pill that
     // is already selected is otherwise silent — a host can decide it is not.
     let onPillTap: ((Int) -> Void)?
+    let file: String
     @Binding var selectedIndex: Int
     @ViewBuilder let content: (Int) -> Content
 
@@ -168,6 +169,7 @@ struct BrightSwipePageView<Content: View>: View {
         backgroundColor: Color? = nil,
         onRefresh: (() async -> Void)? = nil,
         onPillTap: ((Int) -> Void)? = nil,
+        file: String = #file,
         selectedIndex: Binding<Int>,
         @ViewBuilder content: @escaping (Int) -> Content
     ) {
@@ -195,6 +197,7 @@ struct BrightSwipePageView<Content: View>: View {
         self.backgroundColor = backgroundColor
         self.onRefresh = onRefresh
         self.onPillTap = onPillTap
+        self.file = file
         _selectedIndex = selectedIndex
         // Start the scroll position at the selected page so the appear-time sync
         // is a no-op — otherwise the nil→index change trips `.brightHaptic`
@@ -248,18 +251,12 @@ struct BrightSwipePageView<Content: View>: View {
             .toolbar(navigationBarVisibility, for: .navigationBar)
             .brightSoftScrollEdges()
             .toolbar {
-                if collapsesTitleToToolbar {
-                    ToolbarItem(placement: .principal) {
-                        if let fakeLargeTitle, !fakeLargeTitle.isEmpty {
-                            BrightText(fakeLargeTitle, size: .subheading)
-                                .opacity(state.activeTitleOpacity)
-                                .blur(radius: (1 - state.activeTitleOpacity) * 6)
-                                .scaleEffect(1.15 - 0.15 * state.activeTitleOpacity)
-                        } else {
-                            BrightText(".", size: .subheading)
-                                .opacity(0)
-                        }
-                    }
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(
+                        title: collapsesTitleToToolbar ? fakeLargeTitle ?? "" : "",
+                        file: file,
+                        titleFade: state.activeTitleOpacity
+                    )
                 }
             }
     }

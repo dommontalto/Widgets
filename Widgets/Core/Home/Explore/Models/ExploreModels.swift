@@ -43,12 +43,6 @@ struct ExploreClinic: Identifiable {
     var id: String { name }
 }
 
-struct ExploreAd {
-    let title: String
-    let subtitle: String
-    let image: String
-}
-
 struct ExploreSearchClinic: Identifiable {
     let name: String
     let address: String
@@ -57,8 +51,22 @@ struct ExploreSearchClinic: Identifiable {
     var isAd = false
     var services: [String] = []
     var blurb = ""
+    var tests: [VaultClinicTest] = []
 
     var id: String { name }
+
+    var testingClinic: VaultTestingClinic {
+        VaultTestingClinic(
+            id: name,
+            name: name,
+            address: address,
+            distanceKm: 0,
+            latitude: 0,
+            longitude: 0,
+            services: services,
+            tests: tests
+        )
+    }
 
     func matches(_ query: String) -> Bool {
         ([name, address] + services).contains { $0.localizedStandardContains(query) }

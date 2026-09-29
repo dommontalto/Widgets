@@ -23,11 +23,6 @@ struct ExploreAgentSheet: View {
     var body: some View {
         BrightPageSheetView(
             horizontalPadding: .spacing0x,
-            trailing: {
-                ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(file: #file)
-                }
-            },
             content: {
                 ZStack {
                     if isConfiguring {

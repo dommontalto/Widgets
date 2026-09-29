@@ -14,6 +14,7 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
     let backgroundColor: Color
     let bottomSafeArea: Bool
     let infoButton: (() -> Void)?
+    let file: String
     let toolbar: Toolbar
     let content: Content
 
@@ -35,6 +36,7 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
         backgroundColor: Color = .defaultBackground,
         bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
+        file: String = #file,
         @ToolbarContentBuilder toolbar: () -> Toolbar,
         @ViewBuilder content: () -> Content
     ) {
@@ -44,6 +46,7 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
         self.backgroundColor = backgroundColor
         self.bottomSafeArea = bottomSafeArea
         self.infoButton = infoButton
+        self.file = file
         self.toolbar = toolbar()
         self.content = content()
     }
@@ -87,13 +90,8 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
             .brightSoftScrollEdges()
             .toolbar(.visible, for: .navigationBar)
             .toolbar {
-                if !title.isEmpty {
-                    ToolbarItem(placement: .principal) {
-                        BrightText(title, size: .subheading)
-                            .opacity(inlineTitleFade)
-                            .blur(radius: (1 - inlineTitleFade) * 6)
-                            .scaleEffect(1.15 - 0.15 * inlineTitleFade)
-                    }
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(title: title, file: file, titleFade: inlineTitleFade)
                 }
                 toolbar
                 if let infoButton {
@@ -115,6 +113,7 @@ extension BrightPageView where Toolbar == EmptyToolbarContent {
         backgroundColor: Color = .defaultBackground,
         bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
+        file: String = #file,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -123,6 +122,7 @@ extension BrightPageView where Toolbar == EmptyToolbarContent {
         self.backgroundColor = backgroundColor
         self.bottomSafeArea = bottomSafeArea
         self.infoButton = infoButton
+        self.file = file
         toolbar = EmptyToolbarContent()
         self.content = content()
     }

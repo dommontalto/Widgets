@@ -115,8 +115,31 @@ extension VaultPaymentMethod {
     ]
 }
 
+extension VaultTestOrder {
+    static let demo: [VaultTestOrder] = {
+        let clinic = VaultTestingClinic.demo[0]
+        let now = Date.now
+        return [
+            VaultTestOrder(
+                number: "482913",
+                test: clinic.tests[0],
+                clinic: clinic,
+                type: .atHomeKit,
+                placedAt: now.addingTimeInterval(-2 * 86_400),
+                address: VaultShippingAddress.demo.first?.street,
+                delivery: VaultTestDelivery(arrivesOn: now.addingTimeInterval(2 * 86_400), progress: 0.55),
+                paymentMethod: VaultPaymentMethod.demo.first
+            ),
+        ]
+    }()
+}
+
 extension VaultTestingClinic {
     var website: URL { .demoWebsite(for: name) }
+
+    static func tests(at clinicId: String) -> [VaultClinicTest] {
+        demo.first { $0.id == clinicId }?.tests ?? []
+    }
 
     static func count(offering categoryId: String) -> Int {
         demo.filter { $0.offers(categoryId) }.count

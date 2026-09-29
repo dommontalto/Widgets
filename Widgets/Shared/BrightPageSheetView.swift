@@ -18,6 +18,8 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
     // Set false to let content run under the home indicator, e.g. a full-bleed map.
     let bottomSafeArea: Bool
     let path: Binding<NavigationPath>?
+    // Pass nil when the sheet puts its own view in the principal slot.
+    let file: String?
     let trailing: Trailing
     let content: Content
 
@@ -32,6 +34,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         backButtonCallback: (() -> Void)? = nil,
         bottomSafeArea: Bool = true,
         path: Binding<NavigationPath>? = nil,
+        file: String? = #file,
         @ToolbarContentBuilder trailing: () -> Trailing,
         @ViewBuilder content: () -> Content
     ) {
@@ -43,6 +46,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
         self.backButtonCallback = backButtonCallback
         self.bottomSafeArea = bottomSafeArea
         self.path = path
+        self.file = file
         self.trailing = trailing()
         self.content = content()
     }
@@ -98,6 +102,11 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                             }
                         }
                     }
+                    if let file {
+                        ToolbarItem(placement: .principal) {
+                            ExerciseInlineTitle(title: title, file: file)
+                        }
+                    }
                     trailing
                 }
     }
@@ -113,6 +122,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         backButtonCallback: (() -> Void)? = nil,
         bottomSafeArea: Bool = true,
         path: Binding<NavigationPath>? = nil,
+        file: String? = #file,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -123,6 +133,7 @@ extension BrightPageSheetView where Trailing == EmptyToolbarContent {
         self.backButtonCallback = backButtonCallback
         self.bottomSafeArea = bottomSafeArea
         self.path = path
+        self.file = file
         self.trailing = EmptyToolbarContent()
         self.content = content()
     }

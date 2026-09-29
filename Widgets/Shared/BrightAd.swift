@@ -15,6 +15,7 @@ struct BrightAd: View {
     let subtitle: String
     let logo: String
     let logoBackground: Color
+    var image: UIImage? = nil
     let blurb: String
     let services: [String]
     let onTap: () -> Void
@@ -22,10 +23,13 @@ struct BrightAd: View {
     var body: some View {
         VStack(spacing: .spacing0x) {
             header
-            details
+
+            if !blurb.isEmpty || !services.isEmpty {
+                details
+            }
         }
         .frame(maxWidth: .infinity)
-        .background { BrightAdBackdrop(logo: logo) }
+        .background { BrightAdBackdrop(logo: logo, image: image) }
         .overlay(alignment: .topTrailing) {
             adBadge
                 .padding(.spacing3x)
@@ -41,9 +45,15 @@ struct BrightAd: View {
             logoBackground
                 .frame(width: Constants.logoSize, height: Constants.logoSize)
                 .overlay {
-                    Image(logo)
-                        .resizable()
-                        .scaledToFill()
+                    if let image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Image(logo)
+                            .resizable()
+                            .scaledToFill()
+                    }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
                 .padding(.bottom, .spacing1x)
@@ -61,43 +71,47 @@ struct BrightAd: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText(blurb, size: .body1, color: .white.opacity(.mediumOpacity))
-                .lineSpacing(.lineSpacingMedium)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, .spacing3x)
+            if !blurb.isEmpty {
+                BrightText(blurb, size: .body1, color: .white.opacity(.mediumOpacity))
+                    .lineSpacing(.lineSpacingMedium)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, .spacing3x)
+            }
 
-            VStack(alignment: .leading, spacing: .spacing2x) {
-                HStack(spacing: .spacing05x) {
-                    Image(systemName: "list.clipboard")
-                        .font(.standardSFPro(size: .body1, weight: .regular))
+            if !services.isEmpty {
+                VStack(alignment: .leading, spacing: .spacing2x) {
+                    HStack(spacing: .spacing05x) {
+                        Image(systemName: "list.clipboard")
+                            .font(.standardSFPro(size: .body1, weight: .regular))
 
-                    BrightText("Services", size: .body1, color: .white)
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, .spacing3x)
+                        BrightText("Services", size: .body1, color: .white)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, .spacing3x)
 
-                ScrollView(.horizontal) {
-                    HStack(spacing: .spacing105x) {
-                        ForEach(services, id: \.self) { service in
-                            BrightText(service, size: .body1, color: .white)
-                                .padding(.horizontal, .spacing105x)
-                                .frame(height: .spacing5x)
-                                .background(Color.white.opacity(.ultraLowOpacity), in: Capsule())
-                                .overlay(Capsule().strokeBorder(Color.white.opacity(.lowOpacity), lineWidth: Constants.stroke))
+                    ScrollView(.horizontal) {
+                        HStack(spacing: .spacing105x) {
+                            ForEach(services, id: \.self) { service in
+                                BrightText(service, size: .body1, color: .white)
+                                    .padding(.horizontal, .spacing105x)
+                                    .frame(height: .spacing5x)
+                                    .background(Color.white.opacity(.ultraLowOpacity), in: Capsule())
+                                    .overlay(Capsule().strokeBorder(Color.white.opacity(.lowOpacity), lineWidth: Constants.stroke))
+                            }
                         }
                     }
-                }
-                .scrollIndicators(.hidden)
-                .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
-                .mask {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .black, location: 0.8),
-                            .init(color: .clear, location: 1),
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                    .scrollIndicators(.hidden)
+                    .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
+                    .mask {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .black, location: 0.8),
+                                .init(color: .clear, location: 1),
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    }
                 }
             }
         }
@@ -122,11 +136,12 @@ struct BrightAd: View {
 // The wash behind an ad: its logo's own colour, deepening towards the bottom.
 struct BrightAdBackdrop: View {
     let logo: String
+    var image: UIImage? = nil
     // How far the top colour runs up past the edge, for a page pulled down past its top.
     var bleed: CGFloat = 0
 
     var body: some View {
-        let tint = BrightAdTint.color(for: logo)
+        let tint = BrightAdTint.color(for: logo, image: image)
         let top = Color(tint.shaded(brightness: Constants.topBrightness))
         LinearGradient(
             colors: [top, Color(tint.shaded(brightness: Constants.bottomBrightness))],
@@ -153,10 +168,11 @@ struct BrightAdBackdrop: View {
 private enum BrightAdTint {
     private static var cache: [String: UIColor] = [:]
 
-    static func color(for imageName: String) -> UIColor {
-        if let cached = cache[imageName] { return cached }
-        let color = sample(UIImage(named: imageName)) ?? .darkGray
-        cache[imageName] = color
+    static func color(for imageName: String, image: UIImage? = nil) -> UIColor {
+        let key = image.map { "\(imageName)#\(ObjectIdentifier($0).hashValue)" } ?? imageName
+        if let cached = cache[key] { return cached }
+        let color = sample(image ?? UIImage(named: imageName)) ?? .darkGray
+        cache[key] = color
         return color
     }
 

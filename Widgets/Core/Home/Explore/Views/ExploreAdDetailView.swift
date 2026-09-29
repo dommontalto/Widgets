@@ -8,22 +8,40 @@
 import SwiftUI
 
 // What a sponsored card opens into: the clinic in its own colours up top, then
-// every service near you, filterable by what this clinic offers.
+// every test it runs, filterable by category.
 struct ExploreAdDetailView: View {
     let clinic: ExploreSearchClinic
 
     @Environment(\.dismiss) private var dismiss
-    @State private var filter: String?
+    @State private var filter: VaultTestCategory?
     @State private var shownWebsite: ExploreSearchClinic?
     @State private var hasAppeared = false
+    @State private var selectedTest: VaultClinicTest?
+    @State private var receipt: VaultTestOrder?
 
-    private var services: [ExploreSearchClinic] {
-        let others = ExploreSearchClinic.results.filter { $0.name != clinic.name }
-        guard let filter else { return others }
-        return others.filter { $0.services.contains(filter) }
+    private var categories: [VaultTestCategory] {
+        VaultTestCategory.demo.filter { category in clinic.tests.contains { $0.categoryId == category.id } }
+    }
+
+    private var tests: [VaultClinicTest] {
+        guard let filter else { return clinic.tests }
+        return clinic.tests.filter { $0.categoryId == filter.id }
     }
 
     var body: some View {
+        NavigationStack {
+            content
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(item: $selectedTest) { test in
+                    VaultTestDetailView(test: test, clinic: clinic.testingClinic, isSheet: false, onOrder: place)
+                }
+        }
+        .sheet(item: $receipt) { order in
+            VaultTestReceiptSheet(order: order)
+        }
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: .spacing0x) {
                 hero
@@ -59,6 +77,11 @@ struct ExploreAdDetailView: View {
             SafariView(url: clinic.website) { shownWebsite = nil }
                 .ignoresSafeArea()
         }
+    }
+
+    private func place(_ order: VaultTestOrder) {
+        selectedTest = nil
+        receipt = order
     }
 
     private var hero: some View {
@@ -103,11 +126,11 @@ struct ExploreAdDetailView: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: .spacing105x) {
-                    ForEach(clinic.services, id: \.self) { service in
+                    ForEach(categories) { category in
                         Button {
-                            filter = filter == service ? nil : service
+                            filter = filter == category ? nil : category
                         } label: {
-                            ExploreServiceChip(title: service, isSelected: filter == service)
+                            ExploreServiceChip(title: category.name, isSelected: filter == category)
                         }
                         .buttonStyle(.plain)
                     }
@@ -124,75 +147,82 @@ struct ExploreAdDetailView: View {
             BrightText("All Services", size: .body1)
                 .padding(.horizontal, .spacing3x)
 
-            if services.isEmpty, let filter {
-                BrightText("No other clinics near you offer \(filter) yet.", size: .body1, color: .lightTextColor)
-                    .padding(.horizontal, .spacing3x)
-            } else {
-                VStack(spacing: .spacing2x) {
-                    ForEach(services) { service in
-                        serviceCard(service)
+            VStack(spacing: .spacing2x) {
+                ForEach(tests) { test in
+                    Button {
+                        selectedTest = test
+                    } label: {
+                        testCard(test)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, .spacing3x)
             }
+            .padding(.horizontal, .spacing3x)
         }
     }
 
-    private func serviceCard(_ service: ExploreSearchClinic) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
+    private func testCard(_ test: VaultClinicTest) -> some View {
+        VStack(alignment: .leading, spacing: .spacing0x) {
             HStack(spacing: .spacing2x) {
-                service.logoBackground
-                    .frame(width: Constants.cardLogoSize, height: Constants.cardLogoSize)
-                    .overlay {
-                        Image(service.logo)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
-
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(service.name, size: .subheading)
-                        .lineLimit(1)
-
-                    BrightText(service.address, size: .body1, color: .lightTextColor)
-                        .lineLimit(1)
+                if let category = VaultTestCategory.named(test.categoryId) {
+                    categoryBadge(category)
                 }
+
+                BrightText(test.name, size: .subheading)
+                    .lineLimit(1)
             }
+            .padding(.bottom, .spacing2x)
 
             BrightDivider()
 
-            BrightText(service.blurb, size: .body1, color: .semiLightTextColor)
+            BrightText(test.detail, size: .body1, color: .semiLightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, .spacing2x)
 
-            HStack(spacing: .spacing05x) {
-                Image(systemName: "list.clipboard")
-                    .font(.standardSFPro(size: .body1, weight: .regular))
-                    .foregroundStyle(Color.textColor)
+            BrightDivider()
 
-                BrightText("Services", size: .body1)
-            }
+            VStack(alignment: .leading, spacing: .spacing105x) {
+                BrightText("Available:", size: .body1)
 
-            ScrollView(.horizontal) {
-                HStack(spacing: .spacing105x) {
-                    ForEach(service.services, id: \.self) { name in
-                        ExploreServiceChip(title: name, isSelected: name == filter)
+                ForEach(test.availability) { availability in
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: availability.systemImage)
+                            .font(.standardSFPro(size: .body1, weight: .regular))
+                            .foregroundStyle(Color.textColor)
+                            .frame(width: Constants.availabilitySize, height: Constants.availabilitySize)
+                            .background(Color.defaultBackground, in: Circle())
+
+                        BrightText(availability.rawValue, size: .body1)
                     }
                 }
             }
-            .scrollIndicators(.hidden)
-            .scrollClipDisabled()
+            .padding(.top, .spacing2x)
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier(cornerRadius: .cornerRadius24))
-        .contentShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
-        .onTapGesture { shownWebsite = service }
+        .contentShape(Rectangle())
+    }
+
+    private func categoryBadge(_ category: VaultTestCategory) -> some View {
+        Image(category.tileName)
+            .resizable()
+            .scaledToFill()
+            .frame(width: Constants.badgeSize, height: Constants.badgeSize)
+            .overlay {
+                VaultTestCategoryIcon(category: category, symbolSize: .body1)
+                    .foregroundStyle(.white)
+                    .frame(width: Constants.badgeIconSize, height: Constants.badgeIconSize)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous))
     }
 
     private enum Constants {
         static let logoSize: CGFloat = 80
-        static let cardLogoSize: CGFloat = 60
+        static let badgeSize: CGFloat = 46
+        static let badgeIconSize: CGFloat = .spacing3x
+        static let availabilitySize: CGFloat = 32
         // Clears the status bar now that the scroll view runs under it.
         static let heroTop: CGFloat = 84
         static let pullBleed: CGFloat = 1000

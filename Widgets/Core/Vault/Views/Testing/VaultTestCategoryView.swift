@@ -65,6 +65,10 @@ struct VaultTestCategoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                ExerciseInlineTitle(file: #file)
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingMap = true

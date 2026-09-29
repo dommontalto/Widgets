@@ -49,6 +49,7 @@ struct LighthouseWaypointSheet: View {
 
     var body: some View {
         BrightPageSheetView(
+            file: nil,
             trailing: {
                 ToolbarItem(placement: .principal) {
                     title

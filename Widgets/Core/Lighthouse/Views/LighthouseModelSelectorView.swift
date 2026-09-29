@@ -45,6 +45,10 @@ struct LighthouseModelSelectorView: View {
             .background { LighthouseChatBackground() }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ExerciseInlineTitle(file: #file)
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()

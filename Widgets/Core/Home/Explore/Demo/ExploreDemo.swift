@@ -116,16 +116,6 @@ extension ExploreClinic {
     ]
 }
 
-extension ExploreAd {
-    var website: URL { .demoWebsite(for: title) }
-
-    static let demo = ExploreAd(
-        title: "The Microbiome Clinic",
-        subtitle: "Gut Health",
-        image: ImageNames.exploreMicrobiomeClinicAdV5
-    )
-}
-
 extension ExploreSearchClinic {
     var website: URL { .demoWebsite(for: name) }
 
@@ -159,7 +149,8 @@ extension ExploreSearchClinic {
             logoBackground: .white,
             isAd: true,
             services: ["Physiotherapy", "Exercise Physiology", "Women's health", "NDIS - Disability", "Performance Management"],
-            blurb: "Physiotherapy and Exercise Physiology clinic. Our qualified practitioners offer specialised treatment and advice. Katoomba | Waterloo."
+            blurb: "Physiotherapy and Exercise Physiology clinic. Our qualified practitioners offer specialised treatment and advice. Katoomba | Waterloo.",
+            tests: VaultTestingClinic.tests(at: "longevity-clinic")
         ),
         ExploreSearchClinic(
             name: "Little Lungs Sleep Clinic",
@@ -168,7 +159,8 @@ extension ExploreSearchClinic {
             logoBackground: Color(hex: "#1C2F54"),
             isAd: true,
             services: ["Sleep Studies", "Paediatric Respiratory", "Asthma Care", "Snoring & Apnoea", "Allergy Testing"],
-            blurb: "A paediatric respiratory and sleep clinic helping kids breathe easy and sleep well, with sleep studies, asthma and allergy care under one roof."
+            blurb: "A paediatric respiratory and sleep clinic helping kids breathe easy and sleep well, with sleep studies, asthma and allergy care under one roof.",
+            tests: VaultTestingClinic.tests(at: "meridian-health-labs")
         ),
     ]
 

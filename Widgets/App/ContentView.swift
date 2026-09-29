@@ -17,10 +17,41 @@ struct ContentView: View {
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
     @State private var selectedPage = HomePage.health.rawValue
+    @State private var isSideMenuExpanded = false
+    @State private var showingMyOrders = false
 
     var body: some View {
         NavigationStack {
-            content
+            BrightSideMenu(
+                isEnabled: !showingMyOrders,
+                canOpenBySwipe: selectedPage == HomePage.health.rawValue,
+                isExpanded: $isSideMenuExpanded
+            ) {
+                SideMenuView {
+                    isSideMenuExpanded = false
+                    showingMyOrders = true
+                }
+            } content: {
+                content
+            }
+            .background(Color.defaultBackground)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        withAnimation(.interactiveSpring(duration: Constants.menuSpringDuration, extraBounce: Constants.menuSpringBounce)) {
+                            isSideMenuExpanded.toggle()
+                        }
+                    } label: {
+                        Image(ImageNames.brightLogoSearchingV4)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: Constants.logoSize, height: Constants.logoSize)
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showingMyOrders) {
+                MyOrdersView()
+            }
         }
     }
 
@@ -171,6 +202,9 @@ struct ContentView: View {
 
     private enum Constants {
         static let beamCardHeight: CGFloat = 68
+        static let logoSize: CGFloat = 22
+        static let menuSpringDuration: Double = 0.25
+        static let menuSpringBounce: Double = 0.02
     }
 }
 

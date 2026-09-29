@@ -302,6 +302,14 @@ The iOS app tints its whole TabView, which outranks the red that `role: .destruc
 
 ---
 
+## Tap the title to see the file name
+
+Every screen and sheet in this repo shows its source file name when the top of it (the nav bar's principal slot) is tapped, via `ExerciseInlineTitle(title:file:)`. `BrightPageView`, `BrightPageSheetView` and `BrightSwipePageView` do this automatically: their `file` parameter defaults to `#file`, so it names the call site. Any new screen with its own toolbar must add `ToolbarItem(placement: .principal) { ExerciseInlineTitle(title: ..., file: #file) }`. If a sheet supplies its own principal item, or wraps a page that already shows one, pass `file: nil` to `BrightPageSheetView` so the two principal items don't collide.
+
+This is a prototyping aid for this repo only. **Never add it to the iOS app**: strip `ExerciseInlineTitle` and the `file` parameters when syncing a view or container to `/Users/dommontalto/ios`.
+
+---
+
 ## Last-row trailing chrome
 
 When rows in a stack carry their own trailing chrome — a divider after each row, or bottom padding between rows — the last row must drop it, or it stacks with the container's own padding. Pass `isLast` into the row builder and branch on it (see `ExerciseHistoryWidget.sessionRow` here, and the iOS app's `ExerciseCompletePerformanceGraphWidget`).

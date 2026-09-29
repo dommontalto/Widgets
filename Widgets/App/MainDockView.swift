@@ -18,6 +18,7 @@ enum MainDockTab: Int {
 struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
     @State private var lighthouse: LighthousePresentation?
+    @State private var showingGenome = false
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
 
     private var tabSelection: Binding<MainDockTab> {
@@ -53,7 +54,7 @@ struct MainDockView: View {
             }
 
             Tab(value: MainDockTab.vault) {
-                emptyPage
+                vaultPage
             } label: {
                 tabLabel("Vault", selected: ImageNames.vaultTabIconSelectedV5, unselected: ImageNames.vaultTabIconUnselectedV5, tab: .vault)
             }
@@ -105,6 +106,27 @@ struct MainDockView: View {
         .offset(y: Constants.addTargetOffset)
     }
 
+    private var vaultPage: some View {
+        NavigationStack {
+            emptyPage
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            showingGenome = true
+                        } label: {
+                            Image(ImageNames.genomeV5)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: Constants.genomeSize, height: Constants.genomeSize)
+                        }
+                    }
+                }
+                .navigationDestination(isPresented: $showingGenome) {
+                    GenomeView()
+                }
+        }
+    }
+
     private var emptyPage: some View {
         Color.defaultBackground.ignoresSafeArea()
     }
@@ -130,6 +152,7 @@ struct MainDockView: View {
         static let addTargetHeight: CGFloat = 50
         static let addTargetOffset: CGFloat = 4
         static let longPressDuration: Double = 0.5
+        static let genomeSize: CGFloat = 30
     }
 }
 

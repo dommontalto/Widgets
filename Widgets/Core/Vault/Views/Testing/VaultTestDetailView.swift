@@ -10,26 +10,41 @@ import SwiftUI
 struct VaultTestDetailView: View {
     let test: VaultClinicTest
     let clinic: VaultTestingClinic
+    let isSheet: Bool
     let onOrder: (VaultTestOrder) -> Void
 
     @State private var selectedType: VaultTestAvailability
     @State private var showingPayment = false
 
-    init(test: VaultClinicTest, clinic: VaultTestingClinic, onOrder: @escaping (VaultTestOrder) -> Void) {
+    private var cardColor: Color {
+        isSheet ? .defaultSheetModalCards : .defaultCards
+    }
+
+    init(
+        test: VaultClinicTest,
+        clinic: VaultTestingClinic,
+        isSheet: Bool = true,
+        onOrder: @escaping (VaultTestOrder) -> Void
+    ) {
         self.test = test
         self.clinic = clinic
+        self.isSheet = isSheet
         self.onOrder = onOrder
         _selectedType = State(initialValue: test.type)
     }
 
     var body: some View {
-        BrightPageView(horizontalPadding: .spacing0x, backgroundColor: .defaultSheetBackground) {
+        BrightPageView(
+            horizontalPadding: .spacing0x,
+            backgroundColor: isSheet ? .defaultSheetBackground : .defaultBackground
+        ) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
-                    includedTitle
-                    includedCard
-                    typeCard
+                    BrightDivider()
+                    included
+                    BrightDivider()
+                    typeSection
                 }
                 .padding(.horizontal, .spacing3x)
                 .padding(.bottom, .spacing12x)
@@ -51,82 +66,86 @@ struct VaultTestDetailView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: .spacing105x) {
-            BrightText(test.name, size: .standout1, weight: .regular)
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            BrightText(test.name, size: .standout3, weight: .regular)
 
             BrightText(test.detail, size: .body1, color: .lightTextColor)
+                .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, .spacing2x)
     }
 
-    private var includedTitle: some View {
-        HStack(spacing: .spacing2x) {
-            Image(systemName: "checklist")
-                .font(.standard(size: .heading, weight: .light))
+    private var included: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            BrightText("What’s included?", size: .body1, color: .semiLightTextColor, weight: .regular)
 
-            BrightText("What's included", size: .body1, color: .semiLightTextColor, weight: .regular)
-        }
-        .padding(.leading, .spacing2x)
-    }
+            LazyVGrid(
+                columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                alignment: .leading,
+                spacing: .spacing105x
+            ) {
+                ForEach(test.included, id: \.self) { item in
+                    HStack(spacing: .spacing1x) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.standardSFPro(size: .standout3, weight: .light))
+                            .foregroundStyle(Color.defaultGreen)
 
-    private var includedCard: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            ForEach(test.included, id: \.self) { item in
-                HStack(spacing: .spacing1x) {
-                    Image(systemName: "checkmark.rectangle.stack")
-                        .font(.standard(size: .body1, weight: .light))
-                        .foregroundStyle(Color.semiLightTextColor)
-
-                    BrightText(item, size: .body1, color: .semiLightTextColor, weight: .regular)
-                }
-            }
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
-    }
-
-    private var typeCard: some View {
-        HStack(spacing: .spacing105x) {
-            Image(systemName: selectedType.systemImage)
-                .font(.standard(size: .heading, weight: .light))
-                .foregroundStyle(Color.semiLightTextColor)
-                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-
-            BrightText("Test Type", size: .body1, weight: .regular)
-
-            Spacer(minLength: .spacing0x)
-
-            typeMenu
-        }
-        .padding(.spacing3x)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
-        .animation(.brightEaseInOut, value: selectedType)
-        .brightHaptic(.light, trigger: selectedType)
-    }
-
-    private var typeMenu: some View {
-        Menu {
-            ForEach(test.availability) { availability in
-                Button {
-                    selectedType = availability
-                } label: {
-                    Label {
-                        Text(availability.rawValue)
-                    } icon: {
-                        if availability == selectedType {
-                            Image(systemName: "checkmark")
-                        } else {
-                            Image(systemName: availability.systemImage)
-                        }
+                        BrightText(item, size: .body1, color: .semiLightTextColor)
+                            .lineLimit(1)
                     }
                 }
             }
-        } label: {
-            BrightPillButton(selectedType.rawValue, buttonSize: .small) {}
-                .allowsHitTesting(false)
         }
+    }
+
+    private var typeSection: some View {
+        VStack(alignment: .leading, spacing: .spacing2x) {
+            BrightText("Test Type", size: .body1, color: .semiLightTextColor, weight: .regular)
+                .padding(.leading, .spacing1x)
+
+            VStack(spacing: .spacing0x) {
+                ForEach(test.availability) { availability in
+                    typeRow(availability, isLast: availability == test.availability.last)
+                }
+            }
+            .padding(.horizontal, .spacing3x)
+            .padding(.vertical, .spacing105x)
+            .modifier(CardModifier(color: cardColor, cornerRadius: .cornerRadius24))
+        }
+    }
+
+    private func typeRow(_ availability: VaultTestAvailability, isLast: Bool) -> some View {
+        VStack(spacing: .spacing0x) {
+            Button {
+                selectedType = availability
+            } label: {
+                HStack(spacing: .spacing1x) {
+                    Image(systemName: availability.systemImage)
+                        .font(.standardSFPro(size: .body1, weight: .regular))
+                        .foregroundStyle(Color.textColor)
+                        .frame(width: Constants.iconSize, height: Constants.iconSize)
+                        .background(isSheet ? Color.defaultSheetBackground : Color.defaultBackground, in: Circle())
+
+                    BrightText(availability.rawValue, size: .body1)
+
+                    Spacer(minLength: .spacing0x)
+
+                    BrightTick(isTicked: availability == selectedType)
+                }
+                .padding(.vertical, .spacing2x)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if !isLast {
+                BrightDivider()
+            }
+        }
+    }
+
+    private enum Constants {
+        static let iconSize: CGFloat = 32
     }
 }
 

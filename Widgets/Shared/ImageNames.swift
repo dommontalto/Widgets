@@ -137,6 +137,11 @@ nonisolated class ImageNames {
     static let exploreServiceAgentBackgroundV5 = "Explore/explore_service_agent_background_v5"
     static let exploreAgentStickerV5           = "Explore/explore_agent_sticker_v5"
 
+    // MARK: - Account
+
+    static let brightLogoSearchingV4           = "bright_logo_searching_v4"
+    static let myOrdersV5                      = "Account/my_orders_v5"
+
     // MARK: - Main Tab
 
     static let homeTabIconSelectedV5           = "MainTab/home_tab_icon_selected_v5"

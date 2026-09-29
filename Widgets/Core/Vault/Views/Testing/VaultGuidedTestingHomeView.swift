@@ -111,15 +111,22 @@ struct VaultGuidedTestingHomeView: View {
         } else {
             VStack(spacing: .spacing3x) {
                 ForEach(orders) { order in
-                    orderCard(order)
+                    VaultOrderCard(order: order) { onSelectOrder(order) }
                 }
             }
             .padding(.spacing3x)
             .padding(.bottom, .spacing10x)
         }
     }
+}
 
-    private func orderCard(_ order: VaultTestOrder) -> some View {
+// MARK: - Order card
+
+struct VaultOrderCard: View {
+    let order: VaultTestOrder
+    let onTap: () -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(alignment: .top, spacing: .spacing2x) {
                 VaultClinicLogo()
@@ -148,11 +155,11 @@ struct VaultGuidedTestingHomeView: View {
                 VaultOrderDeliveryTrack(progress: delivery.progress)
             } else {
                 if let address = order.address {
-                    orderDetail("mappin.and.ellipse", address)
+                    detail("mappin.and.ellipse", address)
                 }
 
                 if let scheduledAt = order.scheduledAt {
-                    orderDetail("clock", scheduledAt.formatted(.brightTimestamp))
+                    detail("clock", scheduledAt.formatted(.brightTimestamp))
                 }
             }
         }
@@ -160,10 +167,10 @@ struct VaultGuidedTestingHomeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(CardModifier())
         .contentShape(Rectangle())
-        .onTapGesture { onSelectOrder(order) }
+        .onTapGesture(perform: onTap)
     }
 
-    private func orderDetail(_ systemImage: String, _ title: String) -> some View {
+    private func detail(_ systemImage: String, _ title: String) -> some View {
         HStack(spacing: .spacing1x) {
             Image(systemName: systemImage)
                 .font(.standard(size: .body1, weight: .light))
@@ -173,7 +180,6 @@ struct VaultGuidedTestingHomeView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
-
 }
 
 // MARK: - Delivery track

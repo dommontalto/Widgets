@@ -391,7 +391,8 @@ private struct WaypointAdjustmentGroupSheet: View {
     @State private var shownAdjustment: WaypointAdjustment?
 
     var body: some View {
-        BrightPageSheetView(horizontalPadding: .spacing0x) {
+        // The page inside names the file, and two principal items would collide.
+        BrightPageSheetView(horizontalPadding: .spacing0x, file: nil) {
             BrightPageView(title: "\(group.title) Adjustments", backgroundColor: .defaultSheetBackground) {
                 VStack(spacing: .spacing2x) {
                     ForEach(group.adjustments) { adjustment in

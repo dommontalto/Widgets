@@ -43,6 +43,10 @@ struct VaultClinicsMapView: View {
         .brightSoftScrollEdges()
         .navigationBarBackButtonHidden(true)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                ExerciseInlineTitle(file: #file)
+            }
+
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: goBack) {
                     Label("Back", systemImage: "chevron.backward")

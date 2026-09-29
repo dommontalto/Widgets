@@ -10,6 +10,9 @@ import SwiftUI
 struct ExerciseInlineTitle: View {
     var title = ""
     let file: String
+    // Lets a page fade and blur the title in as it scrolls, without hiding the
+    // file name once it has been tapped out.
+    var titleFade: CGFloat = 1
 
     @State private var showsFile = false
     @State private var taps = 0
@@ -22,6 +25,9 @@ struct ExerciseInlineTitle: View {
             VStack(spacing: .spacing0x) {
                 if !title.isEmpty {
                     BrightText(title, size: .subheading)
+                        .opacity(titleFade)
+                        .blur(radius: (1 - titleFade) * 6)
+                        .scaleEffect(1.15 - 0.15 * titleFade)
                 }
 
                 if showsFile {
@@ -29,6 +35,8 @@ struct ExerciseInlineTitle: View {
                         .transition(.opacity)
                 }
             }
+            // Untitled pages still need something at the top to tap.
+            .frame(minWidth: Constants.minTapWidth, minHeight: Constants.minTapHeight)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -43,6 +51,8 @@ struct ExerciseInlineTitle: View {
 
     private enum Constants {
         static let reveal: TimeInterval = 3
+        static let minTapWidth: CGFloat = 160
+        static let minTapHeight: CGFloat = 32
     }
 }
 

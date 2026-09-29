@@ -15,6 +15,8 @@ struct ExploreView: View {
     @State private var showsAllClinics = false
     @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
+    @State private var shownAd: ExploreSearchClinic?
+    @Namespace private var adZoom
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
@@ -34,7 +36,6 @@ struct ExploreView: View {
         }
         .padding(.top, .spacing2x)
         .padding(.bottom, .spacing12x)
-        .background { BrightHomeGradient() }
         .contentShape(Rectangle())
         .onTapGesture {
             UIApplication.shared.sendAction(
@@ -52,6 +53,10 @@ struct ExploreView: View {
         }
         .sheet(item: $receipt) { order in
             VaultTestReceiptSheet(order: order)
+        }
+        .fullScreenCover(item: $shownAd) { clinic in
+            ExploreAdDetailView(clinic: clinic)
+                .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
         }
         .navigationDestination(isPresented: $showsAllClinics) {
             ExploreClinicsView()
@@ -75,7 +80,10 @@ struct ExploreView: View {
                     .padding(.horizontal, .spacing3x)
             }
 
-            ExploreAdCard(ad: .demo)
+            BrightAd(clinic: ExploreSearchClinic.sponsored[0]) { shownAd = ExploreSearchClinic.sponsored[0] }
+                .matchedTransitionSource(id: ExploreSearchClinic.sponsored[0].id, in: adZoom) { source in
+                    source.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+                }
                 .padding(.horizontal, .spacing3x)
         }
     }
@@ -118,58 +126,5 @@ struct ExploreView: View {
 
     private enum Constants {
         static let sheetDismissDuration: TimeInterval = 0.35
-    }
-}
-
-// A sponsored clinic: its artwork, an Ad badge, and a frosted footer to visit it.
-private struct ExploreAdCard: View {
-    let ad: ExploreAd
-
-    @State private var showsWebsite = false
-
-    var body: some View {
-        Color.clear
-            .frame(height: Constants.height)
-            .background {
-                Image(ad.image)
-                    .resizable()
-                    .scaledToFill()
-            }
-            .overlay(alignment: .bottom) {
-                footer
-            }
-            .overlay(alignment: .bottomLeading) {
-                ExploreAdBadge()
-                    .padding(.leading, .spacing2x)
-                    .padding(.bottom, Constants.footerHeight + .spacing2x)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
-    }
-
-    private var footer: some View {
-        HStack(spacing: .spacing2x) {
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(ad.title, size: .body1, color: .white.opacity(.mediumOpacity))
-                BrightText(ad.subtitle, size: .body1, color: .white.opacity(.lowOpacity))
-            }
-
-            Spacer(minLength: .spacing0x)
-
-            BrightPillButton("Visit", buttonSize: .small) { showsWebsite = true }
-        }
-        .padding(.horizontal, .spacing3x)
-        .frame(height: Constants.footerHeight)
-        .background(.ultraThinMaterial.opacity(.veryHighOpacity))
-        .background(Color.black.opacity(.veryLowOpacity))
-        .environment(\.colorScheme, .dark)
-        .sheet(isPresented: $showsWebsite) {
-            SafariView(url: ad.website) { showsWebsite = false }
-                .ignoresSafeArea()
-        }
-    }
-
-    private enum Constants {
-        static let height: CGFloat = 200
-        static let footerHeight: CGFloat = 68
     }
 }
