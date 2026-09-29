@@ -76,45 +76,6 @@ extension VaultTestCategory {
     }
 }
 
-extension VaultShippingAddress {
-    static let demo: [VaultShippingAddress] = [
-        VaultShippingAddress(
-            id: "marrickville",
-            name: "Ian Qu",
-            street: "2/23 Wardell St, Marrickville NSW 2204, AUS"
-        ),
-    ]
-}
-
-extension VaultShippingOption {
-    static let demo: [VaultShippingOption] = [
-        VaultShippingOption(
-            id: "free-express",
-            name: "Free express shipping - FREE",
-            detail: "1-3 Business days"
-        ),
-    ]
-}
-
-extension VaultPaymentMethod {
-    static let demo: [VaultPaymentMethod] = [
-        VaultPaymentMethod(
-            id: "bendigo",
-            name: "Bendigo and Adelaide Bank",
-            markName: ImageNames.paymentMastercardV5,
-            markSize: CGSize(width: 35, height: 22),
-            last4: "7851",
-            billing: "Ian Qu, 20-40 Meagher Street. Chippendale NSW 2008, AUS"
-        ),
-        VaultPaymentMethod(
-            id: "apple-pay",
-            name: "Apple Pay",
-            markName: ImageNames.paymentApplePayV5,
-            markSize: CGSize(width: 38, height: 24.33)
-        ),
-    ]
-}
-
 extension VaultTestOrder {
     static let demo: [VaultTestOrder] = {
         let clinic = VaultTestingClinic.demo[0]
@@ -126,9 +87,9 @@ extension VaultTestOrder {
                 clinic: clinic,
                 type: .atHomeKit,
                 placedAt: now.addingTimeInterval(-2 * 86_400),
-                address: VaultShippingAddress.demo.first?.street,
+                address: "2/23 Wardell St, Marrickville NSW 2204, AUS",
                 delivery: VaultTestDelivery(arrivesOn: now.addingTimeInterval(2 * 86_400), progress: 0.55),
-                paymentMethod: VaultPaymentMethod.demo.first
+                paymentMethod: .applePay
             ),
         ]
     }()

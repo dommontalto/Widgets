@@ -40,7 +40,7 @@ enum GenomeOrderStatus: String, Codable {
         case .ordered: 1
         case .shipping: 2
         case .delivered: 3
-        case .processing: 4
+        case .processing, .ready: 4
         default: 0
         }
     }

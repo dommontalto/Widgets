@@ -1,5 +1,5 @@
 //
-//  VaultTestReceiptSheet.swift
+//  BrightReceiptSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 18/9/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct VaultTestReceiptSheet: View {
+struct BrightReceiptSheet: View {
     let order: VaultTestOrder
 
     var body: some View {
@@ -121,7 +121,7 @@ struct VaultTestReceiptSheet: View {
         }
     }
 
-    private func maskedNumber(_ method: VaultPaymentMethod) -> String {
+    private func maskedNumber(_ method: BrightPaymentMethod) -> String {
         guard let last4 = method.last4 else { return method.name }
         return "\(Constants.mask) \(Constants.mask) \(Constants.mask) \(last4)"
     }
@@ -140,14 +140,14 @@ struct VaultTestReceiptSheet: View {
 }
 
 #Preview {
-    VaultTestReceiptSheet(
+    BrightReceiptSheet(
         order: VaultTestOrder(
             number: "162371",
             test: VaultTestingClinic.demo[0].tests[0],
             clinic: VaultTestingClinic.demo[0],
             type: .atHomeKit,
             placedAt: .now,
-            paymentMethod: VaultPaymentMethod.demo[0]
+            paymentMethod: .applePay
         )
     )
 }

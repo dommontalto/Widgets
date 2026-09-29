@@ -1,5 +1,5 @@
 //
-//  VaultAddAddressSheet.swift
+//  BrightAddAddressSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 18/9/2026.
@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-struct VaultAddAddressSheet: View {
-    let onSave: (VaultShippingAddress) -> Void
+struct BrightAddAddressSheet: View {
+    let onSave: (BrightShippingAddress) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var country: VaultCountry? = .default
+    @State private var country: BrightCountry? = .default
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var company = ""
@@ -22,7 +22,7 @@ struct VaultAddAddressSheet: View {
     @State private var state = ""
     @State private var postcode = ""
     @State private var phone = ""
-    @State private var phoneCountry = VaultCountry.default
+    @State private var phoneCountry = BrightCountry.default
     @State private var isDefault = false
     @State private var nudge = 0
 
@@ -37,40 +37,40 @@ struct VaultAddAddressSheet: View {
                     BrightText(Constants.title, size: .standout1, weight: .regular)
                         .padding(.bottom, .spacing2x)
 
-                    VaultCountryField(placeholder: Constants.countryPlaceholder, country: $country)
+                    BrightCountryField(placeholder: Constants.countryPlaceholder, country: $country)
 
-                    VaultFormField(placeholder: Constants.firstNamePlaceholder, text: $firstName)
+                    BrightFormField(placeholder: Constants.firstNamePlaceholder, text: $firstName)
 
-                    VaultFormField(placeholder: Constants.lastNamePlaceholder, text: $lastName)
+                    BrightFormField(placeholder: Constants.lastNamePlaceholder, text: $lastName)
 
-                    VaultFormField(placeholder: Constants.companyPlaceholder, text: $company)
+                    BrightFormField(placeholder: Constants.companyPlaceholder, text: $company)
 
-                    VaultFormField(
+                    BrightFormField(
                         placeholder: Constants.streetPlaceholder,
                         text: $street,
                         systemImage: "magnifyingglass"
                     )
                     .padding(.top, .spacing2x)
 
-                    VaultFormField(placeholder: Constants.unitPlaceholder, text: $unit)
+                    BrightFormField(placeholder: Constants.unitPlaceholder, text: $unit)
 
-                    VaultFormField(placeholder: Constants.suburbPlaceholder, text: $suburb)
+                    BrightFormField(placeholder: Constants.suburbPlaceholder, text: $suburb)
 
-                    VaultFormField(placeholder: Constants.statePlaceholder, text: $state)
+                    BrightFormField(placeholder: Constants.statePlaceholder, text: $state)
 
-                    VaultFormField(
+                    BrightFormField(
                         placeholder: Constants.postcodePlaceholder,
                         text: $postcode,
                         keyboardType: .numberPad
                     )
 
-                    VaultPhoneField(
+                    BrightPhoneField(
                         placeholder: Constants.phonePlaceholder,
                         number: $phone,
                         country: $phoneCountry
                     )
 
-                    VaultFormToggleRow(title: Constants.defaultTitle, isOn: $isDefault)
+                    BrightFormToggleRow(title: Constants.defaultTitle, isOn: $isDefault)
                         .padding(.top, .spacing2x)
                 }
                 .brightWiggle(trigger: nudge)
@@ -92,10 +92,18 @@ struct VaultAddAddressSheet: View {
         }
 
         onSave(
-            VaultShippingAddress(
+            BrightShippingAddress(
                 id: UUID().uuidString,
                 name: "\(trim(firstName)) \(trim(lastName))",
-                street: streetLine
+                street: streetLine,
+                line1: trim(street),
+                line2: trim(unit).isEmpty ? nil : trim(unit),
+                city: trim(suburb),
+                state: trim(state),
+                postalCode: trim(postcode),
+                countryCode: (country ?? .default).code,
+                phone: trim(phone).isEmpty ? nil : "\(phoneCountry.dialCode)\(trim(phone))",
+                isDefault: isDefault
             )
         )
         dismiss()
@@ -130,5 +138,5 @@ struct VaultAddAddressSheet: View {
 }
 
 #Preview {
-    VaultAddAddressSheet { _ in }
+    BrightAddAddressSheet { _ in }
 }

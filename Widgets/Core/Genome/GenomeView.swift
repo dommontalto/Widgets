@@ -146,7 +146,10 @@ private struct GenomePresentations: ViewModifier {
             .sheet(isPresented: $viewModel.showingGenomeInfo) {
                 GenomeInfoSheet()
             }
-            .sheet(isPresented: $orderViewModel.showingOrderSheet) {
+            .sheet(
+                isPresented: $orderViewModel.showingOrderSheet,
+                onDismiss: { orderViewModel.handleOrderSheetDismissed() }
+            ) {
                 GenomeOrderSheet(viewModel: orderViewModel)
             }
             .sheet(item: $viewModel.selectedCategory) { category in
@@ -156,23 +159,6 @@ private struct GenomePresentations: ViewModifier {
                 if let marker = viewModel.selectedMarker {
                     GenomeGeneMiniSheet(marker: marker) { viewModel.selectedMarker = nil }
                 }
-            }
-            .fullScreenCover(
-                isPresented: $orderViewModel.showingCheckout,
-                onDismiss: { orderViewModel.handleCheckoutCoverDismissed() }
-            ) {
-                if let url = orderViewModel.checkoutURL {
-                    SafariView(url: url) {
-                        orderViewModel.handleCheckoutClosed()
-                    }
-                    .ignoresSafeArea()
-                }
-            }
-            .sheet(
-                isPresented: $orderViewModel.showingConfirmation,
-                onDismiss: { orderViewModel.handleConfirmationDismissed() }
-            ) {
-                GenomeOrderConfirmationSheet(viewModel: orderViewModel)
             }
     }
 

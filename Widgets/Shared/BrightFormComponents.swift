@@ -1,5 +1,5 @@
 //
-//  VaultTestFormComponents.swift
+//  BrightFormComponents.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 18/9/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct VaultFormField: View {
+struct BrightFormField: View {
     let placeholder: String
     @Binding var text: String
     var systemImage: String?
@@ -30,16 +30,16 @@ struct VaultFormField: View {
                 .dynamicTypeSize(.medium)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .modifier(VaultFormFieldBackground())
+        .modifier(BrightFormFieldBackground())
     }
 }
 
-struct VaultCountryField: View {
+struct BrightCountryField: View {
     let placeholder: String
-    @Binding var country: VaultCountry?
+    @Binding var country: BrightCountry?
 
     var body: some View {
-        VaultCountryMenu(country: countrySelection, showsDialCodes: false) {
+        BrightCountryMenu(country: countrySelection, showsDialCodes: false) {
             HStack(spacing: .spacing2x) {
                 if let country {
                     BrightText("\(country.flag)  \(country.name)", size: .body1, weight: .regular)
@@ -53,11 +53,11 @@ struct VaultCountryField: View {
                     .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
             }
-            .modifier(VaultFormFieldBackground())
+            .modifier(BrightFormFieldBackground())
         }
     }
 
-    private var countrySelection: Binding<VaultCountry> {
+    private var countrySelection: Binding<BrightCountry> {
         Binding(
             get: { country ?? .default },
             set: { country = $0 }
@@ -65,10 +65,10 @@ struct VaultCountryField: View {
     }
 }
 
-struct VaultPhoneField: View {
+struct BrightPhoneField: View {
     let placeholder: String
     @Binding var number: String
-    @Binding var country: VaultCountry
+    @Binding var country: BrightCountry
 
     var body: some View {
         HStack(spacing: .spacing2x) {
@@ -82,7 +82,7 @@ struct VaultPhoneField: View {
                 .dynamicTypeSize(.medium)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            VaultCountryMenu(country: $country) {
+            BrightCountryMenu(country: $country) {
                 HStack(spacing: .spacing1x) {
                     BrightText(country.flag, size: .body1)
 
@@ -93,18 +93,18 @@ struct VaultPhoneField: View {
                 .contentShape(Rectangle())
             }
         }
-        .modifier(VaultFormFieldBackground())
+        .modifier(BrightFormFieldBackground())
     }
 }
 
-struct VaultCountryMenu<Content: View>: View {
-    @Binding var country: VaultCountry
+struct BrightCountryMenu<Content: View>: View {
+    @Binding var country: BrightCountry
     var showsDialCodes = true
     @ViewBuilder let label: () -> Content
 
     var body: some View {
         Menu {
-            ForEach(VaultCountry.all) { option in
+            ForEach(BrightCountry.all) { option in
                 Button {
                     country = option
                 } label: {
@@ -124,13 +124,13 @@ struct VaultCountryMenu<Content: View>: View {
         .brightHaptic(.light, trigger: country)
     }
 
-    private func title(for option: VaultCountry) -> String {
+    private func title(for option: BrightCountry) -> String {
         guard showsDialCodes else { return "\(option.flag)  \(option.name)" }
         return "\(option.flag)  \(option.name)  \(option.dialCode)"
     }
 }
 
-struct VaultFormToggleRow: View {
+struct BrightFormToggleRow: View {
     let title: String
     @Binding var isOn: Bool
 
@@ -149,7 +149,7 @@ struct VaultFormToggleRow: View {
     }
 }
 
-struct VaultFormFieldBackground: ViewModifier {
+struct BrightFormFieldBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.horizontal, .spacing3x)
@@ -165,16 +165,16 @@ struct VaultFormFieldBackground: ViewModifier {
 
 #Preview {
     @Previewable @State var text = ""
-    @Previewable @State var country: VaultCountry? = .default
-    @Previewable @State var phoneCountry = VaultCountry.default
+    @Previewable @State var country: BrightCountry? = .default
+    @Previewable @State var phoneCountry = BrightCountry.default
     @Previewable @State var isOn = false
 
     VStack(spacing: .spacing2x) {
-        VaultCountryField(placeholder: "Country/Region", country: $country)
-        VaultFormField(placeholder: "First name", text: $text)
-        VaultFormField(placeholder: "Search for address", text: $text, systemImage: "magnifyingglass")
-        VaultPhoneField(placeholder: "Phone", number: $text, country: $phoneCountry)
-        VaultFormToggleRow(title: "Use as my default address", isOn: $isOn)
+        BrightCountryField(placeholder: "Country/Region", country: $country)
+        BrightFormField(placeholder: "First name", text: $text)
+        BrightFormField(placeholder: "Search for address", text: $text, systemImage: "magnifyingglass")
+        BrightPhoneField(placeholder: "Phone", number: $text, country: $phoneCountry)
+        BrightFormToggleRow(title: "Use as my default address", isOn: $isOn)
     }
     .padding(.spacing3x)
     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -1,5 +1,5 @@
 //
-//  VaultAddPaymentMethodSheet.swift
+//  BrightAddPaymentMethodSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 18/9/2026.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct VaultAddPaymentMethodSheet: View {
-    let onSave: (VaultPaymentMethod) -> Void
+struct BrightAddPaymentMethodSheet: View {
+    let onSave: (BrightPaymentMethod) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -16,7 +16,7 @@ struct VaultAddPaymentMethodSheet: View {
     @State private var expiry = ""
     @State private var securityCode = ""
     @State private var name = ""
-    @State private var billing: VaultShippingAddress?
+    @State private var billing: BrightShippingAddress?
     @State private var isDefault = false
     @State private var isAddingAddress = false
     @State private var nudge = 0
@@ -32,33 +32,33 @@ struct VaultAddPaymentMethodSheet: View {
                     BrightText(Constants.title, size: .standout1, weight: .regular)
                         .padding(.bottom, .spacing2x)
 
-                    VaultFormField(
+                    BrightFormField(
                         placeholder: Constants.numberPlaceholder,
                         text: $number,
                         keyboardType: .numberPad,
                         capitalization: .never
                     )
 
-                    VaultFormField(
+                    BrightFormField(
                         placeholder: Constants.expiryPlaceholder,
                         text: $expiry,
                         keyboardType: .numbersAndPunctuation,
                         capitalization: .never
                     )
 
-                    VaultFormField(
+                    BrightFormField(
                         placeholder: Constants.securityPlaceholder,
                         text: $securityCode,
                         keyboardType: .numberPad,
                         capitalization: .never
                     )
 
-                    VaultFormField(placeholder: Constants.namePlaceholder, text: $name)
+                    BrightFormField(placeholder: Constants.namePlaceholder, text: $name)
 
                     billingCard
                         .padding(.top, .spacing2x)
 
-                    VaultFormToggleRow(title: Constants.defaultTitle, isOn: $isDefault)
+                    BrightFormToggleRow(title: Constants.defaultTitle, isOn: $isDefault)
                         .padding(.top, .spacing2x)
                 }
                 .brightWiggle(trigger: nudge)
@@ -67,7 +67,7 @@ struct VaultAddPaymentMethodSheet: View {
             }
             .scrollIndicators(.hidden)
             .sheet(isPresented: $isAddingAddress) {
-                VaultAddAddressSheet { billing = $0 }
+                BrightAddAddressSheet { billing = $0 }
             }
         }
         .overlay(alignment: .bottom) {
@@ -118,7 +118,7 @@ struct VaultAddPaymentMethodSheet: View {
         }
 
         onSave(
-            VaultPaymentMethod(
+            BrightPaymentMethod(
                 id: UUID().uuidString,
                 name: trim(name),
                 markName: ImageNames.paymentMastercardV5,
@@ -156,5 +156,5 @@ struct VaultAddPaymentMethodSheet: View {
 }
 
 #Preview {
-    VaultAddPaymentMethodSheet { _ in }
+    BrightAddPaymentMethodSheet { _ in }
 }

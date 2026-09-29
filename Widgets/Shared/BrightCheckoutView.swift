@@ -1,5 +1,5 @@
 //
-//  VaultTestPaymentView.swift
+//  BrightCheckoutView.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 18/9/2026.
@@ -7,22 +7,34 @@
 
 import SwiftUI
 
-struct VaultTestPaymentView: View {
-    let test: VaultClinicTest
-    let type: VaultTestAvailability
-    let clinic: VaultTestingClinic
-    let onPay: (VaultTestOrder) -> Void
+struct BrightCheckoutView: View {
+    let item: BrightCheckoutItem
+    let payment: BrightCheckoutPayment
+    let isPaying: Bool
+    let onPay: (BrightCheckoutDetails) -> Void
 
-    @State private var addresses = VaultShippingAddress.demo
-    @State private var methods = VaultPaymentMethod.demo
-    @State private var selectedAddress: VaultShippingAddress.ID?
-    @State private var selectedShipping: VaultShippingOption.ID?
-    @State private var selectedPayment: VaultPaymentMethod.ID?
+    @State private var addressBook = BrightAddressBook()
+    @State private var methods = [BrightPaymentMethod.applePay]
+    @State private var selectedAddress: BrightShippingAddress.ID?
+    @State private var selectedShipping: BrightShippingOption.ID?
+    @State private var selectedPayment: BrightPaymentMethod.ID?
     @State private var isAddingAddress = false
     @State private var isAddingCard = false
     @State private var nudges = [Section: Int]()
 
-    private let shipping = VaultShippingOption.demo
+    private let shipping = [BrightShippingOption.standard]
+
+    init(
+        item: BrightCheckoutItem,
+        payment: BrightCheckoutPayment = .demo,
+        isPaying: Bool = false,
+        onPay: @escaping (BrightCheckoutDetails) -> Void
+    ) {
+        self.item = item
+        self.payment = payment
+        self.isPaying = isPaying
+        self.onPay = onPay
+    }
 
     enum Section: Hashable {
         case shipTo
@@ -49,11 +61,18 @@ struct VaultTestPaymentView: View {
     }
 
     private var blocking: Section? {
-        if type.needsAddress {
+        if item.fulfilment.needsAddress {
             if selectedAddress == nil { return .shipTo }
-            if type.needsShipping, selectedShipping == nil { return .shipping }
+            if item.fulfilment.needsShipping, selectedShipping == nil { return .shipping }
         }
-        return selectedPayment == nil ? .payment : nil
+        return hasPayment ? nil : .payment
+    }
+
+    private var hasPayment: Bool {
+        switch payment {
+        case .demo: selectedPayment != nil
+        case let .external(option, _): option != nil
+        }
     }
 
     var body: some View {
@@ -67,13 +86,14 @@ struct VaultTestPaymentView: View {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
 
-                    if type.needsAddress {
+                    switch item.fulfilment {
+                    case .shipped, .delivered:
                         shipToCard
-                    } else {
-                        locationCard
+                    case let .inPerson(name, address):
+                        locationCard(name: name, address: address)
                     }
 
-                    if type.needsShipping {
+                    if item.fulfilment.needsShipping {
                         shippingCard
                     }
 
@@ -86,17 +106,34 @@ struct VaultTestPaymentView: View {
             .scrollIndicators(.hidden)
         }
         .overlay(alignment: .bottom) {
-            BrightPillButton(Constants.payTitle, systemImage: "arrow.right", buttonSize: .large, onTapCallback: pay)
-                .padding(.bottom, .spacing4x)
+            Group {
+                if isPaying {
+                    ProgressView()
+                        .controlSize(.large)
+                } else {
+                    BrightPillButton(Constants.payTitle, systemImage: "arrow.right", buttonSize: .large, onTapCallback: pay)
+                }
+            }
+            .padding(.bottom, .spacing4x)
+            .animation(.brightEaseInOut, value: isPaying)
         }
         .sheet(isPresented: $isAddingAddress) {
-            VaultAddAddressSheet { address in
-                addresses.append(address)
-                selectedAddress = address.id
+            BrightAddAddressSheet { address in
+                Task {
+                    if let saved = await addressBook.add(address) {
+                        selectedAddress = saved.id
+                    }
+                }
+            }
+        }
+        .task {
+            await addressBook.loadIfNeeded()
+            if selectedAddress == nil {
+                selectedAddress = addressBook.defaultAddress?.id
             }
         }
         .sheet(isPresented: $isAddingCard) {
-            VaultAddPaymentMethodSheet { method in
+            BrightAddPaymentMethodSheet { method in
                 methods.append(method)
                 selectedPayment = method.id
             }
@@ -107,16 +144,20 @@ struct VaultTestPaymentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
-            BrightText(test.name, size: .standout1, weight: .regular)
+            BrightText(item.title, size: .standout1, weight: .regular)
 
-            HStack(spacing: .spacing1x) {
-                Image(systemName: type.systemImage)
-                    .font(.standard(size: .subheading, weight: .light))
+            if let subtitle = item.subtitle {
+                HStack(spacing: .spacing1x) {
+                    if let systemImage = item.systemImage {
+                        Image(systemName: systemImage)
+                            .font(.standard(size: .subheading, weight: .light))
+                    }
 
-                BrightText(type.rawValue, size: .subheading, weight: .regular)
+                    BrightText(subtitle, size: .subheading, weight: .regular)
+                }
             }
 
-            BrightText(test.detail, size: .body1, color: .lightTextColor)
+            BrightText(item.detail, size: .body1, color: .lightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, .spacing2x)
@@ -130,7 +171,7 @@ struct VaultTestPaymentView: View {
 
             BrightDivider()
 
-            ForEach(addresses) { address in
+            ForEach(addressBook.addresses) { address in
                 optionRow(isSelected: selectedAddress == address.id) {
                     selectedAddress = address.id
                 } label: {
@@ -180,15 +221,15 @@ struct VaultTestPaymentView: View {
 
     // MARK: - Service location
 
-    private var locationCard: some View {
+    private func locationCard(name: String, address: String) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             sectionTitle(.location)
 
             BrightDivider()
 
-            BrightText(clinic.name, size: .body1, weight: .regular)
+            BrightText(name, size: .body1, weight: .regular)
 
-            BrightText(clinic.address, size: .body1, color: .lightTextColor)
+            BrightText(address, size: .body1, color: .lightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .modifier(SectionCard(nudge: nudges[.location, default: 0]))
@@ -202,23 +243,36 @@ struct VaultTestPaymentView: View {
 
             BrightDivider()
 
-            ForEach(methods) { method in
-                optionRow(isSelected: selectedPayment == method.id) {
-                    selectedPayment = method.id
-                } label: {
-                    methodLabel(method)
+            switch payment {
+            case .demo:
+                ForEach(methods) { method in
+                    optionRow(isSelected: selectedPayment == method.id) {
+                        selectedPayment = method.id
+                    } label: {
+                        methodLabel(method)
+                    }
+                    .contextMenu { removeButton { remove(method) } }
+
+                    BrightDivider()
                 }
-                .contextMenu { removeButton { remove(method) } }
 
-                BrightDivider()
+                addRow(Constants.addCardTitle) { isAddingCard = true }
+            case let .external(option, choose):
+                if let option {
+                    optionRow(isSelected: true, select: choose) {
+                        methodLabel(option)
+                    }
+
+                    BrightDivider()
+                }
+
+                addRow(option == nil ? Constants.choosePaymentTitle : Constants.changePaymentTitle, action: choose)
             }
-
-            addRow(Constants.addCardTitle) { isAddingCard = true }
         }
         .modifier(SectionCard(nudge: nudges[.payment, default: 0]))
     }
 
-    private func methodLabel(_ method: VaultPaymentMethod) -> some View {
+    private func methodLabel(_ method: BrightPaymentMethod) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
                 BrightText(method.name, size: .body1, weight: .regular)
@@ -232,10 +286,17 @@ struct VaultTestPaymentView: View {
 
                 Spacer(minLength: .spacing1x)
 
-                Image(method.markName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: method.markSize.width, height: method.markSize.height)
+                Group {
+                    if let markImage = method.markImage {
+                        Image(uiImage: markImage)
+                            .resizable()
+                    } else {
+                        Image(method.markName)
+                            .resizable()
+                    }
+                }
+                .scaledToFit()
+                .frame(width: method.markSize.width, height: method.markSize.height)
             }
 
             if let billing = method.billing {
@@ -253,9 +314,9 @@ struct VaultTestPaymentView: View {
 
             Spacer(minLength: .spacing2x)
 
-            BrightChip(title: Constants.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
+            BrightChip(title: item.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
 
-            BrightText(test.priceText, size: .body1, weight: .regular)
+            BrightText(item.priceText, size: .body1, weight: .regular)
                 .monospacedDigit()
         }
         .modifier(SectionCard(nudge: 0))
@@ -319,14 +380,14 @@ struct VaultTestPaymentView: View {
 
     // MARK: - Actions
 
-    private func remove(_ address: VaultShippingAddress) {
-        addresses.removeAll { $0.id == address.id }
+    private func remove(_ address: BrightShippingAddress) {
         if selectedAddress == address.id {
             selectedAddress = nil
         }
+        Task { await addressBook.remove(address) }
     }
 
-    private func remove(_ method: VaultPaymentMethod) {
+    private func remove(_ method: BrightPaymentMethod) {
         methods.removeAll { $0.id == method.id }
         if selectedPayment == method.id {
             selectedPayment = nil
@@ -335,24 +396,22 @@ struct VaultTestPaymentView: View {
 
     private func pay() {
         guard let blocking else {
-            onPay(order)
+            onPay(details)
             return
         }
 
         nudges[blocking, default: 0] += 1
     }
 
-    private var order: VaultTestOrder {
-        VaultTestOrder(
-            number: VaultTestOrder.newNumber(),
-            test: test,
-            clinic: clinic,
-            type: type,
-            placedAt: .now,
-            scheduledAt: type.needsShipping ? nil : Constants.scheduledAt,
-            address: type.needsAddress ? addresses.first { $0.id == selectedAddress }?.street : clinic.address,
-            delivery: type.needsShipping ? Constants.delivery : nil,
-            paymentMethod: methods.first { $0.id == selectedPayment }
+    private var details: BrightCheckoutDetails {
+        let paymentMethod: BrightPaymentMethod? = switch payment {
+        case .demo: methods.first { $0.id == selectedPayment }
+        case let .external(option, _): option
+        }
+        return BrightCheckoutDetails(
+            address: item.fulfilment.needsAddress ? addressBook.addresses.first { $0.id == selectedAddress } : nil,
+            shipping: item.fulfilment.needsShipping ? shipping.first { $0.id == selectedShipping } : nil,
+            paymentMethod: paymentMethod
         )
     }
 
@@ -360,23 +419,12 @@ struct VaultTestPaymentView: View {
         static let title = "Review and Purchase"
         static let payTitle = "Pay"
         static let totalTitle = "Total"
-        static let currency = "AUD"
         static let mask = "•••"
         static let addAddressTitle = "Add an address"
         static let addCardTitle = "Add a card"
+        static let choosePaymentTitle = "Choose a payment method"
+        static let changePaymentTitle = "Change payment method"
         static let removeTitle = "Remove"
-        static let appointmentDays = 2
-        static let deliveryDays = 3
-        static let startingProgress = 0.25
-
-        static var scheduledAt: Date {
-            Calendar.autoupdatingCurrent.date(byAdding: .day, value: appointmentDays, to: .now) ?? .now
-        }
-
-        static var delivery: VaultTestDelivery {
-            let arrives = Calendar.autoupdatingCurrent.date(byAdding: .day, value: deliveryDays, to: .now) ?? .now
-            return VaultTestDelivery(arrivesOn: arrives, progress: startingProgress)
-        }
     }
 }
 
@@ -394,10 +442,16 @@ private struct SectionCard: ViewModifier {
 
 #Preview {
     NavigationStack {
-        VaultTestPaymentView(
-            test: VaultTestingClinic.demo[0].tests[0],
-            type: .atHomeKit,
-            clinic: VaultTestingClinic.demo[0]
+        BrightCheckoutView(
+            item: BrightCheckoutItem(
+                title: "Biological Age Panel",
+                subtitle: "At Home Kit",
+                systemImage: "shippingbox",
+                detail: "An epigenetic read of biological age alongside the bloods that explain the number",
+                priceText: "$499.99",
+                currency: "AUD",
+                fulfilment: .shipped
+            )
         ) { _ in }
     }
 }

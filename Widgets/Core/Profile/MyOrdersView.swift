@@ -12,6 +12,10 @@ struct MyOrdersView: View {
     @State private var selectedPage = 0
     @State private var guidedOrders = VaultTestOrder.demo
     @State private var receipt: VaultTestOrder?
+    @State private var genomeViewModel = GenomeViewModel()
+    @State private var orderViewModel = GenomeOrderViewModel()
+    @State private var genomeScenario = GenomeDemoScenario.current
+    @State private var showingGenome = false
 
     var body: some View {
         BrightSwipePageView(
@@ -30,7 +34,23 @@ struct MyOrdersView: View {
             }
         }
         .sheet(item: $receipt) { order in
-            VaultTestReceiptSheet(order: order)
+            BrightReceiptSheet(order: order)
+        }
+        .toolbar {
+            if selectedPage == 1 {
+                ToolbarItem(placement: .topBarTrailing) {
+                    genomeScenarioPicker
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showingGenome) {
+            GenomeView()
+        }
+        .sheet(
+            isPresented: $orderViewModel.showingOrderSheet,
+            onDismiss: { orderViewModel.handleOrderSheetDismissed() }
+        ) {
+            GenomeOrderSheet(viewModel: orderViewModel)
         }
     }
 
@@ -54,11 +74,54 @@ struct MyOrdersView: View {
     }
 
     private var genome: some View {
-        BrightPlaceholderView(
-            image: ImageNames.genomeV5,
-            title: "No genome orders yet",
-            subtitle: "Once you order a genome kit, you can follow it here from dispatch to results."
-        )
+        Group {
+            if genomeViewModel.orderStatus == .none, !genomeViewModel.hasResults {
+                Button { orderViewModel.handleOrderTapped() } label: {
+                    GenomeOrderWidget()
+                }
+                .buttonStyle(.plain)
+                .padding(.spacing3x)
+                .frame(maxHeight: .infinity, alignment: .top)
+            } else {
+                GenomeOrderStatusWidget(
+                    status: genomeViewModel.hasResults ? .ready : genomeViewModel.orderStatus,
+                    order: genomeViewModel.hasResults ? nil : genomeViewModel.orderInfo
+                ) {
+                    showingGenome = true
+                }
+                .padding(.spacing3x)
+                .frame(maxHeight: .infinity, alignment: .top)
+            }
+        }
+    }
+
+    private var genomeScenarioPicker: some View {
+        Menu {
+            Section("Scenario") {
+                ForEach(GenomeDemoScenario.allCases) { scenario in
+                    Button {
+                        selectGenomeScenario(scenario)
+                    } label: {
+                        Label {
+                            Text(scenario.title)
+                        } icon: {
+                            if genomeScenario == scenario {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            Label("Scenario", systemImage: "ladybug.fill")
+                .labelStyle(.iconOnly)
+        }
+    }
+
+    private func selectGenomeScenario(_ scenario: GenomeDemoScenario) {
+        GenomeDemoScenario.current = scenario
+        genomeScenario = scenario
+        genomeViewModel.load(scenario)
     }
 }
 

@@ -52,7 +52,7 @@ struct ExploreView: View {
             VaultClinicSheet(clinic: clinic, onOrder: place)
         }
         .sheet(item: $receipt) { order in
-            VaultTestReceiptSheet(order: order)
+            BrightReceiptSheet(order: order)
         }
         .fullScreenCover(item: $shownAd) { clinic in
             ExploreAdDetailView(clinic: clinic)

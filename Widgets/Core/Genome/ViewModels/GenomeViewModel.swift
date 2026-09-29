@@ -42,7 +42,7 @@ final class GenomeViewModel {
 
     var orderFailed: Bool { orderStatus == .failed || orderStatus == .cancelled }
     var canOrder: Bool { orderStatus.isTerminal && !orderFailed }
-    var hasResults: Bool { riskPercentile != nil || !leadingContributors.isEmpty || !categories.isEmpty }
+    var hasResults: Bool { riskPercentile != nil || !leadingContributors.isEmpty || categories.contains(where: \.isInteractive) }
     var orderInfo: GenomeOrderInfo? { summary?.order }
     var leadingContributors: [GenomeContributor] { summary?.leadingContributors ?? [] }
     var riskPercentile: GenomeRiskPercentile? { summary?.riskPercentile }

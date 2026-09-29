@@ -82,7 +82,13 @@ extension GenomeDemoScenario {
 }
 
 enum GenomeDemo {
-    static let checkoutURL = URL(string: "https://thebrightapp.xyz")!
+    static let checkoutItem = BrightCheckoutItem(
+        title: "30x Whole Genome Sequencing",
+        detail: "Whole genome sequencing kit, posted to you. Your results appear in Bright once your sample is sequenced.",
+        priceText: "$499.00",
+        currency: "AUD",
+        fulfilment: .delivered
+    )
 
     static func categoryDetail(id: String) -> GenomeCategoryDetail {
         let category = sampleCategories.first { $0.id == id }

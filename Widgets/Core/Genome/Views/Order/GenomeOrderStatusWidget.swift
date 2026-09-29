@@ -10,13 +10,15 @@ import SwiftUI
 struct GenomeOrderStatusWidget: View {
     let status: GenomeOrderStatus
     var order: GenomeOrderInfo?
+    var onSeeResults: (() -> Void)?
 
     @Environment(\.openURL) private var openURL
 
     private var isFailed: Bool { status == .failed || status == .cancelled }
+    private var isReady: Bool { status == .ready }
     private var statusLabel: String { order?.statusLabel ?? status.displayTitle }
-    private var statusColor: Color { isFailed ? .defaultRed : .defaultSkyBlue }
-    private var etaText: String? { isFailed ? nil : order?.eta.map { "ETA: \($0)" } }
+    private var statusColor: Color { isFailed ? .defaultRed : isReady ? .defaultGreen : .defaultSkyBlue }
+    private var etaText: String? { isFailed || isReady ? nil : order?.eta.map { "ETA: \($0)" } }
     private var completedSteps: Int { order?.completedSteps ?? status.completedSteps }
     private var totalSteps: Int { order?.totalSteps ?? 4 }
 
@@ -29,6 +31,12 @@ struct GenomeOrderStatusWidget: View {
             } else {
                 progressBar
                     .padding(.bottom, .spacing1x)
+
+                if isReady, let onSeeResults {
+                    BrightPillButton("See results", systemImage: "arrow.right", onTapCallback: onSeeResults)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, .spacing1x)
+                }
             }
         }
         .padding(.spacing3x)
@@ -42,7 +50,7 @@ struct GenomeOrderStatusWidget: View {
             HStack(spacing: .spacing2x) {
                 Image(ImageNames.genomeDnaV5)
 
-                BrightText("Genome test", size: .body1)
+                BrightText("Genome", size: .body1)
             }
             Spacer()
 
@@ -72,7 +80,7 @@ struct GenomeOrderStatusWidget: View {
             BrightText("Something went wrong with your order. Get in touch and we'll help sort it out.", size: .body3, color: Color.lightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 
-            BrightPillButton("Contact us", systemImage: "envelope", color: .defaultRed) {
+            BrightPillButton("Contact us", systemImage: "envelope") {
                 let subject = "Genome order — \(status.displayTitle)"
                     .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
                 if let url = URL(string: "mailto:hello@thebrightapp.xyz?subject=\(subject)") {
@@ -86,11 +94,13 @@ struct GenomeOrderStatusWidget: View {
 
     // MARK: Progress Bar
 
+    private var progressColor: Color { isReady ? .defaultGreen : .defaultSkyBlue }
+
     private var progressBar: some View {
         HStack(spacing: .spacing1x) {
             ForEach(0..<totalSteps, id: \.self) { i in
                 Capsule()
-                    .fill(i < completedSteps ? Color.defaultSkyBlue : Color.defaultSkyBlue.opacity(.minimalOpacity))
+                    .fill(i < completedSteps ? progressColor : progressColor.opacity(.minimalOpacity))
                     .frame(height: 9)
             }
         }

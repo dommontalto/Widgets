@@ -58,9 +58,9 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing4x)
         }
         .navigationDestination(isPresented: $showingPayment) {
-            VaultTestPaymentView(test: test, type: selectedType, clinic: clinic) { order in
+            BrightCheckoutView(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
                 showingPayment = false
-                onOrder(order)
+                onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
             }
         }
     }

@@ -46,10 +46,11 @@ struct GenomeOrderSheet: View {
                     BrightPlaceholderView(
                         image: ImageNames.genomeOrderDnaHeroV5,
                         title: "Order your genome test",
-                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test."
+                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
+                        fillsViewport: false
                     )
                     .environment(\.colorScheme, .dark)
-                    .padding(.bottom, .spacing8x)
+                    .padding(.bottom, .spacing6x)
                     
                     includedList
                 }
@@ -80,6 +81,12 @@ struct GenomeOrderSheet: View {
             }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationDestination(isPresented: $viewModel.showingCheckout) {
+                BrightCheckoutView(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
+                    .navigationDestination(isPresented: $viewModel.showingConfirmation) {
+                        GenomeOrderConfirmationView(viewModel: viewModel)
+                    }
+            }
         }
     }
 

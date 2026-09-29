@@ -36,7 +36,7 @@ nonisolated class ImageNames {
     static let genomeHourglassV5           = "Genome/Icons/genome_hourglass_v5"
     static let genomeSunriseV5             = "Genome/Icons/genome_sunrise_v5"
     static let genomeBrainV5               = "Genome/Icons/genome_brain_v5"
-    static let genomeDnaV5                 = "Genome/Icons/genome_dna_v5"
+    static let genomeDnaV5                 = "Genome/genome_dna_v5"
     static let genomeClockV5               = "Genome/Icons/genome_clock_v5"
     static let genomeV5                    = "Genome/genome_v5"
     static let genomeOrderBackgroundV5     = "Genome/genome_order_background_v5"

@@ -37,7 +37,7 @@ struct ExploreAdDetailView: View {
                 }
         }
         .sheet(item: $receipt) { order in
-            VaultTestReceiptSheet(order: order)
+            BrightReceiptSheet(order: order)
         }
     }
 

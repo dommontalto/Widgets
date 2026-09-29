@@ -15,35 +15,29 @@ final class GenomeOrderViewModel {
     }
 
     var showingOrderSheet = false
-    private(set) var isStartingCheckout = false
-    private(set) var checkoutURL: URL?
     var showingCheckout = false
     var showingConfirmation = false
+    private(set) var isStartingCheckout = false
     private(set) var confirmationState: OrderConfirmationState?
+
+    let checkoutItem = GenomeDemo.checkoutItem
 
     func handleOrderTapped() {
         showingOrderSheet = true
     }
 
     func handlePurchase() {
-        showingOrderSheet = false
-        checkoutURL = GenomeDemo.checkoutURL
         showingCheckout = true
     }
 
-    func handleCheckoutClosed() {
-        confirmationState = .confirming
-        showingCheckout = false
-    }
-
-    func handleCheckoutCoverDismissed() {
-        checkoutURL = nil
-        guard confirmationState != nil else { return }
-        showingConfirmation = true
+    func handlePay(_ details: BrightCheckoutDetails) {
         confirmationState = .confirmed
+        showingConfirmation = true
     }
 
-    func handleConfirmationDismissed() {
+    func handleOrderSheetDismissed() {
+        showingCheckout = false
+        showingConfirmation = false
         confirmationState = nil
     }
 }
