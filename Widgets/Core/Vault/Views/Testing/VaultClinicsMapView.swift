@@ -44,7 +44,7 @@ struct VaultClinicsMapView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                ExerciseInlineTitle(file: #file)
+                DebugInlineTitle(file: #file)
             }
 
             ToolbarItem(placement: .topBarLeading) {

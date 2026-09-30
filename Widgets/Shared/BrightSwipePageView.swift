@@ -252,7 +252,7 @@ struct BrightSwipePageView<Content: View>: View {
             .brightSoftScrollEdges()
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(
+                    DebugInlineTitle(
                         title: collapsesTitleToToolbar ? fakeLargeTitle ?? "" : "",
                         file: file,
                         titleFade: state.activeTitleOpacity

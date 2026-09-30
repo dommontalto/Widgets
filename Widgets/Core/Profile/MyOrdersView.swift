@@ -16,6 +16,8 @@ struct MyOrdersView: View {
     @State private var orderViewModel = GenomeOrderViewModel()
     @State private var genomeScenario = GenomeDemoScenario.current
     @State private var showingGenome = false
+    @State private var showingAddresses = false
+    @State private var showingCards = false
 
     var body: some View {
         BrightSwipePageView(
@@ -36,12 +38,34 @@ struct MyOrdersView: View {
         .sheet(item: $receipt) { order in
             BrightReceiptSheet(order: order)
         }
-        .toolbar {
+        .overlay(alignment: .topTrailing) {
             if selectedPage == 1 {
-                ToolbarItem(placement: .topBarTrailing) {
-                    genomeScenarioPicker
+                genomeScenarioPicker
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingCards = true
+                } label: {
+                    Label("Cards", systemImage: "creditcard")
+                        .labelStyle(.iconOnly)
                 }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingAddresses = true
+                } label: {
+                    Label("Addresses", systemImage: "house")
+                        .labelStyle(.iconOnly)
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showingCards) {
+            CardsView()
+        }
+        .navigationDestination(isPresented: $showingAddresses) {
+            AddressesView()
         }
         .navigationDestination(isPresented: $showingGenome) {
             GenomeView()
@@ -113,9 +137,10 @@ struct MyOrdersView: View {
                 }
             }
         } label: {
-            Label("Scenario", systemImage: "ladybug.fill")
-                .labelStyle(.iconOnly)
+            Image(systemName: "ladybug.fill")
+                .padding(.spacing2x)
         }
+        .padding(.spacing3x)
     }
 
     private func selectGenomeScenario(_ scenario: GenomeDemoScenario) {

@@ -104,7 +104,7 @@ struct BrightPageSheetView<Content: View, Trailing: ToolbarContent>: View {
                     }
                     if let file {
                         ToolbarItem(placement: .principal) {
-                            ExerciseInlineTitle(title: title, file: file)
+                            DebugInlineTitle(title: title, file: file)
                         }
                     }
                     trailing

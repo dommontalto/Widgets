@@ -66,7 +66,7 @@ struct VaultTestCategoryView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                ExerciseInlineTitle(file: #file)
+                DebugInlineTitle(file: #file)
             }
 
             ToolbarItem(placement: .topBarTrailing) {

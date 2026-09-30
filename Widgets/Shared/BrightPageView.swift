@@ -91,7 +91,7 @@ struct BrightPageView<Content: View, Toolbar: ToolbarContent>: View {
             .toolbar(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: title, file: file, titleFade: inlineTitleFade)
+                    DebugInlineTitle(title: title, file: file, titleFade: inlineTitleFade)
                 }
                 toolbar
                 if let infoButton {

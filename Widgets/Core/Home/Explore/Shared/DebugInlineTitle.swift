@@ -1,5 +1,5 @@
 //
-//  ExerciseInlineTitle.swift
+//  DebugInlineTitle.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 4/8/2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ExerciseInlineTitle: View {
+struct DebugInlineTitle: View {
     var title = ""
     let file: String
     // Lets a page fade and blur the title in as it scrolls, without hiding the
@@ -62,7 +62,7 @@ struct ExerciseInlineTitle: View {
             .ignoresSafeArea()
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    ExerciseInlineTitle(title: "Bench Press", file: #file)
+                    DebugInlineTitle(title: "Bench Press", file: #file)
                 }
             }
     }

@@ -38,6 +38,15 @@ final class BrightAddressBook {
         return address
     }
 
+    func makeDefault(_ address: BrightShippingAddress) async {
+        addresses = addresses.map { existing in
+            var existing = existing
+            existing.isDefault = existing.id == address.id
+            return existing
+        }
+        Self.saved = addresses
+    }
+
     func remove(_ address: BrightShippingAddress) async {
         addresses.removeAll { $0.id == address.id }
         if !addresses.isEmpty, !addresses.contains(where: \.isDefault) {
