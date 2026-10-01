@@ -97,6 +97,8 @@ nonisolated extension CGFloat {
 
     static var cornerRadius24: CGFloat = 24
 
+    static let cornerRadius26: CGFloat = 26
+
     static let cornerRadius36: CGFloat = 36
 
     static let cornerRadius40: CGFloat = 40
@@ -116,6 +118,8 @@ nonisolated extension CGFloat {
     // MARK: - View
 
     static let viewPaddingBottom: CGFloat = .spacing8x
+
+    static let rowHeight: CGFloat = 50
 
     // MARK: - Line Spacing
 

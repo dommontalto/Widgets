@@ -10,7 +10,7 @@ import SwiftUI
 // Do NOT port this file to the Bright iOS app — it's a tuning rig for dialling
 // the beam in on device, reached from ContentView's sparkles button. What ports
 // over is the result: the values it settles on, promoted to the defaults on
-// `BrightScreenEdgeBeam`/`BorderBeam` and the beam spec.
+// `BrightScreenEdgeBeamV5`/`BrightBorderBeamV5` and the beam spec.
 
 struct BeamConfig {
     var colorVariant: BeamColorVariant = .skyBlueCyan
@@ -21,9 +21,9 @@ struct BeamConfig {
     var duration = BeamSpec.shared.defaults.duration.rotate
     var brightness = BeamSpec.shared.defaults.brightnessFallback
     var strength: Double = 1
-    var cornerRadius = BrightScreenEdgeBeam.defaultCornerRadius
+    var cornerRadius = BrightScreenEdgeBeamV5.defaultCornerRadius
     var saturation = BeamSpec.shared.sizeThemePresets["md"]?["dark"]?.saturation ?? 1.2
-    var renderScale = BrightScreenEdgeBeam.defaultRenderScale
+    var renderScale = BrightScreenEdgeBeamV5.defaultRenderScale
     // Multiplier on every layer's opacity. The web demo's tuned preset runs
     // 1.71, which is what makes it read stronger than an untuned beam.
     var layerOpacity: Double = 1
@@ -127,7 +127,7 @@ struct BeamControlsView: View {
             content()
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 }
 

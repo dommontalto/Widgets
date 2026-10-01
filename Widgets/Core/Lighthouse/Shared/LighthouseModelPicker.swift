@@ -24,7 +24,7 @@ struct LighthouseModelPicker: View {
 
             Spacer(minLength: .spacing0x)
 
-            BrightCarousel(
+            BrightCarouselV5(
                 items: LighthouseModelChoice.allCases,
                 activeIndex: $activeIndex,
                 cardWidthRatio: Constants.cardWidthRatio,
@@ -111,7 +111,7 @@ struct LighthouseApiKeyCard: View {
             BrightText(Constants.title, size: .body1, weight: .regular)
         }
         .frame(width: width, height: height)
-        .modifier(GlassEffect(shape: .roundedRect, cornerRadius: .cornerRadius40))
+        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .cornerRadius40))
     }
 
     private enum Constants {
@@ -128,7 +128,7 @@ struct LighthouseApiKeyGlyph: View {
             .font(.system(size: size * Constants.glyphRatio, weight: .light))
             .foregroundStyle(Color.textColor)
             .frame(width: size, height: size)
-            .modifier(GlassEffect(shape: .roundedRect, cornerRadius: size * Constants.cornerRatio))
+            .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: size * Constants.cornerRatio))
     }
 
     private enum Constants {

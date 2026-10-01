@@ -64,7 +64,7 @@ struct IntakeBreakdownWidget: View {
             .padding(.top, .spacing6x)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     struct Header: View {
@@ -139,7 +139,7 @@ struct IntakeBreakdownWidget: View {
         }
 
         var divider: some View {
-            BrightDivider()
+            BrightDividerV5()
                 .frame(height: Constants.dividerHeight)
                 .padding(.horizontal, Constants.dividerOffSet)
         }

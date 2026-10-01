@@ -11,7 +11,7 @@ import Foundation
 //
 // ```swift
 // // Roughly the web demo's tuned pulse-outside preset.
-// card.borderBeam(.pulseOutside, tuning: .init(
+// card.brightBorderBeamV5(.pulseOutside, tuning: .init(
 //     glowBoost: 1.05,
 //     strokeOpacity: 1.71, innerOpacity: 1.71, bloomOpacity: 1.71,
 //     glowBrightness: 1.3 * 1.71, glowSaturate: 1.2 * 1.71

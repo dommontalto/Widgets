@@ -26,7 +26,7 @@ struct GenomeCategorySheet: View {
 
 
     var body: some View {
-        BrightPageSheetView {
+        BrightPageSheetViewV5 {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
@@ -48,7 +48,7 @@ struct GenomeCategorySheet: View {
             }
             .scrollIndicators(.hidden)
         }
-        .brightMiniSheet(isPresented: markerShown) {
+        .brightMiniSheetV5(isPresented: markerShown) {
             if let marker = selectedMarker {
                 GenomeGeneMiniSheet(marker: marker) { selectedMarker = nil }
             }
@@ -112,7 +112,7 @@ private struct GenomeCategoryMarkerRow: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
     private var trailing: some View {

@@ -21,7 +21,7 @@ struct ExploreAgentSheet: View {
     @State private var finishedCalls = Set<UUID>()
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             horizontalPadding: .spacing0x,
             content: {
                 ZStack {
@@ -43,7 +43,7 @@ struct ExploreAgentSheet: View {
 
     // The artwork stays behind both steps, dimmed under the chat so its text reads.
     private var wash: some View {
-        BrightRipple(size: 2.26, caustic: 0.18, waves: 0.21, layering: 0.15, edges: 0.36, highlights: 0.35) {
+        BrightRippleV5(size: 2.26, caustic: 0.18, waves: 0.21, layering: 0.15, edges: 0.36, highlights: 0.35) {
             Image(agent.background)
                 .resizable()
                 .scaledToFill()

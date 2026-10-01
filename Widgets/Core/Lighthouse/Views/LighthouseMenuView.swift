@@ -28,7 +28,7 @@ struct LighthouseMenuView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                BrightSearchBar(Constants.searchPlaceholder, text: $searchText)
+                BrightSearchBarV5(Constants.searchPlaceholder, text: $searchText)
 
                 // Typing a search clears the way for the results; the card and
                 // shortcuts come back as soon as the field is empty again.
@@ -88,7 +88,7 @@ struct LighthouseMenuView: View {
         }
         .padding(.horizontal, .spacing2x + .spacing05x)
         .padding(.vertical, .spacing105x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     private var shortcuts: some View {
@@ -119,7 +119,7 @@ struct LighthouseMenuView: View {
                 }
                 .frame(height: Constants.rowHeight)
 
-                BrightDivider()
+                BrightDividerV5()
             }
             .contentShape(Rectangle())
         }
@@ -142,7 +142,7 @@ struct LighthouseMenuView: View {
             }
             .frame(height: Constants.rowHeight)
 
-            BrightDivider()
+            BrightDividerV5()
 
             ForEach(sortedHistory) { entry in
                 historyRow(entry)

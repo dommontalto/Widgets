@@ -47,7 +47,7 @@ struct LighthouseIntro: View {
                 .animation(.easeOut(duration: Constants.veilLift), value: phase)
 
             // Lit by the bang, then dwindling steadily the whole way to gone.
-            BrightScreenEdgeBeam(
+            BrightScreenEdgeBeamV5(
                 isActive: phase >= .bang && phase < .faded,
                 colorVariant: .multicoloured,
                 duration: Constants.beamLap

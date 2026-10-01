@@ -10,7 +10,7 @@ struct CardsView: View {
     @State private var isLoading = true
 
     var body: some View {
-        BrightPageView(title: Constants.title, scrollableTitle: false, horizontalPadding: .spacing0x) {
+        BrightPageViewV5(title: Constants.title, scrollableTitle: false, horizontalPadding: .spacing0x) {
             content
         }
         .task {
@@ -26,7 +26,7 @@ struct CardsView: View {
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if wallet.cards.isEmpty {
-            BrightPlaceholderView(
+            BrightPlaceholderViewV5(
                 systemImage: "creditcard",
                 title: Constants.emptyTitle,
                 subtitle: Constants.emptySubtitle

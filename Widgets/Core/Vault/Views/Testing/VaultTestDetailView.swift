@@ -34,16 +34,16 @@ struct VaultTestDetailView: View {
     }
 
     var body: some View {
-        BrightPageView(
+        BrightPageViewV5(
             horizontalPadding: .spacing0x,
             backgroundColor: isSheet ? .defaultSheetBackground : .defaultBackground
         ) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
-                    BrightDivider()
+                    BrightDividerV5()
                     included
-                    BrightDivider()
+                    BrightDividerV5()
                     typeSection
                 }
                 .padding(.horizontal, .spacing3x)
@@ -58,7 +58,7 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing4x)
         }
         .navigationDestination(isPresented: $showingPayment) {
-            BrightCheckoutView(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
+            BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
                 showingPayment = false
                 onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
             }
@@ -111,7 +111,7 @@ struct VaultTestDetailView: View {
             }
             .padding(.horizontal, .spacing3x)
             .padding(.vertical, .spacing105x)
-            .modifier(CardModifier(color: cardColor, cornerRadius: .cornerRadius24))
+            .modifier(BrightCardModifierV5(color: cardColor, cornerRadius: .cornerRadius24))
         }
     }
 
@@ -131,7 +131,7 @@ struct VaultTestDetailView: View {
 
                     Spacer(minLength: .spacing0x)
 
-                    BrightTick(isTicked: availability == selectedType)
+                    BrightTickV5(isTicked: availability == selectedType)
                 }
                 .padding(.vertical, .spacing2x)
                 .contentShape(Rectangle())
@@ -139,7 +139,7 @@ struct VaultTestDetailView: View {
             .buttonStyle(.plain)
 
             if !isLast {
-                BrightDivider()
+                BrightDividerV5()
             }
         }
     }

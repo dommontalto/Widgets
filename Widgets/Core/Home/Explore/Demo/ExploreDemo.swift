@@ -212,7 +212,7 @@ extension URL {
     ]
 }
 
-extension BrightAd {
+extension BrightAdV5 {
     init(clinic: ExploreSearchClinic, showsBadge: Bool = true, onTap: @escaping () -> Void) {
         self.init(
             title: clinic.name,

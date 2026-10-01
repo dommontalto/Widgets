@@ -44,7 +44,7 @@ struct GenomePercentileBarWidget: View {
             }
         }
         .padding(.spacing3x)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
     // MARK: Header

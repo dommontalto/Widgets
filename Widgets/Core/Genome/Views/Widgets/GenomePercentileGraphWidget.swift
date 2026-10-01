@@ -38,7 +38,7 @@ struct GenomePercentileGraphWidget: View {
             chartSection
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     // MARK: Header

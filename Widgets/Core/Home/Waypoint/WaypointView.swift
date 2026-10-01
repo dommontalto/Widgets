@@ -117,8 +117,8 @@ struct WaypointView: View {
                 .padding(.top, .spacing1x)
         }
         .animation(.brightEaseInOut, value: bearing)
-        .brightHaptic(.light, trigger: bearing)
-        .brightHaptic(.impact, trigger: bounce.tick)
+        .brightHapticV5(.light, trigger: bearing)
+        .brightHapticV5(.impact, trigger: bounce.tick)
     }
 
     private func step(by offset: Int) {
@@ -183,35 +183,13 @@ struct WaypointView: View {
     }
 
     private func groupRow(_ group: WaypointAdjustmentGroup) -> some View {
-        Button {
+        BrightRowV5(
+            group.title,
+            icon: .symbol(group.symbol, tint: group.color),
+            trailing: .value("\(group.adjustments.count) changes")
+        ) {
             shownGroup = group
-        } label: {
-            HStack(spacing: .spacing105x) {
-                Image(systemName: group.symbol)
-                    .font(.standardSFPro(size: .subheading2, weight: .regular))
-                    .foregroundStyle(group.color)
-                    .frame(width: Constants.titleIconSize, height: Constants.titleIconSize)
-
-                BrightText(group.title, size: .body1)
-
-                Spacer(minLength: .spacing2x)
-
-                BrightText("\(group.adjustments.count)", size: .body1)
-                    .frame(width: Constants.countSize, height: Constants.countSize)
-                    .background(Color.defaultBackground, in: Circle())
-
-                BrightText("changes", size: .body1, color: .semiLightTextColor)
-
-                Image(systemName: "chevron.right")
-                    .font(.standardSFPro(size: .body1, weight: .regular))
-                    .foregroundStyle(Color.semiLightTextColor)
-            }
-            .padding(.horizontal, .spacing2x)
-            .frame(height: Constants.rowHeight)
-            .modifier(CardModifier(cornerRadius: .cornerRadius24))
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Debug
@@ -244,12 +222,6 @@ struct WaypointView: View {
 
     private func checkIn() {
         onCheckIn()
-    }
-
-    private enum Constants {
-        static let countSize: CGFloat = 25
-        static let titleIconSize: CGFloat = .spacing4x
-        static let rowHeight: CGFloat = .spacing11x
     }
 }
 
@@ -392,8 +364,8 @@ private struct WaypointAdjustmentGroupSheet: View {
 
     var body: some View {
         // The page inside names the file, and two principal items would collide.
-        BrightPageSheetView(horizontalPadding: .spacing0x, file: nil) {
-            BrightPageView(title: "\(group.title) Adjustments", backgroundColor: .defaultSheetBackground) {
+        BrightPageSheetViewV5(horizontalPadding: .spacing0x, file: nil) {
+            BrightPageViewV5(title: "\(group.title) Adjustments", backgroundColor: .defaultSheetBackground) {
                 VStack(spacing: .spacing2x) {
                     ForEach(group.adjustments) { adjustment in
                         Button {
@@ -454,7 +426,7 @@ private struct WaypointAdjustmentGroupSheet: View {
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing2x + .spacing05x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
         .contentShape(Rectangle())
     }
 
@@ -502,7 +474,7 @@ private struct WaypointAdjustmentDetailView: View {
     let adjustment: WaypointAdjustment
 
     var body: some View {
-        BrightPageView(title: adjustment.title, horizontalPadding: .spacing0x, backgroundColor: .defaultSheetBackground) {
+        BrightPageViewV5(title: adjustment.title, horizontalPadding: .spacing0x, backgroundColor: .defaultSheetBackground) {
             VStack(alignment: .leading, spacing: .spacing4x) {
                 VStack(alignment: .leading, spacing: .spacing105x) {
                     HStack(spacing: .spacing1x) {
@@ -578,7 +550,7 @@ private struct WaypointAdjustmentDetailView: View {
         }
         .padding(.spacing3x)
         .frame(maxHeight: .infinity, alignment: .top)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
     private func evidenceRow(_ row: WaypointEvidence.Row, isLast: Bool) -> some View {
@@ -586,7 +558,7 @@ private struct WaypointAdjustmentDetailView: View {
             evidenceRowContent(row)
 
             if !isLast {
-                BrightDivider()
+                BrightDividerV5()
             }
         }
     }

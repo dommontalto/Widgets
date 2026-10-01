@@ -111,15 +111,15 @@ struct SleepSummaryWidget: View {
                 .padding(.top, .spacing2x)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     var sevenDayChart: some View {
         VStack(spacing: .spacing0x) {
-            BrightDivider()
+            BrightDividerV5()
 
             HStack(alignment: .top, spacing: .spacing0x) {
-                BrightVerticalDivider()
+                BrightDividerV5(.vertical)
 
                 let chartData = sevenDayData ?? []
                 let maxValue = chartData.compactMap(\.value).max() ?? 100
@@ -183,7 +183,7 @@ struct SleepSummaryWidget: View {
 
                         Spacer()
 
-                        BrightVerticalDivider()
+                        BrightDividerV5(.vertical)
                     }
                 }
             }
@@ -193,10 +193,10 @@ struct SleepSummaryWidget: View {
 
     var twentyEightDayChart: some View {
         VStack(spacing: .spacing0x) {
-            BrightDivider()
+            BrightDividerV5()
 
             HStack(alignment: .bottom, spacing: .spacing0x) {
-                BrightVerticalDivider()
+                BrightDividerV5(.vertical)
 
                 GeometryReader { _ in
                     let chartData = twentyEightDayData ?? []
@@ -242,7 +242,7 @@ struct SleepSummaryWidget: View {
                     }
                 }
 
-                BrightVerticalDivider()
+                BrightDividerV5(.vertical)
             }
             .frame(height: 120)
 
@@ -269,7 +269,7 @@ struct SleepSummaryWidget: View {
 
             ForEach(Array(weeklyAvgs.enumerated()), id: \.offset) { index, weekAvg in
                 if index > 0 {
-                    BrightDivider()
+                    BrightDividerV5()
                 }
 
                 HStack {

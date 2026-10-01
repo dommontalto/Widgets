@@ -130,7 +130,7 @@ struct LighthouseChatResponse: View {
                 actionIcon(isCopied ? "checkmark.circle" : "doc.on.doc")
                     .contentTransition(.symbolEffect(.replace))
             }
-            .brightHaptic(.success, trigger: isCopied) { _, copied in copied }
+            .brightHapticV5(.success, trigger: isCopied) { _, copied in copied }
             .task(id: isCopied) {
                 guard isCopied else { return }
                 try? await Task.sleep(for: .seconds(Constants.copiedDuration))
@@ -141,14 +141,14 @@ struct LighthouseChatResponse: View {
                 actionIcon("square.and.arrow.up")
             }
             .simultaneousGesture(TapGesture().onEnded { shareTaps += 1 })
-            .brightHaptic(.light, trigger: shareTaps)
+            .brightHapticV5(.light, trigger: shareTaps)
 
             Spacer(minLength: .spacing0x)
 
             BrightText(date.formatted(.brightTime), size: .body1, color: .lightTextColor)
         }
         .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: rating)
+        .brightHapticV5(.light, trigger: rating)
     }
 
     private func ratingButton(_ value: Rating) -> some View {
@@ -231,12 +231,12 @@ struct LighthouseChoiceBox: View {
 
                     Spacer(minLength: .spacing2x)
 
-                    BrightTick(isTicked: selected == option, tickTint: isSubmitted ? .lightTextColor : .defaultGreen)
+                    BrightTickV5(isTicked: selected == option, tickTint: isSubmitted ? .lightTextColor : .defaultGreen)
                 }
                 .padding(.vertical, .spacing2x)
 
                 if !isLast {
-                    BrightDivider()
+                    BrightDividerV5()
                 }
             }
             .contentShape(Rectangle())

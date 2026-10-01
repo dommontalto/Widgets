@@ -23,7 +23,7 @@ struct ExploreAgentCallCard: View {
         card
             .animation(.brightSnappy, value: stepIndex)
             .animation(.brightSnappy, value: isFinished)
-            .brightHaptic(.light, trigger: stepIndex)
+            .brightHapticV5(.light, trigger: stepIndex)
             .task { await run() }
     }
 
@@ -40,7 +40,7 @@ struct ExploreAgentCallCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     private var steps: some View {

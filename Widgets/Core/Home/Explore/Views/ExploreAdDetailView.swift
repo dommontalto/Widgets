@@ -37,7 +37,7 @@ struct ExploreAdDetailView: View {
                 }
         }
         .sheet(item: $receipt) { order in
-            BrightReceiptSheet(order: order)
+            BrightReceiptSheetV5(order: order)
         }
     }
 
@@ -109,7 +109,7 @@ struct ExploreAdDetailView: View {
         .padding(.bottom, .spacing5x)
         .padding(.horizontal, .spacing3x)
         .frame(maxWidth: .infinity)
-        .background { BrightAdBackdrop(logo: clinic.logo, bleed: Constants.pullBleed) }
+        .background { BrightAdBackdropV5(logo: clinic.logo, bleed: Constants.pullBleed) }
         .environment(\.colorScheme, .dark)
     }
 
@@ -138,7 +138,7 @@ struct ExploreAdDetailView: View {
             }
             .scrollIndicators(.hidden)
             .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
-            .brightHaptic(.light, trigger: filter)
+            .brightHapticV5(.light, trigger: filter)
         }
     }
 
@@ -173,14 +173,14 @@ struct ExploreAdDetailView: View {
             }
             .padding(.bottom, .spacing2x)
 
-            BrightDivider()
+            BrightDividerV5()
 
             BrightText(test.detail, size: .body1, color: .semiLightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, .spacing2x)
 
-            BrightDivider()
+            BrightDividerV5()
 
             VStack(alignment: .leading, spacing: .spacing105x) {
                 BrightText("Available:", size: .body1)
@@ -201,7 +201,7 @@ struct ExploreAdDetailView: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(cornerRadius: .cornerRadius24))
+        .modifier(BrightCardModifierV5(cornerRadius: .cornerRadius24))
         .contentShape(Rectangle())
     }
 

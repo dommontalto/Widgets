@@ -21,7 +21,7 @@ struct GenomeOrderWidget: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
             .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
-            .modifier(CardModifier(clipContent: false))
+            .modifier(BrightCardModifierV5(clipContent: false))
     }
 
     private var content: some View {

@@ -20,7 +20,7 @@ struct ExploreView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightSearchBar("What would you like me to find?", text: $searchText) { isSearchFocused = $0 }
+            BrightSearchBarV5("What would you like me to find?", text: $searchText) { isSearchFocused = $0 }
                 .padding(.horizontal, .spacing3x)
 
             ZStack(alignment: .top) {
@@ -52,7 +52,7 @@ struct ExploreView: View {
             VaultClinicSheet(clinic: clinic, onOrder: place)
         }
         .sheet(item: $receipt) { order in
-            BrightReceiptSheet(order: order)
+            BrightReceiptSheetV5(order: order)
         }
         .fullScreenCover(item: $shownAd) { clinic in
             ExploreAdDetailView(clinic: clinic)
@@ -69,18 +69,18 @@ struct ExploreView: View {
 
     private var home: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightWidgetTitle(icon: .symbol("sparkles"), title: "Agents") {
+            BrightWidgetTitleV5(icon: .symbol("sparkles"), title: "Agents") {
                 agents
             }
 
             VaultTestBrowse { selectedClinic = $0 }
 
-            BrightWidgetTitle(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
+            BrightWidgetTitleV5(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
                 clinics
                     .padding(.horizontal, .spacing3x)
             }
 
-            BrightAd(clinic: ExploreSearchClinic.sponsored[0]) { shownAd = ExploreSearchClinic.sponsored[0] }
+            BrightAdV5(clinic: ExploreSearchClinic.sponsored[0]) { shownAd = ExploreSearchClinic.sponsored[0] }
                 .matchedTransitionSource(id: ExploreSearchClinic.sponsored[0].id, in: adZoom) { source in
                     source.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
                 }
@@ -100,7 +100,7 @@ struct ExploreView: View {
         ScrollView(.horizontal) {
             HStack(spacing: .spacing1x) {
                 ForEach(ExploreAgent.demo) { agent in
-                    BrightTag(title: agent.title, systemImage: agent.systemImage, isSelected: true) {
+                    BrightTagV5(title: agent.title, systemImage: agent.systemImage, isSelected: true) {
                         selectedAgent = agent
                     }
                 }

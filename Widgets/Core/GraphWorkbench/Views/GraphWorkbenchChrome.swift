@@ -76,7 +76,7 @@ struct GraphWorkbenchButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: tapTick)
+        .brightHapticV5(.light, trigger: tapTick)
     }
 }
 
@@ -98,7 +98,7 @@ struct GraphWorkbenchSectionLabel: View {
             .padding(.vertical, .spacing105x)
             .background(Color.defaultWhite.opacity(.finalBossUltraLowOpacity))
 
-            BrightDivider()
+            BrightDividerV5()
         }
     }
 }

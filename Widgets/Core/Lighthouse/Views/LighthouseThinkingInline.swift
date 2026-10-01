@@ -89,8 +89,8 @@ struct LighthouseThinkingInline: View {
                             .foregroundStyle(Color.semiLightTextColor)
                             .transition(.opacity)
                     } else {
-                        BrightSolvingStars(state: .thinking, size: Constants.orbSize, ambientMotion: .off)
-                            .transition(.brightBurstOut)
+                        BrightSolvingGalaxyV5(state: .thinking, size: Constants.orbSize, ambientMotion: .off)
+                            .transition(.brightBurstOutV5)
                     }
                 }
                 .frame(
@@ -117,13 +117,13 @@ struct LighthouseThinkingInline: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: toggleCount)
-        .brightHaptic(.light, trigger: stepToggleCount)
+        .brightHapticV5(.light, trigger: toggleCount)
+        .brightHapticV5(.light, trigger: stepToggleCount)
     }
 
     private var thinkingTitle: some View {
         BrightText(Constants.thinkingTitle, size: .body1)
-            .brightShimmer()
+            .brightShimmerV5()
     }
 
     private func row(_ step: LighthouseThoughtStep) -> some View {
@@ -150,7 +150,7 @@ struct LighthouseThinkingInline: View {
 
                     BrightText(step.title, size: .body1, color: .semiLightTextColor)
                         .lineLimit(1)
-                        .brightTextReveal(isActive: !isFinished)
+                        .brightTextRevealV5(isActive: !isFinished)
 
                     if step.isExpandable {
                         Image(systemName: "chevron.forward")

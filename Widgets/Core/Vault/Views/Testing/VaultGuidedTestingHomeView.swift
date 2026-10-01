@@ -21,7 +21,7 @@ struct VaultGuidedTestingHomeView: View {
     }
 
     var body: some View {
-        BrightSwipePageView(
+        BrightSwipePageViewV5(
             pages: [
                 SwipePage(title: "Explore", systemImage: "sparkle.magnifyingglass"),
                 SwipePage(title: "My Orders", systemImage: "shippingbox"),
@@ -58,7 +58,7 @@ struct VaultGuidedTestingHomeView: View {
             VaultTestBrowse(blur: true, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
                 .padding(.top, .spacing3x)
 
-            BrightWidgetTitle(icon: .symbol("location"), title: "All Clinics Near Me") {
+            BrightWidgetTitleV5(icon: .symbol("location"), title: "All Clinics Near Me") {
                 sortMenu
                     .padding(.trailing, .spacing3x)
             } content: {
@@ -95,7 +95,7 @@ struct VaultGuidedTestingHomeView: View {
             BrightPillButton(sortOrder.rawValue, systemImage: "line.3.horizontal.decrease", buttonSize: .small) {}
                 .allowsHitTesting(false)
         }
-        .brightHaptic(.light, trigger: sortOrder)
+        .brightHapticV5(.light, trigger: sortOrder)
     }
 
     // MARK: - My Orders
@@ -103,7 +103,7 @@ struct VaultGuidedTestingHomeView: View {
     @ViewBuilder
     private var myOrders: some View {
         if orders.isEmpty {
-            BrightPlaceholderView(
+            BrightPlaceholderViewV5(
                 systemImage: "shippingbox",
                 title: "No orders yet",
                 subtitle: "Tests you order will show up here with their status."
@@ -147,7 +147,7 @@ struct VaultOrderCard: View {
                 BrightText(order.test.name, size: .body1, color: .lightTextColor)
             }
 
-            BrightDivider()
+            BrightDividerV5()
 
             if let delivery = order.delivery {
                 BrightText(delivery.status, size: .body1, weight: .regular)
@@ -165,7 +165,7 @@ struct VaultOrderCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
     }
@@ -241,7 +241,7 @@ struct VaultClinicCard: View {
 
             BrightText(clinic.address, size: .body1, color: .lightTextColor)
 
-            BrightDivider()
+            BrightDividerV5()
 
             HStack(spacing: .spacing1x) {
                 Image(systemName: "pencil.and.list.clipboard")
@@ -253,7 +253,7 @@ struct VaultClinicCard: View {
 
             FlowLayout(spacing: .spacing1x) {
                 ForEach(clinic.services, id: \.self) { service in
-                    BrightChip(
+                    BrightChipV5(
                         title: service,
                         tint: .defaultBlue,
                         fill: .defaultBlue.opacity(.veryMinimalOpacity)
@@ -263,7 +263,7 @@ struct VaultClinicCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
     }
@@ -330,8 +330,8 @@ struct VaultTestBrowse: View {
     @State private var selectedCategory: VaultTestCategory?
 
     var body: some View {
-        BrightWidgetTitle(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
-            BrightTileRow(blur: blur) {
+        BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
+            BrightTileRowV5(blur: blur) {
                 ForEach(VaultTestCategory.demo) { category in
                     VaultTestCategoryTile(category: category) { selectedCategory = category }
                 }
@@ -352,7 +352,7 @@ struct VaultTestCategoryTile: View {
     let onTap: () -> Void
 
     var body: some View {
-        BrightTile(
+        BrightTileV5(
             category.name,
             subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
             backgroundImage: category.tileName,
@@ -372,8 +372,8 @@ struct VaultTestCategoriesView: View {
     @State private var selectedCategory: VaultTestCategory?
 
     var body: some View {
-        BrightPageView(title: "Guided Testing") {
-            BrightCardGrid(spacing: .spacing3x) {
+        BrightPageViewV5(title: "Guided Testing") {
+            BrightCardGridV5(spacing: .spacing3x) {
                 ForEach(VaultTestCategory.demo) { category in
                     VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }
                 }

@@ -11,7 +11,7 @@ struct AddressesView: View {
     @State private var isAddingAddress = false
 
     var body: some View {
-        BrightPageView(title: Constants.title, scrollableTitle: false, horizontalPadding: .spacing0x) {
+        BrightPageViewV5(title: Constants.title, scrollableTitle: false, horizontalPadding: .spacing0x) {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isAddingAddress = true
@@ -23,8 +23,15 @@ struct AddressesView: View {
         } content: {
             content
         }
+        .brightBottomButtonV5 {
+            if !isLoading && addressBook.addresses.isEmpty {
+                BrightPillButton(Constants.addTitle, buttonSize: .large) {
+                    isAddingAddress = true
+                }
+            }
+        }
         .sheet(isPresented: $isAddingAddress) {
-            BrightAddAddressSheet { address in
+            BrightAddAddressSheetV5 { address in
                 Task { _ = await addressBook.add(address) }
             }
         }
@@ -41,14 +48,11 @@ struct AddressesView: View {
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if addressBook.addresses.isEmpty {
-            BrightPlaceholderView(
+            BrightPlaceholderViewV5(
                 systemImage: "house",
                 title: Constants.emptyTitle,
-                subtitle: Constants.emptySubtitle,
-                buttonTitle: Constants.addTitle
-            ) {
-                isAddingAddress = true
-            }
+                subtitle: Constants.emptySubtitle
+            )
         } else {
             List {
                 ForEach(addressBook.addresses) { address in
@@ -94,7 +98,7 @@ struct AddressesView: View {
             Spacer(minLength: .spacing2x)
 
             if address.isDefault {
-                BrightChip(title: Constants.defaultTitle, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
+                BrightChipV5(title: Constants.defaultTitle, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
             }
         }
         .padding(.vertical, .spacing1x)

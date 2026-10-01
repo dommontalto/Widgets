@@ -146,7 +146,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             // The input bar hugs the true bottom edge — its own padding is the
             // gap — rather than stacking the sheet's bottom insets under it.
             .ignoresSafeArea(.container, edges: .bottom)
-            .brightHaptic(.light, trigger: messages.count)
+            .brightHapticV5(.light, trigger: messages.count)
             .onAppear { isTyping.wrappedValue = true }
             .onDisappear { onStop() }
     }
@@ -267,10 +267,10 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             userBubble(message)
         case .assistant:
             assistantText(message.text)
-                .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
+                .transition(.asymmetric(insertion: AnyTransition(.blurReplace.animation(.brightEaseInOut)), removal: .opacity))
         case .response:
             response(message)
-                .transition(.asymmetric(insertion: .brightCondenseIn, removal: .opacity))
+                .transition(.asymmetric(insertion: AnyTransition(.blurReplace.animation(.brightEaseInOut)), removal: .opacity))
         case .failure:
             failureRow(message)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -284,7 +284,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             Spacer(minLength: .spacing8x)
 
             sentBubble(message.text)
-                .brightSendDestination(
+                .brightSendDestinationV5(
                     flight,
                     isHeld: flight.isWaiting && flightID == message.id,
                     isFitted: flight.isFitted && flightID == message.id,
@@ -329,9 +329,9 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
     }
 
     private var thinkingIndicator: some View {
-        BrightSolvingOrb(size: Constants.orbSize, speed: Constants.orbSpeed)
+        BrightSolvingOrbV5(size: Constants.orbSize, speed: Constants.orbSpeed)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .transition(.asymmetric(insertion: .opacity, removal: .brightBurstOut))
+            .transition(.asymmetric(insertion: .opacity, removal: .brightBurstOutV5))
     }
 
     // MARK: - Input
@@ -362,7 +362,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
         .coordinateSpace(.named(BrightChatSpace.input))
         .overlay(alignment: .topLeading) { sentSource }
         .disabled(isDismissDragging)
-        .brightKeyboardDismissDrag(isActive: isTyping.wrappedValue)
+        .brightKeyboardDismissDragV5(isActive: isTyping.wrappedValue)
         .offset(y: dragOffset)
         .simultaneousGesture(dismissKeyboardDrag)
     }
@@ -371,7 +371,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
     private var sentSource: some View {
         if flight.isWaiting, let flightID {
             sentBubble(flight.text)
-                .brightSendSource(flight, id: flightID, in: sendNamespace)
+                .brightSendSourceV5(flight, id: flightID, in: sendNamespace)
         }
     }
 
@@ -431,14 +431,14 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: .spacing105x) {
                     ForEach(suggestions.prompts, id: \.self) { prompt in
-                        BrightTag(title: prompt, systemImage: suggestions.symbols[prompt] ?? "sparkles", isSelected: true) {
+                        BrightTagV5(title: prompt, systemImage: suggestions.symbols[prompt] ?? "sparkles", isSelected: true) {
                             suggestions.onTap(prompt)
                         }
                         .disabled(isBusy)
                     }
 
                     ForEach(suggestions.custom, id: \.self) { prompt in
-                        BrightTag(title: prompt, systemImage: "bookmark", isSelected: true) {
+                        BrightTagV5(title: prompt, systemImage: "bookmark", isSelected: true) {
                             suggestions.onTap(prompt)
                         }
                         .disabled(isBusy)
@@ -518,7 +518,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
         }
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing1x + .spacing05x)
-        .modifier(GlassEffect(shape: .capsule))
+        .modifier(BrightGlassEffectV5(shape: .capsule))
         .frame(minWidth: Constants.newPromptMinWidth)
         .onAppear { isNewPromptFocused = true }
         // Tapping outside with nothing typed dismisses the new chip.

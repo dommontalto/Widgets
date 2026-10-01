@@ -12,6 +12,14 @@ extension Int {
         formatted(.number.grouping(.automatic))
     }
 
+    func rounded(toNearest: Int) -> Int {
+        Int(round(Double(self) / Double(toNearest)) * Double(toNearest))
+    }
+
+    func roundedUp(toNearest: Int) -> Int {
+        Int((Double(self) / Double(toNearest)).rounded(.up) * Double(toNearest))
+    }
+
     func ordinalSuffix() -> String {
         if (11 ... 13).contains(self % 100) {
             return "\(self)th"

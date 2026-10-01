@@ -13,7 +13,7 @@ struct ExploreSearchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightWidgetTitle(icon: .symbol("sparkle.magnifyingglass"), title: "Suggestions") {
+            BrightWidgetTitleV5(icon: .symbol("sparkle.magnifyingglass"), title: "Suggestions") {
                 VStack(spacing: .spacing2x) {
                     ForEach(matching(ExploreSearchClinic.suggestions)) { clinic in
                         ExploreSuggestionRow(clinic: clinic)
@@ -21,7 +21,7 @@ struct ExploreSearchView: View {
                 }
             }
 
-            BrightWidgetTitle(icon: .symbol("list.bullet.rectangle"), title: "Results") {
+            BrightWidgetTitleV5(icon: .symbol("list.bullet.rectangle"), title: "Results") {
                 VStack(spacing: .spacing2x) {
                     ForEach(matching(ExploreSearchClinic.results)) { clinic in
                         ExploreResultCard(clinic: clinic)
@@ -79,7 +79,7 @@ private struct ExploreSuggestionRow: View {
                 .opacity(.veryLowOpacity)
             }
         }
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 }
 
@@ -107,7 +107,7 @@ struct ExploreResultCard: View {
                 }
             }
 
-            BrightDivider()
+            BrightDividerV5()
 
             HStack(spacing: .spacing1x) {
                 Image(systemName: "pencil.and.list.clipboard")
@@ -119,7 +119,7 @@ struct ExploreResultCard: View {
 
             FlowLayout(spacing: .spacing1x) {
                 ForEach(clinic.services, id: \.self) { service in
-                    BrightChip(
+                    BrightChipV5(
                         title: service,
                         tint: chipTint,
                         fill: chipFill
@@ -129,7 +129,7 @@ struct ExploreResultCard: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 }
 

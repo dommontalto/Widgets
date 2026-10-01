@@ -40,10 +40,10 @@ struct GenomeOrderSheet: View {
     ]
 
     var body: some View {
-        BrightPageSheetView(horizontalPadding: .spacing0x, backgroundColor: .black) {
+        BrightPageSheetViewV5(horizontalPadding: .spacing0x, backgroundColor: .black) {
             ScrollView {
                 VStack(spacing: .spacing0x) {
-                    BrightPlaceholderView(
+                    BrightPlaceholderViewV5(
                         image: ImageNames.genomeOrderDnaHeroV5,
                         title: "Order your genome test",
                         subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
@@ -54,7 +54,6 @@ struct GenomeOrderSheet: View {
                     
                     includedList
                 }
-                .padding(.bottom, .spacing12x)
             }
             .scrollIndicators(.hidden)
             .background(alignment: .top) {
@@ -76,13 +75,13 @@ struct GenomeOrderSheet: View {
                     }
                     .ignoresSafeArea()
             }
-            .overlay(alignment: .bottom) {
+            .brightBottomButtonV5 {
                 purchaseButton
             }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(isPresented: $viewModel.showingCheckout) {
-                BrightCheckoutView(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
+                BrightCheckoutViewV5(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
                     .navigationDestination(isPresented: $viewModel.showingConfirmation) {
                         GenomeOrderConfirmationView(viewModel: viewModel)
                     }
@@ -114,12 +113,12 @@ struct GenomeOrderSheet: View {
             }
         }
         .padding(.spacing3x)
-        .modifier(GlassCardModifier())
+        .modifier(BrightCardModifierV5(isGlass: true))
         .padding(.horizontal, .spacing3x)
     }
 
     private var purchaseButton: some View {
-        BrightFullWidthButton(viewModel.isStartingCheckout ? "" : "Purchase", horizontalPadding: .spacing6x) {
+        BrightPillButton(viewModel.isStartingCheckout ? "" : "Purchase", buttonSize: .large) {
             viewModel.handlePurchase()
         }
         .contentTransition(.opacity)
@@ -128,7 +127,6 @@ struct GenomeOrderSheet: View {
             if viewModel.isStartingCheckout {
                 ProgressView()
                     .controlSize(.large)
-                    .tint(.black)
                     .transition(.asymmetric(
                         insertion: .opacity.animation(.brightEaseInOut.delay(0.35)),
                         removal: .opacity.animation(.brightEaseInOut)

@@ -13,7 +13,7 @@ struct LighthouseConfigurationsSheet: View {
     @State private var configurations = LighthouseDemo.configurations
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: .spacing3x) {
@@ -61,21 +61,21 @@ struct LighthouseConfigurationsSheet: View {
                 Toggle("", isOn: configuration.isOn)
                     .labelsHidden()
                     .tint(Color.defaultGreen)
-                    .brightHaptic(.light, trigger: configuration.wrappedValue.isOn)
+                    .brightHapticV5(.light, trigger: configuration.wrappedValue.isOn)
             }
 
-            BrightDivider()
+            BrightDividerV5()
 
             BrightText(Constants.widgetsLabel, size: .body1, color: .lightTextColor)
 
             FlowLayout(spacing: .spacing1x) {
                 ForEach(configuration.wrappedValue.widgets, id: \.self) { widget in
-                    BrightChip(title: widget)
+                    BrightChipV5(title: widget)
                 }
             }
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     private enum Constants {

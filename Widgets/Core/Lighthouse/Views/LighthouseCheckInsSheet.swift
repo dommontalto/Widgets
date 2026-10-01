@@ -14,7 +14,7 @@ struct LighthouseCheckInsSheet: View {
     @State private var editing: LighthouseCheckIn?
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: .spacing4x) {
@@ -74,17 +74,17 @@ struct LighthouseCheckInsSheet: View {
                 Toggle("", isOn: checkIn.isOn)
                     .labelsHidden()
                     .tint(Color.defaultGreen)
-                    .brightHaptic(.light, trigger: checkIn.wrappedValue.isOn)
+                    .brightHapticV5(.light, trigger: checkIn.wrappedValue.isOn)
             }
 
-            BrightDivider()
+            BrightDividerV5()
 
             BrightText(checkIn.wrappedValue.detail, size: .body1, color: .lightTextColor)
                 .lineSpacing(.lineSpacingMedium)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
         .contentShape(Rectangle())
         .onTapGesture { editing = checkIn.wrappedValue }
     }

@@ -40,7 +40,7 @@ struct GenomeOrderStatusWidget: View {
             }
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     // MARK: Header

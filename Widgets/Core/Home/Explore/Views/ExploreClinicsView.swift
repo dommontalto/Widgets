@@ -11,7 +11,7 @@ struct ExploreClinicsView: View {
     @State private var shownClinic: ExploreClinic?
 
     var body: some View {
-        BrightPageView(title: "Explore all") {
+        BrightPageViewV5(title: "Explore all") {
             LazyVGrid(columns: Constants.columns, spacing: .spacing3x) {
                 ForEach(ExploreClinic.all) { clinic in
                     ExploreClinicTile(clinic: clinic)

@@ -161,8 +161,8 @@ struct LighthouseScreen: View {
     private var island: some View {
         ZStack(alignment: .top) {
             if dictation.isListening {
-                BrightIslandIndicator {
-                    BrightSolvingStars(
+                BrightIslandIndicatorV5 {
+                    BrightSolvingGalaxyV5(
                         state: .listening,
                         audioLevel: dictation.audioLevel,
                         ambientMotion: .off
@@ -191,7 +191,7 @@ struct LighthouseScreen: View {
     // The chat slides right off the menu behind it, dimming as it goes, by
     // swipe or the bar button. Opening puts the keyboard away.
     private var pages: some View {
-        BrightSideMenu(isExpanded: $isMenuOpen) {
+        BrightSideMenuV5(isExpanded: $isMenuOpen) {
             menu
         } content: {
             chat
@@ -199,7 +199,7 @@ struct LighthouseScreen: View {
                 // can't fold together or stretch to fit a glyph, and riding
                 // on the chat page so they slide over with it.
                 .safeAreaBar(edge: .top, spacing: .spacing0x) { topButtons }
-                .brightSoftScrollEdges()
+                .brightSoftScrollEdgesV5()
                 .background { LighthouseChatBackground() }
         }
         .onChange(of: isMenuOpen) { _, isMenuOpen in

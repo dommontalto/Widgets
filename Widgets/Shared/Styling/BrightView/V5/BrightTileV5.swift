@@ -1,0 +1,145 @@
+//
+//  BrightTileV5.swift
+//  Widgets
+//
+//  Created by Dom Montalto on 23/9/2026.
+//
+
+import SwiftUI
+
+// A fixed-size tappable tile over an image: an icon up top, a title
+// and subtitle at the foot, the icon and subtitle overlaid onto the image.
+struct BrightTileV5<Icon: View>: View {
+    let title: String
+    let subtitle: String
+    let backgroundImage: String
+    let fillsWidth: Bool
+    let onTap: () -> Void
+    let icon: Icon
+
+    init(
+        _ title: String,
+        subtitle: String,
+        backgroundImage: String,
+        fillsWidth: Bool = false,
+        onTap: @escaping () -> Void,
+        @ViewBuilder icon: () -> Icon
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.backgroundImage = backgroundImage
+        self.fillsWidth = fillsWidth
+        self.onTap = onTap
+        self.icon = icon()
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: .spacing0x) {
+                icon
+                    .foregroundStyle(.white)
+                    .blendMode(.overlay)
+                    .frame(width: .spacing6x, height: .spacing6x)
+
+                Spacer(minLength: .spacing0x)
+
+                BrightText(title, size: .subheading, color: .white, weight: .regular)
+
+                BrightText(subtitle, size: .body1, color: .white)
+                    .blendMode(.overlay)
+            }
+            .padding(.horizontal, .spacing3x)
+            .padding(.vertical, .spacing2x)
+            .frame(width: fillsWidth ? nil : Constants.width, height: Constants.height, alignment: .leading)
+            .frame(maxWidth: fillsWidth ? .infinity : nil, alignment: .leading)
+            .background {
+                Image(backgroundImage)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .overlay(Color.white.opacity(.ultraLowOpacity))
+            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
+                    .strokeBorder(Color.black.opacity(.minimalOpacity), lineWidth: Constants.stroke)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// A horizontally scrolling row of tiles, optionally blurred and faded at the trailing edge to hint there's more.
+struct BrightTileRowV5<Content: View>: View {
+    var blur = false
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: .spacing3x) {
+                content
+            }
+            .padding(.vertical, blurBleed)
+            .scrollTargetLayout()
+            .visualEffect { [blur, trailingBlur = Constants.trailingBlur, maxBlur = Constants.maxBlur] effect, proxy in
+                let visible = proxy.bounds(of: .scrollView) ?? proxy.frame(in: .local)
+                return effect.layerEffect(
+                    ShaderLibrary.brightEdgeBlur(
+                        .float(visible.maxX - trailingBlur),
+                        .float(visible.maxX),
+                        .float(maxBlur)
+                    ),
+                    maxSampleOffset: CGSize(width: maxBlur, height: maxBlur),
+                    isEnabled: blur
+                )
+            }
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollIndicators(.hidden)
+        .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
+        .modifier(BrightTileRowEdge(fades: blur))
+        .padding(.vertical, -blurBleed)
+    }
+
+    private var blurBleed: CGFloat {
+        blur ? Constants.maxBlur : .spacing0x
+    }
+}
+
+private struct BrightTileRowEdge: ViewModifier {
+    let fades: Bool
+
+    func body(content: Content) -> some View {
+        if fades {
+            hideSystemEdges(content)
+                .mask {
+                    HStack(spacing: .spacing0x) {
+                        Color.black
+
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: Constants.trailingFade)
+                    }
+                }
+        } else {
+            hideSystemEdges(content)
+        }
+    }
+
+    @ViewBuilder private func hideSystemEdges(_ content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .horizontal)
+        } else {
+            content
+        }
+    }
+}
+
+// Outside the structs: a generic type cannot hold static stored properties.
+private enum Constants {
+    static let width: CGFloat = 160
+    static let height: CGFloat = 110
+    static let stroke: CGFloat = 0.5
+    static let trailingFade: CGFloat = .spacing4x
+    static let trailingBlur: CGFloat = .spacing8x
+    static let maxBlur: CGFloat = .spacing1x
+}

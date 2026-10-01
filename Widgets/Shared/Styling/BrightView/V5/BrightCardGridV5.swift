@@ -1,0 +1,96 @@
+//
+//  BrightCardGridV5.swift
+//  Widgets
+//
+//  Created by Dom Montalto on 23/9/2026.
+//
+
+import SwiftUI
+
+// Two columns of small cards, each tapped or held by the screen that lays it out.
+struct BrightCardGridV5<Content: View>: View {
+    var spacing: CGFloat = .spacing2x
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing), count: 2), spacing: spacing) {
+            content
+        }
+    }
+}
+
+// A card for the grid: a 36pt mark up top, then a title and a dimmer subtitle.
+struct BrightCardGridItemV5<Icon: View, Accessory: View>: View {
+    let title: String
+    let subtitle: String
+    let color: Color
+    let icon: Icon
+    let titleAccessory: Accessory
+
+    init(
+        _ title: String,
+        subtitle: String,
+        color: Color = .defaultCards,
+        @ViewBuilder icon: () -> Icon,
+        @ViewBuilder titleAccessory: () -> Accessory
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.color = color
+        self.icon = icon()
+        self.titleAccessory = titleAccessory()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            icon
+                .frame(height: Constants.iconSize)
+
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                HStack(spacing: .spacing1x) {
+                    BrightText(title, size: .subheading2)
+                        .lineLimit(1)
+
+                    titleAccessory
+                }
+
+                BrightText(subtitle, size: .body3, color: .lightTextColor)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.spacing3x)
+        .modifier(BrightCardModifierV5(color: color, cornerRadius: .cornerRadius24))
+    }
+}
+
+extension BrightCardGridItemV5 where Accessory == EmptyView {
+    init(
+        _ title: String,
+        subtitle: String,
+        color: Color = .defaultCards,
+        @ViewBuilder icon: () -> Icon
+    ) {
+        self.init(title, subtitle: subtitle, color: color, icon: icon) { EmptyView() }
+    }
+}
+
+// Outside the structs: a generic type cannot hold static stored properties.
+private enum Constants {
+    static let iconSize: CGFloat = .spacing6x
+}
+
+#Preview {
+    BrightCardGridV5 {
+        ForEach(["Heart", "Sleep", "Metabolism"], id: \.self) { title in
+            BrightCardGridItemV5(title, subtitle: "12 markers") {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: .spacing5x))
+                    .frame(width: .spacing6x, height: .spacing6x)
+            }
+        }
+    }
+    .padding(.spacing3x)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .background(Color.defaultBackground.ignoresSafeArea())
+}

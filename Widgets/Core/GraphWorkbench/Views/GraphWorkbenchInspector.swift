@@ -24,14 +24,14 @@ struct GraphWorkbenchInspector: View {
     }
 
     var body: some View {
-        BrightPageSheetView(title: "Inspector", horizontalPadding: .spacing0x, backgroundColor: .defaultBlack) {
+        BrightPageSheetViewV5(title: "Inspector", horizontalPadding: .spacing0x, backgroundColor: .defaultBlack) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing0x) {
-                    BrightDivider()
+                    BrightDividerV5()
                     header
-                    BrightDivider()
+                    BrightDividerV5()
                     stats
-                    BrightDivider()
+                    BrightDividerV5()
 
                     GraphWorkbenchSectionLabel(title: "Description", systemImage: "doc.text")
                     BrightText(node.entity.description, size: .body4, color: .semiLightTextColor)
@@ -78,11 +78,11 @@ struct GraphWorkbenchInspector: View {
     private var stats: some View {
         HStack(spacing: .spacing0x) {
             stat("Links", value: "\(node.entity.degree)")
-            BrightVerticalDivider()
+            BrightDividerV5(.vertical)
             stat("Frequency", value: "\(node.entity.frequency)")
-            BrightVerticalDivider()
+            BrightDividerV5(.vertical)
             stat("Level", value: community.map { "\($0.level)" } ?? "—")
-            BrightVerticalDivider()
+            BrightDividerV5(.vertical)
             stat("Entities", value: community.map { "\($0.size)" } ?? "—")
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -131,7 +131,7 @@ struct GraphWorkbenchInspector: View {
             .padding(.vertical, .spacing105x)
             .background(isCurrent ? Color.defaultWhite.opacity(.finalBossLowOpacity) : .clear)
 
-            BrightDivider()
+            BrightDividerV5()
         }
     }
 
@@ -173,7 +173,7 @@ struct GraphWorkbenchInspector: View {
                     .padding(.vertical, .spacing105x)
 
                     if !isLast {
-                        BrightDivider()
+                        BrightDividerV5()
                     }
                 }
                 .contentShape(Rectangle())

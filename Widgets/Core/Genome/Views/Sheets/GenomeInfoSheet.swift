@@ -7,7 +7,7 @@ import SwiftUI
 
 struct GenomeInfoSheet: View {
     var body: some View {
-        BrightPageSheetView(title: "About Genome") {
+        BrightPageSheetViewV5(title: "About Genome") {
             content
         }
     }
@@ -27,7 +27,7 @@ struct GenomeInfoSheet: View {
                 )
                 .lineSpacing(.lineSpacingMedium)
 
-                BrightDivider()
+                BrightDividerV5()
 
                 VStack(alignment: .leading, spacing: .spacing6x) {
                     Section(

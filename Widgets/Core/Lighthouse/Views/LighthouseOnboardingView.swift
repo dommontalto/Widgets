@@ -80,7 +80,7 @@ struct LighthouseOnboardingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.brightEaseInOut, value: isIntroDone)
         .animation(.easeOut(duration: Constants.afterglowFade), value: introPhase == .faded)
-        .brightHaptic(trigger: introPhase) { _, phase in
+        .brightHapticV5(trigger: introPhase) { _, phase in
             switch phase {
             case .bang: .impact
             case .title: .light
@@ -172,7 +172,7 @@ struct LighthouseOnboardingView: View {
             .padding(.horizontal, .spacing5x)
         }
         .scrollIndicators(.hidden)
-        .brightSoftScrollEdges()
+        .brightSoftScrollEdgesV5()
         .task(id: page) { await revealCapabilities() }
     }
 
@@ -212,7 +212,7 @@ struct LighthouseOnboardingView: View {
         if #available(iOS 26, *) {
             AnyTransition(SymbolEffectTransition.symbolEffect(.drawOn.byLayer))
         } else {
-            .brightCondenseIn
+            AnyTransition(.blurReplace.animation(.brightEaseInOut))
         }
     }
 

@@ -40,7 +40,7 @@ struct VaultClinicsMapView: View {
         ))
         .ignoresSafeArea()
         .toolbarBackground(.hidden, for: .navigationBar)
-        .brightSoftScrollEdges()
+        .brightSoftScrollEdgesV5()
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -61,7 +61,7 @@ struct VaultClinicsMapView: View {
                 }
             }
         }
-        .brightMiniSheet(isPresented: sheetShown) {
+        .brightMiniSheetV5(isPresented: sheetShown) {
             if let selectedClinic {
                 ClinicMiniSheet(
                     clinic: selectedClinic,
@@ -155,13 +155,13 @@ private struct ClinicMiniSheet: View {
 
             BrightText(clinic.address, size: .body1, color: .lightTextColor)
 
-            BrightDivider()
+            BrightDividerV5()
 
             BrightText("Services", size: .body1, color: .semiLightTextColor, weight: .regular)
 
             FlowLayout(spacing: .spacing1x) {
                 ForEach(clinic.services, id: \.self) { service in
-                    BrightChip(
+                    BrightChipV5(
                         title: service,
                         tint: .defaultBlue,
                         fill: .defaultBlue.opacity(.veryMinimalOpacity)

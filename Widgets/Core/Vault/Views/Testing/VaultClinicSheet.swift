@@ -21,7 +21,7 @@ struct VaultClinicSheet: View {
     }
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             horizontalPadding: .spacing0x,
             trailing: {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -90,7 +90,7 @@ struct VaultClinicSheet: View {
     }
 
     private func filterTag(_ title: String, systemImage: String, id: String?) -> some View {
-        BrightTag(title: title, systemImage: systemImage, isSelected: selectedCategoryId == id) {
+        BrightTagV5(title: title, systemImage: systemImage, isSelected: selectedCategoryId == id) {
             withAnimation(.brightSnappy) { selectedCategoryId = id }
         }
     }
@@ -121,7 +121,7 @@ struct VaultClinicSheet: View {
 
             HStack(spacing: .spacing1x) {
                 ForEach(test.availability) { availability in
-                    BrightChip(
+                    BrightChipV5(
                         title: availability.rawValue,
                         tint: .defaultBlue,
                         fill: .defaultBlue.opacity(.veryMinimalOpacity)
@@ -129,14 +129,14 @@ struct VaultClinicSheet: View {
                 }
             }
 
-            BrightDivider()
+            BrightDividerV5()
 
             BrightText(test.detail, size: .body1, color: .lightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(CardModifier(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
         .contentShape(Rectangle())
         .onTapGesture { selectedTest = test }
     }

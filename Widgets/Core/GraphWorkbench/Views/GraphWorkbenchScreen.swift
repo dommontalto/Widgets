@@ -72,7 +72,7 @@ struct GraphWorkbenchScreen: View {
         .onChange(of: model.isIsolating) {
             scene.apply(model)
         }
-        .brightHaptic(.light, trigger: model.selectedID)
+        .brightHapticV5(.light, trigger: model.selectedID)
         .sheet(isPresented: isInspecting) {
             if let node = inspectedID.flatMap(model.node) {
                 GraphWorkbenchInspector(model: model, node: node, onSelect: select)

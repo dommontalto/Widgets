@@ -9,7 +9,7 @@ struct LineBeamConfig {
     let borderRadius: Double?
     let brightness: Double?
     let saturation: Double?
-    let hueRange: Double // already capped at 13 by BorderBeam
+    let hueRange: Double // already capped at 13 by BrightBorderBeamV5
     let strength: Double
 
     let spec = BeamSpec.shared

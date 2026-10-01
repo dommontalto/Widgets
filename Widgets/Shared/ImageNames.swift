@@ -140,6 +140,11 @@ nonisolated class ImageNames {
     // MARK: - Account
 
     static let brightLogoSearchingV4           = "bright_logo_searching_v4"
+    static let brightLogoPastelGreenV4         = "bright_logo_pastel_green_v4"
+    static let circleCheckmarkV5               = "circle-checkmark_v5"
+    static let warningDiamondYellowV4          = "warning_diamond_yellow_v4"
+    static let warningDiamondV4                = "warning_diamond_v4"
+    static let warningIconV4                   = "warning_icon_v4"
     static let myOrdersV5                      = "Account/my_orders_v5"
 
     // MARK: - Main Tab

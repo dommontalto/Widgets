@@ -64,7 +64,7 @@ struct WaypointGauge: View {
 
             if isActive {
                 BrightText(bearing.label, size: .standout3, color: bearing.color)
-                    .brightTextReveal()
+                    .brightTextRevealV5()
                     .offset(point(radius: Constants.radius + Constants.labelGap))
                     .id(bearing)
                     .transition(.asymmetric(insertion: .identity, removal: .opacity))

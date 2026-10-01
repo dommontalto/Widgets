@@ -26,7 +26,7 @@ struct GenomeView: View {
     }
 
     private var content: some View {
-        BrightSwipePageView(
+        BrightSwipePageViewV5(
             pages: GenomeViewTab.allCases.map { SwipePage(title: $0.displayTitle, systemImage: $0.systemImage) },
             fakeLargeTitle: "Genome",
             bottomSafeArea: false,
@@ -120,7 +120,7 @@ struct GenomeView: View {
         var body: some View {
             Group {
                 if viewModel.categories.isEmpty {
-                    BrightPlaceholderView(
+                    BrightPlaceholderViewV5(
                         image: ImageNames.genomeV5,
                         title: "Categories coming soon",
                         subtitle: "Your impact categories will appear here once your genome results are ready."
@@ -155,7 +155,7 @@ private struct GenomePresentations: ViewModifier {
             .sheet(item: $viewModel.selectedCategory) { category in
                 GenomeCategorySheet(category: category, dataMarkers: viewModel.dataMarkers)
             }
-            .brightMiniSheet(isPresented: markerShown) {
+            .brightMiniSheetV5(isPresented: markerShown) {
                 if let marker = viewModel.selectedMarker {
                     GenomeGeneMiniSheet(marker: marker) { viewModel.selectedMarker = nil }
                 }

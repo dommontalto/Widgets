@@ -50,7 +50,7 @@ struct LighthouseCheckInReviewView: View {
 
     private func sectionView(_ section: LighthouseCheckInReview.Section) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightWidgetTitle(icon: .symbol(section.kind.symbol), title: section.kind.title) {
+            BrightWidgetTitleV5(icon: .symbol(section.kind.symbol), title: section.kind.title) {
                 widget(for: section.kind)
                     .frame(maxWidth: .infinity)
             }
@@ -70,7 +70,7 @@ struct LighthouseCheckInReviewView: View {
         case .workouts:
             ExerciseTrainingLoadContent(load: LighthouseDemo.trainingLoad, title: "Split", subtitle: "Past 4 weeks")
                 .padding(.spacing3x)
-                .modifier(CardModifier())
+                .modifier(BrightCardModifierV5())
         case .nutrition:
             IntakeBreakdownWidget(viewState: LighthouseDemo.intakeBreakdown)
         case .sleep:
@@ -127,7 +127,7 @@ struct LighthouseCheckInReviewView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .brightHaptic(.light, trigger: isExpanded)
+        .brightHapticV5(.light, trigger: isExpanded)
     }
 
     private enum Constants {

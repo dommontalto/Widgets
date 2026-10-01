@@ -48,7 +48,7 @@ struct LighthouseChatView: View {
     @State private var replyTask: Task<Void, Never>?
 
     var body: some View {
-        BrightChat(
+        BrightChatV5(
             messages: messages,
             isThinking: isThinking,
             isBusy: isThinking,
@@ -123,10 +123,10 @@ struct LighthouseChatView: View {
 
             VStack(spacing: .spacing1x) {
                 BrightText(Constants.welcomeTitle, size: .standout3)
-                    .brightTextReveal()
+                    .brightTextRevealV5()
 
                 BrightText(Constants.welcomePrompt, size: .subheading, color: .semiLightTextColor)
-                    .brightTextReveal(delay: Constants.welcomePromptDelay)
+                    .brightTextRevealV5(delay: Constants.welcomePromptDelay)
             }
             .multilineTextAlignment(.center)
 
@@ -197,8 +197,8 @@ struct LighthouseChatView: View {
             tierPill
         }
         .buttonStyle(.plain)
-        .modifier(GlassEffect(shape: .capsule))
-        .brightHaptic(.light, trigger: tier)
+        .modifier(BrightGlassEffectV5(shape: .capsule))
+        .brightHapticV5(.light, trigger: tier)
     }
 
     // Sized to the name in use, so the pill grows and shrinks with the tier.
@@ -235,8 +235,8 @@ struct LighthouseChatView: View {
             speedPill
         }
         .buttonStyle(.plain)
-        .modifier(GlassEffect(shape: .capsule))
-        .brightHaptic(.light, trigger: speed)
+        .modifier(BrightGlassEffectV5(shape: .capsule))
+        .brightHapticV5(.light, trigger: speed)
     }
 
     private var speedPill: some View {

@@ -76,7 +76,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         .frame(maxWidth: .infinity)
         .contentShape(.rect)
         .onTapGesture { isFocused.wrappedValue = true }
-        .modifier(GlassEffect(shape: .unevenRoundedRect(top: Constants.topCorner, bottom: bottomCorner)))
+        .modifier(BrightGlassEffectV5(shape: .unevenRoundedRect(top: Constants.topCorner, bottom: bottomCorner)))
         .animation(.brightSnappy, value: bottomCorner)
         .geometryGroup()
     }
@@ -94,7 +94,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
                 BrightText(placeholder, size: .subheading2, color: .lightTextColor)
                     .lineLimit(1)
                     .allowsHitTesting(false)
-                    .brightWiggle(trigger: nudge)
+                    .brightWiggleV5(trigger: nudge)
             }
 
             TextField("", text: $text, axis: .vertical)
@@ -184,7 +184,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
         }
         .symbolEffect(.variableColor.iterative, isActive: action == .dictating)
         .contentTransition(.symbolEffect(.replace.upUp))
-        .brightHaptic(.light, trigger: dictation.isListening)
+        .brightHapticV5(.light, trigger: dictation.isListening)
     }
 
     private func send() {

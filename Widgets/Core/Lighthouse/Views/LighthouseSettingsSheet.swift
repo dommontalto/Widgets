@@ -16,7 +16,7 @@ struct LighthouseSettingsSheet: View {
     @State private var chatHistory = ChatHistory.hour
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             content: {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: .spacing3x) {
@@ -91,7 +91,7 @@ struct LighthouseSettingsSheet: View {
             BrightText(Constants.resetsLabel, size: .body1, color: .lightTextColor)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
     private var usageBar: some View {
@@ -109,11 +109,9 @@ struct LighthouseSettingsSheet: View {
     }
 
     private func toggleCard(_ title: String, detail: String, isOn: Binding<Bool>) -> some View {
-        card(title, detail: detail) {
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(Color.defaultGreen)
-                .brightHaptic(.light, trigger: isOn.wrappedValue)
+        BrightRowGroupV5(footer: detail, color: .defaultSheetModalCards) {
+            BrightRowV5(title, trailing: .toggle(isOn))
+                .brightHapticV5(.light, trigger: isOn.wrappedValue)
         }
     }
 
@@ -137,7 +135,7 @@ struct LighthouseSettingsSheet: View {
                 BrightPillButton(chatHistory.title, buttonSize: .small) {}
                     .allowsHitTesting(false)
             }
-            .brightHaptic(.light, trigger: chatHistory)
+            .brightHapticV5(.light, trigger: chatHistory)
         }
     }
 
@@ -158,21 +156,19 @@ struct LighthouseSettingsSheet: View {
             accessory()
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
     private var actions: some View {
-        HStack(spacing: .spacing2x) {
-            BrightPillButton(
-                Constants.deleteChatsTitle,
-                systemImage: "bubble",
-                textColor: .defaultRed,
-                buttonSize: .large
-            ) {}
-
-            BrightPillButton(Constants.resetTitle, buttonSize: .large) {}
-        }
-        .frame(maxWidth: .infinity)
+        BrightDuelPillButtonV5(
+            Constants.deleteChatsTitle,
+            Constants.resetTitle,
+            leadingSystemImage: "bubble",
+            leadingColor: .defaultRed,
+            trailingColor: .defaultRed,
+            onLeadingTap: {},
+            onTrailingTap: {}
+        )
         .padding(.top, .spacing2x)
     }
 

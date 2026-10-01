@@ -26,7 +26,7 @@ private struct GenomeCategoryCard: View {
     }
 
     private var builtCard: some View {
-        BrightCardGridItem(category.title, subtitle: "\(category.markerCount) markers") {
+        BrightCardGridItemV5(category.title, subtitle: "\(category.markerCount) markers") {
             Image(category.imageName)
                 .resizable()
                 .frame(width: .spacing6x, height: .spacing6x)
@@ -40,7 +40,7 @@ private struct GenomeCategoryCard: View {
     }
 
     private var pendingCard: some View {
-        BrightCardGridItem(category.title, subtitle: "\(category.markerCount) markers") {
+        BrightCardGridItemV5(category.title, subtitle: "\(category.markerCount) markers") {
             RoundedRectangle(cornerRadius: .cornerRadius10)
                 .fill(Color.defaultMainGrey.opacity(.lowOpacity))
                 .frame(width: .spacing6x, height: .spacing6x)
@@ -56,7 +56,7 @@ struct GenomeImpactCategoryWidget: View {
     var onSelect: (GenomeCategory) -> Void = { _ in }
 
     var body: some View {
-        BrightCardGrid {
+        BrightCardGridV5 {
             ForEach(categories) { category in
                 GenomeCategoryCard(category: category) { onSelect(category) }
             }

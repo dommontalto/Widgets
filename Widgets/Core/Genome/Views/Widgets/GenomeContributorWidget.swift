@@ -46,6 +46,6 @@ private struct GenomeContributorRow: View {
                 .monospacedDigit()
         }
         .padding(.spacing3x)
-        .modifier(CardModifier(color: cardColor))
+        .modifier(BrightCardModifierV5(color: cardColor))
     }
 }

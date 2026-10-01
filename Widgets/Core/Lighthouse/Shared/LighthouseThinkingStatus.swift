@@ -83,8 +83,8 @@ struct LighthouseThinkingStatus: View {
     Color.defaultBackground
         .ignoresSafeArea()
         .overlay {
-            BrightIslandIndicator {
-                BrightSolvingStars(state: .thinking, ambientMotion: .off)
+            BrightIslandIndicatorV5 {
+                BrightSolvingGalaxyV5(state: .thinking, ambientMotion: .off)
                     .aspectRatio(1, contentMode: .fit)
                     .containerRelativeFrame(.horizontal) { width, _ in width * 0.3 }
             } footer: {

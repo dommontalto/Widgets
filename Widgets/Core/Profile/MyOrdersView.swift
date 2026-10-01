@@ -20,7 +20,7 @@ struct MyOrdersView: View {
     @State private var showingCards = false
 
     var body: some View {
-        BrightSwipePageView(
+        BrightSwipePageViewV5(
             pages: [
                 SwipePage(title: "Guided Testing", systemImage: "heart.text.square"),
                 SwipePage(title: "Genome", image: ImageNames.genomeV5),
@@ -36,7 +36,7 @@ struct MyOrdersView: View {
             }
         }
         .sheet(item: $receipt) { order in
-            BrightReceiptSheet(order: order)
+            BrightReceiptSheetV5(order: order)
         }
         .overlay(alignment: .topTrailing) {
             if selectedPage == 1 {
@@ -81,7 +81,7 @@ struct MyOrdersView: View {
     @ViewBuilder
     private var guidedTesting: some View {
         if guidedOrders.isEmpty {
-            BrightPlaceholderView(
+            BrightPlaceholderViewV5(
                 systemImage: "shippingbox",
                 title: "No orders yet",
                 subtitle: "Tests you order through Guided Testing will show up here with their status."

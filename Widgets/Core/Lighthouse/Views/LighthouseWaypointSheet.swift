@@ -48,7 +48,7 @@ struct LighthouseWaypointSheet: View {
     private var isEditing: Bool { checkIn != nil }
 
     var body: some View {
-        BrightPageSheetView(
+        BrightPageSheetViewV5(
             file: nil,
             trailing: {
                 ToolbarItem(placement: .principal) {
@@ -124,7 +124,7 @@ struct LighthouseWaypointSheet: View {
             .focused($isNamingFocus)
             .font(.standard(size: .heading, weight: .light))
             .foregroundStyle(Color.textColor)
-            .brightWiggle(trigger: nameNudge)
+            .brightWiggleV5(trigger: nameNudge)
             .padding(.horizontal, .spacing2x)
     }
 
@@ -145,7 +145,7 @@ struct LighthouseWaypointSheet: View {
         }
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing1x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
         .animation(.brightEaseInOut, value: frequency)
     }
 
@@ -180,12 +180,12 @@ struct LighthouseWaypointSheet: View {
                     BrightPillButton(selection.wrappedValue.title, buttonSize: .small) {}
                         .allowsHitTesting(false)
                 }
-                .brightHaptic(.light, trigger: selection.wrappedValue)
+                .brightHapticV5(.light, trigger: selection.wrappedValue)
             }
             .padding(.vertical, .spacing2x)
 
             if !isLast {
-                BrightDivider()
+                BrightDividerV5()
             }
         }
     }
@@ -215,11 +215,11 @@ struct LighthouseWaypointSheet: View {
                     BrightPillButton(dayOfMonth.ordinalSuffix(), buttonSize: .small) {}
                         .allowsHitTesting(false)
                 }
-                .brightHaptic(.light, trigger: dayOfMonth)
+                .brightHapticV5(.light, trigger: dayOfMonth)
             }
             .padding(.vertical, .spacing2x)
 
-            BrightDivider()
+            BrightDividerV5()
         }
     }
 
@@ -233,7 +233,7 @@ struct LighthouseWaypointSheet: View {
                 .datePickerStyle(.compact)
                 .labelsHidden()
                 .tint(.textColor)
-                .modifier(GlassEffect(shape: .capsule))
+                .modifier(BrightGlassEffectV5(shape: .capsule))
         }
         .padding(.vertical, .spacing2x)
     }
@@ -267,11 +267,11 @@ struct LighthouseWaypointSheet: View {
                 }
                 .contentShape(Rectangle())
             }
-            .brightHaptic(.light, trigger: endDate)
+            .brightHapticV5(.light, trigger: endDate)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.vertical, .spacing2x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     private var focusField: some View {
@@ -287,7 +287,7 @@ struct LighthouseWaypointSheet: View {
                 .lineLimit(Constants.focusLines, reservesSpace: true)
         }
         .padding(.spacing3x)
-        .modifier(CardModifier())
+        .modifier(BrightCardModifierV5())
     }
 
     private func rowLabel(symbol: String, title: String) -> some View {

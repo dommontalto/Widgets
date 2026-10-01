@@ -21,7 +21,7 @@ struct VaultGuidedTestingScreen: View {
                 VaultClinicSheet(clinic: clinic, onOrder: place)
             }
             .sheet(item: $receipt) { order in
-                BrightReceiptSheet(order: order)
+                BrightReceiptSheetV5(order: order)
             }
     }
 
