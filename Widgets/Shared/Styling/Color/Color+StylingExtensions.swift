@@ -157,6 +157,9 @@ nonisolated extension Color {
     // The veil over content pushed aside by the side menu, on top of its
     // frosting. Light mode has nothing to darken against, so it stays clear.
     static let sideMenuDim = Color(light: .clear, dark: .black.opacity(.lowOpacity))
+
+    // Lifts the black toast pill off a black screen; in light mode it already stands out.
+    static let toastBorder = Color(light: .clear, dark: .white.opacity(.veryLowOpacity))
 }
 
 // MARK: - Support

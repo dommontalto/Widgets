@@ -102,9 +102,11 @@ struct BrightDotGridV5: View {
         if let id = selection?.wrappedValue, let position = position(of: id) {
             let pitch = cellSize + spacing
             let size = isHolding ? Constants.fingerSize : cellSize + Constants.ringOutset
-            Circle()
-                .stroke(ringColor, lineWidth: Constants.ringWidth)
+            Color.clear
                 .frame(width: size, height: size)
+                .modifier(BrightGlassEffectV5(shape: .circle, isClear: true, interactive: false))
+                .overlay(Circle().stroke(ringColor, lineWidth: Constants.ringWidth))
+                .shadow(color: ringColor.opacity(isHolding ? Constants.glowOpacity : 0), radius: isHolding ? Constants.glowRadius : 0)
                 .position(
                     x: CGFloat(position.column) * pitch + cellSize / 2,
                     y: CGFloat(position.row) * pitch + cellSize / 2
@@ -169,7 +171,9 @@ private struct DotGridHoldGesture: UIGestureRecognizerRepresentable {
 }
 
 private enum Constants {
-    static let fingerSize: CGFloat = 44
+    static let fingerSize: CGFloat = 60
+    static let glowRadius: CGFloat = 14
+    static let glowOpacity: Double = 0.9
     static let ringOutset: CGFloat = 4
     static let ringWidth: CGFloat = 1.5
 }

@@ -12,13 +12,13 @@ struct ContentView: View {
 
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
     @State private var showingBeam = false
-    @State private var showingGraphWorkbench = false
     @State private var beamTarget = BeamTarget.screen
     @State private var screenBeam = BeamConfig.screen
     @State private var cardBeam = BeamConfig.card
     @State private var selectedPage = HomePage.health.rawValue
     @State private var isSideMenuExpanded = false
     @State private var showingMyOrders = false
+    @State private var syncPhase: BrightSyncPhase?
 
     var body: some View {
         NavigationStack {
@@ -35,15 +35,6 @@ struct ContentView: View {
                 content
             }
             .background(Color.defaultBackground)
-            .overlay {
-                if selectedPage == HomePage.health.rawValue && !isSideMenuExpanded {
-                    VStack(spacing: .spacing2x) {
-                        ForEach(MorphLoader.allCases, id: \.self) { loader in
-                            MorphLoadingPill(loader: loader)
-                        }
-                    }
-                }
-            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -63,6 +54,7 @@ struct ContentView: View {
             }
         }
         .toolbarVisibility(isSideMenuExpanded ? .hidden : .visible, for: .tabBar)
+        .brightToastV5($syncPhase)
     }
 
     private var content: some View {
@@ -93,9 +85,6 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showingBeam) {
             beamScreen
         }
-        .fullScreenCover(isPresented: $showingGraphWorkbench) {
-            GraphWorkbenchScreen()
-        }
     }
 
     private var healthPage: some View {
@@ -113,8 +102,13 @@ struct ContentView: View {
             }
             .brightHapticV5(.light, trigger: showingLighthouseOnboarding)
 
-            BrightPillButton("GraphRAG Workbench", systemImage: "point.3.connected.trianglepath.dotted") {
-                showingGraphWorkbench = true
+            BrightPillButton("Sync", systemImage: "arrow.triangle.2.circlepath") {
+                guard syncPhase == nil else { return }
+                syncPhase = .syncing
+                Task {
+                    try? await Task.sleep(for: .seconds(Constants.syncDemoDuration))
+                    syncPhase = .synced
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -215,6 +209,7 @@ struct ContentView: View {
         static let logoSize: CGFloat = 22
         static let menuSpringDuration: Double = 0.25
         static let menuSpringBounce: Double = 0.02
+        static let syncDemoDuration: Double = 2.5
     }
 }
 
@@ -237,75 +232,6 @@ private enum HomePage: Int, CaseIterable {
         case .waypoint: "safari.fill"
         case .explore: "map.fill"
         }
-    }
-}
-
-private enum MorphLoader: CaseIterable {
-    case orb
-    case galaxy
-    case logo
-    case spinner
-
-    var title: String {
-        switch self {
-        case .orb: "Button 1"
-        case .galaxy: "Button 2"
-        case .logo: "Button 3"
-        case .spinner: "Button 4"
-        }
-    }
-}
-
-private struct MorphLoadingPill: View {
-    let loader: MorphLoader
-    @State private var isLoading = false
-
-    var body: some View {
-        Button {
-            isLoading = true
-        } label: {
-            ZStack {
-                if isLoading {
-                    loadingView
-                        .transition(.scale.combined(with: .opacity))
-                } else {
-                    BrightText(loader.title, size: BrightButtonSizes.large.defaultFontSize)
-                        .fixedSize()
-                        .transition(.opacity)
-                }
-            }
-            .padding(.horizontal, isLoading ? .spacing0x : .spacing3x)
-            .frame(width: isLoading ? Constants.height : nil, height: Constants.height)
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(isLoading)
-        .modifier(BrightGlassEffectV5(shape: .capsule))
-        .animation(.brightBouncy, value: isLoading)
-        .brightHapticV5(.light, trigger: isLoading)
-        .task(id: isLoading) {
-            guard isLoading else { return }
-            try? await Task.sleep(for: .seconds(5))
-            isLoading = false
-        }
-    }
-
-    @ViewBuilder
-    private var loadingView: some View {
-        switch loader {
-        case .orb:
-            BrightSolvingOrbV5(size: Constants.height * 0.6)
-        case .galaxy:
-            BrightSolvingGalaxyV5(state: .thinking, size: Constants.height * 0.8, ambientMotion: .off)
-        case .logo:
-            BrightLogoAnimationV5(size: Constants.height * 0.6)
-        case .spinner:
-            ProgressView()
-        }
-    }
-
-    private enum Constants {
-        static let height: CGFloat = BrightButtonSizes.large.rawValue
     }
 }
 
