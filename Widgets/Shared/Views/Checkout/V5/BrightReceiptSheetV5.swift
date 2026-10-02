@@ -139,16 +139,3 @@ struct BrightReceiptSheetV5: View {
         static let mask = "••••"
     }
 }
-
-#Preview {
-    BrightReceiptSheetV5(
-        order: VaultTestOrder(
-            number: "162371",
-            test: VaultTestingClinic.demo[0].tests[0],
-            clinic: VaultTestingClinic.demo[0],
-            type: .atHomeKit,
-            placedAt: .now,
-            paymentMethod: .applePay
-        )
-    )
-}
