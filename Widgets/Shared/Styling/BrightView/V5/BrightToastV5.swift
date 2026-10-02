@@ -54,13 +54,16 @@ final class BrightToastPresenterV5 {
 
     private func show(_ message: BrightToastV5Message) {
         dismissTask?.cancel()
+        // The pill is already open after a loading step, so a success there
+        // needs less time on screen than one that has to drop out first.
+        let followsLoading = self.message?.kind == .loading
         self.message = message
 
         let hold: Duration
         switch message.kind {
         case .loading: return
-        case .success: hold = Constants.successHold
-        case .error: hold = Constants.errorHold
+        case .success: hold = followsLoading ? Constants.successAfterLoadingHold : Constants.hold
+        case .error: hold = Constants.hold
         }
 
         dismissTask = Task { [weak self] in
@@ -231,7 +234,7 @@ private struct BrightToastV5: View {
             }
             .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-            BrightText(shown?.text ?? "", size: .subheading, color: textColor, weight: .regular)
+            BrightText(shown?.text ?? "", size: .subheading, color: .defaultWhite, weight: .regular)
                 .lineLimit(Constants.maxLines)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
@@ -258,14 +261,6 @@ private struct BrightToastV5: View {
 
     private var kind: BrightToastV5Kind {
         shown?.kind ?? .loading
-    }
-
-    private var textColor: Color {
-        switch kind {
-        case .loading: .defaultWhite
-        case .success: .defaultGreen
-        case .error: .defaultRed
-        }
     }
 
     private var pillWidth: CGFloat {
@@ -416,8 +411,8 @@ private enum Constants {
     static let blurRadius: CGFloat = 25
     static let alphaThreshold: Float = 0.5
     static let windowHeight: CGFloat = 240
-    static let successHold: Duration = .seconds(1.4)
-    static let errorHold: Duration = .seconds(3)
+    static let hold: Duration = .seconds(3)
+    static let successAfterLoadingHold: Duration = .seconds(1.5)
     static let drop: Animation = .smooth(duration: 0.45)
     static let retract: Animation = .smooth(duration: 0.4)
 }
