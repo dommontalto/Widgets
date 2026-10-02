@@ -7,49 +7,135 @@
 
 import SwiftUI
 
-enum BrightSyncPhase: Equatable {
-    case syncing
-    case synced
+// The app's one toast: a glass pill that drops out of the Dynamic Island.
+// Call it from anywhere through `BrightToastPresenterV5.shared`; the root view
+// hosts it once with `.brightToastHostV5()`.
+//
+//     BrightToastPresenterV5.shared.loading("Syncing…")
+//     BrightToastPresenterV5.shared.success("Synced")
+//     BrightToastPresenterV5.shared.error("Couldn't delete template")
+enum BrightToastV5Kind: Equatable {
+    case loading
+    case success
+    case error
+}
+
+struct BrightToastV5Message: Equatable {
+    // Showing the same text twice still restarts the toast.
+    let id = UUID()
+    let kind: BrightToastV5Kind
+    let text: String
+}
+
+@MainActor @Observable
+final class BrightToastPresenterV5 {
+    static let shared = BrightToastPresenterV5()
+
+    private(set) var message: BrightToastV5Message?
+    @ObservationIgnored private var dismissTask: Task<Void, Never>?
+
+    // Stays up until replaced by `success` or `error`, or dismissed.
+    func loading(_ text: String) {
+        show(BrightToastV5Message(kind: .loading, text: text))
+    }
+
+    func success(_ text: String) {
+        show(BrightToastV5Message(kind: .success, text: text))
+    }
+
+    func error(_ text: String) {
+        show(BrightToastV5Message(kind: .error, text: text))
+    }
+
+    func dismiss() {
+        dismissTask?.cancel()
+        message = nil
+    }
+
+    private func show(_ message: BrightToastV5Message) {
+        dismissTask?.cancel()
+        self.message = message
+
+        let hold: Duration
+        switch message.kind {
+        case .loading: return
+        case .success: hold = Constants.successHold
+        case .error: hold = Constants.errorHold
+        }
+
+        dismissTask = Task { [weak self] in
+            try? await Task.sleep(for: hold)
+            guard !Task.isCancelled else { return }
+            self?.message = nil
+        }
+    }
 }
 
 extension View {
-    // Drops a pill out of the Dynamic Island while `phase` is set. Setting
-    // `.synced` turns it green with a tick; it then clears `phase` itself
-    // and melts back into the island.
-    func brightToastV5(_ phase: Binding<BrightSyncPhase?>) -> some View {
-        overlay(alignment: .top) {
-            BrightToastV5(phase: phase)
+    // Hosts the shared toast in its own window, so it shows over sheets and
+    // full-screen covers too. Apply once, on the app's root view.
+    func brightToastHostV5() -> some View {
+        background {
+            BrightToastWindowInstaller()
+        }
+    }
+
+    // Shows the shared toast whenever a screen's flag turns on, then turns it
+    // straight back off so the next one fires too.
+    func brightToastV5(_ kind: BrightToastV5Kind, isPresented: Binding<Bool>, text: String) -> some View {
+        onChange(of: isPresented.wrappedValue) { _, isShowing in
+            guard isShowing else { return }
+            switch kind {
+            case .loading: BrightToastPresenterV5.shared.loading(text)
+            case .success: BrightToastPresenterV5.shared.success(text)
+            case .error: BrightToastPresenterV5.shared.error(text)
+            }
+            isPresented.wrappedValue = false
         }
     }
 }
 
 private struct BrightToastV5: View {
-    @Binding var phase: BrightSyncPhase?
+    var presenter: BrightToastPresenterV5
 
     @Environment(\.scenePhase) private var scenePhase
-    // Lags `phase` on the way out so the pill keeps its look while it retracts.
-    @State private var shown: BrightSyncPhase?
+    // Lags the presenter on the way out so the pill keeps its look while it retracts.
+    @State private var shown: BrightToastV5Message?
     @State private var progress: CGFloat = 0
     // The threshold shader is only needed while the pill is joined to the
     // island; once it has dropped clear, it would just alias the edges.
     @State private var isSettled = false
     @State private var isExpanded = false
-    @State private var labelWidth: CGFloat = 0
+    // Flips once the pill has opened, so a toast that arrives as a success
+    // or error still plays the tick or cross animation in front of the user.
+    @State private var isRevealed = false
+    @State private var isLeaving = false
+    @State private var labelSize = CGSize.zero
 
     var body: some View {
         GeometryReader { proxy in
-            ZStack {
+            ZStack(alignment: .top) {
+                // Lays the label out at its natural size, wrapping to two lines
+                // at most, so the pill can open to fit without the text reflowing.
+                // A blank stands in for the icon so the orb doesn't animate and
+                // the tick doesn't buzz twice.
+                pillContent(isMeasuring: true)
+                    .hidden()
+                    // Measured after layout, outside the message's own transaction,
+                    // so the spring has to be applied here for the pill to bounce.
+                    .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
+                        withAnimation(.brightBouncy) { labelSize = size }
+                    }
+                    .frame(maxWidth: proxy.size.width - CGFloat.spacing3x * 2)
+
                 if shown != nil {
                     island(safeArea: proxy.safeAreaInsets)
                 }
             }
             .ignoresSafeArea()
         }
-        // A sliver at the top so the reader picks up the top safe area
-        // without taking any space from the screen beneath.
-        .frame(height: 1)
         .allowsHitTesting(false)
-        .onChange(of: phase) { _, new in
+        .onChange(of: presenter.message) { _, new in
             update(to: new)
         }
     }
@@ -73,9 +159,9 @@ private struct BrightToastV5: View {
                         Capsule()
                             .padding(.top, Constants.islandInset)
                     }
-                    .overlay(alignment: .bottom) {
+                    .overlay(alignment: .top) {
                         pill
-                            .scaleEffect(pillScale, anchor: .bottom)
+                            .scaleEffect(pillScale, anchor: .top)
                             .offset(y: offset)
                     }
                     .compositingGroup()
@@ -87,22 +173,22 @@ private struct BrightToastV5: View {
                             isEnabled: !isSettled
                         )
                     }
-                    .overlay(alignment: .bottom) {
+                    .overlay(alignment: .top) {
                         pillLabel
-                            .scaleEffect(pillScale, anchor: .bottom)
+                            .scaleEffect(pillScale, anchor: .top)
                             .offset(y: offset)
                     }
                     .offset(y: hasIsland ? 0 : -Constants.islandHeight)
             }
     }
 
-    // The gooey drip, sized from the label laid over it so the two always
-    // match. Glass can't go through the threshold shader, so the glass ball
-    // rides on top and this only draws the neck, thinning away as it drops.
+    // The gooey drip, sized like the label laid over it. Glass can't go
+    // through the threshold shader, so the glass ball rides on top and this
+    // only draws the neck, thinning away as it drops.
     private var pill: some View {
-        Capsule()
+        pillShape
             .fill(Color.defaultBlack)
-            .frame(width: pillWidth, height: Constants.pillHeight)
+            .frame(width: pillWidth, height: pillHeight)
             .opacity(isSettled ? 0 : 1 - progress)
     }
 
@@ -112,90 +198,205 @@ private struct BrightToastV5: View {
     }
 
     private var pillLabel: some View {
-        pillContent
-            // Measured after layout, outside the text's own transaction, so the
-            // spring has to be applied here for the pill to bounce to its new width.
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
-                withAnimation(.brightBouncy) { labelWidth = width }
-            }
-            .frame(width: pillWidth, height: Constants.pillHeight)
-            .clipShape(.capsule)
+        pillContent(isMeasuring: false)
+            // Pinned at its natural size while the pill opens around it.
+            .frame(width: labelSize.width, height: labelSize.height)
+            .frame(width: pillWidth, height: pillHeight)
+            .clipShape(pillShape)
             .opacity(isExpanded ? 1 : 0)
             // Behind the island until it drops, so the ball is glass the whole way down.
             .background {
-                Capsule()
+                pillShape
                     .fill(.clear)
-                    .modifier(BrightGlassEffectV5(shape: .capsule, tint: .toastGlassTint, interactive: false))
+                    .modifier(BrightGlassEffectV5(
+                        shape: .roundedRect,
+                        cornerRadius: Constants.pillHeight / 2,
+                        tint: .toastGlassTint,
+                        interactive: false
+                    ))
             }
     }
 
-    private var pillContent: some View {
-        HStack(spacing: .spacing1x) {
-            // The tick stays mounted under the orb so flipping it plays its
-            // own symbol replace and success haptic.
-            ZStack {
-                BrightTickV5(isTicked: isSynced)
-                    .opacity(isSynced ? .opaque : .zero)
-                BrightSolvingOrbV5(size: Constants.orbSize)
-                    .scaleEffect(isSynced ? Constants.orbExitScale : 1)
-                    .opacity(isSynced ? .zero : .opaque)
-            }
+    // A capsule on one line; a two-line message keeps the same ends.
+    private var pillShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Constants.pillHeight / 2, style: .continuous)
+    }
 
-            BrightText(isSynced ? "Synced" : "Syncing…", size: .subheading, color: isSynced ? .defaultGreen : .defaultWhite, weight: .regular)
+    private func pillContent(isMeasuring: Bool) -> some View {
+        HStack(spacing: .spacing1x) {
+            ZStack {
+                if !isMeasuring {
+                    icon
+                }
+            }
+            .frame(width: Constants.iconSize, height: Constants.iconSize)
+
+            BrightText(shown?.text ?? "", size: .subheading, color: textColor, weight: .regular)
+                .lineLimit(Constants.maxLines)
+                .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
-                .brightShimmerV5(isActive: shown == .syncing)
+                .brightShimmerV5(isActive: kind == .loading)
         }
-        .fixedSize()
+        .padding(.vertical, .spacing1x)
         .padding(.leading, .spacing105x)
         .padding(.trailing, .spacing2x)
     }
 
-    private var isSynced: Bool {
-        shown == .synced
+    // The tick and cross stay mounted under the orb so flipping them plays
+    // their own symbol replace and haptic.
+    private var icon: some View {
+        ZStack {
+            BrightTickV5(isTicked: isRevealed && kind == .success)
+                .opacity(kind == .success ? .opaque : .zero)
+            BrightCrossV5(isCrossed: isRevealed && kind == .error)
+                .opacity(kind == .error ? .opaque : .zero)
+            BrightSolvingOrbV5(size: Constants.orbSize)
+                .scaleEffect(kind == .loading ? 1 : Constants.orbExitScale)
+                .opacity(kind == .loading ? .opaque : .zero)
+        }
+    }
+
+    private var kind: BrightToastV5Kind {
+        shown?.kind ?? .loading
+    }
+
+    private var textColor: Color {
+        switch kind {
+        case .loading: .defaultWhite
+        case .success: .defaultGreen
+        case .error: .defaultRed
+        }
     }
 
     private var pillWidth: CGFloat {
-        isExpanded ? labelWidth : Constants.pillHeight
+        isExpanded ? labelSize.width : Constants.pillHeight
     }
 
-    private func update(to new: BrightSyncPhase?) {
-        switch new {
-        case let new?:
-            if shown == nil {
-                shown = new
-                dropOut()
-            } else {
-                withAnimation(.brightBouncy) { shown = new }
-            }
-            if new == .synced {
-                Task {
-                    try? await Task.sleep(for: Constants.syncedHold)
-                    if phase == .synced { phase = nil }
-                }
-            }
-        case nil:
-            withAnimation(.brightSnappy) {
-                isExpanded = false
-            } completion: {
-                isSettled = false
-                withAnimation(Constants.retract) {
-                    progress = 0
-                } completion: {
-                    if phase == nil { shown = nil }
-                }
-            }
+    private var pillHeight: CGFloat {
+        isExpanded ? max(labelSize.height, Constants.pillHeight) : Constants.pillHeight
+    }
+
+    private func update(to new: BrightToastV5Message?) {
+        guard let new else {
+            retract()
+            return
+        }
+
+        if shown == nil || isLeaving {
+            shown = new
+            dropOut()
+        } else {
+            withAnimation(.brightBouncy) { shown = new }
         }
     }
 
     private func dropOut() {
+        isLeaving = false
         isSettled = false
         withAnimation(Constants.drop) {
             progress = 1
         } completion: {
-            guard phase != nil else { return }
+            guard presenter.message != nil, !isLeaving else { return }
             isSettled = true
-            withAnimation(.brightBouncy) { isExpanded = true }
+            withAnimation(.brightBouncy) {
+                isExpanded = true
+            } completion: {
+                withAnimation(.brightBouncy) { isRevealed = true }
+            }
         }
+    }
+
+    private func retract() {
+        isLeaving = true
+        withAnimation(.brightSnappy) {
+            isExpanded = false
+        } completion: {
+            guard presenter.message == nil else { return }
+            isSettled = false
+            isRevealed = false
+            withAnimation(Constants.retract) {
+                progress = 0
+            } completion: {
+                guard presenter.message == nil else { return }
+                shown = nil
+                isLeaving = false
+            }
+        }
+    }
+}
+
+// A zero-size view in the app's hierarchy that finds its window scene and
+// gives the toast a window of its own on it.
+private struct BrightToastWindowInstaller: UIViewRepresentable {
+    func makeUIView(context: Context) -> BrightToastInstallerView {
+        BrightToastInstallerView()
+    }
+
+    func updateUIView(_ uiView: BrightToastInstallerView, context: Context) {}
+}
+
+private final class BrightToastInstallerView: UIView {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isUserInteractionEnabled = false
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, _) in
+            view.syncStyle()
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard let scene = window?.windowScene else { return }
+        BrightToastWindow.install(in: scene)
+        syncStyle()
+    }
+
+    // The toast's window doesn't inherit an in-app light/dark override, so
+    // it copies whatever style the app's own window resolved to.
+    private func syncStyle() {
+        guard let scene = window?.windowScene else { return }
+        BrightToastWindow.window(for: scene)?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+    }
+}
+
+private final class BrightToastWindow: UIWindow {
+    private static var windows: [ObjectIdentifier: BrightToastWindow] = [:]
+
+    static func window(for scene: UIWindowScene) -> BrightToastWindow? {
+        windows[ObjectIdentifier(scene)]
+    }
+
+    static func install(in scene: UIWindowScene) {
+        guard window(for: scene) == nil else { return }
+
+        let window = BrightToastWindow(windowScene: scene)
+        // Only as tall as the toast needs: a full-screen window on top would
+        // take over the status bar style from the app's own window.
+        window.frame = CGRect(
+            x: 0,
+            y: 0,
+            width: scene.coordinateSpace.bounds.width,
+            height: Constants.windowHeight
+        )
+        window.windowLevel = .alert + 1
+        window.backgroundColor = .clear
+
+        let host = UIHostingController(rootView: BrightToastV5(presenter: .shared))
+        host.view.backgroundColor = .clear
+        window.rootViewController = host
+        window.isHidden = false
+
+        windows[ObjectIdentifier(scene)] = window
+    }
+
+    // Never takes a touch; everything goes through to the app beneath.
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        nil
     }
 }
 
@@ -207,27 +408,40 @@ private enum Constants {
     static let islandInset: CGFloat = 5
     static let pillHeight: CGFloat = 48
     static let orbSize: CGFloat = 28
+    static let iconSize: CGFloat = 30
     static let orbExitScale: CGFloat = 0.6
     static let pillStartScale: CGFloat = 0.7
-    static let dropDistance: CGFloat = 60
+    static let maxLines = 2
+    static let dropDistance: CGFloat = 45
     static let blurRadius: CGFloat = 25
     static let alphaThreshold: Float = 0.5
-    static let syncedHold: Duration = .seconds(1.4)
+    static let windowHeight: CGFloat = 240
+    static let successHold: Duration = .seconds(1.4)
+    static let errorHold: Duration = .seconds(3)
     static let drop: Animation = .smooth(duration: 0.45)
     static let retract: Animation = .smooth(duration: 0.4)
 }
 
 #Preview {
-    @Previewable @State var phase: BrightSyncPhase?
-
-    Color.defaultBackground
-        .ignoresSafeArea()
-        .brightToastV5($phase)
-        .onTapGesture {
-            phase = .syncing
+    VStack(spacing: .spacing2x) {
+        BrightPillButton("Sync", systemImage: "arrow.triangle.2.circlepath") {
+            BrightToastPresenterV5.shared.loading("Syncing…")
             Task {
                 try? await Task.sleep(for: .seconds(2.5))
-                phase = .synced
+                BrightToastPresenterV5.shared.success("Synced")
             }
         }
+        BrightPillButton("Success", systemImage: "checkmark") {
+            BrightToastPresenterV5.shared.success("Meal logged")
+        }
+        BrightPillButton("Error", systemImage: "xmark") {
+            BrightToastPresenterV5.shared.error("Couldn't delete template")
+        }
+        BrightPillButton("Long error", systemImage: "text.alignleft") {
+            BrightToastPresenterV5.shared.error("It looks like your username is invalid or does not exist.")
+        }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.defaultBackground)
+    .brightToastHostV5()
 }

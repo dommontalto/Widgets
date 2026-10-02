@@ -18,7 +18,6 @@ struct ContentView: View {
     @State private var selectedPage = HomePage.health.rawValue
     @State private var isSideMenuExpanded = false
     @State private var showingMyOrders = false
-    @State private var syncPhase: BrightSyncPhase?
 
     var body: some View {
         NavigationStack {
@@ -54,7 +53,6 @@ struct ContentView: View {
             }
         }
         .toolbarVisibility(isSideMenuExpanded ? .hidden : .visible, for: .tabBar)
-        .brightToastV5($syncPhase)
     }
 
     private var content: some View {
@@ -103,11 +101,18 @@ struct ContentView: View {
             .brightHapticV5(.light, trigger: showingLighthouseOnboarding)
 
             BrightPillButton("Sync", systemImage: "arrow.triangle.2.circlepath") {
-                guard syncPhase == nil else { return }
-                syncPhase = .syncing
+                BrightToastPresenterV5.shared.loading("Syncing…")
                 Task {
                     try? await Task.sleep(for: .seconds(Constants.syncDemoDuration))
-                    syncPhase = .synced
+                    BrightToastPresenterV5.shared.success("Synced")
+                }
+            }
+
+            BrightPillButton("Sync error", systemImage: "xmark") {
+                BrightToastPresenterV5.shared.loading("Syncing…")
+                Task {
+                    try? await Task.sleep(for: .seconds(Constants.syncDemoDuration))
+                    BrightToastPresenterV5.shared.error("Couldn't sync")
                 }
             }
         }

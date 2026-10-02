@@ -12,6 +12,7 @@ struct WidgetsApp: App {
     var body: some Scene {
         WindowGroup {
             MainDockView()
+                .brightToastHostV5()
         }
     }
 }
