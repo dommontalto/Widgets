@@ -31,7 +31,7 @@ private struct BrightMiniSheet<SheetContent: View>: ViewModifier {
                     )
                     .onPreferenceChange(BrightMiniSheetHeightKey.self) { if $0 > 0 { sheetHeight = $0 } }
                     .presentationDetents([.height(sheetHeight)])
-                    .presentationCornerRadius(.cornerRadius50)
+                    .presentationCornerRadius(.screenCornerRadius)
                     .presentationDragIndicator(.hidden)
                     .presentationBackgroundInteraction(.enabled)
             }

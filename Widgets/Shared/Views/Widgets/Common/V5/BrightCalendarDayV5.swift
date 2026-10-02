@@ -220,9 +220,9 @@ struct BrightCalendarDayV5: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isCompact ? .leading : .topLeading)
         .background(
             event.color.opacity(.ultraLowOpacity),
-            in: RoundedRectangle(cornerRadius: isCompact ? .cornerRadius9 : .cornerRadius14, style: .continuous)
+            in: RoundedRectangle(cornerRadius: isCompact ? .squareCornerRadius : .squareCornerRadius, style: .continuous)
         )
-        .contentShape(RoundedRectangle(cornerRadius: isCompact ? .cornerRadius9 : .cornerRadius14, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: isCompact ? .squareCornerRadius : .squareCornerRadius, style: .continuous))
     }
 
     private func detailLabel(_ event: BrightCalendarDayEvent) -> some View {

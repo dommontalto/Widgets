@@ -93,7 +93,7 @@ struct ExploreAdDetailView: View {
                         .resizable()
                         .scaledToFill()
                 }
-                .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
                 .padding(.bottom, .spacing1x)
 
             BrightText(clinic.name, size: .standout1, color: .white)
@@ -201,7 +201,7 @@ struct ExploreAdDetailView: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(BrightCardModifierV5(cornerRadius: .cornerRadius24))
+        .modifier(BrightCardModifierV5(cornerRadius: .cardCornerRadius))
         .contentShape(Rectangle())
     }
 
@@ -215,7 +215,7 @@ struct ExploreAdDetailView: View {
                     .foregroundStyle(.white)
                     .frame(width: Constants.badgeIconSize, height: Constants.badgeIconSize)
             }
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous))
     }
 
     private enum Constants {

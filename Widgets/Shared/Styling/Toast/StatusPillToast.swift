@@ -29,7 +29,7 @@ struct StatusPillToast: View {
         .modifier(
             BrightCardModifierV5(
                 color: color.opacity(.minimalOpacity),
-                cornerRadius: .largePillCornerRadius
+                isCapsule: true
             )
         )
         .modifier(BrightGlassEffectV5(shape: .capsule))

@@ -241,7 +241,7 @@ struct LighthouseThinkingInline: View {
                     .foregroundStyle(Color.lightTextColor)
             }
             .padding(.spacing2x)
-            .background(Color.defaultCards, in: RoundedRectangle(cornerRadius: .cornerRadius18, style: .continuous))
+            .background(Color.defaultCards, in: RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

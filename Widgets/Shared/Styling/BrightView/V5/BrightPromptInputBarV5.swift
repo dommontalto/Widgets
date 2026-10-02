@@ -185,7 +185,7 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
             .resizable()
             .scaledToFill()
             .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous))
             .overlay(alignment: .topTrailing) {
                 Button {
                     attachments.removeAll { $0.id == attachment.id }
@@ -307,8 +307,8 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
 }
 
 private enum Constants {
-    static let topCorner: CGFloat = .cornerRadius36
-    static let bottomCorner: CGFloat = .cornerRadius44
+    static let topCorner: CGFloat = .cardCornerRadius
+    static let bottomCorner: CGFloat = .screenCornerRadius
     static let maxLines = 8
     static let thumbnailSize: CGFloat = .spacing10x
     static let removeSize: CGFloat = .spacing3x

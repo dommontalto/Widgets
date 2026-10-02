@@ -38,6 +38,7 @@ struct BrightDotGridV5: View {
     var ringColor: Color = .defaultPurple
 
     @State private var width: CGFloat = 0
+    @State private var isHolding = false
 
     private var rowCount: Int { columns.map(\.count).max() ?? 0 }
 
@@ -60,12 +61,21 @@ struct BrightDotGridV5: View {
                 }
             }
         }
+        .overlay(alignment: .topLeading) { selectionRing }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .contentShape(Rectangle())
         .onTapGesture(coordinateSpace: .local) { select(at: $0, clamped: false) }
-        .gesture(DotGridHoldGesture { select(at: $0, clamped: true) })
+        .gesture(
+            DotGridHoldGesture { location in
+                isHolding = true
+                select(at: location, clamped: true)
+            } onEnd: {
+                isHolding = false
+            }
+        )
         .allowsHitTesting(selection != nil)
         .animation(.brightBouncy, value: selection?.wrappedValue)
+        .animation(.brightBouncy, value: isHolding)
         .brightHapticV5(.light, trigger: selection?.wrappedValue)
     }
 
@@ -85,14 +95,32 @@ struct BrightDotGridV5: View {
     private func dotView(_ dot: BrightDotGridV5Dot?) -> some View {
         Circle()
             .fill(dot?.fill ?? AnyShapeStyle(Color.clear))
-            .overlay {
-                if let dot, dot.id == selection?.wrappedValue {
-                    Circle()
-                        .stroke(ringColor, lineWidth: 1.5)
-                        .padding(-2)
-                        .transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
+    }
+
+    @ViewBuilder
+    private var selectionRing: some View {
+        if let id = selection?.wrappedValue, let position = position(of: id) {
+            let pitch = cellSize + spacing
+            let size = isHolding ? Constants.fingerSize : cellSize + Constants.ringOutset
+            Circle()
+                .stroke(ringColor, lineWidth: Constants.ringWidth)
+                .frame(width: size, height: size)
+                .position(
+                    x: CGFloat(position.column) * pitch + cellSize / 2,
+                    y: CGFloat(position.row) * pitch + cellSize / 2
+                )
+                .allowsHitTesting(false)
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+        }
+    }
+
+    private func position(of id: String) -> (column: Int, row: Int)? {
+        for (column, dots) in columns.enumerated() {
+            if let row = dots.firstIndex(where: { $0?.id == id }) {
+                return (column, row)
             }
+        }
+        return nil
     }
 
     private func dot(column: Int, row: Int) -> BrightDotGridV5Dot? {
@@ -120,6 +148,7 @@ struct BrightDotGridV5: View {
 
 private struct DotGridHoldGesture: UIGestureRecognizerRepresentable {
     let onChange: (CGPoint) -> Void
+    let onEnd: () -> Void
 
     func makeUIGestureRecognizer(context _: Context) -> UILongPressGestureRecognizer {
         let recognizer = UILongPressGestureRecognizer()
@@ -128,9 +157,21 @@ private struct DotGridHoldGesture: UIGestureRecognizerRepresentable {
     }
 
     func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
-        guard recognizer.state == .began || recognizer.state == .changed else { return }
-        onChange(context.converter.localLocation)
+        switch recognizer.state {
+        case .began, .changed:
+            onChange(context.converter.localLocation)
+        case .ended, .cancelled, .failed:
+            onEnd()
+        default:
+            break
+        }
     }
+}
+
+private enum Constants {
+    static let fingerSize: CGFloat = 44
+    static let ringOutset: CGFloat = 4
+    static let ringWidth: CGFloat = 1.5
 }
 
 private struct DotGridLayout: Layout {

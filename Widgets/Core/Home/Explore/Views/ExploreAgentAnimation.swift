@@ -94,7 +94,7 @@ private struct ExploreShelfAnimation: View {
             .frame(width: Constants.tileSize, height: Constants.tileSize)
             .background(
                 tint.opacity(Constants.tileWash * glow),
-                in: RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
+                in: RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous)
             )
             .scaleEffect(scale)
     }

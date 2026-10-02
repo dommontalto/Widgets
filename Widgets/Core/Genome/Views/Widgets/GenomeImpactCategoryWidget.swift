@@ -41,7 +41,7 @@ private struct GenomeCategoryCard: View {
 
     private var pendingCard: some View {
         BrightCardGridItemV5(category.title, subtitle: "\(category.markerCount) markers") {
-            RoundedRectangle(cornerRadius: .cornerRadius10)
+            RoundedRectangle(cornerRadius: .squareCornerRadius)
                 .fill(Color.defaultMainGrey.opacity(.lowOpacity))
                 .frame(width: .spacing6x, height: .spacing6x)
         }

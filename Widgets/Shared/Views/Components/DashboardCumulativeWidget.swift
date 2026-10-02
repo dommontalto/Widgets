@@ -238,8 +238,8 @@ private struct DashboardCumulativeBaseCard<Content: View>: View {
     var body: some View {
         content
             .frame(width: width, height: height, alignment: .topLeading)
-            .modifier(BrightCardModifierV5(cornerRadius: .cornerRadius22))
-            .addBorder(Color.textColor.opacity(.veryLowOpacity), cornerRadius: .cornerRadius22)
+            .modifier(BrightCardModifierV5(cornerRadius: .cardCornerRadius))
+            .addBorder(Color.textColor.opacity(.veryLowOpacity), cornerRadius: .cardCornerRadius)
     }
 }
 

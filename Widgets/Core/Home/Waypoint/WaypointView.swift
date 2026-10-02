@@ -49,8 +49,6 @@ struct WaypointView: View {
             BrightPillButton(
                 "Start",
                 systemImage: "arrow.right",
-                color: .defaultGreen.opacity(.minimalOpacity),
-                textColor: .defaultGreen,
                 buttonSize: .large,
                 onTapCallback: checkIn
             )

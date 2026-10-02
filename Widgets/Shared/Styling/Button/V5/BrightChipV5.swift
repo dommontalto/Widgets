@@ -56,10 +56,10 @@ struct BrightChipV5<Trailing: View>: View {
         .padding(.vertical, .spacing1x)
         .modifier(BrightCardModifierV5(
             color: isSelected ? accent.opacity(.veryLowOpacity) : fill,
-            cornerRadius: .cornerRadius20
+            cornerRadius: .cardCornerRadius
         ))
         .overlay(
-            RoundedRectangle(cornerRadius: .cornerRadius20)
+            RoundedRectangle(cornerRadius: .cardCornerRadius)
                 .stroke(isSelected ? accent : Color.clear, lineWidth: 0.5)
         )
     }

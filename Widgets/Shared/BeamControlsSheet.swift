@@ -49,7 +49,7 @@ struct BeamConfig {
 
     static let card = BeamConfig(
         colorVariant: .defaultOrange,
-        cornerRadius: CGFloat.cornerRadius24
+        cornerRadius: CGFloat.cardCornerRadius
     )
 }
 

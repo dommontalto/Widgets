@@ -144,9 +144,9 @@ private struct ExploreClinicLogo: View {
                     .resizable()
                     .scaledToFill()
             }
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous)
+                RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
                     .strokeBorder(Color.white.opacity(.lowOpacity), lineWidth: Constants.stroke)
             }
     }

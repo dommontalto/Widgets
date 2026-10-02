@@ -60,7 +60,7 @@ struct BrightCardGridItemV5<Icon: View, Accessory: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.spacing3x)
-        .modifier(BrightCardModifierV5(color: color, cornerRadius: .cornerRadius24))
+        .modifier(BrightCardModifierV5(color: color, cornerRadius: .cardCornerRadius))
     }
 }
 

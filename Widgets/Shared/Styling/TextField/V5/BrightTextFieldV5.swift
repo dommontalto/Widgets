@@ -182,7 +182,7 @@ struct BrightTextFieldV5: View {
     }
 
     private enum Constants {
-        static var regularHeight: CGFloat { 50 }
+        static var regularHeight: CGFloat { .rowHeight }
         static var smallHeight: CGFloat { 36 }
         static var smallWidth: CGFloat { 90 }
     }

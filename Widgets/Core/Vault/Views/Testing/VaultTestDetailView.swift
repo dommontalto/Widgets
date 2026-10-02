@@ -111,7 +111,7 @@ struct VaultTestDetailView: View {
             }
             .padding(.horizontal, .spacing3x)
             .padding(.vertical, .spacing105x)
-            .modifier(BrightCardModifierV5(color: cardColor, cornerRadius: .cornerRadius24))
+            .modifier(BrightCardModifierV5(color: cardColor, cornerRadius: .cardCornerRadius))
         }
     }
 

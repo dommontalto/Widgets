@@ -22,6 +22,8 @@ struct BrightRowGroupV5<Content: View>: View {
     let color: Color
     let content: Content
 
+    @Environment(\.displayScale) private var displayScale
+
     init(
         header: String? = nil,
         headerIcon: String? = nil,
@@ -53,15 +55,14 @@ struct BrightRowGroupV5<Content: View>: View {
                     ForEach(rows) { row in
                         row
                         if row.id != rows.last?.id {
-                            BrightDividerV5()
+                            BrightDividerV5(thickness: 1 / displayScale)
                                 .padding(.leading, dividerInset(hasIcon: row.containerValues.brightRowHasIcon))
-                                .padding(.trailing, .spacing3x)
                         }
                     }
                 }
             }
             .environment(\.isInBrightRowGroup, true)
-            .modifier(BrightCardModifierV5(color: color, cornerRadius: .cornerRadius26))
+            .modifier(BrightCardModifierV5(color: color, cornerRadius: .cardCornerRadius))
 
             if let footer {
                 BrightText(footer, size: .body1, color: .lightTextColor)

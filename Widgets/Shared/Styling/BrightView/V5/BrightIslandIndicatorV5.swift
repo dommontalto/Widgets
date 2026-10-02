@@ -39,19 +39,19 @@ struct BrightIslandIndicatorV5<Content: View, Footer: View>: View {
                         .padding(.bottom, .spacing2x)
                 }
                 .background(wash)
-                .clipShape(.rect(cornerRadius: CGFloat.cornerRadius44))
+                .clipShape(.rect(cornerRadius: CGFloat.screenCornerRadius))
                 .modifier(BrightGlassEffectV5(
                     shape: .roundedRect,
-                    cornerRadius: CGFloat.cornerRadius44,
+                    cornerRadius: CGFloat.screenCornerRadius,
                     tint: .black
                 ))
                 // The same hairline the side menu draws down the content's
                 // edge, so the panel reads as a lifted plate over the chat.
                 .overlay {
-                    RoundedRectangle(cornerRadius: CGFloat.cornerRadius44)
+                    RoundedRectangle(cornerRadius: CGFloat.screenCornerRadius)
                         .strokeBorder(Color.white.opacity(Constants.edgeLineOpacity), lineWidth: Constants.edgeLineWidth)
                 }
-                .contentShape(.rect(cornerRadius: CGFloat.cornerRadius44))
+                .contentShape(.rect(cornerRadius: CGFloat.screenCornerRadius))
                 .onTapGesture { onTap?() }
 
             Spacer(minLength: .spacing0x)

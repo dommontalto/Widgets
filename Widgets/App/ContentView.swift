@@ -182,7 +182,7 @@ struct ContentView: View {
     private var beamCard: some View {
         Color.clear
             .frame(height: Constants.beamCardHeight)
-            .modifier(BrightCardModifierV5(cornerRadius: .cornerRadius24))
+            .modifier(BrightCardModifierV5(cornerRadius: .cardCornerRadius))
             .brightBorderBeamV5(
                 cardBeam.size,
                 colorVariant: cardBeam.colorVariant,

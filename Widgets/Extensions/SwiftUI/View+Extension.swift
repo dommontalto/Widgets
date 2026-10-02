@@ -52,7 +52,7 @@ extension View {
     }
 
     func roundedCorners() -> some View {
-        cornerRadius(.cornerRadius22, corner: .allCorners)
+        cornerRadius(.cardCornerRadius, corner: .allCorners)
     }
 
     func roundedTopCorners(_ radius: CGFloat = 10) -> some View {
@@ -146,16 +146,16 @@ extension View {
         if isDisabled {
             frame(height: 40)
                 .background(
-                    RoundedRectangle(cornerRadius: .cornerRadius22)
+                    RoundedRectangle(cornerRadius: .cardCornerRadius)
                         .strokeBorder(Color.textColor.opacity(0.3), lineWidth: 0.5)
                 )
-                .clipShape(.rect(cornerRadius: .cornerRadius22))
+                .clipShape(.rect(cornerRadius: .cardCornerRadius))
         } else {
             frame(height: 40)
                 .modifier(
                     BrightCardModifierV5(
                         color: isSameAverage ? enabledColor : cardColor,
-                        cornerRadius: .cornerRadius22
+                        cornerRadius: .cardCornerRadius
                     )
                 )
         }

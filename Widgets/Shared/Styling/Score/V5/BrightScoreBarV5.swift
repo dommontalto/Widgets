@@ -90,9 +90,9 @@ struct BrightScoreGradientBarV5: View {
     var body: some View {
         ZStack(alignment: .leading) {
             Color.defaultMainGrey.opacity(.lowOpacity)
-                .cornerRadius(.cornerRadius12)
+                .cornerRadius(.squareCornerRadius)
                 .overlay(
-                    RoundedRectangle(cornerRadius: .cornerRadius12)
+                    RoundedRectangle(cornerRadius: .squareCornerRadius)
                         .stroke(Color.defaultMainGrey, lineWidth: 0.5)
                 )
 
@@ -107,7 +107,7 @@ struct BrightScoreGradientBarV5: View {
             )
             .frame(width: progressBarWidth)
             .mask(
-                RoundedRectangle(cornerRadius: .cornerRadius9)
+                RoundedRectangle(cornerRadius: .squareCornerRadius.concentric(inset: .spacing05x))
                     .frame(width: progressBarWidth * (animatedScore / 100))
                     .frame(maxWidth: .infinity, alignment: .leading)
             )

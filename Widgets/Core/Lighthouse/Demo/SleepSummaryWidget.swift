@@ -167,9 +167,9 @@ struct SleepSummaryWidget: View {
                                 )
                                 .frame(width: 6, height: fullBarHeight)
                                 .frame(width: 6, height: barHeight, alignment: .bottom)
-                                .clipShape(RoundedRectangle(cornerRadius: .cornerRadius22))
+                                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
                             } else {
-                                RoundedRectangle(cornerRadius: .cornerRadius22)
+                                RoundedRectangle(cornerRadius: .cardCornerRadius)
                                     .fill(color)
                                     .frame(width: 6, height: barHeight)
                             }
@@ -226,12 +226,12 @@ struct SleepSummaryWidget: View {
                                     )
                                     .frame(width: 4, height: maxHeight)
                                     .mask(alignment: .bottom) {
-                                        RoundedRectangle(cornerRadius: .cornerRadius22)
+                                        RoundedRectangle(cornerRadius: .cardCornerRadius)
                                             .frame(width: 4, height: barHeight)
                                     }
                                     .opacity(.lowOpacity)
                                 } else {
-                                    RoundedRectangle(cornerRadius: .cornerRadius22)
+                                    RoundedRectangle(cornerRadius: .cardCornerRadius)
                                         .fill(color)
                                         .frame(width: 4, height: barHeight)
                                         .opacity(.lowOpacity)

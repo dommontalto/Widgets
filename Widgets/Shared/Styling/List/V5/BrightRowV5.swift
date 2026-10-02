@@ -10,6 +10,7 @@ import SwiftUI
 enum BrightRowV5Icon {
     case asset(String)
     case symbol(String, tint: Color = .textColor)
+    case template(String)
 }
 
 enum BrightRowV5Trailing {
@@ -55,7 +56,7 @@ struct BrightRowV5<Custom: View>: View {
                 Button(action: action) {
                     row
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(BrightRowPressStyle(isCapsule: !isGrouped))
             } else {
                 row
             }
@@ -95,7 +96,7 @@ struct BrightRowV5<Custom: View>: View {
 
             trailingView
         }
-        .padding(.horizontal, .spacing2x)
+        .padding(.horizontal, .spacing3x)
         .frame(height: Constants.height)
         .contentShape(Rectangle())
     }
@@ -112,6 +113,12 @@ struct BrightRowV5<Custom: View>: View {
                 .resizable()
                 .scaledToFit()
                 .foregroundStyle(tint)
+        case let .template(name):
+            Image(name)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(Color.textColor)
         }
     }
 
@@ -149,14 +156,37 @@ struct BrightRowV5<Custom: View>: View {
     }
 
     private var chevron: some View {
-        Image(systemName: "chevron.right")
+        Image(systemName: "chevron.forward")
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(Color.lightTextColor)
+            .foregroundStyle(Color(.tertiaryLabel))
     }
 
     private enum Constants {
         static var height: CGFloat { .rowHeight }
         static var iconSize: CGFloat { 24 }
+    }
+}
+
+private struct BrightRowPressStyle: ButtonStyle {
+    let isCapsule: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .overlay {
+                highlight
+                    .opacity(configuration.isPressed ? .opaque : 0)
+                    .allowsHitTesting(false)
+            }
+            .animation(configuration.isPressed ? nil : .easeOut(duration: 0.25), value: configuration.isPressed)
+    }
+
+    @ViewBuilder
+    private var highlight: some View {
+        if isCapsule {
+            Capsule(style: .continuous).fill(Color.textColor.opacity(.ultraLowOpacity))
+        } else {
+            Rectangle().fill(Color.textColor.opacity(.ultraLowOpacity))
+        }
     }
 }
 

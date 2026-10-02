@@ -155,7 +155,7 @@ struct BrightPullToRefreshScrollView<Content: View>: View {
             }
         }
         .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-        .clipShape(RoundedRectangle(cornerRadius: .cornerRadius8))
+        .clipShape(RoundedRectangle(cornerRadius: .squareCornerRadius))
     }
 
     private func startAnimation() {

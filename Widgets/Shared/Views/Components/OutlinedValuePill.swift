@@ -20,7 +20,7 @@ struct OutlinedValuePill: View {
     var textColor: Color = .semiLightTextColor
     var strokeColor = Color.textColor.opacity(.veryLowOpacity)
     var lineWidth: CGFloat = 1
-    var cornerRadius: CGFloat = .cornerRadius20
+    var cornerRadius: CGFloat = .cardCornerRadius
     var horizontalPadding: CGFloat = .spacing3x
     var verticalPadding: CGFloat = .spacing1x
 
@@ -31,7 +31,7 @@ struct OutlinedValuePill: View {
         textColor: Color = .semiLightTextColor,
         strokeColor: Color = Color.textColor.opacity(.veryLowOpacity),
         lineWidth: CGFloat = 1,
-        cornerRadius: CGFloat = .cornerRadius20,
+        cornerRadius: CGFloat = .cardCornerRadius,
         horizontalPadding: CGFloat = .spacing3x,
         verticalPadding: CGFloat = .spacing1x
     ) {
@@ -59,7 +59,7 @@ struct OutlinedValuePill: View {
         textColor: Color = .semiLightTextColor,
         strokeColor: Color = Color.textColor.opacity(.veryLowOpacity),
         lineWidth: CGFloat = 1,
-        cornerRadius: CGFloat = .cornerRadius20,
+        cornerRadius: CGFloat = .cardCornerRadius,
         horizontalPadding: CGFloat = .spacing3x,
         verticalPadding: CGFloat = .spacing1x
     ) {

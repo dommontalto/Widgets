@@ -304,7 +304,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
             .padding(.vertical, .spacing2x)
             .background(
                 bubbleTint.opacity(.ultraLowOpacity),
-                in: RoundedRectangle(cornerRadius: .cornerRadius22, style: .continuous)
+                in: RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
             )
     }
 

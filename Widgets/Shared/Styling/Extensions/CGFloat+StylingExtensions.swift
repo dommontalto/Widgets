@@ -75,51 +75,21 @@ nonisolated extension CGFloat {
 
     // MARK: - Corner Radius
 
-    static var cornerRadius4: CGFloat = 4
-
-    static var cornerRadius6: CGFloat = 6
-
-    static var cornerRadius8: CGFloat = 8
-
-    static var cornerRadius9: CGFloat = 9
-
-    static var cornerRadius10: CGFloat = 10
-
-    static var cornerRadius12: CGFloat = 12
-
-    static var cornerRadius14: CGFloat = 14
-
-    static var cornerRadius18: CGFloat = 18
-
-    static var cornerRadius20: CGFloat = 20
-
-    static var cornerRadius22: CGFloat = 22
-
-    static var cornerRadius24: CGFloat = 24
-
-    static let cornerRadius26: CGFloat = 26
-
-    static let cornerRadius36: CGFloat = 36
-
-    static let cornerRadius40: CGFloat = 40
-
-    static let cornerRadius44: CGFloat = 44
-
-    static let cornerRadius50: CGFloat = 50
-
-    static let largePillCornerRadius: CGFloat = 27
-
-    static let smallPillCornerRadius: CGFloat = 32
-
-    static let secondarySmallPillCornerRadius: CGFloat = 17
+    static let screenCornerRadius: CGFloat = 50
 
     static let cardCornerRadius: CGFloat = 30
+
+    static let squareCornerRadius: CGFloat = 14
+
+    func concentric(inset: CGFloat) -> CGFloat {
+        Swift.max(0, self - inset)
+    }
 
     // MARK: - View
 
     static let viewPaddingBottom: CGFloat = .spacing8x
 
-    static let rowHeight: CGFloat = 50
+    static let rowHeight: CGFloat = 52
 
     // MARK: - Line Spacing
 

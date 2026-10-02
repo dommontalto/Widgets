@@ -102,7 +102,7 @@ struct ExerciseSplitPlot: View {
     }
 
     private func pill(_ symbol: String, percent: Int, color: Color) -> some View {
-        let shape = RoundedRectangle(cornerRadius: .cornerRadius12, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous)
         return shape
             .fill(color.opacity(.ultraLowOpacity))
             .overlay {

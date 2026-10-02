@@ -50,7 +50,7 @@ struct LighthouseModelPicker: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: width, height: width * Constants.cardAspect)
-                .clipShape(RoundedRectangle(cornerRadius: .cornerRadius40))
+                .clipShape(RoundedRectangle(cornerRadius: .screenCornerRadius))
         } else {
             LighthouseApiKeyCard(width: width, height: width * Constants.cardAspect)
         }
@@ -111,7 +111,7 @@ struct LighthouseApiKeyCard: View {
             BrightText(Constants.title, size: .body1, weight: .regular)
         }
         .frame(width: width, height: height)
-        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .cornerRadius40))
+        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .screenCornerRadius))
     }
 
     private enum Constants {

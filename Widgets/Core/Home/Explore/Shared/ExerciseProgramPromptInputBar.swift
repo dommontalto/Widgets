@@ -199,8 +199,8 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
 }
 
 private enum Constants {
-    static let topCorner: CGFloat = .cornerRadius36
-    static let bottomCorner: CGFloat = .cornerRadius44
+    static let topCorner: CGFloat = .cardCornerRadius
+    static let bottomCorner: CGFloat = .screenCornerRadius
     static let maxLines = 8
 }
 

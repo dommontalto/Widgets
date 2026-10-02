@@ -137,7 +137,7 @@ private struct DashboardLinearBaseCard: View {
 
     private enum Constants {
         static let rightColumnWidth: CGFloat = 140
-        static let cornerRadius: CGFloat = .cornerRadius22
+        static let cornerRadius: CGFloat = .cardCornerRadius
     }
 
     var body: some View {
@@ -237,7 +237,7 @@ private struct DashboardLinearBaseCard: View {
                 .gradientProgressBar(
                     backgroundColor: .clear,
                     gradientColors: [Color(hex: "71C3FF"), Color(hex: "59CC81")],
-                    cornerRadius: CGFloat.cornerRadius22
+                    cornerRadius: CGFloat.cardCornerRadius
                 )
             )
         }
@@ -246,7 +246,7 @@ private struct DashboardLinearBaseCard: View {
     }
 
     private var background: some View {
-        RoundedRectangle(cornerRadius: .cornerRadius22)
+        RoundedRectangle(cornerRadius: .cardCornerRadius)
             .fill(
                 LinearGradient(
                     stops: [

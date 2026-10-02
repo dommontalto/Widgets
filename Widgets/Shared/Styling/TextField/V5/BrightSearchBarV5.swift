@@ -81,6 +81,6 @@ struct BrightSearchBarV5: View {
     }
 
     private enum Constants {
-        static var height: CGFloat { 50 }
+        static var height: CGFloat { .rowHeight }
     }
 }

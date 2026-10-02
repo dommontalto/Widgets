@@ -58,7 +58,7 @@ struct BrightAdV5: View {
                             .scaledToFill()
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
                 .padding(.bottom, .spacing1x)
 
             BrightText(title, size: .standout1, color: .white)

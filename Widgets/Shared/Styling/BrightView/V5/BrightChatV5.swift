@@ -367,10 +367,10 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                     // The tight bottom trailing corner stands in for a tail.
                     .modifier(BrightGlassEffectV5(
                         shape: .cornerRadii(RectangleCornerRadii(
-                            topLeading: .cornerRadius22,
-                            bottomLeading: .cornerRadius22,
-                            bottomTrailing: .cornerRadius8,
-                            topTrailing: .cornerRadius22
+                            topLeading: .cardCornerRadius,
+                            bottomLeading: .cardCornerRadius,
+                            bottomTrailing: .squareCornerRadius,
+                            topTrailing: .cardCornerRadius
                         )),
                         tint: .defaultSkyBlue,
                         interactive: false
@@ -386,7 +386,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                     .resizable()
                     .scaledToFill()
                     .frame(width: Constants.sentImageSize, height: Constants.sentImageSize)
-                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius20, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             }
         }
     }

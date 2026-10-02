@@ -97,10 +97,10 @@ struct LighthouseSettingsSheet: View {
     private var usageBar: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: .cornerRadius8)
+                RoundedRectangle(cornerRadius: .squareCornerRadius)
                     .fill(Color.textColor.opacity(.ultraLowOpacity))
 
-                RoundedRectangle(cornerRadius: .cornerRadius8)
+                RoundedRectangle(cornerRadius: .squareCornerRadius)
                     .fill(Color.defaultGreen)
                     .frame(width: proxy.size.width * Double(Constants.usedPercent) / 100)
             }

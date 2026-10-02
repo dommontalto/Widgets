@@ -61,7 +61,7 @@ struct BrightStatus: View {
 
     private var shape: AnyShape {
         isNumber
-            ? AnyShape(RoundedRectangle(cornerRadius: .cornerRadius10))
+            ? AnyShape(RoundedRectangle(cornerRadius: .squareCornerRadius))
             : AnyShape(Capsule())
     }
 

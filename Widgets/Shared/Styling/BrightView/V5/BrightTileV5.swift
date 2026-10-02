@@ -58,12 +58,12 @@ struct BrightTileV5<Icon: View>: View {
                     .scaledToFill()
             }
             .overlay(Color.white.opacity(.ultraLowOpacity))
-            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous)
+                RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
                     .strokeBorder(Color.black.opacity(.minimalOpacity), lineWidth: Constants.stroke)
             }
-            .contentShape(RoundedRectangle(cornerRadius: .cornerRadius24, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
         }
         .buttonStyle(.plain)
     }
