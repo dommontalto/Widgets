@@ -75,59 +75,57 @@ private struct BrightToastV5: View {
                     }
                     .overlay(alignment: .bottom) {
                         pill
-                            .scaleEffect(Constants.pillStartScale + (1 - Constants.pillStartScale) * progress, anchor: .bottom)
+                            .scaleEffect(pillScale, anchor: .bottom)
                             .offset(y: offset)
                     }
                     .compositingGroup()
                     .blur(radius: Constants.blurRadius * (1 - progress))
                     .visualEffect { [isSettled] content, proxy in
                         content.layerEffect(
-                            ShaderLibrary.brightAlphaThreshold(
-                                .float(Constants.alphaThreshold),
-                                .color(.toastBorder),
-                                .float(Constants.borderWidth)
-                            ),
+                            ShaderLibrary.brightAlphaThreshold(.float(Constants.alphaThreshold)),
                             maxSampleOffset: proxy.size,
                             isEnabled: !isSettled
                         )
                     }
                     .overlay(alignment: .bottom) {
                         pillLabel
+                            .scaleEffect(pillScale, anchor: .bottom)
                             .offset(y: offset)
                     }
                     .offset(y: hasIsland ? 0 : -Constants.islandHeight)
             }
     }
 
-    // The gooey body, sized from the label laid over it so the two always match.
-    // Glass can't go through the threshold shader, so it only carries the
-    // ball while it's joined to the island, then hands over to the glass.
+    // The gooey drip, sized from the label laid over it so the two always
+    // match. Glass can't go through the threshold shader, so the glass ball
+    // rides on top and this only draws the neck, thinning away as it drops.
     private var pill: some View {
         Capsule()
             .fill(Color.defaultBlack)
             .frame(width: pillWidth, height: Constants.pillHeight)
-            .opacity(isSettled ? 0 : 1)
+            .opacity(isSettled ? 0 : 1 - progress)
+    }
+
+    // Starts about island height, so the ball doesn't poke out above it.
+    private var pillScale: CGFloat {
+        Constants.pillStartScale + (1 - Constants.pillStartScale) * progress
     }
 
     private var pillLabel: some View {
         pillContent
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { labelWidth = $0 }
+            // Measured after layout, outside the text's own transaction, so the
+            // spring has to be applied here for the pill to bounce to its new width.
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+                withAnimation(.brightBouncy) { labelWidth = width }
+            }
             .frame(width: pillWidth, height: Constants.pillHeight)
             .clipShape(.capsule)
             .opacity(isExpanded ? 1 : 0)
+            // Behind the island until it drops, so the ball is glass the whole way down.
             .background {
-                if isSettled {
-                    Capsule()
-                        .fill(.clear)
-                        .modifier(BrightGlassEffectV5(shape: .capsule, tint: .black, interactive: false))
-                }
-            }
-            // Takes over from the shader's outline once the ball has settled
-            // and the shader switches off.
-            .overlay {
                 Capsule()
-                    .strokeBorder(Color.toastBorder, lineWidth: Constants.borderWidth)
-                    .opacity(isSettled ? 1 : 0)
+                    .fill(.clear)
+                    .modifier(BrightGlassEffectV5(shape: .capsule, tint: .toastGlassTint, interactive: false))
             }
     }
 
@@ -210,9 +208,7 @@ private enum Constants {
     static let pillHeight: CGFloat = 48
     static let orbSize: CGFloat = 28
     static let orbExitScale: CGFloat = 0.6
-    // Starts about island height, so the blob doesn't poke out above it.
     static let pillStartScale: CGFloat = 0.7
-    static let borderWidth: CGFloat = 1
     static let dropDistance: CGFloat = 60
     static let blurRadius: CGFloat = 25
     static let alphaThreshold: Float = 0.5

@@ -158,8 +158,9 @@ nonisolated extension Color {
     // frosting. Light mode has nothing to darken against, so it stays clear.
     static let sideMenuDim = Color(light: .clear, dark: .black.opacity(.lowOpacity))
 
-    // Lifts the black toast pill off a black screen; in light mode it already stands out.
-    static let toastBorder = Color(light: .clear, dark: .white.opacity(.veryLowOpacity))
+    // Dark enough to carry white text over a light screen; in dark mode the
+    // screen already is, so the glass is left untinted to show through.
+    static let toastGlassTint = Color(light: .black, dark: .clear)
 }
 
 // MARK: - Support
