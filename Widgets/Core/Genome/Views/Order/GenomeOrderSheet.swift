@@ -118,22 +118,9 @@ struct GenomeOrderSheet: View {
     }
 
     private var purchaseButton: some View {
-        BrightPillButton(viewModel.isStartingCheckout ? "" : "Purchase", buttonSize: .large) {
+        BrightPillButton("Purchase", buttonSize: .large, isLoading: viewModel.isStartingCheckout) {
             viewModel.handlePurchase()
         }
-        .contentTransition(.opacity)
-        .disabled(viewModel.isStartingCheckout)
-        .overlay {
-            if viewModel.isStartingCheckout {
-                ProgressView()
-                    .controlSize(.large)
-                    .transition(.asymmetric(
-                        insertion: .opacity.animation(.brightEaseInOut.delay(0.35)),
-                        removal: .opacity.animation(.brightEaseInOut)
-                    ))
-            }
-        }
-        .animation(.brightEaseInOut, value: viewModel.isStartingCheckout)
     }
 }
 

@@ -96,7 +96,8 @@ struct BrightRowV5<Custom: View>: View {
 
             trailingView
         }
-        .padding(.horizontal, .spacing3x)
+        .padding(.leading, .spacing3x)
+        .padding(.trailing, trailingPadding)
         .frame(height: Constants.height)
         .contentShape(Rectangle())
     }
@@ -120,6 +121,12 @@ struct BrightRowV5<Custom: View>: View {
                 .scaledToFit()
                 .foregroundStyle(Color.textColor)
         }
+    }
+
+    // The tick's circle carries its own space around the glyph, so it sits
+    // closer to the edge to line up optically with everything else.
+    private var trailingPadding: CGFloat {
+        if case .tick = trailing { .spacing2x } else { .spacing3x }
     }
 
     @ViewBuilder

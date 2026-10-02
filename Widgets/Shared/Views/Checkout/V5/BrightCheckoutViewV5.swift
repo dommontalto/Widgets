@@ -106,16 +106,14 @@ struct BrightCheckoutViewV5: View {
             .scrollIndicators(.hidden)
         }
         .overlay(alignment: .bottom) {
-            Group {
-                if isPaying {
-                    ProgressView()
-                        .controlSize(.large)
-                } else {
-                    BrightPillButton(Constants.payTitle, systemImage: "arrow.right", buttonSize: .large, onTapCallback: pay)
-                }
-            }
+            BrightPillButton(
+                Constants.payTitle,
+                systemImage: "arrow.right",
+                buttonSize: .large,
+                isLoading: isPaying,
+                onTapCallback: pay
+            )
             .padding(.bottom, .spacing4x)
-            .animation(.brightEaseInOut, value: isPaying)
         }
         .sheet(isPresented: $isAddingAddress) {
             BrightAddAddressSheetV5 { address in

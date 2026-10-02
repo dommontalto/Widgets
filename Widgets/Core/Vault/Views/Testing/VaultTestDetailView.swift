@@ -58,9 +58,13 @@ struct VaultTestDetailView: View {
             .padding(.bottom, .spacing4x)
         }
         .navigationDestination(isPresented: $showingPayment) {
-            BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
-                showingPayment = false
-                onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
+            if test.labTestId != nil {
+                LabPatientDetailsView(test: test, clinic: clinic, onOrder: onOrder)
+            } else {
+                BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
+                    showingPayment = false
+                    onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
+                }
             }
         }
     }

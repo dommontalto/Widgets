@@ -38,6 +38,22 @@ final class BrightAddressBook {
         return address
     }
 
+    func update(_ address: BrightShippingAddress) async {
+        guard let index = addresses.firstIndex(where: { $0.id == address.id }) else { return }
+        if address.isDefault {
+            addresses = addresses.map { existing in
+                var existing = existing
+                existing.isDefault = false
+                return existing
+            }
+        }
+        addresses[index] = address
+        if !addresses.contains(where: \.isDefault) {
+            addresses[0].isDefault = true
+        }
+        Self.saved = addresses
+    }
+
     func makeDefault(_ address: BrightShippingAddress) async {
         addresses = addresses.map { existing in
             var existing = existing

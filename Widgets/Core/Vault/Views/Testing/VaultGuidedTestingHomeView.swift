@@ -17,7 +17,7 @@ struct VaultGuidedTestingHomeView: View {
     @State private var showingMap = false
 
     private var clinics: [VaultTestingClinic] {
-        sortOrder.sorted(VaultTestingClinic.demo)
+        sortOrder.sorted(VaultTestingClinic.all)
     }
 
     var body: some View {
@@ -47,7 +47,7 @@ struct VaultGuidedTestingHomeView: View {
             }
         }
         .navigationDestination(isPresented: $showingMap) {
-            VaultClinicsMapView(clinics: clinics, onSelectClinic: onSelectClinic)
+            VaultClinicsMapView(clinics: clinics.filter { !$0.shipsToYou }, onSelectClinic: onSelectClinic)
         }
     }
 
@@ -340,6 +340,7 @@ struct VaultTestBrowse: View {
         .navigationDestination(isPresented: $showsAllCategories) {
             VaultTestCategoriesView(sortOrder: sortOrder, onSelectClinic: onSelectClinic)
         }
+        .task { await LabCatalog.shared.loadIfNeeded() }
         .navigationDestination(item: $selectedCategory) { category in
             VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
         }

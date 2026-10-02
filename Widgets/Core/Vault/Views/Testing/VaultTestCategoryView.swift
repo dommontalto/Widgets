@@ -18,7 +18,7 @@ struct VaultTestCategoryView: View {
     @Namespace private var adZoom
 
     private var clinics: [VaultTestingClinic] {
-        sortOrder.sorted(VaultTestingClinic.demo).filter { $0.offers(category.id) }
+        sortOrder.sorted(VaultTestingClinic.all).filter { $0.offers(category.id) }
     }
 
     var body: some View {
@@ -83,7 +83,7 @@ struct VaultTestCategoryView: View {
                 .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
         }
         .navigationDestination(isPresented: $showingMap) {
-            VaultClinicsMapView(clinics: clinics, onSelectClinic: onSelectClinic)
+            VaultClinicsMapView(clinics: clinics.filter { !$0.shipsToYou }, onSelectClinic: onSelectClinic)
         }
     }
 

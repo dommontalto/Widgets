@@ -9,6 +9,7 @@ struct AddressesView: View {
     @State private var addressBook = BrightAddressBook()
     @State private var isLoading = true
     @State private var isAddingAddress = false
+    @State private var editingAddress: BrightShippingAddress?
 
     var body: some View {
         BrightPageViewV5(title: Constants.title, scrollableTitle: false, horizontalPadding: .spacing0x) {
@@ -35,6 +36,11 @@ struct AddressesView: View {
                 Task { _ = await addressBook.add(address) }
             }
         }
+        .sheet(item: $editingAddress) { address in
+            BrightAddAddressSheetV5(editing: address) { updated in
+                Task { await addressBook.update(updated) }
+            }
+        }
         .task {
             await addressBook.loadIfNeeded()
             isLoading = false
@@ -59,6 +65,12 @@ struct AddressesView: View {
                     row(address)
                         .listRowBackground(Color.defaultCards)
                         .contextMenu {
+                            Button {
+                                editingAddress = address
+                            } label: {
+                                Label(Constants.editTitle, systemImage: "pencil")
+                            }
+
                             if !address.isDefault {
                                 Button {
                                     Task { await addressBook.makeDefault(address) }
@@ -107,6 +119,7 @@ struct AddressesView: View {
     private enum Constants {
         static let title = "Addresses"
         static let addTitle = "Add address"
+        static let editTitle = "Edit"
         static let deleteTitle = "Delete"
         static let makeDefaultTitle = "Make Default"
         static let defaultTitle = "Default"

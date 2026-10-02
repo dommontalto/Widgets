@@ -40,6 +40,18 @@ enum VaultTestAvailability: String, CaseIterable, Identifiable {
     }
 }
 
+enum LabProvider: String, Hashable {
+    case junction
+    case eirly
+
+    var countryCode: String {
+        switch self {
+        case .junction: "US"
+        case .eirly: "AU"
+        }
+    }
+}
+
 struct VaultClinicTest: Identifiable, Hashable {
     let id: String
     let name: String
@@ -48,12 +60,14 @@ struct VaultClinicTest: Identifiable, Hashable {
     let included: [String]
     let availability: [VaultTestAvailability]
     var price: Double = 499.99
+    var currency = "AUD"
+    var labTestId: String?
+    var labProvider: LabProvider?
 
     var type: VaultTestAvailability {
         availability.first ?? .inPerson
     }
 
-    // The AUD chip beside the total carries the currency code.
     var priceText: String {
         "$\(price.formatted(.number.precision(.fractionLength(2))))"
     }
@@ -68,9 +82,10 @@ struct VaultTestingClinic: Identifiable, Hashable {
     let longitude: Double
     let services: [String]
     let tests: [VaultClinicTest]
+    var shipsToYou = false
 
     var distance: String {
-        String(format: "%.1f km away", distanceKm)
+        shipsToYou ? "Ships to you" : String(format: "%.1f km away", distanceKm)
     }
 
     var categories: [VaultTestCategory] {
@@ -115,10 +130,16 @@ struct VaultTestOrder: Identifiable, Hashable {
 }
 
 extension VaultTestOrder {
-    init(test: VaultClinicTest, clinic: VaultTestingClinic, type: VaultTestAvailability, details: BrightCheckoutDetails) {
+    init(
+        number: String = VaultTestOrder.newNumber(),
+        test: VaultClinicTest,
+        clinic: VaultTestingClinic,
+        type: VaultTestAvailability,
+        details: BrightCheckoutDetails
+    ) {
         let fulfilment = type.fulfilment(at: clinic)
         self.init(
-            number: Self.newNumber(),
+            number: number,
             test: test,
             clinic: clinic,
             type: type,
@@ -154,7 +175,7 @@ extension VaultClinicTest {
             systemImage: type.systemImage,
             detail: detail,
             priceText: priceText,
-            currency: "AUD",
+            currency: currency,
             fulfilment: type.fulfilment(at: clinic)
         )
     }

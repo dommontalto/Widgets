@@ -102,8 +102,8 @@ extension VaultTestingClinic {
         demo.first { $0.id == clinicId }?.tests ?? []
     }
 
-    static func count(offering categoryId: String) -> Int {
-        demo.filter { $0.offers(categoryId) }.count
+    @MainActor static func count(offering categoryId: String) -> Int {
+        all.filter { $0.offers(categoryId) }.count
     }
 
     static let demo: [VaultTestingClinic] = [

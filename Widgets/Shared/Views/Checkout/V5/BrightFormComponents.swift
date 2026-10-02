@@ -44,29 +44,30 @@ struct BrightPhoneFieldV5: View {
     @Binding var country: BrightCountry
 
     var body: some View {
-        HStack(spacing: .spacing2x) {
-            BrightText(country.dialCode, size: .body1, color: .lightTextColor, weight: .regular)
-                .monospacedDigit()
+        BrightRowV5(placeholder, color: .defaultSheetModalCards, trailing: {
+            HStack(spacing: .spacing2x) {
+                BrightCountryMenuV5(country: $country) {
+                    HStack(spacing: .spacing1x) {
+                        BrightText(country.flag, size: .body1)
 
-            TextField(placeholder, text: $number)
-                .font(.standard(size: .body1, weight: .regular))
-                .foregroundStyle(Color.textColor)
-                .keyboardType(.phonePad)
-                .dynamicTypeSize(.medium)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                        BrightText(country.dialCode, size: .body1, color: .lightTextColor, weight: .regular)
+                            .monospacedDigit()
 
-            BrightCountryMenuV5(country: $country) {
-                HStack(spacing: .spacing1x) {
-                    BrightText(country.flag, size: .body1)
-
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.standard(size: .body1, weight: .regular))
-                        .foregroundStyle(Color.semiLightTextColor)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.standard(size: .body1, weight: .regular))
+                            .foregroundStyle(Color.semiLightTextColor)
+                    }
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
+
+                BrightTextFieldV5(
+                    "",
+                    editingText: $number,
+                    style: .inline,
+                    keyboardType: .phonePad
+                )
             }
-        }
-        .modifier(BrightFormFieldBackgroundV5())
+        })
     }
 }
 
@@ -132,7 +133,8 @@ private struct BrightFormFieldBackgroundV5: ViewModifier {
     }
 
     private enum Constants {
-        static let height: CGFloat = .spacing8x
+        // Matches BrightTextFieldV5, so form rows and text fields line up.
+        static let height: CGFloat = .rowHeight
     }
 }
 

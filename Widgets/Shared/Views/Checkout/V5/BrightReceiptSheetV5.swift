@@ -23,10 +23,6 @@ struct BrightReceiptSheetV5: View {
             }
             .scrollIndicators(.hidden)
         }
-        .overlay(alignment: .bottom) {
-            BrightPillButton(Constants.trackTitle, systemImage: "box.truck.badge.clock", buttonSize: .large) {}
-                .padding(.bottom, .spacing4x)
-        }
     }
 
     private var header: some View {
@@ -81,7 +77,7 @@ struct BrightReceiptSheetV5: View {
 
                 Spacer(minLength: .spacing2x)
 
-                BrightChipV5(title: Constants.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
+                BrightChipV5(title: order.test.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
 
                 BrightText(order.test.priceText, size: .body1, weight: .regular)
                     .monospacedDigit()
@@ -93,10 +89,17 @@ struct BrightReceiptSheetV5: View {
 
             if let method = order.paymentMethod {
                 HStack(spacing: .spacing2x) {
-                    Image(method.markName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: method.markSize.width, height: method.markSize.height)
+                    Group {
+                        if let markImage = method.markImage {
+                            Image(uiImage: markImage)
+                                .resizable()
+                        } else {
+                            Image(method.markName)
+                                .resizable()
+                        }
+                    }
+                    .scaledToFit()
+                    .frame(width: method.markSize.width, height: method.markSize.height)
 
                     BrightText(maskedNumber(method), size: .body1, weight: .regular)
                         .monospacedDigit()
@@ -128,13 +131,11 @@ struct BrightReceiptSheetV5: View {
 
     private enum Constants {
         static let title = "Receipt"
-        static let trackTitle = "Track Order"
         static let clinicTitle = "Clinic"
         static let testTitle = "Test"
         static let typeTitle = "Type"
         static let totalTitle = "Total"
         static let paymentTitle = "Payment method"
-        static let currency = "AUD"
         static let mask = "••••"
     }
 }

@@ -11,6 +11,8 @@ import SwiftUI
 struct MyOrdersView: View {
     @State private var selectedPage = 0
     @State private var guidedOrders = VaultTestOrder.demo
+    @State private var labOrders = [LabOrder]()
+    @State private var shownLabOrder: LabOrder?
     @State private var receipt: VaultTestOrder?
     @State private var genomeViewModel = GenomeViewModel()
     @State private var orderViewModel = GenomeOrderViewModel()
@@ -37,6 +39,9 @@ struct MyOrdersView: View {
         }
         .sheet(item: $receipt) { order in
             BrightReceiptSheetV5(order: order)
+        }
+        .sheet(item: $shownLabOrder) { order in
+            LabOrderSheet(order: order, onChange: update)
         }
         .overlay(alignment: .topTrailing) {
             if selectedPage == 1 {
@@ -76,11 +81,14 @@ struct MyOrdersView: View {
         ) {
             GenomeOrderSheet(viewModel: orderViewModel)
         }
+        .task {
+            await loadLabOrders()
+        }
     }
 
     @ViewBuilder
     private var guidedTesting: some View {
-        if guidedOrders.isEmpty {
+        if guidedOrders.isEmpty, labOrders.isEmpty {
             BrightPlaceholderViewV5(
                 systemImage: "shippingbox",
                 title: "No orders yet",
@@ -88,6 +96,10 @@ struct MyOrdersView: View {
             )
         } else {
             VStack(spacing: .spacing3x) {
+                ForEach(labOrders) { order in
+                    LabOrderCard(order: order) { shownLabOrder = order }
+                }
+
                 ForEach(guidedOrders) { order in
                     VaultOrderCard(order: order) { receipt = order }
                 }
@@ -141,6 +153,19 @@ struct MyOrdersView: View {
                 .padding(.spacing2x)
         }
         .padding(.spacing3x)
+    }
+
+    private func loadLabOrders() async {
+        do {
+            labOrders = try await LabOrdersMockService().getOrders().filter { $0.status != "awaiting_payment" }
+        } catch {
+            Log("Labs: orders load failed – \(error)")
+        }
+    }
+
+    private func update(_ order: LabOrder) {
+        guard let index = labOrders.firstIndex(where: { $0.id == order.id }) else { return }
+        labOrders[index] = order
     }
 
     private func selectGenomeScenario(_ scenario: GenomeDemoScenario) {

@@ -199,6 +199,7 @@ extension URL {
     }
 
     private static let demoWebsites = [
+        "Junction": "https://www.junction.com",
         "Commons Health Club": "https://thecommonshealthclub.com.au",
         "The Skin Hospital": "https://www.skinhospital.edu.au",
         "The Microbiome Clinic": "https://themicrobiomeclinic.com.au",

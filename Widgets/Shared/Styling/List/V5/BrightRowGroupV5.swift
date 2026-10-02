@@ -57,6 +57,7 @@ struct BrightRowGroupV5<Content: View>: View {
                         if row.id != rows.last?.id {
                             BrightDividerV5(thickness: 1 / displayScale)
                                 .padding(.leading, dividerInset(hasIcon: row.containerValues.brightRowHasIcon))
+                                .padding(.trailing, .spacing3x)
                         }
                     }
                 }
