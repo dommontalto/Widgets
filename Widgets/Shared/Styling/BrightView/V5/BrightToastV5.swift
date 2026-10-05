@@ -153,8 +153,11 @@ private struct BrightToastV5: View {
 
     private func island(safeArea: EdgeInsets) -> some View {
         let hasIsland = safeArea.top >= Constants.islandSafeAreaMin
-        // Without an island the pill drops from just above the screen edge.
-        let drop = hasIsland ? Constants.dropDistance : safeArea.top + Constants.dropDistance
+        // Lands the pill's top on the nav bar's, level with its corner buttons on
+        // every phone. Without an island it drops from just above the screen edge.
+        let drop = hasIsland
+            ? (safeArea.top + Constants.islandHeight) / 2
+            : safeArea.top + Constants.islandHeight
         let offset = drop * progress
 
         return Rectangle()
@@ -221,16 +224,17 @@ private struct BrightToastV5: View {
                     .fill(.clear)
                     .modifier(BrightGlassEffectV5(
                         shape: .roundedRect,
-                        cornerRadius: Constants.pillHeight / 2,
+                        cornerRadius: .cardCornerRadius,
                         tint: .toastGlassTint,
                         interactive: false
                     ))
             }
     }
 
-    // A capsule on one line; a longer message grows downwards and keeps the same ends.
+    // A capsule on one line, since the radius clamps to half its height; a longer
+    // message grows downwards into a card.
     private var pillShape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: Constants.pillHeight / 2, style: .continuous)
+        RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
     }
 
     private func pillContent(isMeasuring: Bool) -> some View {
@@ -415,7 +419,6 @@ private enum Constants {
     static let orbExitScale: CGFloat = 0.6
     static let pillStartScale: CGFloat = 0.7
     static let sideInset: CGFloat = .spacing12x
-    static let dropDistance: CGFloat = 45
     static let blurRadius: CGFloat = 25
     static let alphaThreshold: Float = 0.5
     static let windowHeight: CGFloat = 360
