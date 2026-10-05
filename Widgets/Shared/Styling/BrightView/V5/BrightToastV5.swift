@@ -59,18 +59,25 @@ final class BrightToastPresenterV5 {
         let followsLoading = self.message?.kind == .loading
         self.message = message
 
-        let hold: Duration
+        let minimumHold: Duration
         switch message.kind {
         case .loading: return
-        case .success: hold = followsLoading ? Constants.successAfterLoadingHold : Constants.hold
-        case .error: hold = Constants.hold
+        case .success: minimumHold = followsLoading ? Constants.successAfterLoadingHold : Constants.hold
+        case .error: minimumHold = Constants.hold
         }
+        let hold = min(max(minimumHold, readingTime(for: message.text)), Constants.maxHold)
 
         dismissTask = Task { [weak self] in
             try? await Task.sleep(for: hold)
             guard !Task.isCancelled else { return }
             self?.message = nil
         }
+    }
+
+    // Long messages stay up long enough to read at a relaxed pace.
+    private func readingTime(for text: String) -> Duration {
+        let words = text.split(whereSeparator: \.isWhitespace).count
+        return Constants.readingLeadIn + Constants.readingTimePerWord * words
     }
 }
 
@@ -118,8 +125,8 @@ private struct BrightToastV5: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
-                // Lays the label out at its natural size, wrapping to two lines
-                // at most, so the pill can open to fit without the text reflowing.
+                // Lays the label out at its natural size, wrapping as many lines
+                // as it needs, so the pill can open to fit without the text reflowing.
                 // A blank stands in for the icon so the orb doesn't animate and
                 // the tick doesn't buzz twice.
                 pillContent(isMeasuring: true)
@@ -129,7 +136,8 @@ private struct BrightToastV5: View {
                     .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
                         withAnimation(.brightBouncy) { labelSize = size }
                     }
-                    .frame(maxWidth: proxy.size.width - CGFloat.spacing3x * 2)
+                    // Clear of the nav bar's corner buttons either side.
+                    .frame(maxWidth: proxy.size.width - Constants.sideInset * 2)
 
                 if shown != nil {
                     island(safeArea: proxy.safeAreaInsets)
@@ -220,7 +228,7 @@ private struct BrightToastV5: View {
             }
     }
 
-    // A capsule on one line; a two-line message keeps the same ends.
+    // A capsule on one line; a longer message grows downwards and keeps the same ends.
     private var pillShape: RoundedRectangle {
         RoundedRectangle(cornerRadius: Constants.pillHeight / 2, style: .continuous)
     }
@@ -235,7 +243,6 @@ private struct BrightToastV5: View {
             .frame(width: Constants.iconSize, height: Constants.iconSize)
 
             BrightText(shown?.text ?? "", size: .subheading, color: .defaultWhite, weight: .regular)
-                .lineLimit(Constants.maxLines)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
                 .brightShimmerV5(isActive: kind == .loading)
@@ -254,6 +261,7 @@ private struct BrightToastV5: View {
             BrightCrossV5(isCrossed: isRevealed && kind == .error)
                 .opacity(kind == .error ? .opaque : .zero)
             BrightSolvingOrbV5(size: Constants.orbSize)
+                .environment(\.colorScheme, .dark)
                 .scaleEffect(kind == .loading ? 1 : Constants.orbExitScale)
                 .opacity(kind == .loading ? .opaque : .zero)
         }
@@ -401,18 +409,21 @@ private enum Constants {
     static let islandWidth: CGFloat = 100
     static let islandHeight: CGFloat = 33
     static let islandInset: CGFloat = 5
-    static let pillHeight: CGFloat = 48
+    static let pillHeight: CGFloat = 44
     static let orbSize: CGFloat = 28
     static let iconSize: CGFloat = 30
     static let orbExitScale: CGFloat = 0.6
     static let pillStartScale: CGFloat = 0.7
-    static let maxLines = 2
+    static let sideInset: CGFloat = .spacing12x
     static let dropDistance: CGFloat = 45
     static let blurRadius: CGFloat = 25
     static let alphaThreshold: Float = 0.5
-    static let windowHeight: CGFloat = 240
+    static let windowHeight: CGFloat = 360
     static let hold: Duration = .seconds(3)
     static let successAfterLoadingHold: Duration = .seconds(1.5)
+    static let readingLeadIn: Duration = .seconds(1)
+    static let readingTimePerWord: Duration = .milliseconds(300)
+    static let maxHold: Duration = .seconds(10)
     static let drop: Animation = .smooth(duration: 0.45)
     static let retract: Animation = .smooth(duration: 0.4)
 }

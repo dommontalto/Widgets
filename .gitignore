@@ -1,3 +1,6 @@
 
 # Carries the Mapbox access token, so it stays out of the repo.
 Info.plist
+
+build/
+DerivedData/

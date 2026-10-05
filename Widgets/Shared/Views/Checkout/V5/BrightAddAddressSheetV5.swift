@@ -5,6 +5,7 @@
 //  Created by Dom Montalto on 18/9/2026.
 //
 
+import MapKit
 import SwiftUI
 
 struct BrightAddAddressSheetV5: View {
@@ -29,6 +30,8 @@ struct BrightAddAddressSheetV5: View {
     @State private var isDefault = false
     @State private var nudges: [RequiredField: Int] = [:]
     @State private var didPrefill = false
+    @State private var addressSearch = AddressSearchCompleter()
+    @State private var pickedStreet: String?
 
     private enum RequiredField: CaseIterable {
         case firstName
@@ -96,6 +99,10 @@ struct BrightAddAddressSheetV5: View {
                     .brightWiggleV5(trigger: nudges[.street, default: 0])
                     .padding(.top, .spacing2x)
 
+                    if !addressSearch.suggestions.isEmpty {
+                        suggestionList
+                    }
+
                     BrightTextFieldV5(
                         Constants.unitPlaceholder,
                         editingText: $unit,
@@ -147,6 +154,69 @@ struct BrightAddAddressSheetV5: View {
                 .padding(.bottom, .spacing4x)
         }
         .onAppear(perform: prefill)
+        .onChange(of: street) { _, query in
+            guard query != pickedStreet else { return }
+            addressSearch.update(query: query)
+        }
+        .animation(.brightSnappy, value: addressSearch.suggestions)
+    }
+
+    private var suggestionList: some View {
+        VStack(spacing: .spacing0x) {
+            ForEach(Array(addressSearch.suggestions.enumerated()), id: \.offset) { offset, suggestion in
+                suggestionRow(suggestion)
+
+                if offset != addressSearch.suggestions.count - 1 {
+                    BrightDividerV5()
+                        .padding(.horizontal, .spacing3x)
+                }
+            }
+        }
+        .padding(.vertical, .spacing1x)
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
+        .transition(.blurReplace)
+    }
+
+    private func suggestionRow(_ suggestion: MKLocalSearchCompletion) -> some View {
+        Button {
+            select(suggestion)
+        } label: {
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                BrightText(suggestion.title, size: .body1)
+                    .lineLimit(1)
+
+                if !suggestion.subtitle.isEmpty {
+                    BrightText(suggestion.subtitle, size: .body1, color: .lightTextColor)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, .spacing3x)
+            .padding(.vertical, .spacing105x)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func select(_ suggestion: MKLocalSearchCompletion) {
+        addressSearch.clear()
+        Task {
+            guard let item = try? await MKLocalSearch(request: MKLocalSearch.Request(completion: suggestion))
+                .start().mapItems.first else { return }
+            fill(from: item.placemark, fallbackStreet: suggestion.title)
+        }
+    }
+
+    private func fill(from placemark: MKPlacemark, fallbackStreet: String) {
+        let line = [placemark.subThoroughfare, placemark.thoroughfare].compactMap(\.self).joined(separator: " ")
+        pickedStreet = line.isEmpty ? fallbackStreet : line
+        street = pickedStreet ?? ""
+        suburb = placemark.locality ?? suburb
+        state = placemark.administrativeArea ?? state
+        postcode = placemark.postalCode ?? postcode
+        if let code = placemark.isoCountryCode, let match = BrightCountry.all.first(where: { $0.code == code }) {
+            country = match
+        }
     }
 
     private func prefill() {
@@ -157,6 +227,7 @@ struct BrightAddAddressSheetV5: View {
         firstName = names.first ?? ""
         lastName = names.count > 1 ? names[1] : ""
         street = editing.line1
+        pickedStreet = editing.line1
         unit = editing.line2 ?? ""
         suburb = editing.city
         state = editing.state ?? ""
@@ -228,6 +299,41 @@ struct BrightAddAddressSheetV5: View {
         static let statePlaceholder = "State/territory"
         static let postcodePlaceholder = "Postcode"
         static let phonePlaceholder = "Phone"
+    }
+}
+
+@Observable
+private final class AddressSearchCompleter: NSObject, MKLocalSearchCompleterDelegate {
+    private let completer = MKLocalSearchCompleter()
+
+    var suggestions: [MKLocalSearchCompletion] = []
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = .address
+    }
+
+    func update(query: String) {
+        let fragment = query.trimmingCharacters(in: .whitespaces)
+        guard !fragment.isEmpty else {
+            clear()
+            return
+        }
+        completer.queryFragment = fragment
+    }
+
+    func clear() {
+        completer.cancel()
+        suggestions = []
+    }
+
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        suggestions = Array(completer.results.prefix(5))
+    }
+
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        suggestions = []
     }
 }
 

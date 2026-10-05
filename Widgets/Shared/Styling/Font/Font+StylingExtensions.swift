@@ -9,11 +9,13 @@ import SwiftUI
 
 extension Font {
     static func standard(size: FontSizes, weight: Font.Weight) -> Font {
-        Font.custom(sfCompactRoundedName(for: weight), size: size.rawValue)
+        .system(size: size.rawValue, weight: standardWeight(weight), design: .rounded)
     }
 
     static func standardUIFont(size: FontSizes, weight: Font.Weight = .regular) -> UIFont? {
-        UIFont(name: sfCompactRoundedName(for: weight), size: size.rawValue)
+        let font = UIFont.systemFont(ofSize: size.rawValue, weight: standardUIWeight(weight))
+        guard let rounded = font.fontDescriptor.withDesign(.rounded) else { return font }
+        return UIFont(descriptor: rounded, size: size.rawValue)
     }
 
     // Matches the iOS app: the names aren't bundled there either, so both
@@ -26,11 +28,18 @@ extension Font {
         }
     }
 
-    private static func sfCompactRoundedName(for weight: Font.Weight) -> String {
+    private static func standardWeight(_ weight: Font.Weight) -> Font.Weight {
         switch weight {
-        case .light: "SFCompactRounded-Light"
-        case .medium: "SFCompactRounded-Medium"
-        default: "SFCompactRounded-Regular"
+        case .light, .medium: weight
+        default: .regular
+        }
+    }
+
+    private static func standardUIWeight(_ weight: Font.Weight) -> UIFont.Weight {
+        switch weight {
+        case .light: .light
+        case .medium: .medium
+        default: .regular
         }
     }
 }

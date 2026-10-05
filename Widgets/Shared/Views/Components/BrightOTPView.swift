@@ -418,7 +418,7 @@ extension BrightOTPTextField {
         delegate = implementation
         implementation.implementationDelegate = self
         becomeFirstResponder()
-        font = UIFont(name: "SFCompactRounded-Light", size: 30)
+        font = Font.standardUIFont(size: .standout1, weight: .light)
     }
 
     private func createLabelsStackView(with count: Int) -> UIStackView {
@@ -443,7 +443,7 @@ extension BrightOTPTextField {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textAlignment = .center
         label.textColor = otpTextColor
-        label.font = UIFont(name: "SFCompactRounded-Light", size: 30)
+        label.font = Font.standardUIFont(size: .standout1, weight: .light)
         // label.font = otpFont
         label.isUserInteractionEnabled = true
         label.layer.masksToBounds = true

@@ -47,14 +47,15 @@ struct LighthouseSettingsSheet: View {
                                 isOn: $sharesCycleData
                             )
                         }
-
-                        actions
                     }
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing4x)
                 }
             }
         )
+        .brightBottomButtonV5 {
+            BrightPillButton(Constants.deleteChatsTitle, color: .defaultRed, buttonSize: .large) {}
+        }
     }
 
     private var header: some View {
@@ -159,19 +160,6 @@ struct LighthouseSettingsSheet: View {
         .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
     }
 
-    private var actions: some View {
-        BrightDuelPillButtonV5(
-            Constants.deleteChatsTitle,
-            Constants.resetTitle,
-            leadingSystemImage: "bubble",
-            leadingColor: .defaultRed,
-            trailingColor: .defaultRed,
-            onLeadingTap: {},
-            onTrailingTap: {}
-        )
-        .padding(.top, .spacing2x)
-    }
-
     private enum ChatHistory: CaseIterable, Identifiable {
         case hour
         case day
@@ -208,7 +196,6 @@ struct LighthouseSettingsSheet: View {
         static let cycleDataTitle = "Menstrual Cycle Data"
         static let cycleDataDetail = "Allow access to Menstrual cycle logs and data."
         static let deleteChatsTitle = "Delete Chats"
-        static let resetTitle = "Reset Lighthouse"
     }
 }
 
