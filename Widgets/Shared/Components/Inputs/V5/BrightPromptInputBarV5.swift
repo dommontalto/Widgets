@@ -122,6 +122,7 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
                 attachMenu
 
                 actionButton
+                    .padding(.trailing, .spacing1x)
             }
         }
         .animation(.brightBouncy, value: isBusy)
