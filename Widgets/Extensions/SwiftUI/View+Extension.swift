@@ -47,22 +47,6 @@ extension View {
             .overlay(roundedRect.strokeBorder(content, lineWidth: width))
     }
 
-    func cornerRadius(_ radius: CGFloat, corner: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corner))
-    }
-
-    func roundedCorners() -> some View {
-        cornerRadius(.cardCornerRadius, corner: .allCorners)
-    }
-
-    func roundedTopCorners(_ radius: CGFloat = 10) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: [.topLeft, .topRight]))
-    }
-
-    func roundedCorners(withRadius: CGFloat) -> some View {
-        cornerRadius(withRadius, corner: .allCorners)
-    }
-
     func dismissKeyboardOnTap() -> some View {
         simultaneousGesture(TapGesture().onEnded { _ in
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
