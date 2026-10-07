@@ -42,6 +42,7 @@ struct HealthWidgetGrid: View {
     @Bindable var editor: HealthWidgetEditor
 
     @State private var containerWidth: CGFloat = 0
+    @State private var viewportHeight: CGFloat = 0
     @State private var jigglePhase = false
 
     private var layout: HealthWidgetLayout {
@@ -66,6 +67,11 @@ struct HealthWidgetGrid: View {
             alignment: .top
         )
         .onGeometryChange(for: CGFloat.self, of: \.size.width) { containerWidth = $0 }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.bounds(of: .scrollView)?.height ?? 0
+        } action: {
+            viewportHeight = $0
+        }
         .task(id: isJiggling) {
             guard isJiggling else {
                 withAnimation(.brightEaseInOut) {
@@ -122,7 +128,7 @@ struct HealthWidgetGrid: View {
     private func dragGesture(for widget: HealthWidgetItem, cellSize: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: Constants.dragMinimumDistance, coordinateSpace: .global)
             .onChanged { value in
-                editor.dragChanged(value, widget: widget, cellSize: cellSize, viewportHeight: UIScreen.main.bounds.height)
+                editor.dragChanged(value, widget: widget, cellSize: cellSize, viewportHeight: viewportHeight)
             }
             .onEnded { _ in
                 editor.dragEnded(widget: widget, cellSize: cellSize)

@@ -128,9 +128,13 @@ private struct WidgetOptions: View {
         GeometryReader { geometry in
             let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: geometry.size.width)
             let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
-            let previewHeight = min(
-                frame.height + .spacing4x * 2 + Constants.indicatorHeight,
-                geometry.size.height - Constants.minimumPanelHeight
+            // Floored at zero: the first layout pass can measure the sheet as zero tall.
+            let previewHeight = max(
+                min(
+                    frame.height + .spacing4x * 2 + Constants.indicatorHeight,
+                    geometry.size.height - Constants.minimumPanelHeight
+                ),
+                0
             )
 
             VStack(spacing: .spacing0x) {
