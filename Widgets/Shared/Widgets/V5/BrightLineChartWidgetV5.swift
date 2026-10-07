@@ -68,7 +68,7 @@ struct BrightLineChartWidgetV5: View {
         }
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .modifier(BrightCardModifierV5())
+        .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .onChange(of: allowsSelection) { _, allows in
             if !allows {
                 selectedDate = nil
@@ -259,8 +259,14 @@ struct BrightLineChartWidgetV5: View {
                     x: .value("Marker", marked.date),
                     y: .value(unit, marked.value)
                 )
-                .foregroundStyle(Color.textColor)
-                .symbolSize(Constants.pointSize)
+                .symbol {
+                    // The card-coloured ring cuts the dot out of the line and marker behind it.
+                    Circle()
+                        .fill(Color.textColor)
+                        .frame(width: Constants.pointDiameter, height: Constants.pointDiameter)
+                        .frame(width: Constants.pointRingDiameter, height: Constants.pointRingDiameter)
+                        .background(Circle().fill(Color.defaultHomeCards))
+                }
             }
         }
         .chartXScale(domain: start...end)
@@ -468,7 +474,8 @@ struct BrightLineChartWidgetV5: View {
         static let axisLabelWidth: CGFloat = 26
         static let lineWidth: CGFloat = 1
         static let hairline: CGFloat = 0.5
-        static let pointSize: CGFloat = 64
+        static let pointDiameter: CGFloat = 8
+        static let pointRingDiameter: CGFloat = 14
         static let heldLabelWidth: CGFloat = 60
         static let tickCount = 6
         static let startTickHeight: CGFloat = 7
