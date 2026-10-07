@@ -80,6 +80,8 @@ struct HealthView: View {
                     editor.layout.add($0)
                 } onReset: {
                     editor.layout.reset()
+                } onAddAll: {
+                    editor.layout.addAll()
                 }
                 .presentationDragIndicator(.hidden)
                 .presentationContentInteraction(.scrolls)

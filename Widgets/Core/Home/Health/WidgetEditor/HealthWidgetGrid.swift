@@ -25,7 +25,7 @@ struct HealthWidgetView: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
-        case (.heartRate, .leadingNumber):
+        case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
                 title: widget.kind.title,
                 systemImage: widget.kind.systemImage,
@@ -34,7 +34,48 @@ struct HealthWidgetView: View {
                 unit: "BPM",
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
+        case (.intake, _):
+            barChart(HealthWidgetDemo.intake, subtitle: intakeSubtitle)
+        case (.activity, .activeEnergyBars):
+            barChart(HealthWidgetDemo.activeEnergy)
+        case (.activity, .stepBars):
+            barChart(HealthWidgetDemo.steps)
+        case (.activity, _):
+            barChart(HealthWidgetDemo.totalEnergy)
         }
+    }
+
+    // Small and medium weeks lead with the average; large leads with today and lists the week below.
+    private func barChart(_ metric: HealthWidgetDemo.BarMetric, subtitle: String? = nil) -> some View {
+        let range = widget.barRange
+        let isLarge = widget.size == .large
+        let headline: BrightBarChartWidgetV5.Headline = range == .week ? (isLarge ? .current : .average) : .total
+
+        return BrightBarChartWidgetV5(
+            title: metric.title,
+            systemImage: metric.systemImage,
+            tint: metric.tint,
+            unit: metric.unit,
+            subtitle: subtitle ?? "Latest: \(HealthWidgetDemo.currentHourRange)",
+            range: range,
+            bars: metric.bars(for: range),
+            fill: metric.fill(for: range),
+            target: metric.target(for: range),
+            headline: headline,
+            comparison: headline == .average ? nil : "\(Int(metric.yesterday).formatted()) Yest.",
+            summary: isLarge ? metric.summary : nil,
+            size: widget.size
+        )
+    }
+
+    // The week names the latest meal; a day counts down what's left of the goal.
+    private var intakeSubtitle: String {
+        if widget.barRange == .week {
+            let meal = HealthWidgetDemo.latestMeal
+            return "Latest: \(Int(meal.calories)) Cal, \(meal.date.formatted(.brightTimestamp))"
+        }
+        let today = HealthWidgetDemo.intake.bars(for: .today).compactMap(\.value).reduce(0, +)
+        return "\(Int(max((HealthWidgetDemo.intake.dayTarget ?? 0) - today, 0)).formatted()) Remaining"
     }
 }
 

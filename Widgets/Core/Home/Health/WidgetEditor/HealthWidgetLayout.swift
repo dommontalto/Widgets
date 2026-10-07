@@ -9,12 +9,16 @@ import SwiftUI
 
 enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case heartRate
+    case intake
+    case activity
 
     var id: Self { self }
 
     var title: String {
         switch self {
         case .heartRate: "Heart Rate"
+        case .intake: "Intake"
+        case .activity: "Total Energy"
         }
     }
 
@@ -22,24 +26,32 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     var rowTitle: String {
         switch self {
         case .heartRate: "Heart"
+        case .intake: "Intake"
+        case .activity: "Activity"
         }
     }
 
     var systemImage: String {
         switch self {
         case .heartRate: "heart.fill"
+        case .intake: "arrow.right"
+        case .activity: "flame.fill"
         }
     }
 
     var tint: Color {
         switch self {
         case .heartRate: .defaultRed
+        case .intake: .defaultGreen
+        case .activity: .defaultOrange
         }
     }
 
     var styles: [HealthWidgetStyle] {
         switch self {
-        case .heartRate: HealthWidgetStyle.allCases
+        case .heartRate: [.lineChart, .leadingNumber]
+        case .intake: [.bars]
+        case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
     }
 }
@@ -48,18 +60,26 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
 enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case lineChart
     case leadingNumber
+    // The kind's main measure as bars: intake, or total energy for activity.
+    case bars
+    case activeEnergyBars
+    case stepBars
 
     var id: Self { self }
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
-        case .lineChart: BrightWidgetSizeV5.allCases
         case .leadingNumber: [.small, .medium]
+        default: BrightWidgetSizeV5.allCases
         }
     }
 
     var hasWindow: Bool {
         self == .lineChart
+    }
+
+    var hasBarRange: Bool {
+        self == .bars || self == .activeEnergyBars || self == .stepBars
     }
 }
 
@@ -69,6 +89,7 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
     var style = HealthWidgetStyle.lineChart
     var size: BrightWidgetSizeV5
     var window = BrightLineChartWidgetV5.Window.rolling1h
+    var barRange = BrightBarChartWidgetV5.Range.today
 }
 
 struct HealthGridPosition: Equatable, Hashable {
@@ -120,6 +141,18 @@ final class HealthWidgetLayout {
 
     func add(_ widget: HealthWidgetItem) {
         widgets.append(widget)
+        commit()
+    }
+
+    // Every kind in every style at every size it comes in, for checking them all at once.
+    func addAll() {
+        for kind in HealthWidgetKind.allCases {
+            for style in kind.styles {
+                for size in style.sizes {
+                    widgets.append(HealthWidgetItem(kind: kind, style: style, size: size))
+                }
+            }
+        }
         commit()
     }
 

@@ -10,6 +10,7 @@ import SwiftUI
 struct AddWidgetSheet: View {
     let onAdd: (HealthWidgetItem) -> Void
     let onReset: () -> Void
+    var onAddAll: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -32,6 +33,16 @@ struct AddWidgetSheet: View {
                             BrightHaptic.medium.play()
                             isConfirmingReset = true
                         }
+
+                        #if DEBUG
+                        if let onAddAll {
+                            BrightRowV5("Add all widgets", icon: .symbol("square.grid.2x2", tint: .defaultGreen), trailing: .none) {
+                                BrightHaptic.medium.play()
+                                onAddAll()
+                                dismiss()
+                            }
+                        }
+                        #endif
                     }
                 }
                 .padding(.vertical, .spacing3x)
@@ -93,12 +104,12 @@ private struct ChooseWidgetSizePage: View {
 
     init(kind: HealthWidgetKind, onAdd: @escaping (HealthWidgetItem) -> Void) {
         self.onAdd = onAdd
-        _widget = State(initialValue: HealthWidgetItem(kind: kind, size: .small))
+        _widget = State(initialValue: HealthWidgetItem(kind: kind, style: kind.styles.first ?? .lineChart, size: .small))
     }
 
     var body: some View {
         BrightPageViewV5(
-            title: widget.kind.title,
+            title: widget.kind.rowTitle,
             scrollableTitle: false,
             horizontalPadding: .spacing0x,
             backgroundColor: .defaultSheetBackground
@@ -148,6 +159,7 @@ private struct WidgetOptions: View {
         }
         .animation(.brightBouncy, value: widget.size)
         .animation(.brightEaseInOut, value: widget.window)
+        .animation(.brightEaseInOut, value: widget.barRange)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -190,7 +202,7 @@ private struct WidgetOptions: View {
         let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
 
         return HealthWidgetView(widget: shown)
-            .id(shown.window)
+            .id("\(shown.window)-\(shown.barRange)")
             .transition(.blurReplace)
             .frame(width: frame.width, height: frame.height)
             .scaleEffect(scale)
@@ -234,6 +246,15 @@ private struct WidgetOptions: View {
                 windowGroup("Rolling", windows: [.rolling1h, .rolling6h, .rolling12h])
 
                 windowGroup("Fixed", windows: [.fixed6h, .fixed12h])
+            } else if widget.style.hasBarRange {
+                BrightRowGroupV5(header: "Range") {
+                    ForEach(BrightBarChartWidgetV5.Range.allCases) { option in
+                        BrightRowV5(option.title, trailing: .tick(option == widget.barRange)) {
+                            BrightHaptic.light.play()
+                            widget.barRange = option
+                        }
+                    }
+                }
             } else {
                 BrightPlaceholderViewV5(
                     systemImage: "slider.horizontal.3",
