@@ -146,7 +146,7 @@ struct LighthouseThinkingInline: View {
                         .font(.standard(size: .body1, weight: .light))
                         .foregroundStyle(Color.semiLightTextColor)
                         .frame(width: Constants.column, height: Constants.column)
-                        .transition(.symbolEffect(.drawOn))
+                        .drawOnTransition()
 
                     BrightText(step.title, size: .body1, color: .semiLightTextColor)
                         .lineLimit(1)
@@ -362,4 +362,15 @@ private struct ThoughtConnector: View {
             try? await Task.sleep(for: .seconds(10))
             withAnimation(.brightSnappy) { thoughtSeconds = 10 }
         }
+}
+
+private extension View {
+    @ViewBuilder
+    func drawOnTransition() -> some View {
+        if #available(iOS 26, *) {
+            transition(.symbolEffect(.drawOn))
+        } else {
+            transition(.opacity)
+        }
+    }
 }

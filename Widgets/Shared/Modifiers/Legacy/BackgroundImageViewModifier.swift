@@ -16,10 +16,7 @@ struct BackgroundImageViewModifier: ViewModifier {
                 Image(image)
                     .resizable()
                     .scaledToFill()
-                    .frame(
-                        width: UIScreen.main.bounds.width,
-                        height: UIScreen.main.bounds.height
-                    )
+                    .containerRelativeFrame([.horizontal, .vertical])
                     .ignoresSafeArea()
             )
     }

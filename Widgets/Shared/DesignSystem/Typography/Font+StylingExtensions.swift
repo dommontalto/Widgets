@@ -18,13 +18,15 @@ extension Font {
         return UIFont(descriptor: rounded, size: size.rawValue)
     }
 
-    // Matches the iOS app: the names aren't bundled there either, so both
-    // apps take the same fallback and draw symbols at the same size.
     static func standardSFPro(size: FontSizes, weight: Font.Weight) -> Font {
-        switch weight {
-        case .light: Font.custom("SF-Pro-Text-Light", size: size.rawValue)
-        case .medium: Font.custom("SF-Pro-Text-Medium", size: size.rawValue)
-        default: Font.custom("SF-Pro-Text-Regular", size: size.rawValue)
+        if weight == .regular {
+            Font.custom("SF-Pro-Text-Regular", size: size.rawValue)
+        } else if weight == .light {
+            Font.custom("SF-Pro-Text-Light", size: size.rawValue)
+        } else if weight == .medium {
+            Font.custom("SF-Pro-Text-Medium", size: size.rawValue)
+        } else {
+            Font.custom("SF-Pro-Text-Regular", size: size.rawValue)
         }
     }
 

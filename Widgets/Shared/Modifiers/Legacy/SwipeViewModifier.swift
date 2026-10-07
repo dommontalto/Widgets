@@ -26,7 +26,8 @@ public struct SwipeViewModifier: ViewModifier {
     //   - settings: settings. can be omitted in which case the settings struct default values apply.
 
     var id: String
-    var cellWidth: CGFloat = UIScreen.main.bounds.width
+    // Measured from the cell when omitted or infinite.
+    var cellWidth: CGFloat?
     var leadingSideGroup: [SwipeViewModifierActionItem] = []
     var trailingSideGroup: [SwipeViewModifierActionItem] = []
     @Binding var currentUserInteractionCellID: String?
@@ -34,12 +35,17 @@ public struct SwipeViewModifier: ViewModifier {
     var cornerRadius: CGFloat = 0
 
     @State private var offsetX: CGFloat = 0
+    @State private var measuredWidth: CGFloat = 0
 
     @State private var hapticFeedbackOccurred = false
     @State private var openSideLock: SwipeViewModifierGroupSide?
 
     @Binding var shouldHideActions: Bool
     public var trailingRevealed: (() -> Void)?
+
+    private var width: CGFloat {
+        if let cellWidth, cellWidth.isFinite { cellWidth } else { measuredWidth }
+    }
 
     public func body(content: Content) -> some View {
         ZStack {
@@ -65,6 +71,7 @@ public struct SwipeViewModifier: ViewModifier {
         }
         .edgesIgnoringSafeArea(.horizontal)
         .clipped()
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { measuredWidth = $0 }
         .onChange(of: currentUserInteractionCellID) {
             if let currentDragCellID = currentUserInteractionCellID,
                currentDragCellID != id, openSideLock != nil {
@@ -178,7 +185,7 @@ public struct SwipeViewModifier: ViewModifier {
     }
 
     func dragOnEnded(value: DragGesture.Value) {
-        let swipeOutTriggerValue = cellWidth * settings.swipeOutTriggerRatio
+        let swipeOutTriggerValue = width * settings.swipeOutTriggerRatio
 
         if offsetX == 0 {
             openSideLock = nil
@@ -241,7 +248,7 @@ public struct SwipeViewModifier: ViewModifier {
 
     func swipeOutAction(item: SwipeViewModifierActionItem, sideFactor: CGFloat) {
         if item.swipeOutIsDestructive {
-            let swipeOutWidth = cellWidth + 10
+            let swipeOutWidth = width + 10
             setOffsetX(value: swipeOutWidth * sideFactor)
             openSideLock = nil
         } else {
@@ -278,7 +285,7 @@ public struct SwipeViewModifier: ViewModifier {
         side: SwipeViewModifierGroupSide
     ) -> CGFloat {
         let dynamicButtonWidth = dynamicButtonWidth(item: item, itemCount: itemGroup.count, side: side)
-        let triggerValue = cellWidth * settings.swipeOutTriggerRatio
+        let triggerValue = width * settings.swipeOutTriggerRatio
         let swipeOutActionCondition = side == .leading ? offsetX > triggerValue : offsetX < -triggerValue
 
         if item.swipeOutAction, swipeOutActionCondition {
@@ -306,7 +313,7 @@ public struct SwipeViewModifier: ViewModifier {
         hasSwipeOut: Bool
     ) -> Bool {
         if hasSwipeOut == false { return false }
-        let triggerValue = cellWidth * settings.swipeOutTriggerRatio
+        let triggerValue = width * settings.swipeOutTriggerRatio
         return (side == .trailing && offsetX < -triggerValue) || (side == .leading && offsetX > triggerValue)
     }
 

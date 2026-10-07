@@ -18,7 +18,7 @@ public struct BrightOTPView: View {
     // An Intger value to set the number of the slots of the `BrightOTPView`
     private let slotsCount: Int
     // A CGFloat value to set a custom width to the `BrightOTPView`
-    private let width: CGFloat
+    private let width: CGFloat?
     // A CGFloat value to set a custom height to the `BrightOTPView`
     private let height: CGFloat
     // The default character placed in the text field slots
@@ -80,7 +80,7 @@ public struct BrightOTPView: View {
     public init(
         text: Binding<String>,
         slotsCount: Int = 6,
-        width: CGFloat = UIScreen.main.bounds.width * 0.8,
+        width: CGFloat? = nil,
         height: CGFloat = 40,
         otpDefaultCharacter: String = "",
         otpBackgroundColor: UIColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1),
@@ -128,7 +128,9 @@ public struct BrightOTPView: View {
                 otpView
             }
         } //: ZStack
-        .frame(width: width, height: height)
+        // Without a width it takes 80% of its container.
+        .containerRelativeFrame(.horizontal) { length, _ in width ?? length * 0.8 }
+        .frame(height: height)
         .onChange(of: text) { _, newValue in
             guard enableClearOTP else { return }
             if newValue.isEmpty {
@@ -298,7 +300,7 @@ class BrightOTPTextFieldSwiftUI: BrightOTPTextField {
         otpFont: UIFont,
         isSecureTextEntry: Bool
     ) {
-        super.init(frame: .init(origin: .zero, size: .init(width: UIScreen.main.bounds.width * 0.8, height: 40)))
+        super.init(frame: .zero)
 
         self.otpDefaultCharacter = otpDefaultCharacter
         self.otpBackgroundColor = otpBackgroundColor

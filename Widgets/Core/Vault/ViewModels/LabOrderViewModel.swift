@@ -41,12 +41,14 @@ final class LabOrderViewModel {
     init(
         test: VaultClinicTest,
         clinic: VaultTestingClinic,
-        service: LabOrdersServiceProtocol = LabOrdersMockService(),
+        // Optional because default arguments are evaluated off the main actor,
+        // where the main-actor mock service can't be created.
+        service: LabOrdersServiceProtocol? = nil,
         onOrder: @escaping (VaultTestOrder) -> Void
     ) {
         self.test = test
         self.clinic = clinic
-        self.service = service
+        self.service = service ?? LabOrdersMockService()
         self.onOrder = onOrder
 
         phoneCountry = Self.country(for: provider)

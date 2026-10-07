@@ -45,7 +45,6 @@ Widgets/
 │   ├── Profile/            — addresses, cards, orders, side menu
 │   └── Vault/              — Demo, Models, Services, ViewModels, Views/Testing
 ├── Shared/
-│   ├── BrightDateFormatting.swift
 │   ├── Components/         — Buttons, Calendar, Cards, Charts, Chat, Feedback, Inputs,
 │   │                         Layout, Lists, Media, Navigation, Pages (each split Legacy/ + V5/)
 │   ├── DesignSystem/
@@ -60,7 +59,7 @@ Widgets/
 │   ├── System/             — camera, barcode scanner, dictation, Safari
 │   └── Widgets/            — V5/ for new widgets (reusable at the root, one-offs in a
 │                             feature subfolder); Common, DailyLog, Explore, Health are older
-├── Extensions/
+├── Extensions/             — Date+FormatStyle (date styles), Animation+Extensions (animation tokens)
 ├── Resources/              — Assets.xcassets, AppIcon
 └── Utilities/              — Constants, Helpers (Glass, Managers, Others)
 ```
@@ -215,7 +214,7 @@ previous years carry one (`4 Aug 2025`), and standalone values say `Today` /
 `formatted(date: .abbreviated, time: .shortened)`, ad-hoc `.dateTime` chains — always
 print the year, so never use them for display text, even as prototype filler: they get
 ported to the main app verbatim and ship the wrong format. Use the styles in
-`Shared/BrightDateFormatting.swift` (`.brightTimestamp`, `.brightDate`, `.brightTime`,
+`Extensions/Date+FormatStyle.swift` (`.brightTimestamp`, `.brightDate`, `.brightTime`,
 `brightTimeRange`); if a design needs a shape the file can't produce yet, hard-code the
 correctly-shaped string (e.g. `"4 Aug, 8:05 PM"`) rather than reaching for a stock
 preset. The main app's `Date+FormatStyle.swift` is the source of truth for every shape.

@@ -8,6 +8,14 @@
 import Foundation
 
 extension Date {
+    var isToday: Bool {
+        Calendar.current.isDateInToday(self)
+    }
+
+    func isSameDay(as date: Date) -> Bool {
+        Calendar.current.isDate(self, equalTo: date, toGranularity: .day)
+    }
+
     static func convertStandardDateToDisplayString(dateString: String) -> String {
         guard let date = Date(brightISOZoned: dateString) else { return "" }
         return "\(date.formatted(.brightSlashDate)) \(date.formatted(.brightTime))"

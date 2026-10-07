@@ -1,31 +1,26 @@
 //
-//  BrightDateFormatting.swift
+//  Date+FormatStyle.swift
 //  Widgets
 //
-//  Created by Dom Montalto on 27/7/2026.
+//  Created by Dom Montalto on 1/8/2026.
 //
 
 import Foundation
-
-extension String {
-    func isoStringToDate() -> Date {
-        ISO8601DateFormatter().date(from: self) ?? Date()
-    }
-}
 
 extension Locale {
     static let bright = Locale(identifier: "en_NZ")
 }
 
 extension FormatStyle where Self == Date.FormatStyle {
-    static var brightTime: Self { Date.FormatStyle(locale: .bright).hour(.defaultDigits(amPM: .abbreviated)).minute() }
-    static var brightHour: Self { Date.FormatStyle(locale: .bright).hour(.defaultDigits(amPM: .abbreviated)) }
-    static var brightDay: Self { Date.FormatStyle(locale: .bright).day(.defaultDigits) }
-    static var brightWeekdayInitial: Self { Date.FormatStyle(locale: .bright).weekday(.narrow) }
-    static var brightWeekday: Self { Date.FormatStyle(locale: .bright).weekday(.abbreviated) }
-    static var brightWeekdayShort: Self { Date.FormatStyle(locale: .bright).weekday(.abbreviated) }
-    static var brightMonth: Self { Date.FormatStyle(locale: .bright).month(.abbreviated) }
-    static var brightSlashDate: Self { Date.FormatStyle(locale: .bright).day(.twoDigits).month(.twoDigits).year() }
+    static var brightTime: Self { bright.hour(.defaultDigits(amPM: .abbreviated)).minute() }
+    static var brightHour: Self { bright.hour(.defaultDigits(amPM: .abbreviated)) }
+    static var brightDay: Self { bright.day(.defaultDigits) }
+    static var brightWeekday: Self { bright.weekday(.wide) }
+    static var brightWeekdayShort: Self { bright.weekday(.abbreviated) }
+    static var brightWeekdayInitial: Self { bright.weekday(.narrow) }
+    static var brightSlashDate: Self { bright.day(.twoDigits).month(.twoDigits).year() }
+
+    private static var bright: Self { Date.FormatStyle(locale: .bright) }
 }
 
 extension FormatStyle where Self == Date.VerbatimFormatStyle {
@@ -35,6 +30,28 @@ extension FormatStyle where Self == Date.VerbatimFormatStyle {
             timeZone: .current,
             calendar: Calendar(identifier: .gregorian)
         )
+    }
+}
+
+extension Date {
+    static func brightDateRange(_ start: String?, _ end: String?) -> String? {
+        guard let start, let end,
+              let from = Date(brightDayKey: start) ?? Date(brightISOZoned: start),
+              let to = Date(brightDayKey: end) ?? Date(brightISOZoned: end)
+        else { return nil }
+        return "\(from.formatted(.brightDate)) – \(max(from, to).formatted(.brightDate))"
+    }
+
+    static func brightTimeRange(_ start: String?, _ end: String?) -> String? {
+        guard let start, let end,
+              let from = Date(brightISOZoned: start),
+              let to = Date(brightISOZoned: end)
+        else { return nil }
+        return brightTimeRange(from: from, to: to)
+    }
+
+    static func brightTimeRange(from: Date, to: Date) -> String {
+        "\(from.formatted(.brightTime)) – \(max(from, to).formatted(.brightTime))"
     }
 }
 
@@ -64,6 +81,16 @@ struct BrightCalendarDateStyle: FormatStyle {
     }
 }
 
+struct BrightMonthStyle: FormatStyle {
+    func format(_ value: Date) -> String {
+        let base = Date.FormatStyle(locale: .bright).month(.abbreviated)
+        if Calendar.autoupdatingCurrent.isDate(value, equalTo: .now, toGranularity: .year) {
+            return value.formatted(base)
+        }
+        return value.formatted(base.year())
+    }
+}
+
 struct BrightTimestampStyle: FormatStyle {
     func format(_ value: Date) -> String {
         guard Calendar.autoupdatingCurrent.isDate(value, equalTo: .now, toGranularity: .year) else {
@@ -81,39 +108,21 @@ extension FormatStyle where Self == BrightCalendarDateStyle {
     static var brightCalendarDate: Self { .init() }
 }
 
+extension FormatStyle where Self == BrightMonthStyle {
+    static var brightMonth: Self { .init() }
+}
+
 extension FormatStyle where Self == BrightTimestampStyle {
     static var brightTimestamp: Self { .init() }
 }
 
 extension Date {
-    var isoString: String {
-        ISO8601DateFormatter().string(from: self)
-    }
-
-    var isToday: Bool {
-        Calendar.current.isDateInToday(self)
-    }
-
-    func isSameDay(as date: Date) -> Bool {
-        Calendar.current.isDate(self, equalTo: date, toGranularity: .day)
-    }
-
-    static func brightTimeRange(from: Date, to: Date) -> String {
-        "\(from.formatted(.brightTime)) – \(max(from, to).formatted(.brightTime))"
-    }
-
-    func stringFromDate(strFormatter: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = strFormatter
-        formatter.amSymbol = "AM"
-        formatter.pmSymbol = "PM"
-        return formatter.string(from: self)
-    }
-}
-
-extension Date {
     var brightDayKey: String { formatted(Date.dayKeyStyle) }
     var brightISOZoned: String { formatted(Date.isoZonedStyle) }
+    var brightISOZonedPrecise: String { formatted(Date.isoZonedPreciseStyle) }
+    var brightYearKey: String { String(Calendar.autoupdatingCurrent.component(.year, from: self)) }
+    var brightMonthNumber: String { String(format: "%02d", Calendar.autoupdatingCurrent.component(.month, from: self)) }
+    var brightLogStamp: String { formatted(Date.logStampStyle) }
 
     init?(brightDayKey: String) {
         guard let date = try? Date.dayKeyStyle.parse(brightDayKey) else { return nil }
@@ -146,6 +155,10 @@ extension Date {
         isoStyle.timeZone(separator: .colon)
     }
 
+    private static var isoZonedPreciseStyle: Date.ISO8601FormatStyle {
+        isoFractionalStyle.timeZone(separator: .colon)
+    }
+
     private static var isoZonedParseStyles: [Date.ISO8601FormatStyle] {
         [
             isoStyle.timeZone(separator: .colon),
@@ -162,14 +175,12 @@ extension Date {
             .dateTimeSeparator(.standard)
             .time(includingFractionalSeconds: true)
     }
-}
 
-extension Double {
-    var toString: String {
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 1
-        formatter.minimumIntegerDigits = 1
-        return formatter.string(from: NSNumber(value: self)) ?? ""
+    private static var logStampStyle: Date.VerbatimFormatStyle {
+        Date.VerbatimFormatStyle(
+            format: "\(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits):\(second: .twoDigits) \(day: .twoDigits)/\(month: .twoDigits)/\(year: .defaultDigits)",
+            timeZone: .current,
+            calendar: Calendar(identifier: .gregorian)
+        )
     }
 }

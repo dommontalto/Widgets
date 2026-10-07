@@ -180,9 +180,9 @@ private struct BrightToastV5: View {
                     }
                     .compositingGroup()
                     .blur(radius: Constants.blurRadius * (1 - progress))
-                    .visualEffect { [isSettled] content, proxy in
+                    .visualEffect { [isSettled, alphaThreshold = Constants.alphaThreshold] content, proxy in
                         content.layerEffect(
-                            ShaderLibrary.brightAlphaThreshold(.float(Constants.alphaThreshold)),
+                            ShaderLibrary.brightAlphaThreshold(.float(alphaThreshold)),
                             maxSampleOffset: proxy.size,
                             isEnabled: !isSettled
                         )
@@ -387,7 +387,7 @@ private final class BrightToastWindow: UIWindow {
         window.frame = CGRect(
             x: 0,
             y: 0,
-            width: scene.coordinateSpace.bounds.width,
+            width: scene.screen.bounds.width,
             height: Constants.windowHeight
         )
         window.windowLevel = .alert + 1

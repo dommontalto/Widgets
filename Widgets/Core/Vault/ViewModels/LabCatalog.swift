@@ -16,8 +16,10 @@ final class LabCatalog {
     private var hasLoaded = false
     private var isLoading = false
 
-    init(service: LabOrdersServiceProtocol = LabOrdersMockService()) {
-        self.service = service
+    // Optional because default arguments are evaluated off the main actor,
+    // where the main-actor mock service can't be created.
+    init(service: LabOrdersServiceProtocol? = nil) {
+        self.service = service ?? LabOrdersMockService()
     }
 
     func loadIfNeeded() async {

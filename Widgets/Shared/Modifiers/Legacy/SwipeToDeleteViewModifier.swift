@@ -14,6 +14,7 @@ private struct SwipeToDeleteViewModifier<Content: View>: ViewModifier {
     let swipeView: Content
     @State private var swipeViewWidth: CGFloat = 0
     @State private var onDeleted = false
+    @State private var width: CGFloat = 0
     var onDelete: (() -> Void)?
 
     func body(content: _ViewModifier_Content<Self>) -> some View {
@@ -45,6 +46,7 @@ private struct SwipeToDeleteViewModifier<Content: View>: ViewModifier {
                         }
                 )
         }
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { width = $0 }
     }
 
     private func onChanged(value: DragGesture.Value) {
@@ -60,7 +62,7 @@ private struct SwipeToDeleteViewModifier<Content: View>: ViewModifier {
     private func onEnd(value: DragGesture.Value) {
         withAnimation(.brightEaseInOut) {
             if value.translation.width < 0 {
-                if -value.translation.width > UIScreen.main.bounds.width / 2 {
+                if -value.translation.width > width / 2 {
                     offset = -1000
                     onDeleted = true
                     onDelete?()

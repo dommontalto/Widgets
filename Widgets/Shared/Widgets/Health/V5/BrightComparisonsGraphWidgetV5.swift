@@ -405,7 +405,7 @@ enum BrightComparisonsDemo {
             let t = Double(index) / 95
             let value = 62 - 12 * sin(t * .pi) + 4 * sin(Double(index) * 1.3)
             return SleepGraphHeartDailyResponseHeartGraphData(
-                heartDate: start.addingTimeInterval(t * 8 * 3600).isoString,
+                heartDate: start.addingTimeInterval(t * 8 * 3600).brightISOZoned,
                 value: Int(value),
                 zone: 1
             )

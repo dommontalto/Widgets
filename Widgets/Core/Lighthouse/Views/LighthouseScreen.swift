@@ -198,7 +198,7 @@ struct LighthouseScreen: View {
                 // Fixed where the bar's buttons would sit, so their glass
                 // can't fold together or stretch to fit a glyph, and riding
                 // on the chat page so they slide over with it.
-                .safeAreaBar(edge: .top, spacing: .spacing0x) { topButtons }
+                .modifier(LighthouseTopBar { topButtons })
                 .brightSoftScrollEdgesV5()
                 .background { LighthouseChatBackground() }
         }
@@ -303,5 +303,17 @@ struct LighthouseScreen: View {
         static let orbWidthFraction: CGFloat = 0.3
         static let modelKey = "lighthouseSelectedModel"
         static let apiKeyKey = "lighthouseApiKey"
+    }
+}
+
+private struct LighthouseTopBar<Bar: View>: ViewModifier {
+    @ViewBuilder let bar: Bar
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.safeAreaBar(edge: .top, spacing: .spacing0x) { bar }
+        } else {
+            content.overlay(alignment: .top) { bar }
+        }
     }
 }

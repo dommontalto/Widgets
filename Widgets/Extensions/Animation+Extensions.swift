@@ -1,5 +1,5 @@
 //
-//  Animation+StylingExtensions.swift
+//  Animation+Extensions.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/7/2026.

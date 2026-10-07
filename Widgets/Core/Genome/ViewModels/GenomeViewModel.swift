@@ -47,7 +47,9 @@ final class GenomeViewModel {
     var leadingContributors: [GenomeContributor] { summary?.leadingContributors ?? [] }
     var riskPercentile: GenomeRiskPercentile? { summary?.riskPercentile }
 
-    init(scenario: GenomeDemoScenario = .current) {
+    // Optional rather than defaulting to `.current`: default arguments are evaluated
+    // off the main actor, where the main-actor `current` can't be read.
+    init(scenario: GenomeDemoScenario? = nil) {
         load(scenario)
     }
 
@@ -68,7 +70,8 @@ final class GenomeViewModel {
 
     // MARK: - Demo data
 
-    func load(_ scenario: GenomeDemoScenario = .current) {
+    func load(_ scenario: GenomeDemoScenario? = nil) {
+        let scenario = scenario ?? .current
         summary = scenario.summary
         orderStatus = scenario.status
         categories = scenario.categories

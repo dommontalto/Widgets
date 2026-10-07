@@ -14,19 +14,12 @@ private struct BrightSpinningLoaderV5: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay {
-                GeometryReader { proxy in
-                    let globalFrame = proxy.frame(in: .global)
-                    ZStack {
-                        if isLoading {
-                            BrightLogoAnimationV5(size: 60)
-                                .position(
-                                    x: UIScreen.main.bounds.midX - globalFrame.minX,
-                                    y: UIScreen.main.bounds.midY - globalFrame.minY
-                                )
-                        }
+                ZStack {
+                    if isLoading {
+                        BrightLogoAnimationV5(size: 60)
                     }
-                    .animation(.brightEaseInOut, value: isLoading)
                 }
+                .animation(.brightEaseInOut, value: isLoading)
             }
     }
 }
