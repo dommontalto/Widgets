@@ -64,7 +64,8 @@ struct HealthWidgetView: View {
             headline: headline,
             comparison: headline == .average ? nil : "\(Int(metric.yesterday).formatted()) Yest.",
             summary: isLarge ? metric.summary : nil,
-            size: widget.size
+            size: widget.size,
+            allowsSelection: allowsSelection
         )
     }
 

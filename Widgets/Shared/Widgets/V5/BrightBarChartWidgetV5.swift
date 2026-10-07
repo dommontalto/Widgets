@@ -5,6 +5,7 @@
 //  Created by Dom Montalto on 7/10/2026.
 //
 
+import Charts
 import SwiftUI
 
 // A bar for each hour or each day of the chosen range. Any part of a bar above the
@@ -79,8 +80,10 @@ struct BrightBarChartWidgetV5: View {
     var comparison: String?
     var summary: Summary?
     let size: BrightWidgetSizeV5
+    var allowsSelection = true
 
     @State private var plotWidth: CGFloat = 0
+    @State private var selectedIndex: Int?
 
     var body: some View {
         Group {
@@ -93,6 +96,11 @@ struct BrightBarChartWidgetV5: View {
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+        .onChange(of: allowsSelection) { _, allows in
+            if !allows {
+                selectedIndex = nil
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(display(headlineValue)) \(unitLabel)")
     }
@@ -200,6 +208,7 @@ struct BrightBarChartWidgetV5: View {
                 }
 
                 barArea(showsGuides: showsGuides)
+                    .overlay { selectionLayer }
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { plotWidth = $0 }
             }
 
@@ -207,6 +216,9 @@ struct BrightBarChartWidgetV5: View {
                 slotDots
 
                 slotLabels
+                    .opacity(selectedIndex == nil ? .opaque : .zero)
+                    .overlay(alignment: .leading) { heldLabel }
+                    .animation(.brightEaseInOut, value: selectedIndex == nil)
             }
             .padding(.leading, showsGuides ? Constants.axisLabelWidth + .spacing1x : .spacing0x)
         }
@@ -226,12 +238,13 @@ struct BrightBarChartWidgetV5: View {
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0 {
                         barShape(value: value, width: barWidth, plotHeight: height)
+                            .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .semiLowOpacity)
                             .offset(x: slot * (CGFloat(bar.index) + 0.5) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
                     }
                 }
 
-                if showsExtremes {
+                if showsExtremes, selectedIndex == nil {
                     ForEach(extremes, id: \.bar.index) { extreme in
                         extremeLabel(extreme.systemImage, value: extreme.value)
                             .position(
@@ -319,7 +332,7 @@ struct BrightBarChartWidgetV5: View {
         HStack(spacing: .spacing0x) {
             ForEach(0 ..< range.slotCount, id: \.self) { index in
                 Capsule()
-                    .fill(index == currentIndex ? Color.textColor : Color.lightTextColor)
+                    .fill(index == (selectedIndex ?? currentIndex) ? Color.textColor : Color.lightTextColor)
                     .frame(width: .spacing05x, height: isLabelledSlot(index) ? Constants.labelTickHeight : .spacing05x)
                     .frame(maxWidth: .infinity)
             }
@@ -363,6 +376,73 @@ struct BrightBarChartWidgetV5: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+
+    // MARK: - Selection
+
+    // An empty chart laid over the bars, so holding them selects with the same
+    // gesture as the line chart and the page still scrolls.
+    @ViewBuilder
+    private var selectionLayer: some View {
+        if allowsSelection {
+            Chart {
+                ForEach(0 ..< range.slotCount, id: \.self) { index in
+                    PointMark(x: .value("Slot", Double(index) + 0.5), y: .value("Floor", 0))
+                        .opacity(.zero)
+                }
+            }
+            .chartXScale(domain: 0 ... Double(range.slotCount))
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXSelection(value: selection)
+        }
+    }
+
+    // Snaps to the slot under the finger, never past the latest reading.
+    private var selection: Binding<Double?> {
+        Binding {
+            selectedIndex.map { Double($0) + 0.5 }
+        } set: { position in
+            let index = position.map { min(max(Int($0), 0), currentIndex) }
+            guard index != selectedIndex else { return }
+            selectedIndex = index
+            if index != nil {
+                BrightHaptic.light.play()
+            }
+        }
+    }
+
+    // The held slot's hour or day, centred over it but kept inside the plot.
+    @ViewBuilder
+    private var heldLabel: some View {
+        if let selectedIndex {
+            let slot = plotWidth / CGFloat(range.slotCount)
+            let centred = slot * (CGFloat(selectedIndex) + 0.5) - Constants.heldLabelWidth / 2
+
+            BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
+                .monospacedDigit()
+                .fixedSize()
+                .frame(width: Constants.heldLabelWidth)
+                .offset(x: min(max(centred, 0), max(plotWidth - Constants.heldLabelWidth, 0)))
+                .transition(.opacity)
+        }
+    }
+
+    private func slotTitle(_ index: Int) -> String {
+        let calendar = Calendar.current
+        switch range {
+        case .rolling12h:
+            let hourStart = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
+            return hourStart.addingTimeInterval(-Double(range.slotCount - 1 - index) * 60 * 60).formatted(.brightHour)
+        case .today:
+            return hourLabel(index)
+        case .week:
+            var monday = calendar
+            monday.firstWeekday = 2
+            let weekStart = monday.dateInterval(of: .weekOfYear, for: .now)?.start ?? .now
+            return (calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart).formatted(.brightWeekday)
         }
     }
 
@@ -440,7 +520,10 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var headlineValue: Double {
-        switch headline {
+        if let selectedIndex, let value = bars.first(where: { $0.index == selectedIndex })?.value {
+            return value
+        }
+        return switch headline {
         case .total: values.reduce(0, +)
         case .average: average
         case .current: bars.last { $0.value != nil }?.value ?? 0
@@ -448,7 +531,7 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var unitLabel: String {
-        let suffix = headline == .average ? "AVG" : nil
+        let suffix = headline == .average && selectedIndex == nil ? "AVG" : nil
         return [unit, suffix].compactMap(\.self).joined(separator: " ")
     }
 
@@ -532,6 +615,7 @@ struct BrightBarChartWidgetV5: View {
         static let averageLabelLift: CGFloat = .spacing1x
         static let risingGreenStop = 0.24
         static let dayBadgeSize: CGFloat = 20
+        static let heldLabelWidth: CGFloat = 70
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]
     }
 }
