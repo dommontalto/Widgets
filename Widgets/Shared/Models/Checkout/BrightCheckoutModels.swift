@@ -57,16 +57,18 @@ struct BrightCheckoutItem {
     let priceText: String
     let currency: String
     let fulfilment: BrightCheckoutFulfilment
+    var countryCode: String?
 }
 
 enum BrightCheckoutFulfilment {
     case shipped
     case delivered
+    case residence
     case inPerson(name: String, address: String)
 
     var needsAddress: Bool {
         switch self {
-        case .shipped, .delivered: true
+        case .shipped, .delivered, .residence: true
         case .inPerson: false
         }
     }

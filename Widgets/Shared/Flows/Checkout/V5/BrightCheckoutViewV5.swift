@@ -38,6 +38,7 @@ struct BrightCheckoutViewV5: View {
 
     enum Section: Hashable {
         case shipTo
+        case residence
         case shipping
         case location
         case payment
@@ -45,6 +46,7 @@ struct BrightCheckoutViewV5: View {
         var title: String {
             switch self {
             case .shipTo: "Ship to"
+            case .residence: "Your Address"
             case .shipping: "Shipping"
             case .location: "Service Location"
             case .payment: "Payment"
@@ -54,15 +56,26 @@ struct BrightCheckoutViewV5: View {
         var systemImage: String {
             switch self {
             case .shipTo, .location: "mappin.and.ellipse"
+            case .residence: "house"
             case .shipping: "shippingbox"
             case .payment: "creditcard"
             }
         }
     }
 
+    private var addressSection: Section {
+        if case .residence = item.fulfilment { return .residence }
+        return .shipTo
+    }
+
+    private var addresses: [BrightShippingAddress] {
+        guard let countryCode = item.countryCode else { return addressBook.addresses }
+        return addressBook.addresses.filter { $0.countryCode.uppercased() == countryCode }
+    }
+
     private var blocking: Section? {
         if item.fulfilment.needsAddress {
-            if selectedAddress == nil { return .shipTo }
+            if selectedAddress == nil { return addressSection }
             if item.fulfilment.needsShipping, selectedShipping == nil { return .shipping }
         }
         return hasPayment ? nil : .payment
@@ -87,8 +100,8 @@ struct BrightCheckoutViewV5: View {
                     header
 
                     switch item.fulfilment {
-                    case .shipped, .delivered:
-                        shipToCard
+                    case .shipped, .delivered, .residence:
+                        addressCard
                     case let .inPerson(name, address):
                         locationCard(name: name, address: address)
                     }
@@ -116,7 +129,7 @@ struct BrightCheckoutViewV5: View {
             .padding(.bottom, .spacing4x)
         }
         .sheet(isPresented: $isAddingAddress) {
-            BrightAddAddressSheetV5 { address in
+            BrightAddAddressSheetV5(countryCode: item.countryCode) { address in
                 Task {
                     if let saved = await addressBook.add(address) {
                         selectedAddress = saved.id
@@ -127,7 +140,7 @@ struct BrightCheckoutViewV5: View {
         .task {
             await addressBook.loadIfNeeded()
             if selectedAddress == nil {
-                selectedAddress = addressBook.defaultAddress?.id
+                selectedAddress = (addresses.first(where: \.isDefault) ?? addresses.first)?.id
             }
         }
         .sheet(isPresented: $isAddingCard) {
@@ -161,15 +174,15 @@ struct BrightCheckoutViewV5: View {
         .padding(.top, .spacing2x)
     }
 
-    // MARK: - Ship to
+    // MARK: - Address
 
-    private var shipToCard: some View {
+    private var addressCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            sectionTitle(.shipTo)
+            sectionTitle(addressSection)
 
             BrightDividerV5()
 
-            ForEach(addressBook.addresses) { address in
+            ForEach(addresses) { address in
                 optionRow(isSelected: selectedAddress == address.id) {
                     selectedAddress = address.id
                 } label: {
@@ -187,7 +200,7 @@ struct BrightCheckoutViewV5: View {
 
             addRow(Constants.addAddressTitle) { isAddingAddress = true }
         }
-        .modifier(SectionCard(nudge: nudges[.shipTo, default: 0]))
+        .modifier(SectionCard(nudge: nudges[addressSection, default: 0]))
     }
 
     // MARK: - Shipping
@@ -407,7 +420,7 @@ struct BrightCheckoutViewV5: View {
         case let .external(option, _): option
         }
         return BrightCheckoutDetails(
-            address: item.fulfilment.needsAddress ? addressBook.addresses.first { $0.id == selectedAddress } : nil,
+            address: item.fulfilment.needsAddress ? addresses.first { $0.id == selectedAddress } : nil,
             shipping: item.fulfilment.needsShipping ? shipping.first { $0.id == selectedShipping } : nil,
             paymentMethod: paymentMethod
         )

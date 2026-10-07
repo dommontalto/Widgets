@@ -8,8 +8,8 @@ import SwiftUI
 struct LabPatientDetailsView: View {
     @State private var viewModel: LabOrderViewModel
 
-    init(test: VaultClinicTest, clinic: VaultTestingClinic, onOrder: @escaping (VaultTestOrder) -> Void) {
-        _viewModel = State(initialValue: LabOrderViewModel(test: test, clinic: clinic, onOrder: onOrder))
+    init(tests: [VaultClinicTest], clinic: VaultTestingClinic, onOrder: @escaping (VaultTestOrder) -> Void) {
+        _viewModel = State(initialValue: LabOrderViewModel(tests: tests, clinic: clinic, onOrder: onOrder))
     }
 
     var body: some View {
@@ -119,7 +119,7 @@ struct LabPatientDetailsView: View {
 
     private enum Constants {
         static let title = "Patient Details"
-        static let subtitle = "The lab needs these to process your sample. They go on the order with your kit and stay private."
+        static let subtitle = "The lab needs these to process your order. They go on the order and stay private."
         static let firstNamePlaceholder = "First name"
         static let lastNamePlaceholder = "Last name"
         static let dateOfBirthTitle = "Date of birth"

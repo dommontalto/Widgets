@@ -9,9 +9,11 @@ protocol LabOrdersServiceProtocol {
     func getLabTests() async throws -> [JunctionLabTest]
     func createPaymentIntent(_ body: LabPaymentIntentRequest) async throws -> LabPaymentIntentResponseData
     func getOrders() async throws -> [LabOrder]
+    func getOrder(id: String) async throws -> LabOrder
     func getResults(id: String) async throws -> LabResults
     func simulate(id: String) async throws -> LabOrder
     func getEirlyTests() async throws -> [EirlyTest]
+    func getEirlyQuote(tests: [String]) async throws -> EirlyQuote
     func createEirlyPaymentIntent(_ body: EirlyPaymentIntentRequest) async throws -> LabPaymentIntentResponseData
 }
 
@@ -51,9 +53,11 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
     }
 
     func createEirlyPaymentIntent(_ body: EirlyPaymentIntentRequest) async throws -> LabPaymentIntentResponseData {
-        guard let test = LabOrdersDemo.eirlyTests.first(where: { body.tests.contains($0.id) }) else {
+        let tests = LabOrdersDemo.eirlyTests.filter { body.tests.contains($0.id) }
+        guard let test = tests.first else {
             throw LabOrdersMockError.notFound
         }
+        let quote = try await getEirlyQuote(tests: body.tests)
         let id = Self.newOrderId()
         let order = LabOrder(
             id: id,
@@ -62,8 +66,13 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
             statusLabel: LabOrdersDemo.eirlySteps[0].label,
             completedSteps: 1,
             totalSteps: LabOrdersDemo.eirlySteps.count,
-            labTest: LabOrder.Test(id: test.id, name: test.name, method: nil, sampleType: test.testType),
-            amountTotal: test.price.map { Int(($0 * 100).rounded()) },
+            labTest: LabOrder.Test(
+                id: test.id,
+                name: tests.count == 1 ? test.name : "\(tests.count) pathology tests",
+                method: nil,
+                sampleType: test.testType
+            ),
+            amountTotal: quote.amountTotal,
             currency: LabOrdersDemo.eirlyCurrency,
             tracking: nil,
             referralUrl: nil,
@@ -76,6 +85,21 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
 
     func getOrders() async throws -> [LabOrder] {
         Self.orders
+    }
+
+    func getOrder(id: String) async throws -> LabOrder {
+        guard let order = Self.orders.first(where: { $0.id == id }) else {
+            throw LabOrdersMockError.notFound
+        }
+        return order
+    }
+
+    func getEirlyQuote(tests: [String]) async throws -> EirlyQuote {
+        let priced = LabOrdersDemo.eirlyTests.filter { tests.contains($0.id) }
+        guard !priced.isEmpty else { throw LabOrdersMockError.notFound }
+        let lines = priced.map { EirlyQuote.Line(label: $0.name, amount: Int((($0.price ?? 0) * 100).rounded())) }
+            + LabOrdersDemo.eirlyFees
+        return EirlyQuote(lines: lines, amountTotal: lines.reduce(0) { $0 + $1.amount }, currency: LabOrdersDemo.eirlyCurrency)
     }
 
     func getResults(id: String) async throws -> LabResults {
@@ -120,6 +144,10 @@ enum LabOrdersMockError: Error {
 enum LabOrdersDemo {
     static let currency = "usd"
     static let eirlyCurrency = "aud"
+    static let eirlyFees = [
+        EirlyQuote.Line(label: "Collection fee", amount: 2_500),
+        EirlyQuote.Line(label: "Service fee", amount: 1_000),
+    ]
     static let referralUrl = "https://example.com/referral.pdf"
 
     static let steps: [(status: String, label: String)] = [
@@ -301,6 +329,25 @@ struct EirlyTest: Codable, Hashable {
     let price: Double?
 }
 
+struct EirlyQuote: Codable, Hashable {
+    struct Line: Codable, Hashable {
+        let label: String
+        let amount: Int
+    }
+
+    let lines: [Line]
+    let amountTotal: Int
+    let currency: String
+
+    var totalText: String {
+        Self.text(amountTotal, currency: currency)
+    }
+
+    static func text(_ cents: Int, currency: String) -> String {
+        (Decimal(cents) / 100).formatted(.currency(code: currency.uppercased()).locale(.bright))
+    }
+}
+
 struct EirlyPatient: Codable, Hashable {
     let firstName: String
     let lastName: String
@@ -384,6 +431,7 @@ struct LabOrder: Codable, Identifiable, Hashable {
     let createdAt: String?
 
     var isEirly: Bool { provider == "eirly" }
+    var isPlaced: Bool { status != "awaiting_payment" && status != "placing" }
     var isReady: Bool { status == "ready" }
     var isFailed: Bool { status == "failed" || status == "cancelled" }
 

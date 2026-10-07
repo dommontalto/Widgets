@@ -88,6 +88,10 @@ struct VaultTestingClinic: Identifiable, Hashable {
         shipsToYou ? "Ships to you" : String(format: "%.1f km away", distanceKm)
     }
 
+    var provider: LabProvider? {
+        LabProvider(rawValue: id)
+    }
+
     var categories: [VaultTestCategory] {
         VaultTestCategory.demo.filter { offers($0.id) }
     }
@@ -119,6 +123,7 @@ struct VaultTestOrder: Identifiable, Hashable {
     var address: String?
     var delivery: VaultTestDelivery?
     var paymentMethod: BrightPaymentMethod?
+    var labOrderId: String?
 
     var reference: String {
         "Order #\(number)"
@@ -135,7 +140,8 @@ extension VaultTestOrder {
         test: VaultClinicTest,
         clinic: VaultTestingClinic,
         type: VaultTestAvailability,
-        details: BrightCheckoutDetails
+        details: BrightCheckoutDetails,
+        labOrderId: String? = nil
     ) {
         let fulfilment = type.fulfilment(at: clinic)
         self.init(
@@ -147,7 +153,8 @@ extension VaultTestOrder {
             scheduledAt: fulfilment.needsShipping ? nil : Constants.scheduledAt,
             address: details.address?.street ?? clinic.address,
             delivery: fulfilment.needsShipping ? Constants.delivery : nil,
-            paymentMethod: details.paymentMethod
+            paymentMethod: details.paymentMethod,
+            labOrderId: labOrderId
         )
     }
 

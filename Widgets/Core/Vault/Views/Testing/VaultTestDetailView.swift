@@ -15,6 +15,9 @@ struct VaultTestDetailView: View {
 
     @State private var selectedType: VaultTestAvailability
     @State private var showingPayment = false
+    @State private var showingCart = false
+
+    private let cart = LabCart.shared
 
     private var cardColor: Color {
         isSheet ? .defaultSheetModalCards : .defaultCards
@@ -52,19 +55,42 @@ struct VaultTestDetailView: View {
             .scrollIndicators(.hidden)
         }
         .overlay(alignment: .bottom) {
-            BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
-                showingPayment = true
-            }
-            .padding(.bottom, .spacing4x)
+            orderButton
+                .padding(.bottom, .spacing4x)
+        }
+        .navigationDestination(isPresented: $showingCart) {
+            LabCartView(clinic: clinic, isSheet: isSheet, onOrder: onOrder)
+        }
+        .brightHapticV5(trigger: cart.items.count) { old, new in
+            new > old ? .success : .light
         }
         .navigationDestination(isPresented: $showingPayment) {
             if test.labTestId != nil {
-                LabPatientDetailsView(test: test, clinic: clinic, onOrder: onOrder)
+                LabPatientDetailsView(tests: [test], clinic: clinic, onOrder: onOrder)
             } else {
                 BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
                     showingPayment = false
                     onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var orderButton: some View {
+        if test.labProvider == .eirly {
+            if cart.contains(test) || cart.isFull {
+                BrightPillButton("View Cart", systemImage: "cart", buttonSize: .large) {
+                    showingCart = true
+                }
+            } else {
+                BrightPillButton("Add to Cart", systemImage: "cart.badge.plus", buttonSize: .large) {
+                    cart.add(test)
+                }
+            }
+        } else {
+            BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
+                showingPayment = true
             }
         }
     }

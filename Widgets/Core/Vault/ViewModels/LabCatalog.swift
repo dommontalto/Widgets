@@ -11,10 +11,11 @@ final class LabCatalog {
     static let shared = LabCatalog()
 
     private(set) var clinics: [VaultTestingClinic] = []
+    private(set) var region: LabRegion?
 
     private let service: LabOrdersServiceProtocol
-    private var hasLoaded = false
-    private var isLoading = false
+    private var loaded: [LabRegion: VaultTestingClinic] = [:]
+    private var loadingRegions: Set<LabRegion> = []
 
     // Optional because default arguments are evaluated off the main actor,
     // where the main-actor mock service can't be created.
@@ -22,16 +23,43 @@ final class LabCatalog {
         self.service = service ?? LabOrdersMockService()
     }
 
-    func loadIfNeeded() async {
-        guard !hasLoaded, !isLoading else { return }
-        isLoading = true
-        defer { isLoading = false }
+    func clinic(for region: LabRegion) -> VaultTestingClinic? {
+        loaded[region]
+    }
 
-        async let junction = loadJunction()
-        async let eirly = loadEirly()
-        let loaded = await [junction, eirly].compactMap { $0 }
-        clinics = loaded
-        hasLoaded = !loaded.isEmpty
+    func loadIfNeeded() async {
+        if let region {
+            await load(region)
+        } else {
+            await load(LabRegion.resolve())
+        }
+    }
+
+    func select(_ region: LabRegion) async {
+        LabRegion.saved = region
+        await load(region)
+    }
+
+    private func load(_ region: LabRegion) async {
+        self.region = region
+        if let clinic = loaded[region] {
+            clinics = [clinic]
+            return
+        }
+        clinics = []
+        guard !loadingRegions.contains(region) else { return }
+        loadingRegions.insert(region)
+        defer { loadingRegions.remove(region) }
+
+        let clinic: VaultTestingClinic?
+        switch region.provider {
+        case .junction: clinic = await loadJunction()
+        case .eirly: clinic = await loadEirly()
+        }
+        loaded[region] = clinic
+        if self.region == region {
+            clinics = clinic.map { [$0] } ?? []
+        }
     }
 
     private func loadJunction() async -> VaultTestingClinic? {

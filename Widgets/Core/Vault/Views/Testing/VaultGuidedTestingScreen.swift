@@ -30,7 +30,8 @@ struct VaultGuidedTestingScreen: View {
             orders: orders,
             selectedPage: $homePage,
             onSelectClinic: { selectedClinic = $0 },
-            onSelectOrder: { receipt = $0 }
+            onSelectOrder: { receipt = $0 },
+            onOrder: place
         )
     }
 

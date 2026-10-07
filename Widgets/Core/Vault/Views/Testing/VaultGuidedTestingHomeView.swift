@@ -13,8 +13,13 @@ struct VaultGuidedTestingHomeView: View {
     let onSelectClinic: (VaultTestingClinic) -> Void
     let onSelectOrder: (VaultTestOrder) -> Void
 
+    let onOrder: (VaultTestOrder) -> Void
+
     @State private var sortOrder = VaultTestingSortOrder.proximity
     @State private var showingMap = false
+    @State private var showingCart = false
+
+    private let catalog = LabCatalog.shared
 
     private var clinics: [VaultTestingClinic] {
         sortOrder.sorted(VaultTestingClinic.all)
@@ -38,6 +43,14 @@ struct VaultGuidedTestingHomeView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                regionMenu
+            }
+            if catalog.region == .au {
+                ToolbarItem(placement: .topBarTrailing) {
+                    LabCartButton { showingCart = true }
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingMap = true
                 } label: {
@@ -49,6 +62,38 @@ struct VaultGuidedTestingHomeView: View {
         .navigationDestination(isPresented: $showingMap) {
             VaultClinicsMapView(clinics: clinics.filter { !$0.shipsToYou }, onSelectClinic: onSelectClinic)
         }
+        .navigationDestination(isPresented: $showingCart) {
+            if let clinic = catalog.clinic(for: .au) {
+                LabCartView(clinic: clinic, isSheet: false) { order in
+                    showingCart = false
+                    onOrder(order)
+                }
+            }
+        }
+    }
+
+    private var regionMenu: some View {
+        Menu {
+            ForEach(LabRegion.allCases) { region in
+                Button {
+                    Task { await catalog.select(region) }
+                } label: {
+                    Label {
+                        Text(region.title)
+                    } icon: {
+                        if region == catalog.region {
+                            Image(systemName: "checkmark")
+                        } else {
+                            Image(systemName: region.systemImage)
+                        }
+                    }
+                }
+            }
+        } label: {
+            Label("Region", systemImage: catalog.region?.systemImage ?? "globe")
+                .labelStyle(.iconOnly)
+        }
+        .brightHapticV5(.light, trigger: catalog.region)
     }
 
     // MARK: - Explore
@@ -316,7 +361,8 @@ struct VaultClinicLogo: View {
             orders: [],
             selectedPage: $page,
             onSelectClinic: { _ in },
-            onSelectOrder: { _ in }
+            onSelectOrder: { _ in },
+            onOrder: { _ in }
         )
     }
 }

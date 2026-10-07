@@ -14,6 +14,7 @@ struct VaultClinicSheet: View {
     @State private var selectedCategoryId: String?
     @State private var selectedTest: VaultClinicTest?
     @State private var showsWebsite = false
+    @State private var showingCart = false
 
     private var tests: [VaultClinicTest] {
         guard let selectedCategoryId else { return clinic.tests }
@@ -24,6 +25,11 @@ struct VaultClinicSheet: View {
         BrightPageSheetViewV5(
             horizontalPadding: .spacing0x,
             trailing: {
+                if clinic.provider == .eirly {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        LabCartButton { showingCart = true }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Visit") { showsWebsite = true }
                 }
@@ -47,6 +53,9 @@ struct VaultClinicSheet: View {
                 .animation(.brightSnappy, value: selectedCategoryId)
                 .navigationDestination(item: $selectedTest) { test in
                     VaultTestDetailView(test: test, clinic: clinic, onOrder: onOrder)
+                }
+                .navigationDestination(isPresented: $showingCart) {
+                    LabCartView(clinic: clinic, onOrder: onOrder)
                 }
             }
         )

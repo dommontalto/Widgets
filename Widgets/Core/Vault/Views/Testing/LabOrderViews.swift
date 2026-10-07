@@ -110,6 +110,7 @@ struct LabOrderSheet: View {
                     .ignoresSafeArea()
             }
         }
+        .task { await refresh() }
         .task(id: order.isReady) {
             guard order.isReady, results == nil else { return }
             do {
@@ -210,6 +211,15 @@ struct LabOrderSheet: View {
             if !isLast {
                 BrightDividerV5()
             }
+        }
+    }
+
+    private func refresh() async {
+        do {
+            order = try await service.getOrder(id: order.id)
+            onChange(order)
+        } catch {
+            Log("Labs: order refresh failed – \(error)")
         }
     }
 

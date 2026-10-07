@@ -17,7 +17,7 @@ enum LabPatientSex: String, CaseIterable, Identifiable {
 @MainActor
 @Observable
 final class LabOrderViewModel {
-    let test: VaultClinicTest
+    let tests: [VaultClinicTest]
     let clinic: VaultTestingClinic
 
     var firstName = ""
@@ -39,14 +39,14 @@ final class LabOrderViewModel {
     private let onOrder: (VaultTestOrder) -> Void
 
     init(
-        test: VaultClinicTest,
+        tests: [VaultClinicTest],
         clinic: VaultTestingClinic,
         // Optional because default arguments are evaluated off the main actor,
         // where the main-actor mock service can't be created.
         service: LabOrdersServiceProtocol? = nil,
         onOrder: @escaping (VaultTestOrder) -> Void
     ) {
-        self.test = test
+        self.tests = tests
         self.clinic = clinic
         self.service = service ?? LabOrdersMockService()
         self.onOrder = onOrder
@@ -55,7 +55,31 @@ final class LabOrderViewModel {
     }
 
     private var provider: LabProvider {
-        test.labProvider ?? .junction
+        tests.first?.labProvider ?? .junction
+    }
+
+    private var labTestIds: [String] {
+        tests.compactMap(\.labTestId)
+    }
+
+    private var type: VaultTestAvailability {
+        tests.first?.type ?? .atHomeKit
+    }
+
+    private var detail: String {
+        tests.count == 1 ? tests[0].detail : tests.map(\.name).joined(separator: ", ")
+    }
+
+    private var title: String {
+        tests.count == 1 ? tests[0].name : "\(tests.count) pathology tests"
+    }
+
+    private var price: Double {
+        tests.reduce(0) { $0 + $1.price }
+    }
+
+    private var currency: String {
+        tests.first?.currency ?? "AUD"
     }
 
     var dateOfBirthRange: ClosedRange<Date> {
@@ -64,13 +88,14 @@ final class LabOrderViewModel {
 
     var checkoutItem: BrightCheckoutItem {
         BrightCheckoutItem(
-            title: test.name,
-            subtitle: test.type.rawValue,
-            systemImage: test.type.systemImage,
-            detail: test.detail,
-            priceText: Decimal(test.price).formatted(.currency(code: test.currency).locale(.bright)),
-            currency: test.currency,
-            fulfilment: provider == .junction ? .shipped : .delivered
+            title: title,
+            subtitle: type.rawValue,
+            systemImage: type.systemImage,
+            detail: detail,
+            priceText: Decimal(price).formatted(.currency(code: currency).locale(.bright)),
+            currency: currency,
+            fulfilment: provider == .junction ? .shipped : .residence,
+            countryCode: provider.countryCode
         )
     }
 
@@ -96,7 +121,7 @@ final class LabOrderViewModel {
             showError(provider == .junction ? Constants.usOnlyError : Constants.auOnlyError)
             return
         }
-        guard let labTestId = test.labTestId, let sex else { return }
+        guard let labTestId = labTestIds.first, let sex else { return }
         isPaying = true
 
         Task {
@@ -110,16 +135,39 @@ final class LabOrderViewModel {
                     )
                 case .eirly:
                     intent = try await service.createEirlyPaymentIntent(
-                        eirlyRequest(labTestId: labTestId, address: address, sex: sex)
+                        eirlyRequest(address: address, sex: sex)
                     )
                 }
                 let number = String(intent.labOrderId.suffix(Constants.orderNumberLength)).uppercased()
-                onOrder(VaultTestOrder(number: number, test: test, clinic: clinic, type: test.type, details: details))
+                onOrder(
+                    VaultTestOrder(
+                        number: number,
+                        test: purchasedTest,
+                        clinic: clinic,
+                        type: type,
+                        details: details,
+                        labOrderId: intent.labOrderId
+                    )
+                )
             } catch {
                 Log("Labs: demo order failed – \(error)")
                 showError(Constants.genericError)
             }
         }
+    }
+
+    private var purchasedTest: VaultClinicTest {
+        VaultClinicTest(
+            id: tests.map(\.id).joined(separator: "+"),
+            name: title,
+            detail: detail,
+            categoryId: tests.first?.categoryId ?? "",
+            included: tests.map(\.name),
+            availability: [type],
+            price: price,
+            currency: currency,
+            labProvider: provider
+        )
     }
 
     private var internationalPhone: String {
@@ -157,12 +205,11 @@ final class LabOrderViewModel {
     }
 
     private func eirlyRequest(
-        labTestId: String,
         address: BrightShippingAddress,
         sex: LabPatientSex
     ) -> EirlyPaymentIntentRequest {
         EirlyPaymentIntentRequest(
-            tests: [labTestId],
+            tests: labTestIds,
             patient: EirlyPatient(
                 firstName: trim(firstName),
                 lastName: trim(lastName),

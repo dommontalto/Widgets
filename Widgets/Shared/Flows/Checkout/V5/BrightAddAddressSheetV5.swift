@@ -12,6 +12,7 @@ struct BrightAddAddressSheetV5: View {
     // Set to edit a saved address: the fields start filled in and saving
     // keeps its id.
     var editing: BrightShippingAddress?
+    var countryCode: String?
     let onSave: (BrightShippingAddress) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -220,8 +221,13 @@ struct BrightAddAddressSheetV5: View {
     }
 
     private func prefill() {
-        guard let editing, !didPrefill else { return }
+        guard !didPrefill else { return }
         didPrefill = true
+        if let countryCode, let match = BrightCountry.all.first(where: { $0.code == countryCode }) {
+            country = match
+            phoneCountry = match
+        }
+        guard let editing else { return }
 
         let names = editing.name.split(separator: " ", maxSplits: 1).map(String.init)
         firstName = names.first ?? ""
