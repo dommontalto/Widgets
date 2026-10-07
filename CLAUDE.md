@@ -4,7 +4,7 @@
 
 **Never commit or push unless explicitly told to, and only one commit at a time.**
 
-iOS 26.5+, SwiftUI only. All design tokens come from `Shared/Styling/`. Always use the tokens below — never use raw hex values, magic numbers, or system fonts.
+iOS 26.5+, SwiftUI only. All design tokens come from `Shared/DesignSystem/`. Always use the tokens below — never use raw hex values, magic numbers, or system fonts.
 
 **Never build (xcodebuild or otherwise) unless explicitly asked.**
 
@@ -24,39 +24,45 @@ Never write comments stating that code was ported from, synced with, or originat
 
 ## File Structure
 
+Mirrors the iOS app's `Bright/Core` + `Bright/Shared` layout, so files sync to the same
+paths. Widgets only carries what it prototypes: features keep their UI side (`Demo`,
+`Models`, `ViewModels`, `Views`) and skip the iOS data layer (`Cache`, `Codables`,
+`Repository`, `Errors`). New files go where their iOS counterpart lives.
+
 ```
 Widgets/
-├── ContentView.swift                  — root scroll view, 3 sections
-├── Shared/Styling/
-│   ├── Color/
-│   │   ├── Color+StylingExtensions.swift   — all named colours + hex init + dark mode
-│   │   └── ThemeColor.swift                — semantic aliases (macros, sleep, etc.)
-│   ├── Extensions/
-│   │   ├── CGFloat+StylingExtensions.swift — spacing, kerning, corner radius
-│   │   └── Double+StylingExtensions.swift  — opacity constants
-│   ├── Font/
-│   │   ├── Font+StylingExtensions.swift    — Font.standard() / Font.standardSFPro()
-│   │   ├── FontSizes.swift                 — FontSizes enum
-│   │   ├── FontKerning.swift               — FontKerning enum
-│   │   └── LineSpacing.swift               — LineSpacing enum
-│   └── ViewModifier/
-│       └── CardModifier.swift              — standard card chrome
-└── Widgets/
-    ├── Genome/
-    │   └── GenomeSummaryPercentileWidget.swift
-    ├── Exercise/
-    │   ├── ExerciseConsistencyWidget.swift  — Strength & Cardio heatmap card
-    │   ├── ExerciseTrainingLoadWidget.swift — Split % bar + weekly load rows
-    │   ├── ExerciseSessionHistoryWidget.swift — Logs list, past 14 days
-    │   ├── ExerciseUpcomingWidget.swift     — No sessions + Quick workout glass pill
-    │   ├── ExerciseWeeklyPlanWidget.swift   — green banner + hero image with Start CTA
-    │   ├── ExerciseProgramPhaseWidget.swift — mesocycle week + macro/meso/micro bars
-    │   ├── ExerciseBodymapWidget.swift      — working sets per muscle group + body image
-    │   ├── ExerciseScoresWidget.swift       — recovery/fatigue/readiness gradient tiles
-    │   └── ExerciseDemo.swift               — ExerciseDayType + ExerciseDemoData
-    └── Vault/
-        ├── VaultDatapointsWidget.swift      — GridCell + SpeechBubble defined here
-        └── VaultDemo.swift                  — VaultDemoData
+├── App/                    — WidgetsApp, MainDockView, HealthView (home pages + widget grid)
+├── Core/                   — features
+│   ├── Genome/             — Demo, Models, ViewModels, Views (Order, Sheets, Widgets)
+│   ├── Home/
+│   │   ├── Explore/        — Demo, Models, Shared, Views
+│   │   ├── Health/
+│   │   │   ├── Dashboard/Components/
+│   │   │   ├── Demo/         — demo data for the home widgets
+│   │   │   └── WidgetEditor/ — grid layout, jiggle/drag edit mode, add and edit sheets
+│   │   └── Waypoint/
+│   ├── Lighthouse/         — Demo, Models, Shared, Views
+│   ├── Profile/            — addresses, cards, orders, side menu
+│   └── Vault/              — Demo, Models, Services, ViewModels, Views/Testing
+├── Shared/
+│   ├── BrightDateFormatting.swift
+│   ├── Components/         — Buttons, Calendar, Cards, Charts, Chat, Feedback, Inputs,
+│   │                         Layout, Lists, Media, Navigation, Pages (each split Legacy/ + V5/)
+│   ├── DesignSystem/
+│   │   ├── Color/          — Color+StylingExtensions (named colours), ThemeColor
+│   │   ├── Tokens/         — CGFloat+ (spacing, corner radius), Double+ (opacity)
+│   │   └── Typography/     — Font+StylingExtensions, FontSizes, FontKerning, LineSpacing
+│   ├── Effects/            — BorderBeam, Foil, Ripple, Shaders
+│   ├── Errors/             — BrightError, BrightErrorSurface, V5/
+│   ├── Flows/Checkout/V5/
+│   ├── Models/             — Checkout, Common, Status
+│   ├── Modifiers/          — Legacy/, V5/ (haptic, wiggle, soft scroll edges, shimmer…)
+│   ├── System/             — camera, barcode scanner, dictation, Safari
+│   └── Widgets/            — V5/ for new widgets (reusable at the root, one-offs in a
+│                             feature subfolder); Common, DailyLog, Explore, Health are older
+├── Extensions/
+├── Resources/              — Assets.xcassets, AppIcon
+└── Utilities/              — Constants, Helpers (Glass, Managers, Others)
 ```
 
 ---
@@ -219,7 +225,7 @@ preset. The main app's `Date+FormatStyle.swift` is the source of truth for every
 ## Haptics & wiggle
 
 Never call `UIImpactFeedbackGenerator` or `sensoryFeedback` directly — use
-`BrightHaptic` (`Shared/BrightHaptic.swift`):
+`BrightHaptic` (`Shared/Modifiers/V5/BrightHapticV5.swift`):
 
 ```swift
 .brightHaptic(.light, trigger: selection)          // .light / .medium / .impact / .success
@@ -229,7 +235,7 @@ Never call `UIImpactFeedbackGenerator` or `sensoryFeedback` directly — use
 ```
 
 To draw attention to whatever is blocking an action, shake it with
-`brightWiggle` (`Shared/BrightWiggle.swift`) — it plays the haptic itself:
+`brightWiggle` (`Shared/Modifiers/V5/BrightWiggleV5.swift`) — it plays the haptic itself:
 
 ```swift
 TextField("Session name", text: $name)
@@ -318,7 +324,7 @@ When rows in a stack carry their own trailing chrome — a divider after each ro
 
 ## CardModifier
 
-Defined in `Shared/Styling/ViewModifier/CardModifier.swift`.
+Defined in `Shared/Components/Cards/V5/BrightCardModifierV5.swift`.
 
 Applies a rounded card with a subtle stroke border that adapts for light/dark mode.
 
@@ -353,7 +359,7 @@ the text/header section horizontally and let the visual content fill the card wi
 
 ## Page Containers
 
-Defined in `Shared/BrightPageSheetView.swift`.
+Defined in `Shared/Components/Pages/V5/BrightPageSheetViewV5.swift`.
 
 Never hand-roll page scaffolding. If a screen sets its own `.frame(maxWidth:maxHeight:)`
 + `.background(...ignoresSafeArea())` + `.scrollDismissesKeyboard` + `.navigationTitle`
@@ -388,7 +394,7 @@ Rules:
 Deliberate exceptions: full-bleed chrome-less sheets (own `presentationBackground`,
 no nav bar) stay hand-rolled.
 
-`BrightPageView` (`Shared/BrightPageView.swift`) is the pushed-destination equivalent
+`BrightPageView` (`Shared/Components/Pages/V5/BrightPageViewV5.swift`) is the pushed-destination equivalent
 with no `NavigationStack` of its own; `BrightSwipePageView` is the horizontally paged
 one. All three share the same rules above.
 

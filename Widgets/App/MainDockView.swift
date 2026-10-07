@@ -46,7 +46,7 @@ struct MainDockView: View {
     private var tabView: some View {
         TabView(selection: tabSelection) {
             Tab(value: MainDockTab.home) {
-                ContentView { action in
+                HealthView { action in
                     lighthouse = LighthousePresentation(action: action)
                 }
             } label: {
