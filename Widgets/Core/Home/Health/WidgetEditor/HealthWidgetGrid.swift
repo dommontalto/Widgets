@@ -8,24 +8,31 @@
 import SwiftUI
 
 struct HealthWidgetView: View {
-    let kind: HealthWidgetKind
-    let size: BrightWidgetSizeV5
-    var window = BrightLineChartWidgetV5.Window.rolling1h
+    let widget: HealthWidgetItem
     var allowsSelection = true
 
     var body: some View {
-        switch kind {
-        case .heartRate:
+        switch (widget.kind, widget.style) {
+        case (.heartRate, .lineChart):
             BrightLineChartWidgetV5(
-                title: kind.title,
-                systemImage: kind.systemImage,
-                tint: kind.tint,
+                title: widget.kind.title,
+                systemImage: widget.kind.systemImage,
+                tint: widget.kind.tint,
                 unit: "BPM",
                 samples: HealthWidgetDemo.heartRate,
                 events: HealthWidgetDemo.heartRateEvents,
-                window: window,
-                size: size,
+                window: widget.window,
+                size: widget.size,
                 allowsSelection: allowsSelection
+            )
+        case (.heartRate, .leadingNumber):
+            BrightLeadingNumberWidgetV5(
+                title: widget.kind.title,
+                systemImage: widget.kind.systemImage,
+                tint: widget.kind.tint,
+                value: HealthWidgetDemo.heartRate.last?.value ?? 0,
+                unit: "BPM",
+                latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
         }
     }
@@ -87,7 +94,7 @@ struct HealthWidgetGrid: View {
             let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
             let origin = drag?.location ?? HealthWidgetGridMetrics.origin(of: position, cellSize: cellSize)
 
-            HealthWidgetView(kind: widget.kind, size: widget.size, window: widget.window, allowsSelection: !editor.isEditing)
+            HealthWidgetView(widget: widget, allowsSelection: !editor.isEditing)
                 .frame(width: frame.width, height: frame.height)
                 .contentShape(.rect(cornerRadius: .cardCornerRadius))
                 .overlay(alignment: .topTrailing) {
@@ -123,7 +130,7 @@ struct HealthWidgetGrid: View {
     }
 
     private func removeButton(for widget: HealthWidgetItem) -> some View {
-        BrightRoundButton(systemImage: "minus", size: .small, fontSize: .body5, haptic: nil) {
+        BrightRoundButton(systemImage: "minus", size: .extraSmall, haptic: nil) {
             editor.remove(widget)
         }
         .offset(x: .spacing05x, y: -.spacing05x)

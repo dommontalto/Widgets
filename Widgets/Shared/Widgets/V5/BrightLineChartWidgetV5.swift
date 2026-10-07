@@ -55,6 +55,16 @@ struct BrightLineChartWidgetV5: View {
             Double(hours) * 60 * 60
         }
 
+        // Longer windows average their readings into buckets so the line keeps
+        // roughly the same detail as the hour does.
+        var bucket: TimeInterval? {
+            switch hours {
+            case 6: 5 * 60
+            case 12: 10 * 60
+            default: nil
+            }
+        }
+
         // A dot every 10 minutes for the hour, otherwise one an hour.
         var tickCount: Int {
             self == .rolling1h ? 7 : hours + 1
@@ -463,7 +473,15 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private var visibleSamples: [Sample] {
-        samples.filter { $0.date >= start && $0.date <= end }
+        let inWindow = samples.filter { $0.date >= start && $0.date <= end }
+        guard let bucket = window.bucket else { return inWindow }
+
+        // Dated by each bucket's last reading so the line still reaches the latest one.
+        let buckets = Dictionary(grouping: inWindow) { Int($0.date.timeIntervalSince(start) / bucket) }
+        return buckets.keys.sorted().compactMap { key in
+            guard let readings = buckets[key], let last = readings.last else { return nil }
+            return Sample(date: last.date, value: readings.map(\.value).reduce(0, +) / Double(readings.count))
+        }
     }
 
     private var nowTickIndex: Int {

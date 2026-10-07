@@ -9,6 +9,8 @@
 import Foundation
 
 enum BrightButtonSizes: CGFloat {
+    // Round button size 24pt — badges on another control, like a widget's remove button.
+    case extraSmall = 24
     // Round button size 30pt.
     case small = 30
     // Round button size 36pt.
@@ -20,6 +22,7 @@ enum BrightButtonSizes: CGFloat {
 
     var defaultFontSize: FontSizes {
         switch self {
+        case .extraSmall: .body5
         case .small: .body1
         case .medium, .large: .subheading1
         case .finalBossLarge: .standout2

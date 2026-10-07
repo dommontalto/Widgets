@@ -30,16 +30,36 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         }
     }
 
+    var styles: [HealthWidgetStyle] {
+        switch self {
+        case .heartRate: HealthWidgetStyle.allCases
+        }
+    }
+}
+
+// The alternative designs a kind can be shown as, swiped between in the add and edit sheets.
+enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
+    case lineChart
+    case leadingNumber
+
+    var id: Self { self }
+
     var sizes: [BrightWidgetSizeV5] {
         switch self {
-        case .heartRate: BrightWidgetSizeV5.allCases
+        case .lineChart: BrightWidgetSizeV5.allCases
+        case .leadingNumber: [.small, .medium]
         }
+    }
+
+    var hasWindow: Bool {
+        self == .lineChart
     }
 }
 
 struct HealthWidgetItem: Identifiable, Codable, Equatable {
     var id = UUID()
     var kind: HealthWidgetKind
+    var style = HealthWidgetStyle.lineChart
     var size: BrightWidgetSizeV5
     var window = BrightLineChartWidgetV5.Window.rolling1h
 }
@@ -101,10 +121,9 @@ final class HealthWidgetLayout {
         commit()
     }
 
-    func update(id: UUID, size: BrightWidgetSizeV5, window: BrightLineChartWidgetV5.Window) {
-        guard let index = widgets.firstIndex(where: { $0.id == id }) else { return }
-        widgets[index].size = size
-        widgets[index].window = window
+    func update(_ widget: HealthWidgetItem) {
+        guard let index = widgets.firstIndex(where: { $0.id == widget.id }) else { return }
+        widgets[index] = widget
         commit()
     }
 

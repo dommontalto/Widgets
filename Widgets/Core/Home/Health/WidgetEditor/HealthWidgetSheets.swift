@@ -38,8 +38,8 @@ struct AddWidgetSheet: View {
             }
             .scrollIndicators(.hidden)
             .navigationDestination(for: HealthWidgetKind.self) { kind in
-                ChooseWidgetSizePage(kind: kind) { size, window in
-                    onAdd(HealthWidgetItem(kind: kind, size: size, window: window))
+                ChooseWidgetSizePage(kind: kind) { widget in
+                    onAdd(widget)
                     dismiss()
                 }
             }
@@ -59,18 +59,14 @@ struct AddWidgetSheet: View {
 }
 
 struct EditWidgetSheet: View {
-    let widget: HealthWidgetItem
-    let onSave: (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void
+    let onSave: (HealthWidgetItem) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var size: BrightWidgetSizeV5
-    @State private var window: BrightLineChartWidgetV5.Window
+    @State private var widget: HealthWidgetItem
 
-    init(widget: HealthWidgetItem, onSave: @escaping (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void) {
-        self.widget = widget
+    init(widget: HealthWidgetItem, onSave: @escaping (HealthWidgetItem) -> Void) {
         self.onSave = onSave
-        _size = State(initialValue: widget.size)
-        _window = State(initialValue: widget.window)
+        _widget = State(initialValue: widget)
     }
 
     var body: some View {
@@ -78,28 +74,31 @@ struct EditWidgetSheet: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
                     BrightHaptic.medium.play()
-                    onSave(size, window)
+                    onSave(widget)
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultSkyBlue)
             }
         } content: {
-            WidgetOptions(kind: widget.kind, size: $size, window: $window)
+            WidgetOptions(widget: $widget)
         }
     }
 }
 
 private struct ChooseWidgetSizePage: View {
-    let kind: HealthWidgetKind
-    let onAdd: (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void
+    let onAdd: (HealthWidgetItem) -> Void
 
-    @State private var size = BrightWidgetSizeV5.small
-    @State private var window = BrightLineChartWidgetV5.Window.rolling1h
+    @State private var widget: HealthWidgetItem
+
+    init(kind: HealthWidgetKind, onAdd: @escaping (HealthWidgetItem) -> Void) {
+        self.onAdd = onAdd
+        _widget = State(initialValue: HealthWidgetItem(kind: kind, size: .small))
+    }
 
     var body: some View {
         BrightPageViewV5(
-            title: kind.title,
+            title: widget.kind.title,
             scrollableTitle: false,
             horizontalPadding: .spacing0x,
             backgroundColor: .defaultSheetBackground
@@ -107,161 +106,177 @@ private struct ChooseWidgetSizePage: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add") {
                     BrightHaptic.medium.play()
-                    onAdd(size, window)
+                    onAdd(widget)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultSkyBlue)
             }
         } content: {
-            WidgetOptions(kind: kind, size: $size, window: $window)
+            WidgetOptions(widget: $widget)
         }
     }
 }
 
-// The size carousel, with the time range below it picked from a mini sheet.
+// The widget on top, swiped between its styles, and its settings below.
 private struct WidgetOptions: View {
-    let kind: HealthWidgetKind
-    @Binding var size: BrightWidgetSizeV5
-    @Binding var window: BrightLineChartWidgetV5.Window
+    @Binding var widget: HealthWidgetItem
 
-    @State private var isPickingWindow = false
+    @State private var stylePosition = ScrollPosition(idType: HealthWidgetStyle.self)
+    @State private var edgeProgress: CGFloat = 0
 
     var body: some View {
+        GeometryReader { geometry in
+            let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: geometry.size.width)
+            let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
+            let previewHeight = min(
+                frame.height + .spacing4x * 2 + Constants.indicatorHeight,
+                geometry.size.height - Constants.minimumPanelHeight
+            )
+
+            VStack(spacing: .spacing0x) {
+                stylePager(cellSize: cellSize, room: previewHeight - Constants.indicatorHeight)
+                    .frame(height: previewHeight)
+                    .brightEdgeV5(progress: edgeProgress)
+                    .zIndex(1)
+
+                panel
+            }
+        }
+        .animation(.brightBouncy, value: widget.size)
+        .animation(.brightEaseInOut, value: widget.window)
+        .onAppear {
+            stylePosition.scrollTo(id: widget.style)
+        }
+    }
+
+    private func stylePager(cellSize: CGFloat, room: CGFloat) -> some View {
         VStack(spacing: .spacing0x) {
-            WidgetSizeCarousel(kind: kind, window: window, selection: $size)
-
-            BrightRowGroupV5(color: .defaultSheetModalCards) {
-                BrightRowV5("Time range", icon: .symbol("clock"), trailing: .value(window.title)) {
-                    BrightHaptic.light.play()
-                    isPickingWindow = true
-                }
-            }
-            .padding([.horizontal, .bottom], .spacing3x)
-        }
-        .brightMiniSheetV5(isPresented: $isPickingWindow) {
-            WidgetWindowPicker(selection: $window) {
-                isPickingWindow = false
-            }
-        }
-    }
-}
-
-private struct WidgetWindowPicker: View {
-    @Binding var selection: BrightLineChartWidgetV5.Window
-    let onClose: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("Time range", size: .heading)
-
-            group("Rolling", windows: [.rolling1h, .rolling6h, .rolling12h])
-
-            group("Fixed", windows: [.fixed6h, .fixed12h])
-        }
-        .padding([.top, .horizontal], .spacing4x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .topTrailing) {
-            BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
-                .padding(.top, .spacing3x)
-                .padding(.trailing, .spacing3x)
-        }
-    }
-
-    private func group(_ header: String, windows: [BrightLineChartWidgetV5.Window]) -> some View {
-        BrightRowGroupV5(header: header, color: .defaultSheetModalCards) {
-            ForEach(windows) { window in
-                BrightRowV5(window.span, trailing: .tick(window == selection)) {
-                    BrightHaptic.light.play()
-                    selection = window
-                    onClose()
-                }
-            }
-        }
-    }
-}
-
-// Pages through a widget's sizes, each drawn at the size it takes on the grid.
-private struct WidgetSizeCarousel: View {
-    let kind: HealthWidgetKind
-    let window: BrightLineChartWidgetV5.Window
-    @Binding var selection: BrightWidgetSizeV5
-
-    @State private var scrollPosition = ScrollPosition(idType: BrightWidgetSizeV5.self)
-    @State private var containerWidth: CGFloat = 0
-
-    var body: some View {
-        let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: containerWidth)
-
-        VStack(spacing: .spacing0x) {
-            Spacer(minLength: .spacing0x)
-
             ScrollView(.horizontal) {
                 HStack(spacing: .spacing0x) {
-                    ForEach(kind.sizes, id: \.self) { size in
-                        page(for: size, cellSize: cellSize)
+                    ForEach(widget.kind.styles) { style in
+                        preview(of: style, cellSize: cellSize, room: room)
+                            .containerRelativeFrame(.horizontal)
+                            .id(style)
                     }
                 }
                 .scrollTargetLayout()
             }
             .scrollIndicators(.hidden)
             .scrollTargetBehavior(.paging)
-            .scrollPosition($scrollPosition)
-            .scrollClipDisabled()
-            .onScrollTargetVisibilityChange(idType: BrightWidgetSizeV5.self, threshold: Constants.visibilityThreshold) { visible in
-                if let first = visible.first, first != selection {
-                    selection = first
+            .scrollPosition($stylePosition)
+            .onScrollTargetVisibilityChange(idType: HealthWidgetStyle.self, threshold: Constants.visibilityThreshold) { visible in
+                if let style = visible.first, style != widget.style {
+                    select(style)
                 }
             }
 
-            Spacer(minLength: .spacing0x)
+            BrightPageIndicatorV5(total: widget.kind.styles.count, activeIndex: styleIndex)
+                .frame(height: Constants.indicatorHeight, alignment: .top)
+        }
+    }
 
-            BrightPageIndicatorV5(total: kind.sizes.count, activeIndex: selectedIndex)
-                .padding(.bottom, .spacing5x)
+    // Shrinks to fit when the sheet is too short to show it at grid size.
+    private func preview(of style: HealthWidgetStyle, cellSize: CGFloat, room: CGFloat) -> some View {
+        var shown = widget
+        shown.style = style
+        if !style.sizes.contains(shown.size), let largest = style.sizes.last {
+            shown.size = largest
         }
-        .onGeometryChange(for: CGFloat.self, of: \.size.width) { containerWidth = $0 }
-        .onAppear {
-            scrollPosition.scrollTo(id: selection)
+        let frame = HealthWidgetGridMetrics.frame(for: shown.size, cellSize: cellSize)
+        let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
+
+        return HealthWidgetView(widget: shown)
+            .id(shown.window)
+            .transition(.blurReplace)
+            .frame(width: frame.width, height: frame.height)
+            .scaleEffect(scale)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var panel: some View {
+        ScrollView {
+            settings
+                .padding(.spacing3x)
         }
-        .onChange(of: selection) { _, newSize in
-            guard scrollPosition.viewID(type: BrightWidgetSizeV5.self) != newSize else { return }
-            withAnimation(.brightSnappy) {
-                scrollPosition.scrollTo(id: newSize)
+        .scrollIndicators(.hidden)
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            let progress = BrightEdgeV5.progress(forOffset: offset)
+            guard progress != edgeProgress else { return }
+            edgeProgress = progress
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var settings: some View {
+        VStack(spacing: .spacing4x) {
+            if widget.style.sizes.count > 1 {
+                Picker("Size", selection: $widget.size) {
+                    ForEach(widget.style.sizes, id: \.self) { size in
+                        Text(size.title)
+                            .tag(size)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .brightHapticV5(.light, trigger: widget.size)
+                // A style with different sizes gets a new control that fades in, rather than
+                // this one reshaping its segments, which smears its shadow mid-swipe.
+                .id(widget.style.sizes)
+                .transition(.opacity)
+            }
+
+            if widget.style.hasWindow {
+                windowGroup("Rolling", windows: [.rolling1h, .rolling6h, .rolling12h])
+
+                windowGroup("Fixed", windows: [.fixed6h, .fixed12h])
+            } else {
+                BrightPlaceholderViewV5(
+                    systemImage: "slider.horizontal.3",
+                    title: "No other customisation",
+                    subtitle: "This widget only changes size."
+                )
+                .padding(.top, .spacing4x)
+            }
+        }
+        .animation(.brightEaseInOut, value: widget.style)
+    }
+
+    private func windowGroup(_ header: String, windows: [BrightLineChartWidgetV5.Window]) -> some View {
+        BrightRowGroupV5(header: header) {
+            ForEach(windows) { option in
+                BrightRowV5(option.span, trailing: .tick(option == widget.window)) {
+                    BrightHaptic.light.play()
+                    widget.window = option
+                }
             }
         }
     }
 
-    private func page(for size: BrightWidgetSizeV5, cellSize: CGFloat) -> some View {
-        let frame = HealthWidgetGridMetrics.frame(for: size, cellSize: cellSize)
-
-        return VStack(spacing: .spacing3x) {
-            HealthWidgetView(kind: kind, size: size, window: window)
-                .frame(width: frame.width, height: frame.height)
-                .allowsHitTesting(false)
-
-            BrightText(size.title, size: .body1, color: .semiLightTextColor)
+    // A style that can't be shown at the current size takes its largest one instead.
+    private func select(_ style: HealthWidgetStyle) {
+        BrightHaptic.light.play()
+        widget.style = style
+        if !style.sizes.contains(widget.size), let largest = style.sizes.last {
+            widget.size = largest
         }
-        .containerRelativeFrame(.horizontal)
-        .scrollTransition(.animated(.brightBouncy)) { content, phase in
-            content
-                .opacity(phase.isIdentity ? .opaque : .semiLowOpacity)
-                .scaleEffect(phase.isIdentity ? 1 : Constants.offPageScale)
-                .blur(radius: phase.isIdentity ? 0 : Constants.offPageBlur)
-        }
-        .id(size)
     }
 
-    private var selectedIndex: Binding<Int?> {
+    private var styleIndex: Binding<Int?> {
         Binding {
-            kind.sizes.firstIndex(of: selection)
+            widget.kind.styles.firstIndex(of: widget.style)
         } set: { index in
-            guard let index, kind.sizes.indices.contains(index) else { return }
-            selection = kind.sizes[index]
+            guard let index, widget.kind.styles.indices.contains(index) else { return }
+            withAnimation(.brightSnappy) {
+                stylePosition.scrollTo(id: widget.kind.styles[index])
+            }
         }
     }
 
     private enum Constants {
+        static let minimumPanelHeight: CGFloat = 200
+        // The indicator's own 30pt pill, plus a gap above the scroll edge line.
+        static let indicatorHeight: CGFloat = .spacing6x
         static let visibilityThreshold: Double = 0.5
-        static let offPageScale: CGFloat = 0.85
-        static let offPageBlur: CGFloat = 2
     }
 }
