@@ -111,7 +111,7 @@ struct BrightLineChartWidgetV5: View {
 
                 reading(
                     selectedSample?.value ?? average,
-                    unit: selectedSample == nil ? "\(unit) AVG" : unit,
+                    unit: unit,
                     valueSize: size == .large ? .huge2 : .standout3,
                     unitSize: .body1,
                     weight: .regular
@@ -183,11 +183,6 @@ struct BrightLineChartWidgetV5: View {
                     .frame(width: Constants.axisLabelWidth)
 
                 chart(domain: domain)
-                    .overlay(alignment: .leading) {
-                        Rectangle()
-                            .fill(Color.lightTextColor)
-                            .frame(width: Constants.hairline)
-                    }
                     .overlay { eventIcons }
             }
 
@@ -244,7 +239,7 @@ struct BrightLineChartWidgetV5: View {
             }
 
             RuleMark(y: .value("Average", average))
-                .brightDashedLineV5(size == .small ? .semiLightTextColor : .lightTextColor)
+                .brightDashedLineV5()
 
             if size != .small {
                 RuleMark(y: .value("High", high))
@@ -318,9 +313,9 @@ struct BrightLineChartWidgetV5: View {
                     Spacer(minLength: .spacing0x)
                 }
 
-                Circle()
+                Capsule()
                     .fill(index == Constants.tickCount - 1 ? Color.textColor : Color.lightTextColor)
-                    .frame(width: .spacing05x, height: .spacing05x)
+                    .frame(width: .spacing05x, height: index == 0 ? Constants.startTickHeight : .spacing05x)
             }
         }
     }
@@ -476,6 +471,7 @@ struct BrightLineChartWidgetV5: View {
         static let pointSize: CGFloat = 64
         static let heldLabelWidth: CGFloat = 60
         static let tickCount = 6
+        static let startTickHeight: CGFloat = 7
         static let eventIconOffset: CGFloat = .spacing2x
     }
 }
