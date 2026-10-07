@@ -10,6 +10,7 @@ import SwiftUI
 struct HealthWidgetView: View {
     let kind: HealthWidgetKind
     let size: BrightWidgetSizeV5
+    var window = BrightLineChartWidgetV5.Window.rolling1h
     var allowsSelection = true
 
     var body: some View {
@@ -22,6 +23,7 @@ struct HealthWidgetView: View {
                 unit: "BPM",
                 samples: HealthWidgetDemo.heartRate,
                 events: HealthWidgetDemo.heartRateEvents,
+                window: window,
                 size: size,
                 allowsSelection: allowsSelection
             )
@@ -85,7 +87,7 @@ struct HealthWidgetGrid: View {
             let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
             let origin = drag?.location ?? HealthWidgetGridMetrics.origin(of: position, cellSize: cellSize)
 
-            HealthWidgetView(kind: widget.kind, size: widget.size, allowsSelection: !editor.isEditing)
+            HealthWidgetView(kind: widget.kind, size: widget.size, window: widget.window, allowsSelection: !editor.isEditing)
                 .frame(width: frame.width, height: frame.height)
                 .contentShape(.rect(cornerRadius: .cardCornerRadius))
                 .overlay(alignment: .topTrailing) {

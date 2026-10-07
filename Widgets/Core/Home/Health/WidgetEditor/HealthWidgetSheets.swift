@@ -38,8 +38,8 @@ struct AddWidgetSheet: View {
             }
             .scrollIndicators(.hidden)
             .navigationDestination(for: HealthWidgetKind.self) { kind in
-                ChooseWidgetSizePage(kind: kind) { size in
-                    onAdd(HealthWidgetItem(kind: kind, size: size))
+                ChooseWidgetSizePage(kind: kind) { size, window in
+                    onAdd(HealthWidgetItem(kind: kind, size: size, window: window))
                     dismiss()
                 }
             }
@@ -60,15 +60,17 @@ struct AddWidgetSheet: View {
 
 struct EditWidgetSheet: View {
     let widget: HealthWidgetItem
-    let onSave: (BrightWidgetSizeV5) -> Void
+    let onSave: (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var size: BrightWidgetSizeV5
+    @State private var window: BrightLineChartWidgetV5.Window
 
-    init(widget: HealthWidgetItem, onSave: @escaping (BrightWidgetSizeV5) -> Void) {
+    init(widget: HealthWidgetItem, onSave: @escaping (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void) {
         self.widget = widget
         self.onSave = onSave
         _size = State(initialValue: widget.size)
+        _window = State(initialValue: widget.window)
     }
 
     var body: some View {
@@ -76,23 +78,24 @@ struct EditWidgetSheet: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
                     BrightHaptic.medium.play()
-                    onSave(size)
+                    onSave(size, window)
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultSkyBlue)
             }
         } content: {
-            WidgetSizeCarousel(kind: widget.kind, selection: $size)
+            WidgetOptions(kind: widget.kind, size: $size, window: $window)
         }
     }
 }
 
 private struct ChooseWidgetSizePage: View {
     let kind: HealthWidgetKind
-    let onAdd: (BrightWidgetSizeV5) -> Void
+    let onAdd: (BrightWidgetSizeV5, BrightLineChartWidgetV5.Window) -> Void
 
     @State private var size = BrightWidgetSizeV5.small
+    @State private var window = BrightLineChartWidgetV5.Window.rolling1h
 
     var body: some View {
         BrightPageViewV5(
@@ -104,13 +107,75 @@ private struct ChooseWidgetSizePage: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add") {
                     BrightHaptic.medium.play()
-                    onAdd(size)
+                    onAdd(size, window)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultSkyBlue)
             }
         } content: {
-            WidgetSizeCarousel(kind: kind, selection: $size)
+            WidgetOptions(kind: kind, size: $size, window: $window)
+        }
+    }
+}
+
+// The size carousel, with the time range below it picked from a mini sheet.
+private struct WidgetOptions: View {
+    let kind: HealthWidgetKind
+    @Binding var size: BrightWidgetSizeV5
+    @Binding var window: BrightLineChartWidgetV5.Window
+
+    @State private var isPickingWindow = false
+
+    var body: some View {
+        VStack(spacing: .spacing0x) {
+            WidgetSizeCarousel(kind: kind, window: window, selection: $size)
+
+            BrightRowGroupV5(color: .defaultSheetModalCards) {
+                BrightRowV5("Time range", icon: .symbol("clock"), trailing: .value(window.title)) {
+                    BrightHaptic.light.play()
+                    isPickingWindow = true
+                }
+            }
+            .padding([.horizontal, .bottom], .spacing3x)
+        }
+        .brightMiniSheetV5(isPresented: $isPickingWindow) {
+            WidgetWindowPicker(selection: $window) {
+                isPickingWindow = false
+            }
+        }
+    }
+}
+
+private struct WidgetWindowPicker: View {
+    @Binding var selection: BrightLineChartWidgetV5.Window
+    let onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            BrightText("Time range", size: .heading)
+
+            group("Rolling", windows: [.rolling1h, .rolling6h, .rolling12h])
+
+            group("Fixed", windows: [.fixed6h, .fixed12h])
+        }
+        .padding([.top, .horizontal], .spacing4x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .topTrailing) {
+            BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
+                .padding(.top, .spacing3x)
+                .padding(.trailing, .spacing3x)
+        }
+    }
+
+    private func group(_ header: String, windows: [BrightLineChartWidgetV5.Window]) -> some View {
+        BrightRowGroupV5(header: header, color: .defaultSheetModalCards) {
+            ForEach(windows) { window in
+                BrightRowV5(window.span, trailing: .tick(window == selection)) {
+                    BrightHaptic.light.play()
+                    selection = window
+                    onClose()
+                }
+            }
         }
     }
 }
@@ -118,6 +183,7 @@ private struct ChooseWidgetSizePage: View {
 // Pages through a widget's sizes, each drawn at the size it takes on the grid.
 private struct WidgetSizeCarousel: View {
     let kind: HealthWidgetKind
+    let window: BrightLineChartWidgetV5.Window
     @Binding var selection: BrightWidgetSizeV5
 
     @State private var scrollPosition = ScrollPosition(idType: BrightWidgetSizeV5.self)
@@ -168,7 +234,7 @@ private struct WidgetSizeCarousel: View {
         let frame = HealthWidgetGridMetrics.frame(for: size, cellSize: cellSize)
 
         return VStack(spacing: .spacing3x) {
-            HealthWidgetView(kind: kind, size: size)
+            HealthWidgetView(kind: kind, size: size, window: window)
                 .frame(width: frame.width, height: frame.height)
                 .allowsHitTesting(false)
 

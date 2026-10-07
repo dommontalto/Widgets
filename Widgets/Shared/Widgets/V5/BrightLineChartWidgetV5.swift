@@ -30,18 +30,62 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
-    enum Window {
-        case rollingHour
+    enum Window: String, CaseIterable, Codable, Identifiable {
+        case rolling1h
+        case rolling6h
+        case rolling12h
+        case fixed6h
+        case fixed12h
 
-        var duration: TimeInterval {
-            switch self {
-            case .rollingHour: 60 * 60
-            }
+        var id: Self { self }
+
+        var title: String {
+            "\(isFixed ? "Fixed" : "Rolling") \(hours)h"
         }
 
-        var startLabel: String {
+        var span: String {
+            hours == 1 ? "1 hour" : "\(hours) hours"
+        }
+
+        var isFixed: Bool {
+            self == .fixed6h || self == .fixed12h
+        }
+
+        var duration: TimeInterval {
+            Double(hours) * 60 * 60
+        }
+
+        // A dot every 10 minutes for the hour, otherwise one an hour.
+        var tickCount: Int {
+            self == .rolling1h ? 7 : hours + 1
+        }
+
+        // A fixed window steps forward by half its length, on the clock, so its left
+        // half is always a complete block and the right half fills in until the next step.
+        func interval(endingAt latest: Date) -> DateInterval {
+            guard isFixed else {
+                return DateInterval(start: latest.addingTimeInterval(-duration), duration: duration)
+            }
+            let step = duration / 2
+            let midnight = Calendar.current.startOfDay(for: latest)
+            let blockStart = midnight.addingTimeInterval((latest.timeIntervalSince(midnight) / step).rounded(.down) * step)
+            return DateInterval(start: blockStart.addingTimeInterval(-step), duration: duration)
+        }
+
+        // Rolling windows count back from now; fixed ones name the hours they start and step at.
+        func labels(for interval: DateInterval) -> (leading: String, trailing: String) {
+            if isFixed {
+                let midpoint = interval.start.addingTimeInterval(duration / 2)
+                return (interval.start.formatted(.brightHour), midpoint.formatted(.brightHour))
+            }
+            return (hours == 1 ? "60m ago" : "\(hours)h ago", "Now")
+        }
+
+        private var hours: Int {
             switch self {
-            case .rollingHour: "60m ago"
+            case .rolling1h: 1
+            case .rolling6h, .fixed6h: 6
+            case .rolling12h, .fixed12h: 12
             }
         }
     }
@@ -52,7 +96,7 @@ struct BrightLineChartWidgetV5: View {
     let unit: String
     let samples: [Sample]
     var events: [Event] = []
-    var window: Window = .rollingHour
+    var window: Window = .rolling1h
     let size: BrightWidgetSizeV5
     var allowsSelection = true
 
@@ -141,7 +185,7 @@ struct BrightLineChartWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText("Latest: \(end.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+            BrightText("Latest: \(latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
         }
     }
 
@@ -314,27 +358,31 @@ struct BrightLineChartWidgetV5: View {
 
     private var ticks: some View {
         HStack(spacing: .spacing0x) {
-            ForEach(0 ..< Constants.tickCount, id: \.self) { index in
+            ForEach(0 ..< window.tickCount, id: \.self) { index in
                 if index > 0 {
                     Spacer(minLength: .spacing0x)
                 }
 
                 Capsule()
-                    .fill(index == Constants.tickCount - 1 ? Color.textColor : Color.lightTextColor)
+                    .fill(index == nowTickIndex ? Color.textColor : Color.lightTextColor)
                     .frame(width: .spacing05x, height: index == 0 ? Constants.startTickHeight : .spacing05x)
             }
         }
     }
 
-    // While a point is held the two ends give way to its time, which rides the selection line.
+    // A fixed window's second label sits under its middle dot, so each label takes
+    // half the width. While a point is held both give way to its time, which rides the selection line.
     private func windowLabels(color: Color) -> some View {
-        HStack(spacing: .spacing1x) {
-            BrightText(window.startLabel, size: .body5, color: color)
+        let labels = window.labels(for: interval)
 
-            Spacer(minLength: .spacing0x)
+        return HStack(spacing: .spacing0x) {
+            BrightText(labels.leading, size: .body5, color: color)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            BrightText("Now", size: .body5, color: color)
+            BrightText(labels.trailing, size: .body5, color: color)
+                .frame(maxWidth: .infinity, alignment: window.isFixed ? .leading : .trailing)
         }
+        .lineLimit(1)
         .opacity(selectedSample == nil ? .opaque : .zero)
         .overlay(alignment: .leading) {
             if let selectedSample {
@@ -398,16 +446,30 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
-    private var end: Date {
+    private var latest: Date {
         samples.last?.date ?? .now
     }
 
+    private var interval: DateInterval {
+        window.interval(endingAt: latest)
+    }
+
     private var start: Date {
-        end.addingTimeInterval(-window.duration)
+        interval.start
+    }
+
+    private var end: Date {
+        interval.end
     }
 
     private var visibleSamples: [Sample] {
-        samples.filter { $0.date >= start }
+        samples.filter { $0.date >= start && $0.date <= end }
+    }
+
+    private var nowTickIndex: Int {
+        let lastIndex = window.tickCount - 1
+        let progress = latest.timeIntervalSince(start) / window.duration
+        return min(max(Int((progress * Double(lastIndex)).rounded()), 0), lastIndex)
     }
 
     private var values: [Double] {
@@ -477,7 +539,6 @@ struct BrightLineChartWidgetV5: View {
         static let pointDiameter: CGFloat = 8
         static let pointRingDiameter: CGFloat = 14
         static let heldLabelWidth: CGFloat = 60
-        static let tickCount = 6
         static let startTickHeight: CGFloat = 7
         static let eventIconOffset: CGFloat = .spacing2x
     }

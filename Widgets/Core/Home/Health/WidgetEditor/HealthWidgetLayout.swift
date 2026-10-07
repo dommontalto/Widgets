@@ -41,6 +41,7 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
     var id = UUID()
     var kind: HealthWidgetKind
     var size: BrightWidgetSizeV5
+    var window = BrightLineChartWidgetV5.Window.rolling1h
 }
 
 struct HealthGridPosition: Equatable, Hashable {
@@ -100,9 +101,10 @@ final class HealthWidgetLayout {
         commit()
     }
 
-    func resize(id: UUID, to size: BrightWidgetSizeV5) {
+    func update(id: UUID, size: BrightWidgetSizeV5, window: BrightLineChartWidgetV5.Window) {
         guard let index = widgets.firstIndex(where: { $0.id == id }) else { return }
         widgets[index].size = size
+        widgets[index].window = window
         commit()
     }
 

@@ -85,9 +85,9 @@ struct HealthView: View {
                 .presentationContentInteraction(.scrolls)
             }
             .sheet(item: $editor.editingWidget) { widget in
-                EditWidgetSheet(widget: widget) { size in
+                EditWidgetSheet(widget: widget) { size, window in
                     withAnimation(.brightSpring) {
-                        editor.layout.resize(id: widget.id, to: size)
+                        editor.layout.update(id: widget.id, size: size, window: window)
                     }
                 }
                 .presentationDragIndicator(.hidden)
