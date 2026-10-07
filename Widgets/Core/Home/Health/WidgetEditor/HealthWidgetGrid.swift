@@ -15,27 +15,21 @@ struct HealthWidgetView: View {
         switch (widget.kind, widget.style) {
         case (.heartRate, .lineChart):
             BrightLineChartWidgetV5(
-                title: widget.kind.title,
-                systemImage: widget.kind.systemImage,
-                tint: widget.kind.tint,
-                unit: "BPM",
+                appearance: heartRateAppearance,
                 samples: HealthWidgetDemo.heartRate,
                 events: HealthWidgetDemo.heartRateEvents,
-                window: widget.window,
+                range: widget.range,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
-                title: widget.kind.title,
-                systemImage: widget.kind.systemImage,
-                tint: widget.kind.tint,
+                appearance: heartRateAppearance,
                 value: HealthWidgetDemo.heartRate.last?.value ?? 0,
-                unit: "BPM",
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
         case (.intake, _):
-            barChart(HealthWidgetDemo.intake, subtitle: intakeSubtitle)
+            barChart(HealthWidgetDemo.intake)
         case (.activity, .activeEnergyBars):
             barChart(HealthWidgetDemo.activeEnergy)
         case (.activity, .stepBars):
@@ -45,18 +39,19 @@ struct HealthWidgetView: View {
         }
     }
 
+    private var heartRateAppearance: BrightWidgetAppearanceV5 {
+        BrightWidgetAppearanceV5(title: widget.kind.title, systemImage: widget.kind.systemImage, tint: widget.kind.tint, unit: "BPM")
+    }
+
     // Small and medium weeks lead with the average; large leads with today and lists the week below.
-    private func barChart(_ metric: HealthWidgetDemo.BarMetric, subtitle: String? = nil) -> some View {
-        let range = widget.barRange
+    private func barChart(_ metric: HealthWidgetDemo.BarMetric) -> some View {
+        let range = widget.range
         let isLarge = widget.size == .large
-        let headline: BrightBarChartWidgetV5.Headline = range == .week ? (isLarge ? .current : .average) : .total
+        let headline: BrightBarChartWidgetV5.Headline = range.isWeek ? (isLarge ? .current : .average) : .total
 
         return BrightBarChartWidgetV5(
-            title: metric.title,
-            systemImage: metric.systemImage,
-            tint: metric.tint,
-            unit: metric.unit,
-            subtitle: subtitle ?? "Latest: \(HealthWidgetDemo.currentHourRange)",
+            appearance: metric.appearance,
+            subtitle: metric.subtitle(for: range),
             range: range,
             bars: metric.bars(for: range),
             fill: metric.fill(for: range),
@@ -67,16 +62,6 @@ struct HealthWidgetView: View {
             size: widget.size,
             allowsSelection: allowsSelection
         )
-    }
-
-    // The week names the latest meal; a day counts down what's left of the goal.
-    private var intakeSubtitle: String {
-        if widget.barRange == .week {
-            let meal = HealthWidgetDemo.latestMeal
-            return "Latest: \(Int(meal.calories)) Cal, \(meal.date.formatted(.brightTimestamp))"
-        }
-        let today = HealthWidgetDemo.intake.bars(for: .today).compactMap(\.value).reduce(0, +)
-        return "\(Int(max((HealthWidgetDemo.intake.dayTarget ?? 0) - today, 0)).formatted()) Remaining"
     }
 }
 

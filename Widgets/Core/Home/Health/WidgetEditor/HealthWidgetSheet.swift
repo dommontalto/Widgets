@@ -158,8 +158,7 @@ private struct WidgetOptions: View {
             }
         }
         .animation(.brightBouncy, value: widget.size)
-        .animation(.brightEaseInOut, value: widget.window)
-        .animation(.brightEaseInOut, value: widget.barRange)
+        .animation(.brightEaseInOut, value: widget.range)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -194,15 +193,12 @@ private struct WidgetOptions: View {
     // Shrinks to fit when the sheet is too short to show it at grid size.
     private func preview(of style: HealthWidgetStyle, cellSize: CGFloat, room: CGFloat) -> some View {
         var shown = widget
-        shown.style = style
-        if !style.sizes.contains(shown.size), let largest = style.sizes.last {
-            shown.size = largest
-        }
+        shown.adopt(style)
         let frame = HealthWidgetGridMetrics.frame(for: shown.size, cellSize: cellSize)
         let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
 
         return HealthWidgetView(widget: shown)
-            .id("\(shown.window)-\(shown.barRange)")
+            .id(shown.range)
             .transition(.blurReplace)
             .frame(width: frame.width, height: frame.height)
             .scaleEffect(scale)
@@ -242,17 +238,11 @@ private struct WidgetOptions: View {
                 .transition(.opacity)
             }
 
-            if widget.style.hasWindow {
-                windowGroup("Rolling", windows: [.rolling1h, .rolling6h, .rolling12h])
-
-                windowGroup("Fixed", windows: [.fixed6h, .fixed12h])
-            } else if widget.style.hasBarRange {
-                BrightRowGroupV5(header: "Range") {
-                    ForEach(BrightBarChartWidgetV5.Range.allCases) { option in
-                        BrightRowV5(option.title, trailing: .tick(option == widget.barRange)) {
-                            BrightHaptic.light.play()
-                            widget.barRange = option
-                        }
+            if !widget.style.ranges.isEmpty {
+                ForEach(BrightWidgetRangeV5.Section.allCases, id: \.self) { section in
+                    let ranges = widget.style.ranges.filter { $0.section == section }
+                    if !ranges.isEmpty {
+                        rangeGroup(section.rawValue, ranges: ranges)
                     }
                 }
             } else {
@@ -267,12 +257,12 @@ private struct WidgetOptions: View {
         .animation(.brightEaseInOut, value: widget.style)
     }
 
-    private func windowGroup(_ header: String, windows: [BrightLineChartWidgetV5.Window]) -> some View {
+    private func rangeGroup(_ header: String, ranges: [BrightWidgetRangeV5]) -> some View {
         BrightRowGroupV5(header: header) {
-            ForEach(windows) { option in
-                BrightRowV5(option.span, trailing: .tick(option == widget.window)) {
+            ForEach(ranges) { option in
+                BrightRowV5(option.rowTitle, trailing: .tick(option == widget.range)) {
                     BrightHaptic.light.play()
-                    widget.window = option
+                    widget.range = option
                 }
             }
         }
@@ -281,10 +271,7 @@ private struct WidgetOptions: View {
     // A style that can't be shown at the current size takes its largest one instead.
     private func select(_ style: HealthWidgetStyle) {
         BrightHaptic.light.play()
-        widget.style = style
-        if !style.sizes.contains(widget.size), let largest = style.sizes.last {
-            widget.size = largest
-        }
+        widget.adopt(style)
     }
 
     private var styleIndex: Binding<Int?> {

@@ -57,8 +57,10 @@ Widgets/
 │   ├── Models/             — Checkout, Common, Status
 │   ├── Modifiers/          — Legacy/, V5/ (haptic, wiggle, soft scroll edges, shimmer…)
 │   ├── System/             — camera, barcode scanner, dictation, Safari
-│   └── Widgets/            — V5/ for new widgets (reusable at the root, one-offs in a
-│                             feature subfolder); Common, DailyLog, Explore, Health are older
+│   └── Widgets/            — V5/ for new widgets: reusable ones at the root, Models/ for
+│                             their shared types (size, range), Features/<Feature>/ for
+│                             one-offs named Bright<Feature>…WidgetV5; Common, DailyLog,
+│                             Explore, Health are older
 ├── Extensions/             — Date+FormatStyle (date styles), Animation+Extensions (animation tokens)
 ├── Resources/              — Assets.xcassets, AppIcon
 └── Utilities/              — Constants, Helpers (Glass, Managers, Others)

@@ -74,12 +74,13 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         }
     }
 
-    var hasWindow: Bool {
-        self == .lineChart
-    }
-
-    var hasBarRange: Bool {
-        self == .bars || self == .activeEnergyBars || self == .stepBars
+    // The ranges it can be set to, the first being where it starts. Empty for none.
+    var ranges: [BrightWidgetRangeV5] {
+        switch self {
+        case .lineChart: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
+        case .leadingNumber: []
+        case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
+        }
     }
 }
 
@@ -88,8 +89,25 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
     var kind: HealthWidgetKind
     var style = HealthWidgetStyle.lineChart
     var size: BrightWidgetSizeV5
-    var window = BrightLineChartWidgetV5.Window.rolling1h
-    var barRange = BrightBarChartWidgetV5.Range.today
+    var range = BrightWidgetRangeV5.rolling1h
+
+    init(kind: HealthWidgetKind, style: HealthWidgetStyle = .lineChart, size: BrightWidgetSizeV5) {
+        self.kind = kind
+        self.size = size
+        adopt(style)
+    }
+
+    // Switches style, falling back to its largest size and its first range where the
+    // current ones aren't offered.
+    mutating func adopt(_ style: HealthWidgetStyle) {
+        self.style = style
+        if !style.sizes.contains(size), let largest = style.sizes.last {
+            size = largest
+        }
+        if !style.ranges.isEmpty, !style.ranges.contains(range), let first = style.ranges.first {
+            range = first
+        }
+    }
 }
 
 struct HealthGridPosition: Equatable, Hashable {

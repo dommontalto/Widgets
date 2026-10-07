@@ -16,7 +16,7 @@ struct BrightLineChartWidgetV5: View {
         var id: Date { date }
     }
 
-    // A stretch of the window to highlight on the large size, such as a workout.
+    // A stretch of the range to highlight on the large size, such as a workout.
     struct Event: Identifiable, Hashable {
         let start: Date
         let end: Date
@@ -30,87 +30,20 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
-    enum Window: String, CaseIterable, Codable, Identifiable {
-        case rolling1h
-        case rolling6h
-        case rolling12h
-        case fixed6h
-        case fixed12h
-
-        var id: Self { self }
-
-        var title: String {
-            "\(isFixed ? "Fixed" : "Rolling") \(hours)h"
-        }
-
-        var span: String {
-            hours == 1 ? "1 hour" : "\(hours) hours"
-        }
-
-        var isFixed: Bool {
-            self == .fixed6h || self == .fixed12h
-        }
-
-        var duration: TimeInterval {
-            Double(hours) * 60 * 60
-        }
-
-        // Longer windows average their readings into buckets so the line keeps
-        // roughly the same detail as the hour does.
-        var bucket: TimeInterval? {
-            switch hours {
-            case 6: 5 * 60
-            case 12: 10 * 60
-            default: nil
-            }
-        }
-
-        // A dot every 10 minutes for the hour, otherwise one an hour.
-        var tickCount: Int {
-            self == .rolling1h ? 7 : hours + 1
-        }
-
-        // A fixed window steps forward by half its length, on the clock, so its left
-        // half is always a complete block and the right half fills in until the next step.
-        func interval(endingAt latest: Date) -> DateInterval {
-            guard isFixed else {
-                return DateInterval(start: latest.addingTimeInterval(-duration), duration: duration)
-            }
-            let step = duration / 2
-            let midnight = Calendar.current.startOfDay(for: latest)
-            let blockStart = midnight.addingTimeInterval((latest.timeIntervalSince(midnight) / step).rounded(.down) * step)
-            return DateInterval(start: blockStart.addingTimeInterval(-step), duration: duration)
-        }
-
-        // Rolling windows count back from now; fixed ones name the hours they start and step at.
-        func labels(for interval: DateInterval) -> (leading: String, trailing: String) {
-            if isFixed {
-                let midpoint = interval.start.addingTimeInterval(duration / 2)
-                return (interval.start.formatted(.brightHour), midpoint.formatted(.brightHour))
-            }
-            return (hours == 1 ? "60m ago" : "\(hours)h ago", "Now")
-        }
-
-        private var hours: Int {
-            switch self {
-            case .rolling1h: 1
-            case .rolling6h, .fixed6h: 6
-            case .rolling12h, .fixed12h: 12
-            }
-        }
-    }
-
-    let title: String
-    let systemImage: String
-    let tint: Color
-    let unit: String
+    let appearance: BrightWidgetAppearanceV5
     let samples: [Sample]
     var events: [Event] = []
-    var window: Window = .rolling1h
+    var range: BrightWidgetRangeV5 = .rolling1h
     let size: BrightWidgetSizeV5
     var allowsSelection = true
 
     @State private var selectedDate: Date?
+    @State private var heldLabelWidth: CGFloat = 0
+
+    private var title: String { appearance.title }
+    private var systemImage: String { appearance.systemImage }
+    private var tint: Color { appearance.tint }
+    private var unit: String { appearance.unit ?? "" }
 
     var body: some View {
         Group {
@@ -139,19 +72,23 @@ struct BrightLineChartWidgetV5: View {
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             header
+                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
             chart(domain: sparklineDomain)
                 .frame(maxHeight: .infinity)
+                .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
                 .padding(.trailing, .spacing1x)
 
             VStack(alignment: .leading, spacing: .spacing0x) {
                 windowLabels(color: .lightTextColor)
+                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
                     .padding(.trailing, .spacing1x)
 
                 reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .light)
                     // Digits never use the room every line keeps below its baseline, so
                     // it's pulled into the padding rather than lifting the number.
                     .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
+                    .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
             }
         }
     }
@@ -160,6 +97,7 @@ struct BrightLineChartWidgetV5: View {
         VStack(alignment: .leading, spacing: size == .large ? .spacing4x : .spacing2x) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
+                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
                 Spacer(minLength: .spacing0x)
 
@@ -170,6 +108,7 @@ struct BrightLineChartWidgetV5: View {
                     unitSize: .body1,
                     weight: .regular
                 )
+                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
             }
 
             plotArea
@@ -235,15 +174,19 @@ struct BrightLineChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 guideLabelColumn
                     .frame(width: Constants.axisLabelWidth)
+                    .background(Color.purple.opacity(.veryLowOpacity)) // DEBUG
 
                 chart(domain: domain)
                     .overlay { eventIcons }
+                    .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
             }
 
             VStack(spacing: .spacing05x) {
                 ticks
+                    .background(Color.orange.opacity(.veryLowOpacity)) // DEBUG
 
                 windowLabels(color: .semiLightTextColor)
+                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
             }
             .padding(.leading, Constants.axisLabelWidth + .spacing1x)
         }
@@ -340,7 +283,7 @@ struct BrightLineChartWidgetV5: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .fixedSize()
-                    .frame(width: geometry.size.width, alignment: .trailing)
+                    .frame(width: geometry.size.width, alignment: .leading)
                     .position(
                         x: geometry.size.width / 2,
                         y: yPosition(of: label.value, height: geometry.size.height)
@@ -368,7 +311,7 @@ struct BrightLineChartWidgetV5: View {
 
     private var ticks: some View {
         HStack(spacing: .spacing0x) {
-            ForEach(0 ..< window.tickCount, id: \.self) { index in
+            ForEach(0 ..< range.tickCount, id: \.self) { index in
                 if index > 0 {
                     Spacer(minLength: .spacing0x)
                 }
@@ -380,17 +323,17 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
-    // A fixed window's second label sits under its middle dot, so each label takes
+    // A fixed range's second label sits under its middle dot, so each label takes
     // half the width. While a point is held both give way to its time, which rides the selection line.
     private func windowLabels(color: Color) -> some View {
-        let labels = window.labels(for: interval)
+        let labels = range.labels(for: interval)
 
         return HStack(spacing: .spacing0x) {
             BrightText(labels.leading, size: .body5, color: color)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             BrightText(labels.trailing, size: .body5, color: color)
-                .frame(maxWidth: .infinity, alignment: window.isFixed ? .leading : .trailing)
+                .frame(maxWidth: .infinity, alignment: range.isRolling ? .trailing : .leading)
         }
         .lineLimit(1)
         .opacity(selectedSample == nil ? .opaque : .zero)
@@ -400,7 +343,7 @@ struct BrightLineChartWidgetV5: View {
                     BrightText(selectedSample.date.formatted(.brightTime), size: .body5, color: color)
                         .monospacedDigit()
                         .fixedSize()
-                        .frame(width: Constants.heldLabelWidth)
+                        .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
                         .offset(x: heldLabelOffset(for: selectedSample.date, width: geometry.size.width))
                 }
                 .transition(.opacity)
@@ -411,8 +354,8 @@ struct BrightLineChartWidgetV5: View {
 
     // Centred on the line, but never past either end of the plot.
     private func heldLabelOffset(for date: Date, width: CGFloat) -> CGFloat {
-        let centred = xPosition(of: date, width: width) - Constants.heldLabelWidth / 2
-        return min(max(centred, 0), max(width - Constants.heldLabelWidth, 0))
+        let centred = xPosition(of: date, width: width) - heldLabelWidth / 2
+        return min(max(centred, 0), max(width - heldLabelWidth, 0))
     }
 
     // MARK: - Values
@@ -461,7 +404,7 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private var interval: DateInterval {
-        window.interval(endingAt: latest)
+        range.interval(endingAt: latest)
     }
 
     private var start: Date {
@@ -474,7 +417,7 @@ struct BrightLineChartWidgetV5: View {
 
     private var visibleSamples: [Sample] {
         let inWindow = samples.filter { $0.date >= start && $0.date <= end }
-        guard let bucket = window.bucket else { return inWindow }
+        guard let bucket = range.bucket else { return inWindow }
 
         // Dated by each bucket's last reading so the line still reaches the latest one.
         let buckets = Dictionary(grouping: inWindow) { Int($0.date.timeIntervalSince(start) / bucket) }
@@ -485,8 +428,8 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private var nowTickIndex: Int {
-        let lastIndex = window.tickCount - 1
-        let progress = latest.timeIntervalSince(start) / window.duration
+        let lastIndex = range.tickCount - 1
+        let progress = latest.timeIntervalSince(start) / range.duration
         return min(max(Int((progress * Double(lastIndex)).rounded()), 0), lastIndex)
     }
 
@@ -529,7 +472,7 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private func xPosition(of date: Date, width: CGFloat) -> CGFloat {
-        width * date.timeIntervalSince(start) / window.duration
+        width * date.timeIntervalSince(start) / range.duration
     }
 
     private func display(_ value: Double) -> String {
@@ -556,7 +499,6 @@ struct BrightLineChartWidgetV5: View {
         static let hairline: CGFloat = 0.5
         static let pointDiameter: CGFloat = 8
         static let pointRingDiameter: CGFloat = 14
-        static let heldLabelWidth: CGFloat = 60
         static let startTickHeight: CGFloat = 7
         static let eventIconOffset: CGFloat = .spacing2x
     }
@@ -581,10 +523,7 @@ struct BrightLineChartWidgetV5: View {
         VStack(alignment: .leading, spacing: .spacing205x) {
             ForEach(BrightWidgetSizeV5.allCases, id: \.self) { size in
                 BrightLineChartWidgetV5(
-                    title: "Heart Rate",
-                    systemImage: "heart.fill",
-                    tint: .defaultRed,
-                    unit: "BPM",
+                    appearance: BrightWidgetAppearanceV5(title: "Heart Rate", systemImage: "heart.fill", tint: .defaultRed, unit: "BPM"),
                     samples: samples,
                     events: [workout],
                     size: size

@@ -19,34 +19,6 @@ struct BrightBarChartWidgetV5: View {
         var id: Int { index }
     }
 
-    enum Range: String, CaseIterable, Codable, Identifiable {
-        case rolling12h
-        case today
-        case week
-
-        var id: Self { self }
-
-        var title: String {
-            switch self {
-            case .rolling12h: "Rolling 12 hours"
-            case .today: "Today"
-            case .week: "This week"
-            }
-        }
-
-        var slotCount: Int {
-            switch self {
-            case .rolling12h: 12
-            case .today: 24
-            case .week: 7
-            }
-        }
-
-        var isHourly: Bool {
-            self != .week
-        }
-    }
-
     enum Fill {
         case solid(Color)
         // Cyan at the floor rising through green to yellow at the top of the plot,
@@ -67,12 +39,9 @@ struct BrightBarChartWidgetV5: View {
         case targets([Bar], target: Double)
     }
 
-    let title: String
-    let systemImage: String
-    let tint: Color
-    var unit: String?
+    let appearance: BrightWidgetAppearanceV5
     let subtitle: String
-    let range: Range
+    let range: BrightWidgetRangeV5
     let bars: [Bar]
     var fill: Fill = .solid(.defaultGreen)
     var target: Double?
@@ -84,6 +53,12 @@ struct BrightBarChartWidgetV5: View {
 
     @State private var plotWidth: CGFloat = 0
     @State private var selectedIndex: Int?
+    @State private var heldLabelWidth: CGFloat = 0
+
+    private var title: String { appearance.title }
+    private var systemImage: String { appearance.systemImage }
+    private var tint: Color { appearance.tint }
+    private var unit: String? { appearance.unit }
 
     var body: some View {
         Group {
@@ -111,11 +86,13 @@ struct BrightBarChartWidgetV5: View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             HStack(alignment: .top, spacing: .spacing05x) {
                 header
+                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
                 if let comparison {
                     Spacer(minLength: .spacing0x)
 
                     comparisonText(comparison)
+                        .background(Color.cyan.opacity(.veryLowOpacity)) // DEBUG
                 }
             }
 
@@ -126,6 +103,7 @@ struct BrightBarChartWidgetV5: View {
                 // Digits never use the room every line keeps below its baseline, so
                 // it's pulled into the padding rather than lifting the number.
                 .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .light)?.descender ?? 0)
+                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
         }
     }
 
@@ -133,14 +111,17 @@ struct BrightBarChartWidgetV5: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
+                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
                 Spacer(minLength: .spacing0x)
 
                 VStack(alignment: .trailing, spacing: .spacing05x) {
                     reading(valueSize: size == .large ? .standout1 : .standout3)
+                        .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
 
                     if let comparison {
                         comparisonText(comparison)
+                            .background(Color.cyan.opacity(.veryLowOpacity)) // DEBUG
                     }
                 }
             }
@@ -155,6 +136,7 @@ struct BrightBarChartWidgetV5: View {
                     .padding(.horizontal, -.spacing205x)
 
                 summaryGrid(summary)
+                    .background(Color.pink.opacity(.veryLowOpacity)) // DEBUG
             }
         }
     }
@@ -205,17 +187,21 @@ struct BrightBarChartWidgetV5: View {
                 if showsGuides {
                     guideLabelColumn
                         .frame(width: Constants.axisLabelWidth)
+                        .background(Color.purple.opacity(.veryLowOpacity)) // DEBUG
                 }
 
                 barArea(showsGuides: showsGuides)
                     .overlay { selectionLayer }
+                    .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { plotWidth = $0 }
             }
 
             VStack(alignment: .leading, spacing: .spacing05x) {
                 slotDots
+                    .background(Color.orange.opacity(.veryLowOpacity)) // DEBUG
 
                 slotLabels
+                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
                     .opacity(selectedIndex == nil ? .opaque : .zero)
                     .overlay(alignment: .leading) { heldLabel }
                     .animation(.brightEaseInOut, value: selectedIndex == nil)
@@ -321,7 +307,7 @@ struct BrightBarChartWidgetV5: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .fixedSize()
-                    .frame(width: geometry.size.width, alignment: .trailing)
+                    .frame(width: geometry.size.width, alignment: .leading)
                     .position(x: geometry.size.width / 2, y: yPosition(of: value, height: geometry.size.height))
             }
         }
@@ -345,27 +331,7 @@ struct BrightBarChartWidgetV5: View {
         // Hour labels start at their tick, half a slot in from the slot's edge.
         let inset = max(plotWidth / CGFloat(range.slotCount) / 2 - .spacing05x / 2, 0)
 
-        switch range {
-        case .rolling12h:
-            HStack(spacing: .spacing0x) {
-                BrightText("12h ago", size: .body5, color: .semiLightTextColor)
-
-                Spacer(minLength: .spacing0x)
-
-                BrightText("Now", size: .body5, color: .semiLightTextColor)
-            }
-            .lineLimit(1)
-            .padding(.horizontal, inset)
-        case .today:
-            HStack(spacing: .spacing0x) {
-                ForEach([0, 12], id: \.self) { hour in
-                    BrightText(hourLabel(hour), size: .body5, color: .semiLightTextColor)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(.leading, inset)
-        case .week:
+        if range.isWeek {
             HStack(spacing: .spacing0x) {
                 ForEach(0 ..< range.slotCount, id: \.self) { index in
                     BrightText(
@@ -376,6 +342,30 @@ struct BrightBarChartWidgetV5: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+        } else if range.isRolling {
+            let labels = range.labels(for: interval)
+
+            HStack(spacing: .spacing0x) {
+                BrightText(labels.leading, size: .body5, color: .semiLightTextColor)
+
+                Spacer(minLength: .spacing0x)
+
+                BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
+            }
+            .lineLimit(1)
+            .padding(.horizontal, inset)
+        } else {
+            // The start and the halfway hour, each under its tick.
+            let labels = range.labels(for: interval)
+
+            HStack(spacing: .spacing0x) {
+                ForEach([labels.leading, labels.trailing], id: \.self) { label in
+                    BrightText(label, size: .body5, color: .semiLightTextColor)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.leading, inset)
         }
     }
 
@@ -400,12 +390,15 @@ struct BrightBarChartWidgetV5: View {
         }
     }
 
-    // Snaps to the slot under the finger, never past the latest reading.
+    // Snaps to the nearest bar, so empty hours and days are passed over rather than held.
     private var selection: Binding<Double?> {
         Binding {
             selectedIndex.map { Double($0) + 0.5 }
         } set: { position in
-            let index = position.map { min(max(Int($0), 0), currentIndex) }
+            let filled = bars.filter { ($0.value ?? 0) > 0 }.map(\.index)
+            let index = position.flatMap { position in
+                filled.min { abs(Double($0) + 0.5 - position) < abs(Double($1) + 0.5 - position) }
+            }
             guard index != selectedIndex else { return }
             selectedIndex = index
             if index != nil {
@@ -419,31 +412,31 @@ struct BrightBarChartWidgetV5: View {
     private var heldLabel: some View {
         if let selectedIndex {
             let slot = plotWidth / CGFloat(range.slotCount)
-            let centred = slot * (CGFloat(selectedIndex) + 0.5) - Constants.heldLabelWidth / 2
+            let centred = slot * (CGFloat(selectedIndex) + 0.5) - heldLabelWidth / 2
 
             BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
                 .monospacedDigit()
                 .fixedSize()
-                .frame(width: Constants.heldLabelWidth)
-                .offset(x: min(max(centred, 0), max(plotWidth - Constants.heldLabelWidth, 0)))
+                .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
+                .offset(x: min(max(centred, 0), max(plotWidth - heldLabelWidth, 0)))
                 .transition(.opacity)
         }
     }
 
     private func slotTitle(_ index: Int) -> String {
-        let calendar = Calendar.current
-        switch range {
-        case .rolling12h:
-            let hourStart = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
-            return hourStart.addingTimeInterval(-Double(range.slotCount - 1 - index) * 60 * 60).formatted(.brightHour)
-        case .today:
-            return hourLabel(index)
-        case .week:
-            var monday = calendar
-            monday.firstWeekday = 2
-            let weekStart = monday.dateInterval(of: .weekOfYear, for: .now)?.start ?? .now
-            return (calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart).formatted(.brightWeekday)
+        slotStart(index).formatted(range.isWeek ? .brightWeekday : .brightHour)
+    }
+
+    // Rolling slots end with the hour now running; the rest count on from the range's start.
+    private func slotStart(_ index: Int) -> Date {
+        if range.isWeek {
+            return Calendar.current.date(byAdding: .day, value: index, to: interval.start) ?? interval.start
         }
+        if range.isRolling {
+            let hourStart = Calendar.current.dateInterval(of: .hour, for: .now)?.start ?? .now
+            return hourStart.addingTimeInterval(-Double(range.slotCount - 1 - index) * 60 * 60)
+        }
+        return interval.start.addingTimeInterval(Double(index) * 60 * 60)
     }
 
     // MARK: - Summary
@@ -493,7 +486,7 @@ struct BrightBarChartWidgetV5: View {
                     .foregroundStyle(Color.semiLightTextColor)
                 }
             } else {
-                BrightText("--", size: .body3, color: .semiLightTextColor)
+                BrightText("-", size: .body3, color: .semiLightTextColor)
             }
         }
         .lineLimit(1)
@@ -541,11 +534,11 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var showsAverage: Bool {
-        range == .week && !values.isEmpty
+        range.isWeek && !values.isEmpty
     }
 
     private var showsExtremes: Bool {
-        size == .large && range.isHourly
+        size == .large && !range.isWeek
     }
 
     private var guideValues: [Double] {
@@ -569,7 +562,7 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var barFraction: CGFloat {
-        range.isHourly ? Constants.hourBarFraction : Constants.dayBarFraction
+        !range.isWeek ? Constants.hourBarFraction : Constants.dayBarFraction
     }
 
     // Rounded up to a tidy number with headroom, so the tallest bar, the target and
@@ -586,16 +579,14 @@ struct BrightBarChartWidgetV5: View {
         height * (1 - min(value / domainMax, 1))
     }
 
+    // The first hour, plus the halfway hour where it's labelled too.
     private func isLabelledSlot(_ index: Int) -> Bool {
-        switch range {
-        case .rolling12h: index == 0
-        case .today: index == 0 || index == 12
-        case .week: false
-        }
+        guard !range.isWeek else { return false }
+        return index == 0 || (!range.isRolling && index == range.slotCount / 2)
     }
 
-    private func hourLabel(_ hour: Int) -> String {
-        Calendar.current.startOfDay(for: .now).addingTimeInterval(Double(hour) * 60 * 60).formatted(.brightHour)
+    private var interval: DateInterval {
+        range.interval(endingAt: .now)
     }
 
     private func display(_ value: Double) -> String {
@@ -615,7 +606,6 @@ struct BrightBarChartWidgetV5: View {
         static let averageLabelLift: CGFloat = .spacing1x
         static let risingGreenStop = 0.24
         static let dayBadgeSize: CGFloat = 20
-        static let heldLabelWidth: CGFloat = 70
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]
     }
 }
@@ -631,10 +621,7 @@ struct BrightBarChartWidgetV5: View {
     ScrollView {
         VStack(spacing: .spacing205x) {
             BrightBarChartWidgetV5(
-                title: "Total Energy",
-                systemImage: "flame.fill",
-                tint: .defaultOrange,
-                unit: "Cal",
+                appearance: BrightWidgetAppearanceV5(title: "Total Energy", systemImage: "flame.fill", tint: .defaultOrange, unit: "Cal"),
                 subtitle: "Latest: 5-6 PM",
                 range: .today,
                 bars: hourly,
@@ -647,9 +634,7 @@ struct BrightBarChartWidgetV5: View {
             .frame(width: 363, height: 363)
 
             BrightBarChartWidgetV5(
-                title: "Steps",
-                systemImage: "shoeprints.fill",
-                tint: .defaultYellow,
+                appearance: BrightWidgetAppearanceV5(title: "Steps", systemImage: "shoeprints.fill", tint: .defaultYellow),
                 subtitle: "Latest: 8-9 AM",
                 range: .week,
                 bars: daily,
@@ -662,10 +647,7 @@ struct BrightBarChartWidgetV5: View {
             .frame(width: 363, height: 363)
 
             BrightBarChartWidgetV5(
-                title: "Total Energy",
-                systemImage: "flame.fill",
-                tint: .defaultOrange,
-                unit: "Cal",
+                appearance: BrightWidgetAppearanceV5(title: "Total Energy", systemImage: "flame.fill", tint: .defaultOrange, unit: "Cal"),
                 subtitle: "Latest: 5-6 PM",
                 range: .rolling12h,
                 bars: Array(hourly.prefix(12)),

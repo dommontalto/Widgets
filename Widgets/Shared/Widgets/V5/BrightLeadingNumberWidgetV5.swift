@@ -9,20 +9,25 @@ import SwiftUI
 
 // A single latest reading, large in the bottom corner. Small and medium only.
 struct BrightLeadingNumberWidgetV5: View {
-    let title: String
-    let systemImage: String
-    let tint: Color
+    let appearance: BrightWidgetAppearanceV5
     let value: Double
-    var unit: String?
     let latest: Date
+
+    private var title: String { appearance.title }
+    private var systemImage: String { appearance.systemImage }
+    private var tint: Color { appearance.tint }
+    private var unit: String? { appearance.unit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
+                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
             Spacer(minLength: .spacing0x)
+                .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
 
             reading
+                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
         }
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -71,20 +76,15 @@ struct BrightLeadingNumberWidgetV5: View {
 #Preview {
     VStack(spacing: .spacing205x) {
         BrightLeadingNumberWidgetV5(
-            title: "Steps",
-            systemImage: "shoeprints.fill",
-            tint: .defaultOrange,
+            appearance: BrightWidgetAppearanceV5(title: "Steps", systemImage: "shoeprints.fill", tint: .defaultOrange),
             value: 12_228,
             latest: .now
         )
         .frame(width: 174, height: 174)
 
         BrightLeadingNumberWidgetV5(
-            title: "Heart Rate",
-            systemImage: "heart.fill",
-            tint: .defaultRed,
+            appearance: BrightWidgetAppearanceV5(title: "Heart Rate", systemImage: "heart.fill", tint: .defaultRed, unit: "BPM"),
             value: 80,
-            unit: "BPM",
             latest: .now
         )
         .frame(width: 363, height: 174)
