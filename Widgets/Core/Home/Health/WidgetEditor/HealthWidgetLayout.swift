@@ -18,6 +18,13 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         }
     }
 
+    // The shorter name it's listed under in the add sheet.
+    var rowTitle: String {
+        switch self {
+        case .heartRate: "Heart"
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .heartRate: "heart.fill"

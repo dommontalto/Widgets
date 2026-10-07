@@ -1,5 +1,5 @@
 //
-//  HealthWidgetSheets.swift
+//  HealthWidgetSheet.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -21,7 +21,7 @@ struct AddWidgetSheet: View {
                 VStack(spacing: .spacing4x) {
                     BrightRowGroupV5(color: .defaultSheetModalCards) {
                         ForEach(HealthWidgetKind.allCases) { kind in
-                            BrightRowV5(kind.title, icon: .symbol(kind.systemImage, tint: kind.tint)) {
+                            BrightRowV5(kind.rowTitle, icon: .symbol(kind.systemImage, tint: kind.tint)) {
                                 path.append(kind)
                             }
                         }
