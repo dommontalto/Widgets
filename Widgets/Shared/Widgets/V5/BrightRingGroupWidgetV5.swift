@@ -71,7 +71,7 @@ struct BrightRingGroupWidgetV5: View {
             }
         }
         // The square's two rows of rings need the room more than the usual edge padding.
-        .padding(size == .small && rings.count == 4 ? .spacing1x : .spacing205x)
+        .padding(size == .small && rings.count > 1 ? .spacing1x : .spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .onChange(of: touchX) { resolveTouch() }
@@ -103,22 +103,24 @@ struct BrightRingGroupWidgetV5: View {
     }
 
     // The first ring on top with its amount above, the other two below with theirs underneath.
+    // The bottom pair tuck up under the top ring, so the three sit packed together.
     private var triangleLayout: some View {
-        VStack(spacing: .spacing05x) {
+        VStack(spacing: -.spacing1x) {
             if let top = rings.first {
-                caption(for: top)
+                VStack(spacing: .spacing05x) {
+                    caption(for: top)
 
-                ring(top, showsLabel: true)
+                    ring(top, showsLabel: true)
+                }
             }
 
-            HStack(alignment: .top, spacing: .spacing0x) {
+            HStack(alignment: .top, spacing: .spacing105x) {
                 ForEach(rings.dropFirst()) { ring in
                     VStack(spacing: .spacing05x) {
                         self.ring(ring, showsLabel: true)
 
                         caption(for: ring)
                     }
-                    .frame(maxWidth: .infinity)
                 }
             }
         }
@@ -128,24 +130,24 @@ struct BrightRingGroupWidgetV5: View {
 
     // Two by two, each ring showing its share in the hole and its name below.
     private var gridLayout: some View {
-        Grid(horizontalSpacing: .spacing2x, verticalSpacing: .spacing0x) {
+        Grid(horizontalSpacing: .spacing3x, verticalSpacing: .spacing05x) {
             ForEach(0 ..< 2, id: \.self) { row in
                 GridRow {
                     ForEach(rings[(row * 2) ..< (row * 2 + 2)]) { ring in
-                        VStack(spacing: .spacing0x) {
-                            self.ring(ring, showsLabel: false)
+                        VStack(spacing: .spacing05x) {
+                            self.ring(ring, showsLabel: false, size: .extraSmall)
                                 .overlay {
                                     // Holding a ring swaps its share for its caption, such as the time.
                                     BrightText(
                                         selectedRingID == ring.id ? ring.caption ?? percent(of: ring) : percent(of: ring),
-                                        size: .body3,
+                                        size: .body5,
                                         color: .semiLightTextColor
                                     )
                                     .monospacedDigit()
                                     .contentTransition(.numericText())
                                 }
 
-                            BrightText(ring.label, size: .body3, color: .semiLightTextColor)
+                            BrightText(ring.label, size: .body5, color: .semiLightTextColor)
                                 .lineLimit(1)
                         }
                     }
@@ -157,10 +159,10 @@ struct BrightRingGroupWidgetV5: View {
     }
 
     private var rowLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
+        VStack(alignment: .leading, spacing: .spacing0x) {
             header
 
-            Spacer(minLength: .spacing0x)
+            Spacer(minLength: .spacing1x)
 
             // Fewer than four rings have the room to spread out; four or more sit closer.
             Grid(horizontalSpacing: rings.count < 4 ? .spacing5x : .spacing3x, verticalSpacing: .spacing1x) {
@@ -194,12 +196,12 @@ struct BrightRingGroupWidgetV5: View {
 
     // The held ring stays bright while the rest dim.
     // Medium widgets' rows get the medium ring; the small widgets' groups use the default.
-    private func ring(_ ring: Ring, showsLabel: Bool) -> some View {
+    private func ring(_ ring: Ring, showsLabel: Bool, size ringSize: BrightRingV5.Size? = nil) -> some View {
         BrightRingV5(
             progress: ring.progress,
             color: ring.color,
             label: showsLabel ? ring.shortLabel : nil,
-            size: size == .small ? .small : .medium
+            size: ringSize ?? (size == .small ? .small : .medium)
         )
             .opacity(selectedRingID == nil || selectedRingID == ring.id ? .opaque : .semiLowOpacity)
     }
@@ -216,11 +218,12 @@ struct BrightRingGroupWidgetV5: View {
                 .contentTransition(.numericText())
                 .lineLimit(1)
         } else {
+            // The small triangle keeps its amounts quiet; the medium row leads with them.
             amount(
                 ring,
-                valueSize: size == .small ? .body3 : .heading,
-                suffixSize: .body3,
-                valueColor: ring.isOver ? .defaultOrange : .textColor
+                valueSize: size == .small ? .body4 : .heading,
+                suffixSize: size == .small ? .body4 : .body3,
+                valueColor: ring.isOver ? .defaultOrange : (size == .small ? .semiLightTextColor : .textColor)
             )
         }
     }

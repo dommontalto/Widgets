@@ -12,22 +12,28 @@ import SwiftUI
 // a thin outer arc for the extra and marks the goal at the top.
 struct BrightRingV5: View {
     enum Size {
+        case extraSmall
         case small
         case medium
         case large
 
         var diameter: CGFloat {
             switch self {
-            case .small: .spacing9x
+            case .extraSmall: .spacing9x
+            case .small: .spacing10x
             case .medium: .spacing11x
             case .large: 84
             }
         }
 
-        // The ring's thickness as a share of its width; small ones are thinner so their
-        // holes still fit a label.
+        // The ring's thickness as a share of its width; the smaller ones are thinner so
+        // their holes still fit a label.
         var thicknessRatio: CGFloat {
-            self == .small ? 0.23 : 0.28
+            switch self {
+            case .extraSmall: 0.2
+            case .small: 0.23
+            case .medium, .large: 0.28
+            }
         }
     }
 
@@ -70,7 +76,7 @@ struct BrightRingV5: View {
             }
 
             if let label {
-                BrightText(label, size: .body3, color: color)
+                BrightText(label, size: .body5, color: .semiLightTextColor)
             }
         }
         .padding(lineWidth / 2)
