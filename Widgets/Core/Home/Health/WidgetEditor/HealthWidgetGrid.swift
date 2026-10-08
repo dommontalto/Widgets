@@ -68,6 +68,16 @@ struct HealthWidgetView: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
+        case (.menstrual, _):
+            BrightMenstrualWidgetV5(
+                cycle: HealthWidgetDemo.menstrualCycle,
+                today: HealthWidgetDemo.menstrualToday,
+                nextPeriod: HealthWidgetDemo.nextPeriod,
+                daysUntilPeriod: HealthWidgetDemo.daysUntilPeriod,
+                details: HealthWidgetDemo.menstrualDetails,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
                 appearance: heartRateAppearance,

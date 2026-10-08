@@ -15,6 +15,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case sleep
     case water
     case weight
+    case menstrual
 
     var id: Self { self }
 
@@ -27,6 +28,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
+        case .menstrual: "Menstrual"
         }
     }
 
@@ -40,6 +42,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
+        case .menstrual: "Menstrual"
         }
     }
 
@@ -52,6 +55,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "bed.double.fill"
         case .water: "drop.fill"
         case .weight: "scalemass.fill"
+        case .menstrual: "moonphase.waxing.crescent"
         }
     }
 
@@ -65,6 +69,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: ImageNames.sleepInfoV4
         case .water: ImageNames.waterIconV5
         case .weight: ImageNames.weightIconV4
+        case .menstrual: ImageNames.cycleTrackingMainV5
         }
     }
 
@@ -77,6 +82,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: .defaultBlue
         case .water: .defaultCyan
         case .weight: .defaultPurple
+        case .menstrual: .defaultPink
         }
     }
 
@@ -88,6 +94,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: [.sleepRings]
         case .water: [.bars, .leadingNumber, .waterRing]
         case .weight: [.dottedLine, .leadingNumber]
+        case .menstrual: [.menstrualCycle]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
     }
@@ -158,11 +165,13 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case vo2Line
     // VO2 Max's latest reading, alongside heart rate's own number.
     case vo2Number
+    case menstrualCycle
 
     // Which shared widget draws it.
     enum Family: CaseIterable {
         case line
         case dottedLine
+        case menstrual
         case bar
         case number
         case ring
@@ -171,6 +180,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
             switch self {
             case .line: "BrightLineChartWidgetV5"
             case .dottedLine: "BrightDottedLineChartWidgetV5"
+            case .menstrual: "BrightMenstrualWidgetV5"
             case .bar: "BrightBarChartWidgetV5"
             case .number: "BrightLeadingNumberWidgetV5"
             case .ring: "BrightRingGroupWidgetV5"
@@ -187,6 +197,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .leadingNumber, .vo2Number: .number
         case .macroRings, .macroRing, .intakeRing, .waterRing, .sleepRings: .ring
         case .dottedLine, .vo2Line: .dottedLine
+        case .menstrualCycle: .menstrual
         }
     }
 
@@ -200,6 +211,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleepRings: [.small, .medium]
         case .dottedLine: [.medium, .large]
         case .vo2Line: [.medium]
+        case .menstrualCycle: BrightWidgetSizeV5.allCases
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -214,6 +226,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macroRings, .macroRing, .intakeRing, .waterRing: [.today]
         case .sleepRings: [.lastNight]
         case .dottedLine, .vo2Line: [.twoWeeks]
+        case .menstrualCycle: [.today]
         }
     }
 }
