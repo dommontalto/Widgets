@@ -72,11 +72,10 @@ enum HealthWidgetDemo {
         }
     }
 
-    // The hour now running, e.g. "5-6 pm".
+    // The hour now running, e.g. "5 pm – 6 pm".
     static var currentHourRange: String {
-        let start = Calendar.current.dateInterval(of: .hour, for: anchor)?.start ?? anchor
-        let hour = Calendar.current.component(.hour, from: start) % 12
-        return "\(hour == 0 ? 12 : hour)-\(start.addingTimeInterval(60 * 60).formatted(.brightHour))"
+        let hour = Calendar.current.dateInterval(of: .hour, for: anchor) ?? DateInterval(start: anchor, duration: 60 * 60)
+        return "\(hour.start.formatted(.brightHour)) – \(hour.end.formatted(.brightHour))"
     }
 
     static var currentHour: Int {

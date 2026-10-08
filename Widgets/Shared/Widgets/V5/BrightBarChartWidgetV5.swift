@@ -84,17 +84,8 @@ struct BrightBarChartWidgetV5: View {
 
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            HStack(alignment: .top, spacing: .spacing05x) {
-                header
-                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
-
-                if let comparison {
-                    Spacer(minLength: .spacing0x)
-
-                    comparisonText(comparison)
-                        .background(Color.cyan.opacity(.veryLowOpacity)) // DEBUG
-                }
-            }
+            header
+                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
 
             plotArea(showsGuides: false)
                 .frame(maxHeight: .infinity)
