@@ -82,6 +82,8 @@ struct HealthView: View {
                     editor.layout.reset()
                 } onAddAll: {
                     editor.layout.addAll()
+                } onRemoveAll: {
+                    editor.layout.removeAll()
                 }
                 .presentationDragIndicator(.hidden)
                 .presentationContentInteraction(.scrolls)

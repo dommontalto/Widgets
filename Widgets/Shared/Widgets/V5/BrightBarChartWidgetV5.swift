@@ -213,8 +213,8 @@ struct BrightBarChartWidgetV5: View {
     private func barArea(showsGuides: Bool) -> some View {
         GeometryReader { geometry in
             let height = geometry.size.height
-            let slot = geometry.size.width / CGFloat(range.slotCount)
-            let barWidth = max(slot * barFraction, Constants.minimumBarWidth)
+            let width = geometry.size.width
+            let barWidth = barWidth(in: width)
 
             ZStack(alignment: .topLeading) {
                 if showsGuides, showsAverage {
@@ -225,7 +225,7 @@ struct BrightBarChartWidgetV5: View {
                     if let value = bar.value, value > 0 {
                         barShape(value: value, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .semiLowOpacity)
-                            .offset(x: slot * (CGFloat(bar.index) + 0.5) - barWidth / 2)
+                            .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
                     }
                 }
@@ -234,7 +234,7 @@ struct BrightBarChartWidgetV5: View {
                     ForEach(extremes, id: \.bar.index) { extreme in
                         extremeLabel(extreme.systemImage, value: extreme.value)
                             .position(
-                                x: slot * (CGFloat(extreme.bar.index) + 0.5),
+                                x: slotCentre(extreme.bar.index, in: width),
                                 y: yPosition(of: extreme.value, height: height) - Constants.extremeOffset
                             )
                     }
@@ -314,13 +314,14 @@ struct BrightBarChartWidgetV5: View {
     }
 
     // One per slot, centred under its bar, with a taller tick at each labelled hour.
+    // Placed within whatever width it's given, so it never sets the widget's width.
     private var slotDots: some View {
-        HStack(spacing: .spacing0x) {
+        GeometryReader { geometry in
             ForEach(0 ..< range.slotCount, id: \.self) { index in
                 Capsule()
                     .fill(index == (selectedIndex ?? currentIndex) ? Color.textColor : Color.lightTextColor)
                     .frame(width: .spacing05x, height: isLabelledSlot(index) ? Constants.labelTickHeight : .spacing05x)
-                    .frame(maxWidth: .infinity)
+                    .position(x: slotCentre(index, in: geometry.size.width), y: geometry.size.height / 2)
             }
         }
         .frame(height: Constants.labelTickHeight)
@@ -328,20 +329,24 @@ struct BrightBarChartWidgetV5: View {
 
     @ViewBuilder
     private var slotLabels: some View {
-        // Hour labels start at their tick, half a slot in from the slot's edge.
-        let inset = max(plotWidth / CGFloat(range.slotCount) / 2 - .spacing05x / 2, 0)
-
         if range.isWeek {
-            HStack(spacing: .spacing0x) {
-                ForEach(0 ..< range.slotCount, id: \.self) { index in
-                    BrightText(
-                        Constants.weekdayInitials[index],
-                        size: .body2,
-                        color: index == currentIndex ? .textColor : .lightTextColor
-                    )
-                    .frame(maxWidth: .infinity)
+            // A hidden letter gives the row its height; the real ones sit over their bars.
+            BrightText("M", size: .body2)
+                .hidden()
+                .frame(maxWidth: .infinity)
+                .overlay {
+                    GeometryReader { geometry in
+                        ForEach(0 ..< range.slotCount, id: \.self) { index in
+                            BrightText(
+                                Constants.weekdayInitials[index],
+                                size: .body2,
+                                color: index == currentIndex ? .textColor : .lightTextColor
+                            )
+                            .fixedSize()
+                            .position(x: slotCentre(index, in: geometry.size.width), y: geometry.size.height / 2)
+                        }
+                    }
                 }
-            }
         } else if range.isRolling {
             let labels = range.labels(for: interval)
 
@@ -353,19 +358,18 @@ struct BrightBarChartWidgetV5: View {
                 BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
             }
             .lineLimit(1)
-            .padding(.horizontal, inset)
         } else {
-            // The start and the halfway hour, each under its tick.
+            // The start at the leading edge, and the halfway hour from its bar's leading edge.
             let labels = range.labels(for: interval)
 
-            HStack(spacing: .spacing0x) {
-                ForEach([labels.leading, labels.trailing], id: \.self) { label in
-                    BrightText(label, size: .body5, color: .semiLightTextColor)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+            ZStack(alignment: .leading) {
+                BrightText(labels.leading, size: .body5, color: .semiLightTextColor)
+
+                BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
+                    .offset(x: slotCentre(range.slotCount / 2, in: plotWidth) - barWidth(in: plotWidth) / 2)
             }
-            .padding(.leading, inset)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -378,11 +382,12 @@ struct BrightBarChartWidgetV5: View {
         if allowsSelection {
             Chart {
                 ForEach(0 ..< range.slotCount, id: \.self) { index in
-                    PointMark(x: .value("Slot", Double(index) + 0.5), y: .value("Floor", 0))
+                    PointMark(x: .value("Slot", Double(slotCentre(index, in: plotWidth))), y: .value("Floor", 0))
                         .opacity(.zero)
                 }
             }
-            .chartXScale(domain: 0 ... Double(range.slotCount))
+            // Measured in points, so the finger and the bars share one scale.
+            .chartXScale(domain: 0 ... Double(max(plotWidth, 1)))
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
@@ -393,11 +398,11 @@ struct BrightBarChartWidgetV5: View {
     // Snaps to the nearest bar, so empty hours and days are passed over rather than held.
     private var selection: Binding<Double?> {
         Binding {
-            selectedIndex.map { Double($0) + 0.5 }
+            selectedIndex.map { Double(slotCentre($0, in: plotWidth)) }
         } set: { position in
             let filled = bars.filter { ($0.value ?? 0) > 0 }.map(\.index)
             let index = position.flatMap { position in
-                filled.min { abs(Double($0) + 0.5 - position) < abs(Double($1) + 0.5 - position) }
+                filled.min { distance($0, from: position) < distance($1, from: position) }
             }
             guard index != selectedIndex else { return }
             selectedIndex = index
@@ -411,8 +416,7 @@ struct BrightBarChartWidgetV5: View {
     @ViewBuilder
     private var heldLabel: some View {
         if let selectedIndex {
-            let slot = plotWidth / CGFloat(range.slotCount)
-            let centred = slot * (CGFloat(selectedIndex) + 0.5) - heldLabelWidth / 2
+            let centred = slotCentre(selectedIndex, in: plotWidth) - heldLabelWidth / 2
 
             BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
                 .monospacedDigit()
@@ -563,6 +567,22 @@ struct BrightBarChartWidgetV5: View {
 
     private var barFraction: CGFloat {
         !range.isWeek ? Constants.hourBarFraction : Constants.dayBarFraction
+    }
+
+    private func barWidth(in width: CGFloat) -> CGFloat {
+        max(width / CGFloat(range.slotCount) * barFraction, Constants.minimumBarWidth)
+    }
+
+    // The bars run edge to edge like the line chart's plot: the first starts at the
+    // leading edge and the last ends at the trailing one.
+    private func slotCentre(_ index: Int, in width: CGFloat) -> CGFloat {
+        let bar = barWidth(in: width)
+        guard range.slotCount > 1 else { return width / 2 }
+        return bar / 2 + CGFloat(index) * (width - bar) / CGFloat(range.slotCount - 1)
+    }
+
+    private func distance(_ index: Int, from position: Double) -> Double {
+        abs(Double(slotCentre(index, in: plotWidth)) - position)
     }
 
     // Rounded up to a tidy number with headroom, so the tallest bar, the target and

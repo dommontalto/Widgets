@@ -162,6 +162,11 @@ final class HealthWidgetLayout {
         commit()
     }
 
+    func removeAll() {
+        widgets.removeAll()
+        commit()
+    }
+
     // Every kind in every style at every size it comes in, for checking them all at once.
     func addAll() {
         for kind in HealthWidgetKind.allCases {

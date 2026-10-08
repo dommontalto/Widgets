@@ -11,6 +11,7 @@ struct AddWidgetSheet: View {
     let onAdd: (HealthWidgetItem) -> Void
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
+    var onRemoveAll: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -39,6 +40,14 @@ struct AddWidgetSheet: View {
                             BrightRowV5("Add all widgets", icon: .symbol("square.grid.2x2", tint: .defaultGreen), trailing: .none) {
                                 BrightHaptic.medium.play()
                                 onAddAll()
+                                dismiss()
+                            }
+                        }
+
+                        if let onRemoveAll {
+                            BrightRowV5("Remove all widgets", icon: .symbol("trash", tint: .defaultRed), trailing: .none) {
+                                BrightHaptic.medium.play()
+                                onRemoveAll()
                                 dismiss()
                             }
                         }
