@@ -21,13 +21,13 @@ struct BrightLeadingNumberWidgetV5: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
-                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.red)
 
             Spacer(minLength: .spacing0x)
-                .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.blue)
 
             reading
-                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.yellow)
         }
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -41,7 +41,7 @@ struct BrightLeadingNumberWidgetV5: View {
             HStack(spacing: .spacing05x) {
                 Image(systemName: systemImage)
                     .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(tint)
+                    .foregroundStyle(appearance.iconStyle)
 
                 BrightText(title, size: .body1, weight: .regular)
             }

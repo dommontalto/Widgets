@@ -13,4 +13,14 @@ struct BrightWidgetAppearanceV5: Hashable {
     let systemImage: String
     let tint: Color
     var unit: String?
+    // Top to bottom, drawn through the icon in place of the tint.
+    var iconGradient: [Color]?
+
+    var iconStyle: AnyShapeStyle {
+        if let iconGradient {
+            AnyShapeStyle(LinearGradient(colors: iconGradient, startPoint: .top, endPoint: .bottom))
+        } else {
+            AnyShapeStyle(tint)
+        }
+    }
 }

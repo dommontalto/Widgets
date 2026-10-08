@@ -85,7 +85,7 @@ struct BrightBarChartWidgetV5: View {
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             header
-                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.red)
 
             plotArea(showsGuides: false)
                 .frame(maxHeight: .infinity)
@@ -94,7 +94,7 @@ struct BrightBarChartWidgetV5: View {
                 // Digits never use the room every line keeps below its baseline, so
                 // it's pulled into the padding rather than lifting the number.
                 .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .light)?.descender ?? 0)
-                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.yellow)
         }
     }
 
@@ -102,17 +102,17 @@ struct BrightBarChartWidgetV5: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
-                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.red)
 
                 Spacer(minLength: .spacing0x)
 
                 VStack(alignment: .trailing, spacing: .spacing05x) {
                     reading(valueSize: size == .large ? .standout1 : .standout3)
-                        .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
+                        .brightDebugBackgroundV5(.yellow)
 
                     if let comparison {
                         comparisonText(comparison)
-                            .background(Color.cyan.opacity(.veryLowOpacity)) // DEBUG
+                            .brightDebugBackgroundV5(.cyan)
                     }
                 }
             }
@@ -127,7 +127,7 @@ struct BrightBarChartWidgetV5: View {
                     .padding(.horizontal, -.spacing205x)
 
                 summaryGrid(summary)
-                    .background(Color.pink.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.pink)
             }
         }
     }
@@ -139,7 +139,7 @@ struct BrightBarChartWidgetV5: View {
             HStack(spacing: .spacing05x) {
                 Image(systemName: systemImage)
                     .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(tint)
+                    .foregroundStyle(appearance.iconStyle)
 
                 BrightText(title, size: .body1, weight: .regular)
             }
@@ -178,21 +178,21 @@ struct BrightBarChartWidgetV5: View {
                 if showsGuides {
                     guideLabelColumn
                         .frame(width: Constants.axisLabelWidth)
-                        .background(Color.purple.opacity(.veryLowOpacity)) // DEBUG
+                        .brightDebugBackgroundV5(.purple)
                 }
 
                 barArea(showsGuides: showsGuides)
                     .overlay { selectionLayer }
-                    .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.blue)
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { plotWidth = $0 }
             }
 
             VStack(alignment: .leading, spacing: .spacing05x) {
                 slotDots
-                    .background(Color.orange.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.orange)
 
                 slotLabels
-                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.green)
                     .opacity(selectedIndex == nil ? .opaque : .zero)
                     .overlay(alignment: .leading) { heldLabel }
                     .animation(.brightEaseInOut, value: selectedIndex == nil)
@@ -236,27 +236,53 @@ struct BrightBarChartWidgetV5: View {
 
     private func averageLine(y: CGFloat) -> some View {
         BrightDashedLineV5(color: .defaultGreen.opacity(.lowOpacity))
-            .overlay(alignment: .trailing) {
-                BrightText("AVG", size: .body6, color: .lightTextColor)
-                    .fixedSize()
-                    .offset(y: -Constants.averageLabelLift)
-            }
             .offset(y: y)
     }
 
     private func barShape(value: Double, width: CGFloat, plotHeight: CGFloat) -> some View {
         let height = max(plotHeight - yPosition(of: value, height: plotHeight), width)
         let aboveTarget = target.map { max(height - (plotHeight - yPosition(of: $0, height: plotHeight)), 0) } ?? 0
+        // The orange melts into the fill across a band centred on the target, rather than
+        // stopping at a hard edge.
+        let blend = min(Constants.targetBlend, aboveTarget * 2)
+        let solidEnd = max(aboveTarget - blend / 2, 0) / height
+        let clearStart = min(aboveTarget + blend / 2, height) / height
 
         return ZStack(alignment: .top) {
             barFill(plotHeight: plotHeight)
                 .frame(width: width, height: height, alignment: .bottom)
 
-            Color.defaultOrange
-                .frame(width: width, height: aboveTarget)
+            if aboveTarget > 0 {
+                Color.defaultOrange
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .black, location: solidEnd),
+                                .init(color: .clear, location: clearStart),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+
+                // On the week's wide bars, a line marks where the target fell.
+                if range.isWeek {
+                    Capsule()
+                        .fill(Color.defaultHomeCards.opacity(.lowOpacity))
+                        .frame(width: max(width - .spacing2x, 0), height: Constants.targetMarkHeight)
+                        .offset(y: aboveTarget - Constants.targetMarkHeight / 2)
+                }
+            }
         }
         .frame(width: width, height: height)
-        .clipShape(Capsule())
+        .clipShape(barOutline)
+    }
+
+    // The week's wide bars are rounded rectangles; the hours' thin ones are capsules.
+    private var barOutline: AnyShape {
+        range.isWeek
+            ? AnyShape(RoundedRectangle(cornerRadius: Constants.weekBarCornerRadius, style: .continuous))
+            : AnyShape(Capsule())
     }
 
     @ViewBuilder
@@ -290,7 +316,7 @@ struct BrightBarChartWidgetV5: View {
         .fixedSize()
     }
 
-    // The target or the top of the scale, the average where its line is drawn, and zero.
+    // The target or the top of the scale, and zero.
     private var guideLabelColumn: some View {
         GeometryReader { geometry in
             ForEach(guideValues, id: \.self) { value in
@@ -455,7 +481,7 @@ struct BrightBarChartWidgetV5: View {
     private func summaryCell(for bar: Bar, summary: Summary) -> some View {
         let isToday = bar.index == summaryBars(summary).last { $0.value != nil }?.index
 
-        return HStack(spacing: .spacing05x) {
+        return HStack(spacing: .spacing1x) {
             BrightText(
                 Constants.weekdayInitials[bar.index],
                 size: .body5,
@@ -537,12 +563,7 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var guideValues: [Double] {
-        var guides = [target ?? domainMax]
-        if showsAverage {
-            guides.append(average)
-        }
-        guides.append(0)
-        return guides
+        [target ?? domainMax, 0]
     }
 
     // The highest and lowest hours that have readings.
@@ -576,9 +597,14 @@ struct BrightBarChartWidgetV5: View {
         abs(Double(slotCentre(index, in: plotWidth)) - position)
     }
 
-    // Rounded up to a tidy number with headroom, so the tallest bar, the target and
-    // the high label above it all sit inside.
+    // The target sits at the top of the plot unless a bar beats it, in which case the
+    // tallest bar reaches the top instead, so nothing ever rises out of the plot.
+    // Without a target, the scale is rounded up to a tidy number with headroom, so the
+    // tallest bar and the high label above it sit inside.
     private var domainMax: Double {
+        if let target, target > 0 {
+            return max(target, values.max() ?? 0)
+        }
         let peak = max(values.max() ?? 0, target ?? 0) * (showsExtremes ? Constants.extremeHeadroom : Constants.headroom)
         guard peak > 0 else { return 1 }
         let magnitude = pow(10, floor(log10(peak)))
@@ -614,7 +640,9 @@ struct BrightBarChartWidgetV5: View {
         static let headroom = 1.1
         static let extremeHeadroom = 1.4
         static let extremeOffset: CGFloat = .spacing3x
-        static let averageLabelLift: CGFloat = .spacing1x
+        static let weekBarCornerRadius: CGFloat = 6
+        static let targetBlend: CGFloat = .spacing4x
+        static let targetMarkHeight: CGFloat = .spacing05x
         static let risingGreenStop = 0.24
         static let dayBadgeSize: CGFloat = 20
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]

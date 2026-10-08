@@ -64,6 +64,8 @@ nonisolated extension Color {
     static let defaultOrange = Color(hex: "#FF512D")
     static let defaultAmber = Color(hex: "#FF9D00")
     static let defaultYellow = Color(hex: "#FFBD13")
+    // The warm middle of the total energy flame, between orange and cyan.
+    static let defaultSand = Color(hex: "#DAB186")
     
     // MARK: -- File private
     

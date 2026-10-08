@@ -72,23 +72,23 @@ struct BrightLineChartWidgetV5: View {
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             header
-                .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.red)
 
             chart(domain: sparklineDomain)
                 .frame(maxHeight: .infinity)
-                .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.blue)
                 .padding(.trailing, .spacing1x)
 
             VStack(alignment: .leading, spacing: .spacing0x) {
                 windowLabels(color: .lightTextColor)
-                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.green)
                     .padding(.trailing, .spacing1x)
 
                 reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .light)
                     // Digits never use the room every line keeps below its baseline, so
                     // it's pulled into the padding rather than lifting the number.
                     .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
-                    .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.yellow)
             }
         }
     }
@@ -97,7 +97,7 @@ struct BrightLineChartWidgetV5: View {
         VStack(alignment: .leading, spacing: size == .large ? .spacing4x : .spacing2x) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
-                    .background(Color.red.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.red)
 
                 Spacer(minLength: .spacing0x)
 
@@ -108,7 +108,7 @@ struct BrightLineChartWidgetV5: View {
                     unitSize: .body1,
                     weight: .regular
                 )
-                .background(Color.yellow.opacity(.veryLowOpacity)) // DEBUG
+                .brightDebugBackgroundV5(.yellow)
             }
 
             plotArea
@@ -122,7 +122,7 @@ struct BrightLineChartWidgetV5: View {
             HStack(spacing: .spacing05x) {
                 Image(systemName: systemImage)
                     .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(tint)
+                    .foregroundStyle(appearance.iconStyle)
 
                 BrightText(title, size: .body1, weight: .regular)
 
@@ -174,19 +174,19 @@ struct BrightLineChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 guideLabelColumn
                     .frame(width: Constants.axisLabelWidth)
-                    .background(Color.purple.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.purple)
 
                 chart(domain: domain)
                     .overlay { eventIcons }
-                    .background(Color.blue.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.blue)
             }
 
             VStack(spacing: .spacing05x) {
                 ticks
-                    .background(Color.orange.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.orange)
 
                 windowLabels(color: .semiLightTextColor)
-                    .background(Color.green.opacity(.veryLowOpacity)) // DEBUG
+                    .brightDebugBackgroundV5(.green)
             }
             .padding(.leading, Constants.axisLabelWidth + .spacing1x)
         }

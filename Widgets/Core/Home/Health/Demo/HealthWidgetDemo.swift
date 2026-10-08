@@ -12,14 +12,16 @@ import SwiftUI
 enum HealthWidgetDemo {
     static let anchor = Date.now
 
-    // One bar measure: its readings for each hour of a day and each day of this week,
-    // Monday first, and what it's held against.
+    // One bar measure: its readings for each hour of a day and for the last seven days,
+    // and what it's held against.
     struct BarMetric {
         let appearance: BrightWidgetAppearanceV5
         let fill: BrightBarChartWidgetV5.Fill
         // The week's bars where they differ from the hours'.
         var weekFill: BrightBarChartWidgetV5.Fill?
         let hourly: [Double]
+        // Oldest first and ending today, so today always shows the last value
+        // whichever day of the week it is.
         let daily: [Double]
         var hourTarget: Double?
         var dayTarget: Double?
@@ -60,7 +62,11 @@ enum HealthWidgetDemo {
         }
 
         var weekBars: [BrightBarChartWidgetV5.Bar] {
-            HealthWidgetDemo.upToNow(daily, current: HealthWidgetDemo.currentWeekday)
+            let today = HealthWidgetDemo.currentWeekday
+            return (0 ..< daily.count).map { index in
+                let value = index <= today ? daily[daily.count - 1 - (today - index)] : nil
+                return BrightBarChartWidgetV5.Bar(index: index, value: value)
+            }
         }
 
         var summary: BrightBarChartWidgetV5.Summary {
@@ -85,13 +91,6 @@ enum HealthWidgetDemo {
     // Monday is 0.
     static var currentWeekday: Int {
         (Calendar.current.component(.weekday, from: anchor) + 5) % 7
-    }
-
-    // Slots after the current one haven't happened yet.
-    static func upToNow(_ values: [Double], current: Int) -> [BrightBarChartWidgetV5.Bar] {
-        values.enumerated().map { index, value in
-            BrightBarChartWidgetV5.Bar(index: index, value: index <= current ? value : nil)
-        }
     }
 
     static func minutesAgo(_ minutes: Int) -> Date {
