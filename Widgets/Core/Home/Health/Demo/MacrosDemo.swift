@@ -31,8 +31,8 @@ extension HealthWidgetDemo {
         }
     }
 
-    // Each day's carbs, fat and protein as a share of its calories, oldest first and
-    // ending today.
+    // Each day's calories, split into carbs, fat and protein as shares of them, oldest
+    // first and ending today.
     static var macroWeek: [BrightBarChartWidgetV5.Bar] {
         let today = currentWeekday
         return (0 ..< macroDays.count).map { index in
@@ -45,17 +45,17 @@ extension HealthWidgetDemo {
                 BrightBarChartWidgetV5.Segment(label: "F", value: day.fat, color: .defaultYellow),
                 BrightBarChartWidgetV5.Segment(label: "P", value: day.protein, color: .defaultPink),
             ]
-            return BrightBarChartWidgetV5.Bar(index: index, value: day.carbs + day.fat + day.protein, segments: segments)
+            return BrightBarChartWidgetV5.Bar(index: index, value: day.calories, segments: segments)
         }
     }
 
-    private static let macroDays: [(carbs: Double, fat: Double, protein: Double)] = [
-        (45, 25, 30),
-        (40, 15, 45),
-        (30, 25, 45),
-        (35, 20, 45),
-        (30, 10, 60),
-        (55, 25, 20),
-        (35, 20, 45),
+    private static let macroDays: [(calories: Double, carbs: Double, fat: Double, protein: Double)] = [
+        (2_150, 45, 25, 30),
+        (1_780, 40, 15, 45),
+        (2_400, 30, 25, 45),
+        (1_950, 35, 20, 45),
+        (1_620, 30, 10, 60),
+        (2_280, 55, 25, 20),
+        (1_870, 35, 20, 45),
     ]
 }

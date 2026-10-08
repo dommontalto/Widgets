@@ -240,7 +240,7 @@ struct BrightBarChartWidgetV5: View {
 
                 slotLabels
                     .brightDebugBackgroundV5(.green)
-                    .opacity(selectedIndex == nil ? .opaque : .zero)
+                    .opacity(range.isWeek || selectedIndex == nil ? .opaque : .zero)
                     .overlay(alignment: .leading) { heldLabel }
                     .animation(.brightEaseInOut, value: selectedIndex == nil)
             }
@@ -278,6 +278,7 @@ struct BrightBarChartWidgetV5: View {
                     }
                 }
             }
+            .animation(.brightEaseInOut, value: selectedIndex)
         }
     }
 
@@ -315,8 +316,8 @@ struct BrightBarChartWidgetV5: View {
             ForEach(Array((size == .small ? [] : tops.dropLast()).enumerated()), id: \.offset) { _, top in
                 Capsule()
                     .fill(Color.defaultHomeCards.opacity(.lowOpacity))
-                    .frame(width: max(width - .spacing05x, 0), height: Constants.targetMarkHeight)
-                    .offset(y: height * (1 - top) - Constants.targetMarkHeight / 2)
+                    .frame(width: max(width - .spacing05x, 0), height: Constants.segmentMarkHeight)
+                    .offset(y: height * (1 - top) - Constants.segmentMarkHeight / 2)
             }
         }
         .frame(width: width, height: height)
@@ -431,6 +432,7 @@ struct BrightBarChartWidgetV5: View {
             }
         }
         .frame(height: Constants.labelTickHeight)
+        .animation(.brightEaseInOut, value: selectedIndex)
     }
 
     @ViewBuilder
@@ -443,16 +445,11 @@ struct BrightBarChartWidgetV5: View {
                 .overlay {
                     GeometryReader { geometry in
                         ForEach(0 ..< range.slotCount, id: \.self) { index in
-                            BrightText(
-                                Constants.weekdayInitials[index],
-                                size: .body2,
-                                color: index == currentIndex ? .textColor : .lightTextColor
-                            )
-                            .fixedSize()
-                            .position(x: slotCentre(index, in: geometry.size.width), y: geometry.size.height / 2)
+                            weekdayLabel(index, in: geometry.size)
                         }
                     }
                 }
+                .animation(.brightEaseInOut, value: selectedIndex)
         } else if range.isRolling {
             let labels = range.labels(for: interval)
 
@@ -477,6 +474,32 @@ struct BrightBarChartWidgetV5: View {
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    // The held day's letter rolls out into its name, kept inside the plot, while the rest
+    // fade: "F" becomes "Friday".
+    private func weekdayLabel(_ index: Int, in size: CGSize) -> some View {
+        let isHeld = selectedIndex == index
+        let centre = slotCentre(index, in: size.width)
+        let halfWidth = heldLabelWidth / 2
+
+        return BrightText(
+            isHeld ? slotTitle(index) : Constants.weekdayInitials[index],
+            size: .body2,
+            color: isHeld || index == currentIndex ? .textColor : .lightTextColor
+        )
+        .contentTransition(.numericText())
+        .fixedSize()
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
+            if isHeld {
+                heldLabelWidth = width
+            }
+        }
+        .position(
+            x: isHeld ? min(max(centre, halfWidth), max(size.width - halfWidth, halfWidth)) : centre,
+            y: size.height / 2
+        )
+        .opacity(selectedIndex == nil || isHeld ? .opaque : .zero)
     }
 
     // MARK: - Selection
@@ -518,10 +541,10 @@ struct BrightBarChartWidgetV5: View {
         }
     }
 
-    // The held slot's hour or day, centred over it but kept inside the plot.
+    // The held hour, centred over its bar but kept inside the plot. Weeks roll their own letters.
     @ViewBuilder
     private var heldLabel: some View {
-        if let selectedIndex {
+        if let selectedIndex, !range.isWeek {
             let centred = slotCentre(selectedIndex, in: plotWidth) - heldLabelWidth / 2
 
             BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
@@ -702,10 +725,15 @@ struct BrightBarChartWidgetV5: View {
     }
 
     // Rounded up to a tidy number with headroom, so the tallest bar, the target and
-    // the high label above it all sit inside.
+    // the high label above it all sit inside. Split bars are each a whole day's shares
+    // with no axis to label, so they keep just a sliver above them, unrounded.
     private var domainMax: Double {
         let targets = bars.compactMap(\.target) + [target].compactMap(\.self)
-        let peak = max(values.max() ?? 0, targets.max() ?? 0) * (showsExtremes ? Constants.extremeHeadroom : Constants.headroom)
+        let highest = max(values.max() ?? 0, targets.max() ?? 0)
+        if isSegmented {
+            return max(highest * Constants.segmentedHeadroom, 1)
+        }
+        let peak = highest * (showsExtremes ? Constants.extremeHeadroom : Constants.headroom)
         guard peak > 0 else { return 1 }
         let magnitude = pow(10, floor(log10(peak)))
         let step = magnitude / 5
@@ -738,10 +766,12 @@ struct BrightBarChartWidgetV5: View {
         static let labelTickHeight: CGFloat = 7
         static let headroom = 1.1
         static let extremeHeadroom = 1.4
+        static let segmentedHeadroom = 1.05
         static let extremeOffset: CGFloat = .spacing3x
         static let weekBarCornerRadius: CGFloat = 6
         static let targetBlend: CGFloat = .spacing4x
         static let targetMarkHeight: CGFloat = .spacing05x
+        static let segmentMarkHeight: CGFloat = 2
         static let risingGreenStop = 0.24
         static let dayBadgeSize: CGFloat = 20
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]

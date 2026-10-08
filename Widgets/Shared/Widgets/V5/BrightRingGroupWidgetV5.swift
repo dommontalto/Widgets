@@ -121,6 +121,7 @@ struct BrightRingGroupWidgetV5: View {
 
                     ring(top, showsLabel: true)
                 }
+                .opacity(opacity(of: top))
             }
 
             HStack(alignment: .top, spacing: .spacing105x) {
@@ -130,6 +131,7 @@ struct BrightRingGroupWidgetV5: View {
 
                         caption(for: ring)
                     }
+                    .opacity(opacity(of: ring))
                 }
             }
         }
@@ -159,6 +161,7 @@ struct BrightRingGroupWidgetV5: View {
                             BrightText(ring.label, size: .body5, color: .semiLightTextColor)
                                 .lineLimit(1)
                         }
+                        .opacity(opacity(of: ring))
                     }
                 }
             }
@@ -178,12 +181,14 @@ struct BrightRingGroupWidgetV5: View {
                 GridRow {
                     ForEach(rings) { ring in
                         caption(for: ring)
+                            .opacity(opacity(of: ring))
                     }
                 }
 
                 GridRow {
                     ForEach(rings) { ring in
                         self.ring(ring, showsLabel: false)
+                            .opacity(opacity(of: ring))
                     }
                 }
 
@@ -191,6 +196,7 @@ struct BrightRingGroupWidgetV5: View {
                     ForEach(rings) { ring in
                         BrightText(ring.label, size: .body3, color: .semiLightTextColor)
                             .lineLimit(1)
+                            .opacity(opacity(of: ring))
                     }
                 }
             }
@@ -203,7 +209,6 @@ struct BrightRingGroupWidgetV5: View {
 
     // MARK: - Pieces
 
-    // The held ring stays bright while the rest dim.
     // Medium widgets' rows get the medium ring; the small widgets' groups use the default.
     private func ring(_ ring: Ring, showsLabel: Bool, size ringSize: BrightRingV5.Size? = nil) -> some View {
         BrightRingV5(
@@ -212,20 +217,24 @@ struct BrightRingGroupWidgetV5: View {
             label: showsLabel ? ring.shortLabel : nil,
             size: ringSize ?? (size == .small ? .small : .medium)
         )
-            .opacity(selectedRingID == nil || selectedRingID == ring.id ? .opaque : .ultraLowOpacity)
+    }
+
+    // The held ring stays bright while the rest, with their numbers and names, dim.
+    private func opacity(of ring: Ring) -> Double {
+        selectedRingID == nil || selectedRingID == ring.id ? .opaque : .ultraLowOpacity
     }
 
     // A held ring trades its numbers for what's left or over, or for its share of the whole,
     // rolling each piece of text over to the new one: "27/46" becomes "19 left".
     @ViewBuilder
     private func caption(for ring: Ring) -> some View {
-        let isHeld = selectedRingID == ring.id
-
         if let caption = ring.caption {
-            BrightText(isHeld ? share(of: ring) : caption, size: .body3, color: isHeld ? .textColor : .lightTextColor)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .lineLimit(1)
+            steady(isHeld: selectedRingID == ring.id) { isHeld in
+                BrightText(isHeld ? share(of: ring) : caption, size: .body3, color: isHeld ? .textColor : .lightTextColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+            }
         } else {
             // The small triangle keeps its amounts quiet; the medium row leads with them.
             amount(
@@ -240,9 +249,13 @@ struct BrightRingGroupWidgetV5: View {
     // "75/200", or held, "125 left": the number then its suffix in the dimmer text,
     // each rolling over to the other.
     private func amount(_ ring: Ring, valueSize: FontSizes, suffixSize: FontSizes, valueColor: Color) -> some View {
-        let isHeld = selectedRingID == ring.id
+        steady(isHeld: selectedRingID == ring.id) { isHeld in
+            amountText(ring, isHeld: isHeld, valueSize: valueSize, suffixSize: suffixSize, valueColor: valueColor)
+        }
+    }
 
-        return HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
+    private func amountText(_ ring: Ring, isHeld: Bool, valueSize: FontSizes, suffixSize: FontSizes, valueColor: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
             BrightText(display(isHeld ? abs(ring.goal - ring.value) : ring.value, of: ring), size: valueSize, color: valueColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
@@ -256,6 +269,20 @@ struct BrightRingGroupWidgetV5: View {
             .contentTransition(.numericText())
         }
         .lineLimit(1)
+    }
+
+    // Takes the room of the wider of its held and resting text, so swapping one for the
+    // other never resizes its column and nudges the rings beside it.
+    private func steady(isHeld: Bool, @ViewBuilder _ content: (Bool) -> some View) -> some View {
+        ZStack {
+            content(false)
+                .hidden()
+
+            content(true)
+                .hidden()
+
+            content(isHeld)
+        }
     }
 
     // MARK: - Holding

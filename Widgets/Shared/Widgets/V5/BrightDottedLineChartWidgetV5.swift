@@ -9,7 +9,8 @@ import Charts
 import SwiftUI
 
 // Occasional readings, such as weigh-ins, joined by a line with a dot on each and the
-// day under it. Medium is the chart; large adds how much it's changed and a note.
+// day under it. The last few readings sit evenly side by side, however many days apart
+// they were taken. Medium is the chart; large adds how much it's changed and a note.
 struct BrightDottedLineChartWidgetV5: View {
     struct Point: Identifiable, Hashable {
         let date: Date
@@ -44,7 +45,7 @@ struct BrightDottedLineChartWidgetV5: View {
     let size: BrightWidgetSizeV5
     var allowsSelection = true
 
-    @State private var selectedDate: Date?
+    @State private var selectedIndex: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -107,7 +108,7 @@ struct BrightDottedLineChartWidgetV5: View {
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .onChange(of: allowsSelection) { _, allows in
             if !allows {
-                selectedDate = nil
+                selectedIndex = nil
             }
         }
         .accessibilityElement(children: .ignore)
@@ -179,9 +180,9 @@ struct BrightDottedLineChartWidgetV5: View {
 
     private var chart: some View {
         Chart {
-            ForEach(points) { point in
+            ForEach(Array(shownPoints.enumerated()), id: \.element) { index, point in
                 AreaMark(
-                    x: .value("Day", point.date),
+                    x: .value("Reading", Double(index)),
                     yStart: .value("Floor", domain.lowerBound),
                     yEnd: .value(appearance.unit ?? "", point.value),
                     series: .value("Series", "Readings")
@@ -191,27 +192,26 @@ struct BrightDottedLineChartWidgetV5: View {
                 )
 
                 LineMark(
-                    x: .value("Day", point.date),
+                    x: .value("Reading", Double(index)),
                     y: .value(appearance.unit ?? "", point.value),
                     series: .value("Series", "Readings")
                 )
                 .foregroundStyle(appearance.tint)
                 .lineStyle(StrokeStyle(lineWidth: Constants.lineWidth))
 
-                PointMark(x: .value("Day", point.date), y: .value(appearance.unit ?? "", point.value))
+                PointMark(x: .value("Reading", Double(index)), y: .value(appearance.unit ?? "", point.value))
                     .symbol {
                         Circle()
                             .fill(appearance.tint)
                             .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
-                            .opacity(selectedDate == nil || shownPoint == point ? .opaque : .ultraLowOpacity)
                     }
             }
 
             if showsTrendLine, let fit = trendLine {
-                ForEach([fit.start, fit.end], id: \.date) { point in
+                ForEach([(0, fit.start), (lastIndex, fit.end)], id: \.0) { index, value in
                     LineMark(
-                        x: .value("Day", point.date),
-                        y: .value(appearance.unit ?? "", point.value),
+                        x: .value("Reading", Double(index)),
+                        y: .value(appearance.unit ?? "", value),
                         series: .value("Series", "Trend")
                     )
                     .foregroundStyle(Color.defaultCyan)
@@ -219,11 +219,11 @@ struct BrightDottedLineChartWidgetV5: View {
                 }
             }
 
-            if let marked = shownPoint {
-                BrightSelectorV5(date: marked.date, value: marked.value)
+            if let markedIndex, let marked = shownPoint {
+                BrightSelectorV5(x: Double(markedIndex), value: marked.value)
             }
         }
-        .chartXScale(domain: dateDomain)
+        .chartXScale(domain: 0 ... Double(max(lastIndex, 1)))
         .chartYScale(domain: domain)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
@@ -241,14 +241,15 @@ struct BrightDottedLineChartWidgetV5: View {
     // Each reading's day of the month, under its dot.
     private var dayLabels: some View {
         GeometryReader { geometry in
-            ForEach(points) { point in
+            ForEach(Array(shownPoints.enumerated()), id: \.element) { index, point in
                 BrightText(point.date.formatted(.brightDay), size: .body6, color: shownPoint == point ? .textColor : .semiLightTextColor)
                     .monospacedDigit()
                     .fixedSize()
-                    .position(x: xPosition(of: point.date, width: geometry.size.width), y: geometry.size.height / 2)
+                    .position(x: xPosition(of: index, width: geometry.size.width), y: geometry.size.height / 2)
             }
         }
         .frame(height: Constants.dayLabelHeight)
+        .animation(.brightEaseInOut, value: shownPoint)
     }
 
     private func sectionLabel(systemImage: String, title: String? = nil) -> some View {
@@ -278,32 +279,40 @@ struct BrightDottedLineChartWidgetV5: View {
 
     // MARK: - Values
 
-    private var shownPoint: Point? {
-        guard let selectedDate else { return points.last }
-        return points.min { abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate)) }
+    private var shownPoints: [Point] {
+        Array(points.suffix(BrightWidgetRangeV5.readingCount))
     }
 
-    private var selection: Binding<Date?> {
+    private var lastIndex: Int {
+        max(shownPoints.count - 1, 0)
+    }
+
+    // The held reading's place in line, or the latest's.
+    private var markedIndex: Int? {
+        shownPoints.isEmpty ? nil : selectedIndex ?? lastIndex
+    }
+
+    private var shownPoint: Point? {
+        markedIndex.map { shownPoints[$0] }
+    }
+
+    // Snaps the finger to the nearest reading.
+    private var selection: Binding<Double?> {
         Binding {
-            selectedDate
-        } set: { newDate in
-            let previous = shownPoint
-            selectedDate = newDate
-            if newDate != nil, shownPoint != previous {
+            selectedIndex.map(Double.init)
+        } set: { position in
+            let index = position.map { min(max(Int($0.rounded()), 0), lastIndex) }
+            guard index != selectedIndex else { return }
+            selectedIndex = index
+            if index != nil {
                 BrightHaptic.light.play()
             }
         }
     }
 
-    private var dateDomain: ClosedRange<Date> {
-        let first = points.first?.date ?? .now
-        let last = points.last?.date ?? .now
-        return first ... max(last, first.addingTimeInterval(1))
-    }
-
     // Rounded out to tidy numbers either side, so the readings never touch the edge.
     private var domain: ClosedRange<Double> {
-        let values = points.map(\.value)
+        let values = shownPoints.map(\.value)
         let low = values.min() ?? 0
         let high = values.max() ?? 1
         let spread = max(high - low, 1)
@@ -314,33 +323,29 @@ struct BrightDottedLineChartWidgetV5: View {
         return lower ... upper
     }
 
-    // The least-squares line through the readings, as its two ends.
-    private var trendLine: (start: Point, end: Point)? {
-        guard points.count > 1, let first = points.first, let last = points.last else { return nil }
-        let xs = points.map { $0.date.timeIntervalSince(first.date) }
-        let ys = points.map(\.value)
-        let count = Double(points.count)
+    // The least-squares line through the readings as they're spaced on the chart, as the
+    // values at its two ends.
+    private var trendLine: (start: Double, end: Double)? {
+        guard shownPoints.count > 1 else { return nil }
+        let xs = shownPoints.indices.map(Double.init)
+        let ys = shownPoints.map(\.value)
+        let count = Double(shownPoints.count)
         let meanX = xs.reduce(0, +) / count
         let meanY = ys.reduce(0, +) / count
-        let spread = zip(xs, xs).reduce(0) { $0 + ($1.0 - meanX) * ($1.1 - meanX) }
+        let spread = xs.reduce(0) { $0 + ($1 - meanX) * ($1 - meanX) }
         guard spread > 0 else { return nil }
         let slope = zip(xs, ys).reduce(0) { $0 + ($1.0 - meanX) * ($1.1 - meanY) } / spread
-        let end = last.date.timeIntervalSince(first.date)
-        return (
-            Point(date: first.date, value: meanY - slope * meanX),
-            Point(date: last.date, value: meanY + slope * (end - meanX))
-        )
+        return (meanY - slope * meanX, meanY + slope * (Double(lastIndex) - meanX))
     }
 
-    private func xPosition(of date: Date, width: CGFloat) -> CGFloat {
-        let span = dateDomain.upperBound.timeIntervalSince(dateDomain.lowerBound)
-        guard span > 0 else { return width / 2 }
-        return width * date.timeIntervalSince(dateDomain.lowerBound) / span
+    private func xPosition(of index: Int, width: CGFloat) -> CGFloat {
+        guard lastIndex > 0 else { return 0 }
+        return width * CGFloat(index) / CGFloat(lastIndex)
     }
 
     private struct SelectionModifier: ViewModifier {
         let isEnabled: Bool
-        let selection: Binding<Date?>
+        let selection: Binding<Double?>
 
         func body(content: Content) -> some View {
             if isEnabled {

@@ -225,7 +225,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macroBars: [.week]
         case .macroRings, .macroRing, .intakeRing, .waterRing: [.today]
         case .sleepRings: [.lastNight]
-        case .dottedLine, .vo2Line: [.twoWeeks]
+        case .dottedLine, .vo2Line: [.lastReadings]
         case .menstrualCycle: [.today]
         }
     }

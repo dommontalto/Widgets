@@ -223,8 +223,11 @@ struct BrightMenstrualWidgetV5: View {
 
                 HStack(spacing: Constants.pillGap) {
                     ForEach(0 ..< count, id: \.self) { offset in
-                        pill(colour(firstDay + offset))
-                            .opacity(selectedDay == nil || selectedDay == firstDay + offset ? .opaque : .ultraLowOpacity)
+                        let day = firstDay + offset
+                        let style = colour(day)
+
+                        pill(selectedDay == day ? style.outlined : style)
+                            .opacity(selectedDay == nil || selectedDay == day ? .opaque : .ultraLowOpacity)
                     }
                 }
                 .overlay { edgeFades }
@@ -302,6 +305,11 @@ struct BrightMenstrualWidgetV5: View {
         var outline: Color?
         var glow: Color?
         var arrow: Color
+
+        // The held day keeps its own fill and gains today's outline, in its phase's colour.
+        var outlined: PillStyle {
+            PillStyle(fill: fill, outline: outline ?? arrow, glow: glow, arrow: arrow)
+        }
     }
 
     // Small: only the window lights up, brightest on the best day.
@@ -349,43 +357,62 @@ struct BrightMenstrualWidgetV5: View {
             let firstDay = today - Constants.expandedLeadingDays
             let stride = Constants.pillWidth + Constants.pillGap
             let x = { (day: Int) in CGFloat(day - firstDay) * stride + Constants.pillWidth / 2 }
-            let windowStart = x(nextOccurrence(of: cycle.ovulationWindow.lowerBound))
-            let windowEnd = x(nextOccurrence(of: cycle.ovulationWindow.upperBound))
-            let lutealStart = x(nextOccurrence(of: cycle.lutealStart))
-            let period = x(nextOccurrence(of: cycle.length + 1))
+            let windowFirst = nextOccurrence(of: cycle.ovulationWindow.lowerBound)
+            // Mid-window, the start has already passed and comes round next cycle, after the end.
+            let windowDays = windowFirst ... max(nextOccurrence(of: cycle.ovulationWindow.upperBound), windowFirst)
+            let lutealDay = nextOccurrence(of: cycle.lutealStart)
+            let periodDay = nextOccurrence(of: cycle.length + 1)
+            let windowStart = x(windowDays.lowerBound)
+            let windowEnd = x(windowDays.upperBound)
+            let lutealStart = x(lutealDay)
+            let period = x(periodDay)
+            let windowOpacity = markerOpacity(near: windowDays)
+            let lutealOpacity = markerOpacity(near: lutealDay ... lutealDay)
+            let periodOpacity = markerOpacity(near: periodDay ... periodDay)
 
             ZStack(alignment: .topLeading) {
                 Rectangle()
                     .fill(Color.defaultCyan)
                     .frame(width: max(windowEnd - windowStart, 0), height: Constants.outlineWidth)
                     .offset(x: windowStart, y: Constants.markerIconSize / 2)
+                    .opacity(windowOpacity)
 
-                markerIcon(.ovulation, at: windowStart)
-                markerIcon(.ovulation, at: windowEnd)
-                markerLabel(Phase.ovulation.title, at: (windowStart + windowEnd) / 2)
+                markerIcon(.ovulation, at: windowStart, opacity: windowOpacity)
+                markerIcon(.ovulation, at: windowEnd, opacity: windowOpacity)
+                markerLabel(Phase.ovulation.title, at: (windowStart + windowEnd) / 2, opacity: windowOpacity)
 
-                markerIcon(.luteal, at: lutealStart)
-                markerLabel(Phase.luteal.title, at: lutealStart)
+                markerIcon(.luteal, at: lutealStart, opacity: lutealOpacity)
+                markerLabel(Phase.luteal.title, at: lutealStart, opacity: lutealOpacity)
 
-                markerIcon(.menstrual, at: period)
-                markerLabel(Phase.menstrual.title, at: period)
+                markerIcon(.menstrual, at: period, opacity: periodOpacity)
+                markerLabel(Phase.menstrual.title, at: period, opacity: periodOpacity)
             }
         }
         .frame(height: Constants.markerIconSize + .spacing05x + Constants.markerLabelHeight)
     }
 
-    private func markerIcon(_ phase: Phase, at x: CGFloat) -> some View {
+    // The icon fades on its own, over the card-coloured disc that cuts it out of the bracket.
+    private func markerIcon(_ phase: Phase, at x: CGFloat, opacity: Double) -> some View {
         Image(systemName: phase.systemImage)
             .font(.standard(size: .body5, weight: .light))
             .foregroundStyle(phase.color)
+            .opacity(opacity)
             .background(Circle().fill(Color.defaultHomeCards))
             .position(x: x, y: Constants.markerIconSize / 2)
     }
 
-    private func markerLabel(_ text: String, at x: CGFloat) -> some View {
+    private func markerLabel(_ text: String, at x: CGFloat, opacity: Double) -> some View {
         BrightText(text, size: .body6, color: .lightTextColor)
             .fixedSize()
+            .opacity(opacity)
             .position(x: x, y: Constants.markerIconSize + .spacing05x + Constants.markerLabelHeight / 2)
+    }
+
+    // While a day is held, a marker only stays lit when the finger is within a few days of it.
+    private func markerOpacity(near days: ClosedRange<Int>) -> Double {
+        guard let selectedDay else { return .opaque }
+        let reach = Constants.markerReach
+        return (days.lowerBound - reach ... days.upperBound + reach).contains(selectedDay) ? .opaque : .ultraLowOpacity
     }
 
     // The first time this cycle day comes round from today on.
@@ -453,6 +480,7 @@ struct BrightMenstrualWidgetV5: View {
         static let fadeWidth: CGFloat = .spacing5x
         static let markerIconSize: CGFloat = 14
         static let markerLabelHeight: CGFloat = 12
+        static let markerReach = 2
         // How many days of the strip sit before the day it's centred on.
         static let compactLeadingDays = 8
         static let expandedLeadingDays = 4
