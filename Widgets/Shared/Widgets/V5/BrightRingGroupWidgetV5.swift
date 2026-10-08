@@ -162,7 +162,8 @@ struct BrightRingGroupWidgetV5: View {
 
             Spacer(minLength: .spacing0x)
 
-            Grid(horizontalSpacing: .spacing4x, verticalSpacing: .spacing1x) {
+            // Fewer than four rings have the room to spread out; four or more sit closer.
+            Grid(horizontalSpacing: rings.count < 4 ? .spacing5x : .spacing3x, verticalSpacing: .spacing1x) {
                 GridRow {
                     ForEach(rings) { ring in
                         caption(for: ring)

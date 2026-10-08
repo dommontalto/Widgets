@@ -19,7 +19,7 @@ struct BrightRingV5: View {
         var diameter: CGFloat {
             switch self {
             case .small: .spacing9x
-            case .medium: .spacing12x
+            case .medium: .spacing11x
             case .large: 84
             }
         }
