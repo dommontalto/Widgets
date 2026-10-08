@@ -114,11 +114,11 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
-        case .leadingNumber: [.small, .medium]
+        case .leadingNumber: [.small]
         case .macroBars: [.medium, .large]
         case .macroRings: [.small, .medium]
         case .macroRing, .intakeRing: [.small]
-        case .sleepRings: [.medium]
+        case .sleepRings: [.small, .medium]
         default: BrightWidgetSizeV5.allCases
         }
     }

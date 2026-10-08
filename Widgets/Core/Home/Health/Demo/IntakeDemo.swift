@@ -20,10 +20,24 @@ extension HealthWidgetDemo {
         customSubtitle: { intakeSubtitle(for: $0) }
     )
 
-    // Today's calories so far against the day's goal.
+    // Today's calories so far against the day's goal, with the running total hour by hour.
     static var intakeRing: BrightRingGroupWidgetV5.Ring {
-        let today = intake.bars(for: .today).compactMap(\.value).reduce(0, +)
-        return .init(label: "Intake", shortLabel: "I", value: today, goal: intake.dayTarget ?? 0, color: .defaultGreen)
+        let timeline = intakeTimeline
+        return .init(
+            label: "Intake",
+            shortLabel: "I",
+            value: timeline.last ?? 0,
+            goal: intake.dayTarget ?? 0,
+            color: .defaultGreen,
+            timeline: timeline
+        )
+    }
+
+    // Calories eaten by the end of each hour so far today.
+    static var intakeTimeline: [Double] {
+        intake.bars(for: .today).compactMap(\.value).reduce(into: []) { totals, hour in
+            totals.append((totals.last ?? 0) + hour)
+        }
     }
 
     private static let latestMeal: (calories: Double, date: Date) = (403, minutesAgo(47))

@@ -29,17 +29,17 @@ struct HealthWidgetView: View {
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
         case (.macros, .macroRings):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size)
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size, allowsSelection: allowsSelection)
         case (.macros, .macroRing):
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.macroRing(widget.macro)], size: widget.size) {
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.macroRing(widget.macro)], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.macro.title, color: HealthWidgetDemo.macroRing(widget.macro).color)
             }
         case (.intake, .intakeRing):
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size) {
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.title, color: widget.kind.tint)
             }
         case (.sleep, _):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size) {
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size, allowsSelection: allowsSelection) {
                 SleepRingsHeader()
             }
         case (.macros, _):

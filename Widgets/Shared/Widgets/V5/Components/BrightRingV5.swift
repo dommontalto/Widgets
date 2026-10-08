@@ -7,17 +7,19 @@
 
 import SwiftUI
 
-// A thick progress ring at one of two sizes: a dim track in its colour, and a sweep
+// A thick progress ring at one of three sizes: a dim track in its colour, and a sweep
 // that brightens from where it starts to where it's reached. Going past the goal laps
 // a thin outer arc for the extra and marks the goal at the top.
 struct BrightRingV5: View {
     enum Size {
+        case small
         case medium
         case large
 
         var diameter: CGFloat {
             switch self {
-            case .medium: .spacing10x
+            case .small: .spacing9x
+            case .medium: .spacing11x
             case .large: 80
             }
         }
