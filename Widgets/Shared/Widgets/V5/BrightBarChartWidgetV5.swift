@@ -15,6 +15,8 @@ struct BrightBarChartWidgetV5: View {
         let index: Int
         // Nil for a slot that hasn't happened yet.
         let value: Double?
+        // This slot's own limit, such as the day's calorie allowance, in place of the chart's target.
+        var target: Double?
 
         var id: Int { index }
     }
@@ -214,7 +216,7 @@ struct BrightBarChartWidgetV5: View {
 
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0 {
-                        barShape(value: value, width: barWidth, plotHeight: height)
+                        barShape(value: value, target: bar.target ?? target, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .semiLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
@@ -239,7 +241,7 @@ struct BrightBarChartWidgetV5: View {
             .offset(y: y)
     }
 
-    private func barShape(value: Double, width: CGFloat, plotHeight: CGFloat) -> some View {
+    private func barShape(value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
         let height = max(plotHeight - yPosition(of: value, height: plotHeight), width)
         let aboveTarget = target.map { max(height - (plotHeight - yPosition(of: $0, height: plotHeight)), 0) } ?? 0
         // The orange melts into the fill across a band centred on the target, rather than
@@ -265,11 +267,11 @@ struct BrightBarChartWidgetV5: View {
                         )
                     )
 
-                // On the week's wide bars, a line marks where the target fell.
-                if range.isWeek {
+                // On the large week's bars, a line marks where the target fell.
+                if range.isWeek, size == .large {
                     Capsule()
                         .fill(Color.defaultHomeCards.opacity(.lowOpacity))
-                        .frame(width: max(width - .spacing2x, 0), height: Constants.targetMarkHeight)
+                        .frame(width: max(width - .spacing05x, 0), height: Constants.targetMarkHeight)
                         .offset(y: aboveTarget - Constants.targetMarkHeight / 2)
                 }
             }
@@ -305,29 +307,34 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private func extremeLabel(_ systemImage: String, value: Double) -> some View {
-        VStack(spacing: .spacing0x) {
+        VStack(spacing: .spacing025x) {
             Image(systemName: systemImage)
-                .font(.standard(size: .body3, weight: .light))
+                .font(.standard(size: .body4, weight: .light))
 
-            BrightText(display(value), size: .body5, color: .semiLightTextColor)
+            BrightText(display(value), size: .body6, color: .semiLightTextColor)
                 .monospacedDigit()
         }
         .foregroundStyle(Color.semiLightTextColor)
         .fixedSize()
     }
 
-    // The target or the top of the scale, and zero.
+    // The top of the scale and zero, at the column's two ends.
     private var guideLabelColumn: some View {
-        GeometryReader { geometry in
-            ForEach(guideValues, id: \.self) { value in
-                BrightText(display(value), size: .body5, color: .lightTextColor)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .fixedSize()
-                    .frame(width: geometry.size.width, alignment: .leading)
-                    .position(x: geometry.size.width / 2, y: yPosition(of: value, height: geometry.size.height))
-            }
+        VStack(alignment: .leading, spacing: .spacing0x) {
+            guideLabel(domainMax)
+
+            Spacer(minLength: .spacing0x)
+
+            guideLabel(0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func guideLabel(_ value: Double) -> some View {
+        BrightText(display(value), size: .body5, color: .lightTextColor)
+            .monospacedDigit()
+            .lineLimit(1)
+            .fixedSize()
     }
 
     // One per slot, centred under its bar, with a taller tick at each labelled hour.
@@ -497,7 +504,7 @@ struct BrightBarChartWidgetV5: View {
                     BrightText([display(value), unit].compactMap(\.self).joined(separator: " "), size: .body3, color: .semiLightTextColor)
                         .monospacedDigit()
                 case let .targets(_, target):
-                    HStack(spacing: .spacing0x) {
+                    HStack(spacing: .spacing05x) {
                         Image(systemName: value >= target ? "arrow.up" : "arrow.down")
                             .font(.standard(size: .body3, weight: .light))
 
@@ -562,10 +569,6 @@ struct BrightBarChartWidgetV5: View {
         size == .large && !range.isWeek
     }
 
-    private var guideValues: [Double] {
-        [target ?? domainMax, 0]
-    }
-
     // The highest and lowest hours that have readings.
     private var extremes: [(bar: Bar, value: Double, systemImage: String)] {
         let readings = bars.filter { ($0.value ?? 0) > 0 }
@@ -597,18 +600,14 @@ struct BrightBarChartWidgetV5: View {
         abs(Double(slotCentre(index, in: plotWidth)) - position)
     }
 
-    // The target sits at the top of the plot unless a bar beats it, in which case the
-    // tallest bar reaches the top instead, so nothing ever rises out of the plot.
-    // Without a target, the scale is rounded up to a tidy number with headroom, so the
-    // tallest bar and the high label above it sit inside.
+    // Rounded up to a tidy number with headroom, so the tallest bar, the target and
+    // the high label above it all sit inside.
     private var domainMax: Double {
-        if let target, target > 0 {
-            return max(target, values.max() ?? 0)
-        }
-        let peak = max(values.max() ?? 0, target ?? 0) * (showsExtremes ? Constants.extremeHeadroom : Constants.headroom)
+        let targets = bars.compactMap(\.target) + [target].compactMap(\.self)
+        let peak = max(values.max() ?? 0, targets.max() ?? 0) * (showsExtremes ? Constants.extremeHeadroom : Constants.headroom)
         guard peak > 0 else { return 1 }
         let magnitude = pow(10, floor(log10(peak)))
-        let step = magnitude / 2
+        let step = magnitude / 5
         return (peak / step).rounded(.up) * step
     }
 

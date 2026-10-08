@@ -9,7 +9,7 @@ import SwiftUI
 
 enum BrightDebugLayoutV5 {
     // Flip on to tint each marked section and see exactly where its edges fall.
-    static let isEnabled = true
+    static let isEnabled = false
 }
 
 extension View {

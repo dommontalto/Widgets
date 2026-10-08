@@ -23,6 +23,8 @@ enum HealthWidgetDemo {
         // Oldest first and ending today, so today always shows the last value
         // whichever day of the week it is.
         let daily: [Double]
+        // Each day's own limit, lined up with `daily`, drawn as the mark inside its bar.
+        var dailyTargets: [Double]?
         var hourTarget: Double?
         var dayTarget: Double?
         let yesterday: Double
@@ -64,8 +66,11 @@ enum HealthWidgetDemo {
         var weekBars: [BrightBarChartWidgetV5.Bar] {
             let today = HealthWidgetDemo.currentWeekday
             return (0 ..< daily.count).map { index in
-                let value = index <= today ? daily[daily.count - 1 - (today - index)] : nil
-                return BrightBarChartWidgetV5.Bar(index: index, value: value)
+                guard index <= today else {
+                    return BrightBarChartWidgetV5.Bar(index: index, value: nil)
+                }
+                let day = daily.count - 1 - (today - index)
+                return BrightBarChartWidgetV5.Bar(index: index, value: daily[day], target: dailyTargets?[day])
             }
         }
 

@@ -13,7 +13,7 @@ extension HealthWidgetDemo {
         fill: .solid(.defaultGreen),
         weekFill: .rising,
         hourly: [0, 0, 0, 0, 0, 0, 0, 180, 320, 0, 90, 0, 520, 140, 0, 60, 0, 0, 640, 220, 0, 120, 0, 0],
-        daily: [2_240, 1_890, 1_968, 2_420, 2_010, 2_150, 1_832],
+        daily: [1_720, 1_610, 1_680, 1_790, 1_540, 1_750, 1_832],
         dayTarget: 2_200,
         yesterday: 2_100,
         summarisesTargets: true,
