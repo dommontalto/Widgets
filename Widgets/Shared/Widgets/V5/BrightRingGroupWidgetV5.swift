@@ -203,7 +203,7 @@ struct BrightRingGroupWidgetV5: View {
             label: showsLabel ? ring.shortLabel : nil,
             size: ringSize ?? (size == .small ? .small : .medium)
         )
-            .opacity(selectedRingID == nil || selectedRingID == ring.id ? .opaque : .semiLowOpacity)
+            .opacity(selectedRingID == nil || selectedRingID == ring.id ? .opaque : .ultraLowOpacity)
     }
 
     // A held ring trades its numbers for what's left or over, or for its share of the whole,

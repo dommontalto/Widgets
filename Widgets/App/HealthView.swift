@@ -11,98 +11,81 @@ struct HealthView: View {
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
 
     @State private var selectedPage = HomePage.health.rawValue
-    @State private var isSideMenuExpanded = false
-    @State private var showingMyOrders = false
     @State private var editor = HealthWidgetEditor()
 
     var body: some View {
         NavigationStack {
-            BrightSideMenuV5(
-                isEnabled: !showingMyOrders && !editor.isEditing,
-                canOpenBySwipe: selectedPage == HomePage.health.rawValue,
-                isExpanded: $isSideMenuExpanded
-            ) {
-                SideMenuView {
-                    isSideMenuExpanded = false
-                    showingMyOrders = true
-                }
-            } content: {
-                content
-            }
-            .background(Color.defaultBackground)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if editor.isEditing {
-                        Button("Add") {
-                            BrightHaptic.medium.play()
-                            editor.isShowingAddSheet = true
-                        }
-                    } else {
-                        Button {
-                            withAnimation(.interactiveSpring(duration: Constants.menuSpringDuration, extraBounce: Constants.menuSpringBounce)) {
-                                isSideMenuExpanded.toggle()
+            content
+                .background(Color.defaultBackground)
+                .toolbar {
+                    // Straight to the widgets, editing or not.
+                    ToolbarItem(placement: .topBarLeading) {
+                        if editor.isEditing {
+                            Button("Add") {
+                                BrightHaptic.medium.play()
+                                editor.isShowingAddSheet = true
                             }
-                        } label: {
-                            Image(ImageNames.brightLogoSearchingV4)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: Constants.logoSize, height: Constants.logoSize)
+                        } else {
+                            Button {
+                                BrightHaptic.medium.play()
+                                withAnimation(.brightEaseInOut) {
+                                    selectedPage = HomePage.health.rawValue
+                                }
+                                editor.isShowingAddSheet = true
+                            } label: {
+                                Label("Add widget", systemImage: "plus")
+                                    .labelStyle(.iconOnly)
+                            }
                         }
                     }
-                }
 
-                ToolbarItem(placement: .topBarTrailing) {
-                    if editor.isEditing {
-                        Button("Done") {
-                            editor.endEditing()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.defaultSkyBlue)
-                    } else {
-                        Button {
-                            withAnimation(.brightEaseInOut) {
-                                isSideMenuExpanded = false
-                                selectedPage = HomePage.health.rawValue
+                    ToolbarItem(placement: .topBarTrailing) {
+                        if editor.isEditing {
+                            Button("Done") {
+                                editor.endEditing()
                             }
-                            editor.beginEditing()
-                        } label: {
-                            Label("Edit", systemImage: "paintbrush")
-                                .labelStyle(.iconOnly)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.defaultSkyBlue)
+                        } else {
+                            Button {
+                                withAnimation(.brightEaseInOut) {
+                                    selectedPage = HomePage.health.rawValue
+                                }
+                                editor.beginEditing()
+                            } label: {
+                                Label("Edit", systemImage: "paintbrush")
+                                    .labelStyle(.iconOnly)
+                            }
                         }
                     }
                 }
-            }
-            .navigationDestination(isPresented: $showingMyOrders) {
-                MyOrdersView()
-            }
-            .sheet(isPresented: $editor.isShowingAddSheet) {
-                AddWidgetSheet {
-                    editor.add($0)
-                } onReset: {
-                    editor.layout.reset()
-                } onAddAll: {
-                    editor.layout.addAll()
-                } onRemoveAll: {
-                    editor.layout.removeAll()
-                } onShowAll: { size in
-                    editor.layout.showAll(size)
-                } onShowFamily: { family in
-                    editor.layout.showAll(family)
-                }
-                .presentationDragIndicator(.hidden)
-                .presentationContentInteraction(.scrolls)
-            }
-            .sheet(item: $editor.editingWidget) { widget in
-                EditWidgetSheet(widget: widget) { edited in
-                    withAnimation(.brightSpring) {
-                        editor.layout.update(edited)
+                .sheet(isPresented: $editor.isShowingAddSheet) {
+                    AddWidgetSheet(widgetCount: editor.layout.widgets.count) {
+                        editor.add($0)
+                    } onReset: {
+                        editor.layout.reset()
+                    } onAddAll: {
+                        editor.layout.addAll()
+                    } onRemoveAll: {
+                        editor.layout.removeAll()
+                    } onShowAll: { size in
+                        editor.layout.showAll(size)
+                    } onShowFamily: { family in
+                        editor.layout.showAll(family)
                     }
+                    .presentationDragIndicator(.hidden)
+                    .presentationContentInteraction(.scrolls)
                 }
-                .presentationDragIndicator(.hidden)
-                .presentationContentInteraction(.scrolls)
-            }
+                .sheet(item: $editor.editingWidget) { widget in
+                    EditWidgetSheet(widget: widget) { edited in
+                        withAnimation(.brightSpring) {
+                            editor.layout.update(edited)
+                        }
+                    }
+                    .presentationDragIndicator(.hidden)
+                    .presentationContentInteraction(.scrolls)
+                }
         }
-        .toolbarVisibility(isSideMenuExpanded ? .hidden : .visible, for: .tabBar)
     }
 
     private var content: some View {
@@ -153,9 +136,6 @@ struct HealthView: View {
     }
 
     private enum Constants {
-        static let logoSize: CGFloat = 22
-        static let menuSpringDuration: Double = 0.25
-        static let menuSpringBounce: Double = 0.02
         static let editingBottomRoom: CGFloat = 300
     }
 }

@@ -134,9 +134,7 @@ struct BrightBarChartWidgetV5: View {
                 .frame(maxHeight: .infinity)
 
             if size == .large, let summary {
-                Rectangle()
-                    .fill(Color.textColor.opacity(.ultraLowOpacity))
-                    .frame(height: Constants.hairline)
+                BrightDividerV5()
                     .padding(.horizontal, -.spacing205x)
 
                 summaryGrid(summary)
@@ -262,7 +260,7 @@ struct BrightBarChartWidgetV5: View {
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0 {
                         barShape(bar, value: value, target: bar.target ?? target, width: barWidth, plotHeight: height)
-                            .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .semiLowOpacity)
+                            .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .ultraLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
                     }
@@ -736,7 +734,6 @@ struct BrightBarChartWidgetV5: View {
         static let dayBarFraction: CGFloat = 0.48
         static let minimumBarWidth: CGFloat = 2
         static let labelTickHeight: CGFloat = 7
-        static let hairline: CGFloat = 0.5
         static let headroom = 1.1
         static let extremeHeadroom = 1.4
         static let extremeOffset: CGFloat = .spacing3x

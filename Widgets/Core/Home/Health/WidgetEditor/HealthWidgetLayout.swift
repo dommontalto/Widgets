@@ -14,6 +14,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity
     case sleep
     case hydration
+    case weight
 
     var id: Self { self }
 
@@ -25,6 +26,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "Total Energy"
         case .sleep: "Sleep"
         case .hydration: "Water"
+        case .weight: "Weight"
         }
     }
 
@@ -37,6 +39,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "Activity"
         case .sleep: "Sleep"
         case .hydration: "Hydration"
+        case .weight: "Weight"
         }
     }
 
@@ -48,6 +51,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "flame.fill"
         case .sleep: "bed.double.fill"
         case .hydration: "drop.fill"
+        case .weight: "scalemass.fill"
         }
     }
 
@@ -60,6 +64,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: ImageNames.activityAlertsIconV5
         case .sleep: ImageNames.sleepInfoV4
         case .hydration: ImageNames.waterIconV5
+        case .weight: ImageNames.weightIconV4
         }
     }
 
@@ -71,16 +76,18 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: .defaultOrange
         case .sleep: .defaultBlue
         case .hydration: .defaultCyan
+        case .weight: .defaultPurple
         }
     }
 
     var styles: [HealthWidgetStyle] {
         switch self {
-        case .heartRate: [.lineChart, .leadingNumber]
+        case .heartRate: [.lineChart, .leadingNumber, .vo2Line, .vo2Number]
         case .intake: [.bars, .intakeRing]
         case .macros: [.macroBars, .macroRings, .macroRing]
         case .sleep: [.sleepRings]
         case .hydration: [.bars, .leadingNumber]
+        case .weight: [.dottedLine, .leadingNumber]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
     }
@@ -102,6 +109,35 @@ enum HealthMacro: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+// Counts across everything the add sheet can make, for the debug stats.
+enum HealthWidgetCatalog {
+    // Each kind's designs, paired with it.
+    static var designs: [(kind: HealthWidgetKind, style: HealthWidgetStyle)] {
+        HealthWidgetKind.allCases.flatMap { kind in kind.styles.map { (kind, $0) } }
+    }
+
+    static var designCount: Int {
+        designs.count
+    }
+
+    static var sizedCount: Int {
+        designs.reduce(0) { $0 + $1.style.sizes.count }
+    }
+
+    static var optionCount: Int {
+        designs.reduce(0) { $0 + options(of: $1.style) }
+    }
+
+    static func optionCount(of family: HealthWidgetStyle.Family) -> Int {
+        designs.filter { $0.style.family == family }.reduce(0) { $0 + options(of: $1.style) }
+    }
+
+    // Every size, range and macro a design can be set to.
+    private static func options(of style: HealthWidgetStyle) -> Int {
+        style.sizes.count * max(style.ranges.count, 1) * (style == .macroRing ? HealthMacro.allCases.count : 1)
+    }
+}
+
 // The alternative designs a kind can be shown as, swiped between in the add and edit sheets.
 enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case lineChart
@@ -116,20 +152,27 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case macroRing
     case intakeRing
     case sleepRings
+    case dottedLine
+    // VO2 Max as a dotted line, which only comes in medium.
+    case vo2Line
+    // VO2 Max's latest reading, alongside heart rate's own number.
+    case vo2Number
 
     // Which shared widget draws it.
     enum Family: CaseIterable {
         case line
+        case dottedLine
         case bar
         case number
         case ring
 
         var title: String {
             switch self {
-            case .line: "line charts"
-            case .bar: "bar charts"
-            case .number: "numbers"
-            case .ring: "rings"
+            case .line: "BrightLineChartWidgetV5"
+            case .dottedLine: "BrightDottedLineChartWidgetV5"
+            case .bar: "BrightBarChartWidgetV5"
+            case .number: "BrightLeadingNumberWidgetV5"
+            case .ring: "BrightRingGroupWidgetV5"
             }
         }
     }
@@ -140,18 +183,21 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .lineChart: .line
         case .bars, .activeEnergyBars, .stepBars, .macroBars: .bar
-        case .leadingNumber: .number
+        case .leadingNumber, .vo2Number: .number
         case .macroRings, .macroRing, .intakeRing, .sleepRings: .ring
+        case .dottedLine, .vo2Line: .dottedLine
         }
     }
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
-        case .leadingNumber: [.small]
+        case .leadingNumber, .vo2Number: [.small]
         case .macroBars: [.medium, .large]
         case .macroRings: [.small, .medium]
         case .macroRing, .intakeRing: [.small]
         case .sleepRings: [.small, .medium]
+        case .dottedLine: [.medium, .large]
+        case .vo2Line: [.medium]
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -160,11 +206,12 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     var ranges: [BrightWidgetRangeV5] {
         switch self {
         case .lineChart: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
-        case .leadingNumber: [.latest]
+        case .leadingNumber, .vo2Number: [.latest]
         case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
         case .macroBars: [.week]
         case .macroRings, .macroRing, .intakeRing: [.today]
         case .sleepRings: [.lastNight]
+        case .dottedLine, .vo2Line: [.twoWeeks]
         }
     }
 }

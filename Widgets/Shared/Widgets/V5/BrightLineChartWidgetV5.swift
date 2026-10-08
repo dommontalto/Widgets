@@ -283,22 +283,7 @@ struct BrightLineChartWidgetV5: View {
 
             // Sits on the latest reading, and follows the finger while a point is held.
             if let marked = selectedSample ?? visibleSamples.last {
-                RuleMark(x: .value("Marker", marked.date))
-                    .foregroundStyle(Color.textColor)
-                    .lineStyle(StrokeStyle(lineWidth: Constants.hairline))
-
-                PointMark(
-                    x: .value("Marker", marked.date),
-                    y: .value(unit, marked.value)
-                )
-                .symbol {
-                    // The card-coloured ring cuts the dot out of the line and marker behind it.
-                    Circle()
-                        .fill(Color.textColor)
-                        .frame(width: Constants.pointDiameter, height: Constants.pointDiameter)
-                        .frame(width: Constants.pointRingDiameter, height: Constants.pointRingDiameter)
-                        .background(Circle().fill(Color.defaultHomeCards))
-                }
+                BrightSelectorV5(date: marked.date, value: marked.value)
             }
         }
         .chartXScale(domain: start...end)
@@ -519,9 +504,6 @@ struct BrightLineChartWidgetV5: View {
         static let domainStep: Double = 10
         static let axisLabelWidth: CGFloat = 26
         static let lineWidth: CGFloat = 1
-        static let hairline: CGFloat = 0.5
-        static let pointDiameter: CGFloat = 8
-        static let pointRingDiameter: CGFloat = 14
         static let startTickHeight: CGFloat = 7
         static let eventIconOffset: CGFloat = .spacing2x
     }

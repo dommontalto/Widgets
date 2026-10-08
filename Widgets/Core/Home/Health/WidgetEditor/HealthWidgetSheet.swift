@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct AddWidgetSheet: View {
+    // How many widgets are on the grid now, for the debug stats.
+    var widgetCount: Int?
     let onAdd: (HealthWidgetItem) -> Void
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
@@ -63,7 +65,7 @@ struct AddWidgetSheet: View {
                         if let onShowFamily {
                             ForEach(HealthWidgetStyle.Family.allCases, id: \.self) { family in
                                 BrightRowV5(
-                                    "Show all \(family.title)",
+                                    "Show \(family.title)",
                                     icon: .symbol("square.stack", tint: .defaultSkyBlue),
                                     trailing: .none
                                 ) {
@@ -83,6 +85,26 @@ struct AddWidgetSheet: View {
                         }
                         #endif
                     }
+
+                    #if DEBUG
+                    BrightRowGroupV5(header: "Stats", color: .defaultSheetModalCards) {
+                        if let widgetCount {
+                            BrightRowV5("On the grid", trailing: .value("\(widgetCount)"))
+                        }
+
+                        BrightRowV5("Rows", trailing: .value("\(HealthWidgetKind.allCases.count)"))
+
+                        BrightRowV5("Designs", trailing: .value("\(HealthWidgetCatalog.designCount)"))
+
+                        BrightRowV5("With every size", trailing: .value("\(HealthWidgetCatalog.sizedCount)"))
+
+                        BrightRowV5("With every option", trailing: .value("\(HealthWidgetCatalog.optionCount)"))
+
+                        ForEach(HealthWidgetStyle.Family.allCases, id: \.self) { family in
+                            BrightRowV5(family.title, trailing: .value("\(HealthWidgetCatalog.optionCount(of: family))"))
+                        }
+                    }
+                    #endif
                 }
                 .padding(.vertical, .spacing3x)
             }

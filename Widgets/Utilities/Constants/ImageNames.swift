@@ -17,6 +17,7 @@ nonisolated class ImageNames {
     static let activityAlertsIconV5 = "activity_alerts_icon_v5"
     static let sleepInfoV4 = "sleep_info_v4"
     static let waterIconV5 = "water_icon_v5"
+    static let weightIconV4 = "weight_icon_v4"
 
     // MARK: - Genome
 

@@ -30,6 +30,38 @@ struct HealthWidgetView: View {
             )
         case (.hydration, _):
             barChart(HealthWidgetDemo.water)
+        case (.weight, .leadingNumber):
+            BrightLeadingNumberWidgetV5(
+                appearance: HealthWidgetDemo.weightAppearance,
+                value: HealthWidgetDemo.weightPoints.last?.value ?? 0,
+                latest: HealthWidgetDemo.weightPoints.last?.date ?? .now
+            )
+        case (.heartRate, .vo2Number):
+            BrightLeadingNumberWidgetV5(
+                appearance: HealthWidgetDemo.vo2MaxAppearance,
+                value: HealthWidgetDemo.vo2MaxPoints.last?.value ?? 0,
+                latest: HealthWidgetDemo.vo2MaxPoints.last?.date ?? .now
+            )
+        case (.weight, _):
+            BrightDottedLineChartWidgetV5(
+                appearance: HealthWidgetDemo.weightAppearance,
+                subtitle: HealthWidgetDemo.anchor.formatted(.brightTimestamp),
+                points: HealthWidgetDemo.weightPoints,
+                trend: .init(systemImage: "arrow.down", text: "0.36kg Weekly AVG"),
+                showsTrendLine: true,
+                changes: HealthWidgetDemo.weightChanges,
+                note: HealthWidgetDemo.weightNote,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
+        case (.heartRate, .vo2Line):
+            BrightDottedLineChartWidgetV5(
+                appearance: HealthWidgetDemo.vo2MaxAppearance,
+                subtitle: "Latest: \(HealthWidgetDemo.anchor.formatted(.brightTimestamp))",
+                points: HealthWidgetDemo.vo2MaxPoints,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
                 appearance: heartRateAppearance,
