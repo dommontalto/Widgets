@@ -247,20 +247,13 @@ private struct WidgetOptions: View {
                 .transition(.opacity)
             }
 
-            if !widget.style.ranges.isEmpty {
-                ForEach(BrightWidgetRangeV5.Section.allCases, id: \.self) { section in
-                    let ranges = widget.style.ranges.filter { $0.section == section }
-                    if !ranges.isEmpty {
-                        rangeGroup(section.rawValue, ranges: ranges)
-                    }
+            // Every style offers at least one range, so a widget with a single option
+            // still says what it shows, ticked.
+            ForEach(BrightWidgetRangeV5.Section.allCases, id: \.self) { section in
+                let ranges = widget.style.ranges.filter { $0.section == section }
+                if !ranges.isEmpty {
+                    rangeGroup(section.rawValue, ranges: ranges)
                 }
-            } else {
-                BrightPlaceholderViewV5(
-                    systemImage: "slider.horizontal.3",
-                    title: "No other customisation",
-                    subtitle: "This widget only changes size."
-                )
-                .padding(.top, .spacing4x)
             }
         }
         .animation(.brightEaseInOut, value: widget.style)

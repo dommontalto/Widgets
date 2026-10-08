@@ -31,14 +31,49 @@ struct BrightLineChartWidgetV5: View {
     }
 
     let appearance: BrightWidgetAppearanceV5
-    let samples: [Sample]
-    var events: [Event] = []
-    var range: BrightWidgetRangeV5 = .rolling1h
+    let range: BrightWidgetRangeV5
     let size: BrightWidgetSizeV5
-    var allowsSelection = true
+    let allowsSelection: Bool
+
+    // Worked out once here rather than on every read: the body asks for them dozens of
+    // times a pass, and every frame of a held finger, over hundreds of readings.
+    private let latest: Date
+    private let interval: DateInterval
+    private let visibleSamples: [Sample]
+    private let visibleEvents: [Event]
+    private let high: Double
+    private let low: Double
+    private let average: Double
 
     @State private var selectedDate: Date?
     @State private var heldLabelWidth: CGFloat = 0
+
+    init(
+        appearance: BrightWidgetAppearanceV5,
+        samples: [Sample],
+        events: [Event] = [],
+        range: BrightWidgetRangeV5 = .rolling1h,
+        size: BrightWidgetSizeV5,
+        allowsSelection: Bool = true
+    ) {
+        self.appearance = appearance
+        self.range = range
+        self.size = size
+        self.allowsSelection = allowsSelection
+
+        let latest = samples.last?.date ?? .now
+        let interval = range.interval(endingAt: latest)
+        let visible = Self.plotted(samples, in: interval, bucket: range.bucket)
+        let values = visible.map(\.value)
+
+        self.latest = latest
+        self.interval = interval
+        visibleSamples = visible
+        visibleEvents = Self.trimmed(events, to: interval)
+        high = values.max() ?? 0
+        low = values.min() ?? 0
+        average = values.isEmpty ? 0 : values.reduce(0, +) / Double(values.count)
+    }
 
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
@@ -196,7 +231,7 @@ struct BrightLineChartWidgetV5: View {
     private func chart(domain: ClosedRange<Double>) -> some View {
         Chart {
             if size == .large {
-                ForEach(events) { event in
+                ForEach(visibleEvents) { event in
                     RectangleMark(
                         xStart: .value("Start", event.start),
                         xEnd: .value("End", event.end),
@@ -296,7 +331,7 @@ struct BrightLineChartWidgetV5: View {
     private var eventIcons: some View {
         if size == .large {
             GeometryReader { geometry in
-                ForEach(events) { event in
+                ForEach(visibleEvents) { event in
                     Image(systemName: event.systemImage)
                         .font(.standard(size: .body1, weight: .light))
                         .foregroundStyle(event.color)
@@ -399,14 +434,6 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
-    private var latest: Date {
-        samples.last?.date ?? .now
-    }
-
-    private var interval: DateInterval {
-        range.interval(endingAt: latest)
-    }
-
     private var start: Date {
         interval.start
     }
@@ -415,12 +442,23 @@ struct BrightLineChartWidgetV5: View {
         interval.end
     }
 
-    private var visibleSamples: [Sample] {
-        let inWindow = samples.filter { $0.date >= start && $0.date <= end }
-        guard let bucket = range.bucket else { return inWindow }
+    // Trimmed to the range, so a zone that started before it only shades the part inside,
+    // and one wholly outside it isn't drawn at all.
+    private static func trimmed(_ events: [Event], to interval: DateInterval) -> [Event] {
+        events.compactMap { event in
+            let clampedStart = max(event.start, interval.start)
+            let clampedEnd = min(event.end, interval.end)
+            guard clampedStart < clampedEnd else { return nil }
+            return Event(start: clampedStart, end: clampedEnd, systemImage: event.systemImage, color: event.color)
+        }
+    }
+
+    private static func plotted(_ samples: [Sample], in interval: DateInterval, bucket: TimeInterval?) -> [Sample] {
+        let inWindow = samples.filter { interval.contains($0.date) }
+        guard let bucket else { return inWindow }
 
         // Dated by each bucket's last reading so the line still reaches the latest one.
-        let buckets = Dictionary(grouping: inWindow) { Int($0.date.timeIntervalSince(start) / bucket) }
+        let buckets = Dictionary(grouping: inWindow) { Int($0.date.timeIntervalSince(interval.start) / bucket) }
         return buckets.keys.sorted().compactMap { key in
             guard let readings = buckets[key], let last = readings.last else { return nil }
             return Sample(date: last.date, value: readings.map(\.value).reduce(0, +) / Double(readings.count))
@@ -433,21 +471,6 @@ struct BrightLineChartWidgetV5: View {
         return min(max(Int((progress * Double(lastIndex)).rounded()), 0), lastIndex)
     }
 
-    private var values: [Double] {
-        visibleSamples.map(\.value)
-    }
-
-    private var high: Double {
-        values.max() ?? 0
-    }
-
-    private var low: Double {
-        values.min() ?? 0
-    }
-
-    private var average: Double {
-        values.isEmpty ? 0 : values.reduce(0, +) / Double(values.count)
-    }
 
     private var current: Double {
         visibleSamples.last?.value ?? 0
@@ -515,8 +538,8 @@ struct BrightLineChartWidgetV5: View {
     let workout = BrightLineChartWidgetV5.Event(
         start: now.addingTimeInterval(-50 * 60),
         end: now.addingTimeInterval(-30 * 60),
-        systemImage: "figure.outdoor.cycle",
-        color: .defaultOrange
+        systemImage: "figure.strengthtraining.traditional",
+        color: .defaultPink
     )
 
     ScrollView {

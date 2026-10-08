@@ -28,6 +28,16 @@ struct HealthWidgetView: View {
                 value: HealthWidgetDemo.heartRate.last?.value ?? 0,
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
+        case (.macros, _):
+            BrightBarChartWidgetV5(
+                appearance: HealthWidgetDemo.macrosAppearance,
+                subtitle: HealthWidgetDemo.macrosYesterday,
+                range: .week,
+                bars: HealthWidgetDemo.macroWeek,
+                headline: .split,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.intake, _):
             barChart(HealthWidgetDemo.intake)
         case (.activity, .activeEnergyBars):

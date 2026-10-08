@@ -67,6 +67,26 @@ final class HealthWidgetEditor {
         }
     }
 
+    // Adds a widget at the end of the grid, then scrolls down to it once the sheet
+    // has gone. The first widget on an empty grid also starts edit mode.
+    func add(_ widget: HealthWidgetItem) {
+        let wasEmpty = layout.widgets.isEmpty
+        layout.add(widget)
+
+        if wasEmpty {
+            withAnimation(.brightEaseInOut) {
+                isEditing = true
+            }
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: Constants.revealDelay)
+            withAnimation(.brightEaseInOut) {
+                scrollPosition.scrollTo(edge: .bottom)
+            }
+        }
+    }
+
     func remove(_ widget: HealthWidgetItem) {
         BrightHaptic.success.play()
         withAnimation(.brightSpring) {
@@ -160,5 +180,6 @@ final class HealthWidgetEditor {
         static let edgeZoneFraction: CGFloat = 8
         static let autoScrollSpeed: CGFloat = 5
         static let autoScrollFrame: Duration = .milliseconds(16)
+        static let revealDelay: Duration = .milliseconds(300)
     }
 }

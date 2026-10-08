@@ -10,6 +10,7 @@ import SwiftUI
 enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case heartRate
     case intake
+    case macros
     case activity
 
     var id: Self { self }
@@ -18,6 +19,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: "Heart Rate"
         case .intake: "Intake"
+        case .macros: "Weekly Macros split"
         case .activity: "Total Energy"
         }
     }
@@ -27,6 +29,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: "Heart"
         case .intake: "Intake"
+        case .macros: "Macros"
         case .activity: "Activity"
         }
     }
@@ -35,6 +38,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: "heart.fill"
         case .intake: "arrow.right"
+        case .macros: "chart.pie.fill"
         case .activity: "flame.fill"
         }
     }
@@ -43,6 +47,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
+        case .macros: .defaultPink
         case .activity: .defaultOrange
         }
     }
@@ -51,6 +56,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: [.lineChart, .leadingNumber]
         case .intake: [.bars]
+        case .macros: [.macroBars]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
     }
@@ -64,22 +70,25 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case bars
     case activeEnergyBars
     case stepBars
+    case macroBars
 
     var id: Self { self }
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
         case .leadingNumber: [.small, .medium]
+        case .macroBars: [.medium, .large]
         default: BrightWidgetSizeV5.allCases
         }
     }
 
-    // The ranges it can be set to, the first being where it starts. Empty for none.
+    // The ranges it can be set to, the first being where it starts; always at least one.
     var ranges: [BrightWidgetRangeV5] {
         switch self {
         case .lineChart: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
-        case .leadingNumber: []
+        case .leadingNumber: [.latest]
         case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
+        case .macroBars: [.week]
         }
     }
 }

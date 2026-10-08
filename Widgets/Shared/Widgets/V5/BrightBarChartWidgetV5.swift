@@ -17,8 +17,17 @@ struct BrightBarChartWidgetV5: View {
         let value: Double?
         // This slot's own limit, such as the day's calorie allowance, in place of the chart's target.
         var target: Double?
+        // Parts stacked from the floor up, such as the day's carbs, fat and protein. Their
+        // colours blend into each other, with a mark where each one meets the next.
+        var segments: [Segment] = []
 
         var id: Int { index }
+    }
+
+    struct Segment: Hashable {
+        let label: String
+        let value: Double
+        let color: Color
     }
 
     enum Fill {
@@ -32,6 +41,8 @@ struct BrightBarChartWidgetV5: View {
         case total
         case average
         case current
+        // Each segment's average in its own colour, e.g. "C:35 · F:20 · P:65 avg".
+        case split
     }
 
     // The large size's grid of this week's days: each day's value, or how far it
@@ -119,7 +130,7 @@ struct BrightBarChartWidgetV5: View {
                 }
             }
 
-            plotArea(showsGuides: true)
+            plotArea(showsGuides: !isSegmented)
                 .frame(maxHeight: .infinity)
 
             if size == .large, let summary {
@@ -158,7 +169,16 @@ struct BrightBarChartWidgetV5: View {
             .lineLimit(1)
     }
 
+    @ViewBuilder
     private func reading(valueSize: FontSizes) -> some View {
+        if headline == .split {
+            splitReading
+        } else {
+            numberReading(valueSize: valueSize)
+        }
+    }
+
+    private func numberReading(valueSize: FontSizes) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
             BrightText(display(headlineValue), size: valueSize, weight: size == .small ? .light : .regular)
                 .monospacedDigit()
@@ -170,6 +190,31 @@ struct BrightBarChartWidgetV5: View {
             }
         }
         .lineLimit(1)
+    }
+
+    // The held day's split, or the average of every day with readings.
+    private var splitReading: some View {
+        HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+            ForEach(Array(splitValues.enumerated()), id: \.offset) { offset, part in
+                if offset > 0 {
+                    BrightText("·", size: .body1, color: .lightTextColor)
+                }
+
+                HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
+                    BrightText("\(part.label):", size: .body1, color: .lightTextColor, weight: .regular)
+
+                    BrightText(display(part.value), size: .subheading, color: part.color, weight: .regular)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+            }
+
+            if selectedIndex == nil {
+                BrightText("avg", size: .body1, color: .lightTextColor, weight: .regular)
+            }
+        }
+        .lineLimit(1)
+        .animation(.brightEaseInOut, value: selectedIndex)
     }
 
     // MARK: - Plot
@@ -216,7 +261,7 @@ struct BrightBarChartWidgetV5: View {
 
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0 {
-                        barShape(value: value, target: bar.target ?? target, width: barWidth, plotHeight: height)
+                        barShape(bar, value: value, target: bar.target ?? target, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .semiLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
@@ -241,7 +286,44 @@ struct BrightBarChartWidgetV5: View {
             .offset(y: y)
     }
 
-    private func barShape(value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
+    @ViewBuilder
+    private func barShape(_ bar: Bar, value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
+        if bar.segments.isEmpty {
+            singleBar(value: value, target: target, width: width, plotHeight: plotHeight)
+        } else {
+            segmentedBar(bar.segments, value: value, width: width, plotHeight: plotHeight)
+        }
+    }
+
+    // Each segment's colour peaks at its middle and blends into its neighbours, with a
+    // mark where one meets the next.
+    private func segmentedBar(_ segments: [Segment], value: Double, width: CGFloat, plotHeight: CGFloat) -> some View {
+        let height = max(plotHeight - yPosition(of: value, height: plotHeight), width)
+        let total = max(segments.reduce(0) { $0 + $1.value }, 1)
+        let tops = segments.indices.map { index in
+            segments[...index].reduce(0) { $0 + $1.value } / total
+        }
+        let stops = segments.indices.map { index in
+            let bottom = index == 0 ? 0 : tops[index - 1]
+            return Gradient.Stop(color: segments[index].color, location: 1 - (bottom + tops[index]) / 2)
+        }
+
+        return ZStack(alignment: .top) {
+            LinearGradient(stops: Array(stops.reversed()), startPoint: .top, endPoint: .bottom)
+
+            // Small bars are too narrow for the marks, so only the blend shows.
+            ForEach(Array((size == .small ? [] : tops.dropLast()).enumerated()), id: \.offset) { _, top in
+                Capsule()
+                    .fill(Color.defaultHomeCards.opacity(.lowOpacity))
+                    .frame(width: max(width - .spacing05x, 0), height: Constants.targetMarkHeight)
+                    .offset(y: height * (1 - top) - Constants.targetMarkHeight / 2)
+            }
+        }
+        .frame(width: width, height: height)
+        .clipShape(barOutline)
+    }
+
+    private func singleBar(value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
         let height = max(plotHeight - yPosition(of: value, height: plotHeight), width)
         let aboveTarget = target.map { max(height - (plotHeight - yPosition(of: $0, height: plotHeight)), 0) } ?? 0
         // The orange melts into the fill across a band centred on the target, rather than
@@ -548,6 +630,20 @@ struct BrightBarChartWidgetV5: View {
         case .total: values.reduce(0, +)
         case .average: average
         case .current: bars.last { $0.value != nil }?.value ?? 0
+        // Shown as its parts instead, so this only feeds the accessibility label.
+        case .split: average
+        }
+    }
+
+    private var splitValues: [Segment] {
+        if let selectedIndex, let bar = bars.first(where: { $0.index == selectedIndex }), !bar.segments.isEmpty {
+            return bar.segments
+        }
+        let days = bars.filter { !$0.segments.isEmpty }
+        guard let first = days.first else { return [] }
+        return first.segments.indices.map { index in
+            let average = days.reduce(0) { $0 + $1.segments[index].value } / Double(days.count)
+            return Segment(label: first.segments[index].label, value: average, color: first.segments[index].color)
         }
     }
 
@@ -562,7 +658,12 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var showsAverage: Bool {
-        range.isWeek && !values.isEmpty
+        range.isWeek && !values.isEmpty && !isSegmented
+    }
+
+    // Split bars are shares of a whole, so a scale or an average line says nothing about them.
+    private var isSegmented: Bool {
+        bars.contains { !$0.segments.isEmpty }
     }
 
     private var showsExtremes: Bool {

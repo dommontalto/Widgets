@@ -77,7 +77,7 @@ struct HealthView: View {
             }
             .sheet(isPresented: $editor.isShowingAddSheet) {
                 AddWidgetSheet {
-                    editor.layout.add($0)
+                    editor.add($0)
                 } onReset: {
                     editor.layout.reset()
                 } onAddAll: {

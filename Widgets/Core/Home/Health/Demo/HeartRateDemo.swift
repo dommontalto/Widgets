@@ -13,16 +13,23 @@ extension HealthWidgetDemo {
     }
 
     static let heartRateEvents: [BrightLineChartWidgetV5.Event] = [
+        // Asleep for the first stretch of the twelve hours, so the longer ranges show it.
+        BrightLineChartWidgetV5.Event(
+            start: minutesAgo(11 * 60 + 30),
+            end: minutesAgo(8 * 60),
+            systemImage: "bed.double",
+            color: .defaultCyan
+        ),
         BrightLineChartWidgetV5.Event(
             start: minutesAgo(54),
             end: minutesAgo(32),
-            systemImage: "figure.outdoor.cycle",
-            color: .defaultOrange
+            systemImage: "figure.strengthtraining.traditional",
+            color: .defaultPink
         ),
     ]
 
-    // One reading a minute for the last hour, oldest first: a ride early on,
-    // then a cool-down with a brief dip near the end.
+    // One reading a minute for the last hour, oldest first: a strength session early
+    // on, then a cool-down with a brief dip near the end.
     private static let lastHourValues: [Double] = [
         96, 98, 94, 92, 99, 104, 101, 97, 108, 112, 123, 106, 102, 110, 114, 108,
         104, 99, 103, 111, 107, 100, 97, 102, 98, 94, 96, 99, 93, 90, 92, 88,

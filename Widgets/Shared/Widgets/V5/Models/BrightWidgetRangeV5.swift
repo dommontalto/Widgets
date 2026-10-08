@@ -16,8 +16,11 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
     case fixed12h
     case today
     case week
+    // Just the most recent reading, for widgets that show a single value.
+    case latest
 
     enum Section: String, CaseIterable {
+        case current = "Current"
         case rolling = "Rolling"
         case fixed = "Fixed"
         case calendar = "Calendar"
@@ -30,6 +33,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         case .rolling1h, .rolling6h, .rolling12h: .rolling
         case .fixed6h, .fixed12h: .fixed
         case .today, .week: .calendar
+        case .latest: .current
         }
     }
 
@@ -38,6 +42,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .today: "Today"
         case .week: "This week"
+        case .latest: "Latest reading"
         default: hours == 1 ? "1 hour" : "\(hours) hours"
         }
     }
@@ -80,7 +85,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
     func interval(endingAt latest: Date) -> DateInterval {
         let calendar = Calendar.current
         switch section {
-        case .rolling:
+        case .rolling, .current:
             return DateInterval(start: latest.addingTimeInterval(-duration), duration: duration)
         case .fixed:
             let step = duration / 2
@@ -111,6 +116,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         case .rolling1h: 1
         case .rolling6h, .fixed6h: 6
         case .rolling12h, .fixed12h: 12
+        case .latest: 1
         case .today: 24
         case .week: 7 * 24
         }
