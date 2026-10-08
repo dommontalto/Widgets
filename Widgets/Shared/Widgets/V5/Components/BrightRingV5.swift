@@ -18,10 +18,16 @@ struct BrightRingV5: View {
 
         var diameter: CGFloat {
             switch self {
-            case .small: .spacing10x
+            case .small: .spacing9x
             case .medium: .spacing12x
-            case .large: 80
+            case .large: 84
             }
+        }
+
+        // The ring's thickness as a share of its width; small ones are thinner so their
+        // holes still fit a label.
+        var thicknessRatio: CGFloat {
+            self == .small ? 0.23 : 0.28
         }
     }
 
@@ -29,10 +35,10 @@ struct BrightRingV5: View {
     let color: Color
     // Drawn in the hole, e.g. "C".
     var label: String?
-    var size: Size = .medium
+    var size: Size = .small
 
     var body: some View {
-        let lineWidth = size.diameter * Constants.thicknessRatio
+        let lineWidth = size.diameter * size.thicknessRatio
         let filled = min(max(progress, 0), 1)
         let overflow = min(max(progress - 1, 0), 1)
 
@@ -82,7 +88,6 @@ struct BrightRingV5: View {
     }
 
     private enum Constants {
-        static let thicknessRatio: CGFloat = 0.28
         static let lapRatio: CGFloat = 0.25
         static let lapGapRatio: CGFloat = 0.25
         static let goalMarkWidth: CGFloat = 2
@@ -93,7 +98,7 @@ struct BrightRingV5: View {
     HStack(spacing: .spacing4x) {
         BrightRingV5(progress: 0.37, color: .defaultGreen)
         BrightRingV5(progress: 1.26, color: .defaultYellow, label: "F")
-        BrightRingV5(progress: 0.73, color: .defaultPink, size: .large)
+        BrightRingV5(progress: 0.73, color: .defaultPink)
     }
     .padding(.spacing3x)
     .background(Color.defaultHomeCards)

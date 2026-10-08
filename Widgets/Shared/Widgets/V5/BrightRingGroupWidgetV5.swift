@@ -11,8 +11,7 @@ import SwiftUI
 // One or more progress rings, each against its own goal. Small shows a single ring large,
 // three in a triangle or four in a square; medium and large lay them out in a row.
 //
-// Holding picks out the ring under the finger and swaps its numbers for the detail;
-// holding the single ring scrubs around it through the day instead.
+// Holding picks out the ring under the finger and swaps its numbers for the detail.
 struct BrightRingGroupWidgetV5: View {
     struct Ring: Identifiable, Hashable {
         let label: String
@@ -23,8 +22,6 @@ struct BrightRingGroupWidgetV5: View {
         let color: Color
         // Shown above the ring in place of "value/goal", e.g. a duration.
         var caption: String?
-        // The running total at the end of each hour so far today, for scrubbing the single ring.
-        var timeline: [Double] = []
 
         var id: String { label }
 
@@ -44,7 +41,6 @@ struct BrightRingGroupWidgetV5: View {
     private let header: AnyView?
 
     @State private var selectedRingID: String?
-    @State private var scrubbedHour: Int?
     @State private var touchX: Double?
     @State private var touchY: Double?
 
@@ -94,27 +90,16 @@ struct BrightRingGroupWidgetV5: View {
     // MARK: - Layouts
 
     private func singleLayout(_ ring: Ring) -> some View {
-        let scrubbed = scrubbedValue(of: ring)
-
-        return VStack(alignment: .leading, spacing: .spacing1x) {
+        VStack(alignment: .leading, spacing: .spacing1x) {
             header
 
-            BrightRingV5(progress: ring.goal > 0 ? scrubbed / ring.goal : 0, color: ring.color, size: .large)
-                .overlay {
-                    if let scrubbedHour {
-                        BrightText(hourLabel(scrubbedHour), size: .body3, color: .semiLightTextColor)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                            .transition(.opacity)
-                    }
-                }
+            BrightRingV5(progress: ring.progress, color: ring.color, size: .large)
                 .overlay { touchLayer }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            amount(value: scrubbed, goal: ring.goal, valueSize: .standout3, goalSize: .body1, valueColor: scrubbed > ring.goal ? .defaultOrange : ring.color)
+            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.isOver ? .defaultOrange : ring.color)
                 .frame(maxWidth: .infinity)
         }
-        .animation(.brightEaseInOut, value: scrubbedHour)
     }
 
     // The first ring on top with its amount above, the other two below with theirs underneath.
@@ -177,7 +162,7 @@ struct BrightRingGroupWidgetV5: View {
 
             Spacer(minLength: .spacing0x)
 
-            Grid(horizontalSpacing: .spacing4x, verticalSpacing: .spacing05x) {
+            Grid(horizontalSpacing: .spacing4x, verticalSpacing: .spacing1x) {
                 GridRow {
                     ForEach(rings) { ring in
                         caption(for: ring)
@@ -207,7 +192,7 @@ struct BrightRingGroupWidgetV5: View {
     // MARK: - Pieces
 
     // The held ring stays bright while the rest dim.
-    // Small widgets fit their groups with the small ring; medium and large use the default.
+    // Medium widgets' rows get the medium ring; the small widgets' groups use the default.
     private func ring(_ ring: Ring, showsLabel: Bool) -> some View {
         BrightRingV5(
             progress: ring.progress,
@@ -230,40 +215,34 @@ struct BrightRingGroupWidgetV5: View {
                 .contentTransition(.numericText())
                 .lineLimit(1)
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                BrightText(
-                    display(isHeld ? abs(ring.goal - ring.value) : ring.value),
-                    size: size == .small ? .body3 : .heading,
-                    color: ring.isOver ? .defaultOrange : .textColor
-                )
-                .monospacedDigit()
-                .contentTransition(.numericText())
-
-                BrightText(
-                    isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal))",
-                    size: .body3,
-                    color: .lightTextColor
-                )
-                .monospacedDigit()
-                .contentTransition(.numericText())
-            }
-            .lineLimit(1)
+            amount(
+                ring,
+                valueSize: size == .small ? .body3 : .heading,
+                suffixSize: .body3,
+                valueColor: ring.isOver ? .defaultOrange : .textColor
+            )
         }
     }
 
-    // "75/200": the amount, then the goal in the dimmer text.
-    private func amount(value: Double, goal: Double, valueSize: FontSizes, goalSize: FontSizes, valueColor: Color) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-            BrightText(display(value), size: valueSize, color: valueColor)
+    // "75/200", or held, "125 left": the number then its suffix in the dimmer text,
+    // each rolling over to the other.
+    private func amount(_ ring: Ring, valueSize: FontSizes, suffixSize: FontSizes, valueColor: Color) -> some View {
+        let isHeld = selectedRingID == ring.id
+
+        return HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
+            BrightText(display(isHeld ? abs(ring.goal - ring.value) : ring.value), size: valueSize, color: valueColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
 
-            BrightText("/\(display(goal))", size: goalSize, color: .lightTextColor)
-                .monospacedDigit()
-                .contentTransition(.numericText())
+            BrightText(
+                isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal))",
+                size: suffixSize,
+                color: .lightTextColor
+            )
+            .monospacedDigit()
+            .contentTransition(.numericText())
         }
         .lineLimit(1)
-        .animation(.brightEaseInOut, value: display(value))
     }
 
     // MARK: - Holding
@@ -290,16 +269,10 @@ struct BrightRingGroupWidgetV5: View {
     private func resolveTouch() {
         guard let touchX, let touchY else {
             selectedRingID = nil
-            scrubbedHour = nil
             return
         }
         // The chart counts up from the bottom; the layouts are laid out from the top.
         let point = CGPoint(x: touchX, y: 1 - touchY)
-
-        if size == .small, rings.count == 1, let ring = rings.first {
-            scrub(ring, at: point)
-            return
-        }
 
         let nearest = rings.indices.min { distance(from: point, to: centre(of: $0)) < distance(from: point, to: centre(of: $1)) }
         let id = nearest.map { rings[$0].id }
@@ -319,24 +292,6 @@ struct BrightRingGroupWidgetV5: View {
         return index == 0 ? CGPoint(x: 0.5, y: 0.3) : CGPoint(x: index == 1 ? 0.25 : 0.75, y: 0.75)
     }
 
-    // Round the ring from twelve o'clock is through the day from midnight, up to now.
-    private func scrub(_ ring: Ring, at point: CGPoint) {
-        guard !ring.timeline.isEmpty else { return }
-        var angle = atan2(point.x - 0.5, 0.5 - point.y)
-        if angle < 0 {
-            angle += 2 * .pi
-        }
-        let hour = min(Int(angle / (2 * .pi) * 24), ring.timeline.count - 1)
-        guard hour != scrubbedHour else { return }
-        scrubbedHour = hour
-        BrightHaptic.light.play()
-    }
-
-    private func scrubbedValue(of ring: Ring) -> Double {
-        guard let scrubbedHour, ring.timeline.indices.contains(scrubbedHour) else { return ring.value }
-        return ring.timeline[scrubbedHour]
-    }
-
     // MARK: - Values
 
     private func distance(from point: CGPoint, to other: CGPoint) -> CGFloat {
@@ -350,10 +305,6 @@ struct BrightRingGroupWidgetV5: View {
     // The bare number, for the small square where the rings say what it is.
     private func percent(of ring: Ring) -> String {
         "\(Int((ring.progress * 100).rounded()))"
-    }
-
-    private func hourLabel(_ hour: Int) -> String {
-        Calendar.current.startOfDay(for: .now).addingTimeInterval(Double(hour) * 60 * 60).formatted(.brightHour)
     }
 
     private func display(_ value: Double) -> String {

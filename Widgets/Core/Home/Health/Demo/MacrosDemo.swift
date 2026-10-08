@@ -23,18 +23,12 @@ extension HealthWidgetDemo {
         .init(label: "Protein", shortLabel: "P", value: 102, goal: 140, color: .defaultPink),
     ]
 
-    // A single macro, with its day following the same meals as intake.
     static func macroRing(_ macro: HealthMacro) -> BrightRingGroupWidgetV5.Ring {
-        let ring = switch macro {
+        switch macro {
         case .carbs: macroRings[0]
         case .fats: macroRings[1]
         case .protein: macroRings[2]
         }
-        let intake = intakeTimeline
-        let total = max(intake.last ?? 1, 1)
-        var withTimeline = ring
-        withTimeline.timeline = intake.map { $0 / total * ring.value }
-        return withTimeline
     }
 
     // Each day's carbs, fat and protein as a share of its calories, oldest first and
