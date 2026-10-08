@@ -727,7 +727,7 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private func display(_ value: Double) -> String {
-        Int(value.rounded()).formatted()
+        appearance.format(value)
     }
 
     private enum Constants {
@@ -766,7 +766,7 @@ struct BrightBarChartWidgetV5: View {
                 bars: hourly,
                 fill: .solid(.defaultCyan),
                 target: 150,
-                comparison: "2,100 Yest.",
+                comparison: "Yesterday: 2,100",
                 summary: .values(daily),
                 size: .large
             )
@@ -779,7 +779,7 @@ struct BrightBarChartWidgetV5: View {
                 bars: daily,
                 fill: .solid(.defaultYellow),
                 headline: .current,
-                comparison: "2,100 Yest.",
+                comparison: "Yesterday: 2,100",
                 summary: .values(daily),
                 size: .large
             )

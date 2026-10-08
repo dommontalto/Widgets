@@ -69,7 +69,7 @@ struct BrightLeadingNumberWidgetV5: View {
     }
 
     private var display: String {
-        Int(value.rounded()).formatted()
+        appearance.format(value)
     }
 }
 

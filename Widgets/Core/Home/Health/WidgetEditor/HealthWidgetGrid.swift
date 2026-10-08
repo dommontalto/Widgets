@@ -22,6 +22,14 @@ struct HealthWidgetView: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
+        case (.hydration, .leadingNumber):
+            BrightLeadingNumberWidgetV5(
+                appearance: HealthWidgetDemo.water.appearance,
+                value: HealthWidgetDemo.waterToday,
+                latest: HealthWidgetDemo.anchor
+            )
+        case (.hydration, _):
+            barChart(HealthWidgetDemo.water)
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
                 appearance: heartRateAppearance,
@@ -93,7 +101,7 @@ struct HealthWidgetView: View {
             fill: metric.fill(for: range),
             target: metric.target(for: range),
             headline: headline,
-            comparison: headline == .average ? nil : "\(Int(metric.yesterday).formatted()) Yest.",
+            comparison: headline == .average ? nil : "Yesterday: \(metric.appearance.format(metric.yesterday))",
             summary: isLarge ? metric.summary : nil,
             size: widget.size,
             allowsSelection: allowsSelection

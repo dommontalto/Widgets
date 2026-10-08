@@ -13,6 +13,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case macros
     case activity
     case sleep
+    case hydration
 
     var id: Self { self }
 
@@ -20,9 +21,10 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: "Heart Rate"
         case .intake: "Intake"
-        case .macros: "Weekly Macros split"
+        case .macros: "Weekly Macros"
         case .activity: "Total Energy"
         case .sleep: "Sleep"
+        case .hydration: "Water"
         }
     }
 
@@ -34,6 +36,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "Macros"
         case .activity: "Activity"
         case .sleep: "Sleep"
+        case .hydration: "Hydration"
         }
     }
 
@@ -44,6 +47,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "chart.pie.fill"
         case .activity: "flame.fill"
         case .sleep: "bed.double.fill"
+        case .hydration: "drop.fill"
         }
     }
 
@@ -55,6 +59,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: ImageNames.macronutrientGraphV5
         case .activity: ImageNames.activityAlertsIconV5
         case .sleep: ImageNames.sleepInfoV4
+        case .hydration: ImageNames.waterIconV5
         }
     }
 
@@ -65,6 +70,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: .defaultGreen
         case .activity: .defaultOrange
         case .sleep: .defaultBlue
+        case .hydration: .defaultCyan
         }
     }
 
@@ -74,6 +80,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .intake: [.bars, .intakeRing]
         case .macros: [.macroBars, .macroRings, .macroRing]
         case .sleep: [.sleepRings]
+        case .hydration: [.bars, .leadingNumber]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
     }
@@ -110,7 +117,33 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case intakeRing
     case sleepRings
 
+    // Which shared widget draws it.
+    enum Family: CaseIterable {
+        case line
+        case bar
+        case number
+        case ring
+
+        var title: String {
+            switch self {
+            case .line: "line charts"
+            case .bar: "bar charts"
+            case .number: "numbers"
+            case .ring: "rings"
+            }
+        }
+    }
+
     var id: Self { self }
+
+    var family: Family {
+        switch self {
+        case .lineChart: .line
+        case .bars, .activeEnergyBars, .stepBars, .macroBars: .bar
+        case .leadingNumber: .number
+        case .macroRings, .macroRing, .intakeRing, .sleepRings: .ring
+        }
+    }
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
@@ -212,6 +245,35 @@ final class HealthWidgetLayout {
 
     func add(_ widget: HealthWidgetItem) {
         widgets.append(widget)
+        commit()
+    }
+
+    // Replaces the grid with every kind and style that comes in this size, once for each
+    // range and macro it offers, to check them all side by side.
+    func showAll(_ size: BrightWidgetSizeV5) {
+        showAll { _, widgetSize in widgetSize == size }
+    }
+
+    // The same, for every size of one family of widget, such as all the line charts.
+    func showAll(_ family: HealthWidgetStyle.Family) {
+        showAll { style, _ in style.family == family }
+    }
+
+    private func showAll(where includes: (HealthWidgetStyle, BrightWidgetSizeV5) -> Bool) {
+        widgets = HealthWidgetKind.allCases.flatMap { kind in
+            kind.styles.flatMap { style in
+                style.sizes.filter { includes(style, $0) }.flatMap { size in
+                    style.ranges.flatMap { range in
+                        (style == .macroRing ? HealthMacro.allCases : [HealthMacro.carbs]).map { macro in
+                            var widget = HealthWidgetItem(kind: kind, style: style, size: size)
+                            widget.range = range
+                            widget.macro = macro
+                            return widget
+                        }
+                    }
+                }
+            }
+        }
         commit()
     }
 

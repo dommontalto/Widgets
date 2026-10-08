@@ -40,12 +40,12 @@ extension HealthWidgetDemo {
         }
     }
 
-    private static let latestMeal: (calories: Double, date: Date) = (403, minutesAgo(47))
+    private static let latestMeal = minutesAgo(47)
 
     // The week names the latest meal; a day counts down what's left of the goal.
     private static func intakeSubtitle(for range: BrightWidgetRangeV5) -> String {
         if range.isWeek {
-            return "Latest: \(Int(latestMeal.calories)) Cal, \(latestMeal.date.formatted(.brightTimestamp))"
+            return "Latest: \(latestMeal.formatted(.brightTimestamp))"
         }
         let today = intake.bars(for: .today).compactMap(\.value).reduce(0, +)
         return "\(Int(max((intake.dayTarget ?? 0) - today, 0)).formatted()) Remaining"

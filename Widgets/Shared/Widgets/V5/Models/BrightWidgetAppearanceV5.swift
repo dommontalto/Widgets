@@ -15,6 +15,12 @@ struct BrightWidgetAppearanceV5: Hashable {
     var unit: String?
     // Top to bottom, drawn through the icon in place of the tint.
     var iconGradient: [Color]?
+    // At most this many decimal places, e.g. 2 for "2.54 L"; whole numbers drop them.
+    var decimals = 0
+
+    func format(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0 ... decimals)))
+    }
 
     var iconStyle: AnyShapeStyle {
         if let iconGradient {

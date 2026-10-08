@@ -9,12 +9,12 @@ import SwiftUI
 
 extension HealthWidgetDemo {
     static let macrosAppearance = BrightWidgetAppearanceV5(
-        title: "Weekly Macros split",
+        title: "Weekly Macros",
         systemImage: "chart.pie.fill",
         tint: .textColor
     )
 
-    static let macrosYesterday = "Yest. C:50, F:20, P:30"
+    static let macrosYesterday = "Yesterday: C:50, F:20, P:30"
 
     // Today's grams against each goal.
     static let macroRings: [BrightRingGroupWidgetV5.Ring] = [

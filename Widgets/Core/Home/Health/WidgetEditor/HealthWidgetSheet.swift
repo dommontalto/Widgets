@@ -12,6 +12,8 @@ struct AddWidgetSheet: View {
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
     var onRemoveAll: (() -> Void)?
+    var onShowAll: ((BrightWidgetSizeV5) -> Void)?
+    var onShowFamily: ((HealthWidgetStyle.Family) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -22,7 +24,7 @@ struct AddWidgetSheet: View {
             ScrollView {
                 VStack(spacing: .spacing4x) {
                     BrightRowGroupV5(color: .defaultSheetModalCards) {
-                        ForEach(HealthWidgetKind.allCases) { kind in
+                        ForEach(HealthWidgetKind.allCases.sorted { $0.rowTitle < $1.rowTitle }) { kind in
                             BrightRowV5(kind.rowTitle, icon: .template(kind.rowIcon)) {
                                 path.append(kind)
                             }
@@ -41,6 +43,34 @@ struct AddWidgetSheet: View {
                                 BrightHaptic.medium.play()
                                 onAddAll()
                                 dismiss()
+                            }
+                        }
+
+                        if let onShowAll {
+                            ForEach(BrightWidgetSizeV5.allCases, id: \.self) { size in
+                                BrightRowV5(
+                                    "Show all \(size.title.lowercased())",
+                                    icon: .symbol("rectangle.grid.2x2", tint: .defaultSkyBlue),
+                                    trailing: .none
+                                ) {
+                                    BrightHaptic.medium.play()
+                                    onShowAll(size)
+                                    dismiss()
+                                }
+                            }
+                        }
+
+                        if let onShowFamily {
+                            ForEach(HealthWidgetStyle.Family.allCases, id: \.self) { family in
+                                BrightRowV5(
+                                    "Show all \(family.title)",
+                                    icon: .symbol("square.stack", tint: .defaultSkyBlue),
+                                    trailing: .none
+                                ) {
+                                    BrightHaptic.medium.play()
+                                    onShowFamily(family)
+                                    dismiss()
+                                }
                             }
                         }
 
