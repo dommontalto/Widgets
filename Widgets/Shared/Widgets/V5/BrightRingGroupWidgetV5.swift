@@ -104,6 +104,7 @@ struct BrightRingGroupWidgetV5: View {
                     if let scrubbedHour {
                         BrightText(hourLabel(scrubbedHour), size: .body3, color: .semiLightTextColor)
                             .monospacedDigit()
+                            .contentTransition(.numericText())
                             .transition(.opacity)
                     }
                 }
@@ -113,7 +114,7 @@ struct BrightRingGroupWidgetV5: View {
             amount(value: scrubbed, goal: ring.goal, valueSize: .standout3, goalSize: .body1, valueColor: scrubbed > ring.goal ? .defaultOrange : ring.color)
                 .frame(maxWidth: .infinity)
         }
-        .animation(.brightEaseInOut, value: scrubbedHour == nil)
+        .animation(.brightEaseInOut, value: scrubbedHour)
     }
 
     // The first ring on top with its amount above, the other two below with theirs underneath.
@@ -217,33 +218,36 @@ struct BrightRingGroupWidgetV5: View {
             .opacity(selectedRingID == nil || selectedRingID == ring.id ? .opaque : .semiLowOpacity)
     }
 
-    // A held ring trades its numbers for what's left or over, or for its share of the whole.
+    // A held ring trades its numbers for what's left or over, or for its share of the whole,
+    // rolling each piece of text over to the new one: "27/46" becomes "19 left".
     @ViewBuilder
     private func caption(for ring: Ring) -> some View {
-        if selectedRingID == ring.id {
-            if ring.caption != nil {
-                BrightText(share(of: ring), size: .body3, color: .textColor)
-                    .monospacedDigit()
-            } else {
+        let isHeld = selectedRingID == ring.id
+
+        if let caption = ring.caption {
+            BrightText(isHeld ? share(of: ring) : caption, size: .body3, color: isHeld ? .textColor : .lightTextColor)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .lineLimit(1)
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
                 BrightText(
-                    ring.isOver ? "\(display(ring.value - ring.goal)) over" : "\(display(ring.goal - ring.value)) left",
+                    display(isHeld ? abs(ring.goal - ring.value) : ring.value),
                     size: size == .small ? .body3 : .heading,
                     color: ring.isOver ? .defaultOrange : .textColor
                 )
                 .monospacedDigit()
-                .lineLimit(1)
+                .contentTransition(.numericText())
+
+                BrightText(
+                    isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal))",
+                    size: .body3,
+                    color: .lightTextColor
+                )
+                .monospacedDigit()
+                .contentTransition(.numericText())
             }
-        } else if let caption = ring.caption {
-            BrightText(caption, size: .body3, color: .lightTextColor)
-                .lineLimit(1)
-        } else {
-            amount(
-                value: ring.value,
-                goal: ring.goal,
-                valueSize: size == .small ? .body3 : .heading,
-                goalSize: .body3,
-                valueColor: ring.isOver ? .defaultOrange : .textColor
-            )
+            .lineLimit(1)
         }
     }
 
@@ -256,6 +260,7 @@ struct BrightRingGroupWidgetV5: View {
 
             BrightText("/\(display(goal))", size: goalSize, color: .lightTextColor)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
         .lineLimit(1)
         .animation(.brightEaseInOut, value: display(value))
