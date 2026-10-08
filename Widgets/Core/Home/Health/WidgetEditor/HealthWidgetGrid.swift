@@ -22,13 +22,19 @@ struct HealthWidgetView: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
-        case (.hydration, .leadingNumber):
+        case (.water, .leadingNumber):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemo.water.appearance,
                 value: HealthWidgetDemo.waterToday,
                 latest: HealthWidgetDemo.anchor
             )
-        case (.hydration, _):
+        case (.water, .waterRing) where widget.size == .small:
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.waterRing], size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
+            }
+        case (.water, .waterRing):
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.waterRings, size: widget.size, allowsSelection: allowsSelection)
+        case (.water, _):
             barChart(HealthWidgetDemo.water)
         case (.weight, .leadingNumber):
             BrightLeadingNumberWidgetV5(
@@ -103,10 +109,10 @@ struct HealthWidgetView: View {
         }
     }
 
-    // The arrow-and-name header the single rings use.
-    private func ringHeader(_ title: String, color: Color) -> some View {
+    // The icon-and-name header the single rings use; intake and macros keep the arrow.
+    private func ringHeader(_ title: String, systemImage: String = "arrow.right", color: Color) -> some View {
         HStack(spacing: .spacing05x) {
-            Image(systemName: "arrow.right")
+            Image(systemName: systemImage)
                 .font(.standard(size: .subheading, weight: .light))
                 .foregroundStyle(color)
 

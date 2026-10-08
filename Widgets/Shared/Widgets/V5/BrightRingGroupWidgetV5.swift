@@ -15,13 +15,18 @@ import SwiftUI
 struct BrightRingGroupWidgetV5: View {
     struct Ring: Identifiable, Hashable {
         let label: String
-        // In the ring's hole on the small triangle, e.g. "C".
+        // In the ring's hole on the small triangle, e.g. "C"
+
         let shortLabel: String
         let value: Double
         let goal: Double
         let color: Color
         // Shown above the ring in place of "value/goal", e.g. a duration.
         var caption: String?
+        // At most this many decimal places, e.g. 2 for "2.54/4" litres.
+        var decimals = 0
+        // Going over turns the amount orange; off for goals where more is fine, like water.
+        var warnsWhenOver = true
 
         var id: String { label }
 
@@ -31,6 +36,10 @@ struct BrightRingGroupWidgetV5: View {
 
         var isOver: Bool {
             value > goal
+        }
+
+        var showsOverWarning: Bool {
+            warnsWhenOver && isOver
         }
     }
 
@@ -84,7 +93,7 @@ struct BrightRingGroupWidgetV5: View {
         }
         .animation(.brightEaseInOut, value: selectedRingID)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(rings.map { "\($0.label) \(display($0.value)) of \(display($0.goal))" }.joined(separator: ", "))
+        .accessibilityLabel(rings.map { "\($0.label) \(display($0.value, of: $0)) of \(display($0.goal, of: $0))" }.joined(separator: ", "))
     }
 
     // MARK: - Layouts
@@ -97,7 +106,7 @@ struct BrightRingGroupWidgetV5: View {
                 .overlay { touchLayer }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.isOver ? .defaultOrange : ring.color)
+            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
                 .frame(maxWidth: .infinity)
         }
     }
@@ -223,7 +232,7 @@ struct BrightRingGroupWidgetV5: View {
                 ring,
                 valueSize: size == .small ? .body4 : .heading,
                 suffixSize: size == .small ? .body4 : .body3,
-                valueColor: ring.isOver ? .defaultOrange : (size == .small ? .semiLightTextColor : .textColor)
+                valueColor: ring.showsOverWarning ? .defaultOrange : (size == .small ? .semiLightTextColor : .textColor)
             )
         }
     }
@@ -234,12 +243,12 @@ struct BrightRingGroupWidgetV5: View {
         let isHeld = selectedRingID == ring.id
 
         return HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-            BrightText(display(isHeld ? abs(ring.goal - ring.value) : ring.value), size: valueSize, color: valueColor)
+            BrightText(display(isHeld ? abs(ring.goal - ring.value) : ring.value, of: ring), size: valueSize, color: valueColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
 
             BrightText(
-                isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal))",
+                isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal, of: ring))",
                 size: suffixSize,
                 color: .lightTextColor
             )
@@ -311,8 +320,8 @@ struct BrightRingGroupWidgetV5: View {
         "\(Int((ring.progress * 100).rounded()))"
     }
 
-    private func display(_ value: Double) -> String {
-        Int(value.rounded()).formatted()
+    private func display(_ value: Double, of ring: Ring) -> String {
+        value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
     }
 }
 

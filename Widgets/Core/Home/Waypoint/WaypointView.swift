@@ -683,8 +683,8 @@ private extension WaypointAdjustmentGroup {
                 ]
             ),
             WaypointAdjustment(
-                id: "hydration",
-                title: "Hydration target",
+                id: "water",
+                title: "Water target",
                 detail: .value("2.8", unit: "L"),
                 label: "Increase water",
                 trend: .up,

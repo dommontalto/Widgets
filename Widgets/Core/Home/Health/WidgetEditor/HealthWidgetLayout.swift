@@ -13,7 +13,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case macros
     case activity
     case sleep
-    case hydration
+    case water
     case weight
 
     var id: Self { self }
@@ -25,7 +25,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "Weekly Macros"
         case .activity: "Total Energy"
         case .sleep: "Sleep"
-        case .hydration: "Water"
+        case .water: "Water"
         case .weight: "Weight"
         }
     }
@@ -38,7 +38,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "Macros"
         case .activity: "Activity"
         case .sleep: "Sleep"
-        case .hydration: "Hydration"
+        case .water: "Water"
         case .weight: "Weight"
         }
     }
@@ -50,7 +50,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "chart.pie.fill"
         case .activity: "flame.fill"
         case .sleep: "bed.double.fill"
-        case .hydration: "drop.fill"
+        case .water: "drop.fill"
         case .weight: "scalemass.fill"
         }
     }
@@ -63,7 +63,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: ImageNames.macronutrientGraphV5
         case .activity: ImageNames.activityAlertsIconV5
         case .sleep: ImageNames.sleepInfoV4
-        case .hydration: ImageNames.waterIconV5
+        case .water: ImageNames.waterIconV5
         case .weight: ImageNames.weightIconV4
         }
     }
@@ -75,7 +75,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: .defaultGreen
         case .activity: .defaultOrange
         case .sleep: .defaultBlue
-        case .hydration: .defaultCyan
+        case .water: .defaultCyan
         case .weight: .defaultPurple
         }
     }
@@ -86,7 +86,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .intake: [.bars, .intakeRing]
         case .macros: [.macroBars, .macroRings, .macroRing]
         case .sleep: [.sleepRings]
-        case .hydration: [.bars, .leadingNumber]
+        case .water: [.bars, .leadingNumber, .waterRing]
         case .weight: [.dottedLine, .leadingNumber]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
         }
@@ -151,6 +151,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     // One macro on its own, picked in the sheet.
     case macroRing
     case intakeRing
+    case waterRing
     case sleepRings
     case dottedLine
     // VO2 Max as a dotted line, which only comes in medium.
@@ -184,7 +185,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .lineChart: .line
         case .bars, .activeEnergyBars, .stepBars, .macroBars: .bar
         case .leadingNumber, .vo2Number: .number
-        case .macroRings, .macroRing, .intakeRing, .sleepRings: .ring
+        case .macroRings, .macroRing, .intakeRing, .waterRing, .sleepRings: .ring
         case .dottedLine, .vo2Line: .dottedLine
         }
     }
@@ -195,6 +196,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macroBars: [.medium, .large]
         case .macroRings: [.small, .medium]
         case .macroRing, .intakeRing: [.small]
+        case .waterRing: [.small, .medium]
         case .sleepRings: [.small, .medium]
         case .dottedLine: [.medium, .large]
         case .vo2Line: [.medium]
@@ -209,7 +211,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .leadingNumber, .vo2Number: [.latest]
         case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
         case .macroBars: [.week]
-        case .macroRings, .macroRing, .intakeRing: [.today]
+        case .macroRings, .macroRing, .intakeRing, .waterRing: [.today]
         case .sleepRings: [.lastNight]
         case .dottedLine, .vo2Line: [.twoWeeks]
         }
