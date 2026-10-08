@@ -16,6 +16,21 @@ extension HealthWidgetDemo {
 
     static let macrosYesterday = "Yest. C:50, F:20, P:30"
 
+    // Today's grams against each goal.
+    static let macroRings: [BrightRingGroupWidgetV5.Ring] = [
+        .init(label: "Carbs", shortLabel: "C", value: 75, goal: 200, color: .defaultGreen),
+        .init(label: "Fats", shortLabel: "F", value: 27, goal: 46, color: .defaultYellow),
+        .init(label: "Protein", shortLabel: "P", value: 102, goal: 140, color: .defaultPink),
+    ]
+
+    static func macroRing(_ macro: HealthMacro) -> BrightRingGroupWidgetV5.Ring {
+        switch macro {
+        case .carbs: macroRings[0]
+        case .fats: macroRings[1]
+        case .protein: macroRings[2]
+        }
+    }
+
     // Each day's carbs, fat and protein as a share of its calories, oldest first and
     // ending today.
     static var macroWeek: [BrightBarChartWidgetV5.Bar] {

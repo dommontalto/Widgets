@@ -20,6 +20,12 @@ extension HealthWidgetDemo {
         customSubtitle: { intakeSubtitle(for: $0) }
     )
 
+    // Today's calories so far against the day's goal.
+    static var intakeRing: BrightRingGroupWidgetV5.Ring {
+        let today = intake.bars(for: .today).compactMap(\.value).reduce(0, +)
+        return .init(label: "Intake", shortLabel: "I", value: today, goal: intake.dayTarget ?? 0, color: .defaultGreen)
+    }
+
     private static let latestMeal: (calories: Double, date: Date) = (403, minutesAgo(47))
 
     // The week names the latest meal; a day counts down what's left of the goal.

@@ -28,6 +28,20 @@ struct HealthWidgetView: View {
                 value: HealthWidgetDemo.heartRate.last?.value ?? 0,
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
+        case (.macros, .macroRings):
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size)
+        case (.macros, .macroRing):
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.macroRing(widget.macro)], size: widget.size) {
+                ringHeader(widget.macro.title, color: HealthWidgetDemo.macroRing(widget.macro).color)
+            }
+        case (.intake, .intakeRing):
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size) {
+                ringHeader(widget.kind.title, color: widget.kind.tint)
+            }
+        case (.sleep, _):
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size) {
+                SleepRingsHeader()
+            }
         case (.macros, _):
             BrightBarChartWidgetV5(
                 appearance: HealthWidgetDemo.macrosAppearance,
@@ -47,6 +61,18 @@ struct HealthWidgetView: View {
         case (.activity, _):
             barChart(HealthWidgetDemo.totalEnergy)
         }
+    }
+
+    // The arrow-and-name header the single rings use.
+    private func ringHeader(_ title: String, color: Color) -> some View {
+        HStack(spacing: .spacing05x) {
+            Image(systemName: "arrow.right")
+                .font(.standard(size: .subheading, weight: .light))
+                .foregroundStyle(color)
+
+            BrightText(title, size: .body1, weight: .regular)
+        }
+        .lineLimit(1)
     }
 
     private var heartRateAppearance: BrightWidgetAppearanceV5 {
@@ -90,10 +116,6 @@ struct HealthWidgetGrid: View {
         let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: containerWidth)
 
         ZStack(alignment: .topLeading) {
-            if layout.widgets.isEmpty {
-                emptyState(cellSize: cellSize)
-            }
-
             ForEach(Array(layout.widgets.enumerated()), id: \.element.id) { index, widget in
                 tile(widget, index: index, cellSize: cellSize)
             }
@@ -177,16 +199,6 @@ struct HealthWidgetGrid: View {
             editor.remove(widget)
         }
         .offset(x: .spacing05x, y: -.spacing05x)
-    }
-
-    private func emptyState(cellSize: CGFloat) -> some View {
-        BrightPillButton("Add widget", systemImage: "plus") {
-            BrightHaptic.medium.play()
-            editor.isShowingAddSheet = true
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: cellSize)
-        .padding(.top, HealthWidgetGridMetrics.spacing)
     }
 
     private enum Constants {

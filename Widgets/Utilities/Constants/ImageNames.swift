@@ -9,6 +9,14 @@ import Foundation
 
 nonisolated class ImageNames {
 
+    // MARK: - Add widget
+
+    static let heartDashIconV4 = "heart_dash_icon_v4"
+    static let logFoodIconV1 = "log_food_icon_v1"
+    static let macronutrientGraphV5 = "macronutrient_graph_v5"
+    static let activityAlertsIconV5 = "activity_alerts_icon_v5"
+    static let sleepInfoV4 = "sleep_info_v4"
+
     // MARK: - Genome
 
     static let lighthouseCirclePlusV5     = "Lighthouse/lighthouse_circle_plus_v5"

@@ -12,6 +12,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     case intake
     case macros
     case activity
+    case sleep
 
     var id: Self { self }
 
@@ -21,6 +22,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .intake: "Intake"
         case .macros: "Weekly Macros split"
         case .activity: "Total Energy"
+        case .sleep: "Sleep"
         }
     }
 
@@ -31,6 +33,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .intake: "Intake"
         case .macros: "Macros"
         case .activity: "Activity"
+        case .sleep: "Sleep"
         }
     }
 
@@ -40,6 +43,18 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .intake: "arrow.right"
         case .macros: "chart.pie.fill"
         case .activity: "flame.fill"
+        case .sleep: "bed.double.fill"
+        }
+    }
+
+    // The black-and-white icon its row shows in the add sheet.
+    var rowIcon: String {
+        switch self {
+        case .heartRate: ImageNames.heartDashIconV4
+        case .intake: ImageNames.logFoodIconV1
+        case .macros: ImageNames.macronutrientGraphV5
+        case .activity: ImageNames.activityAlertsIconV5
+        case .sleep: ImageNames.sleepInfoV4
         }
     }
 
@@ -47,17 +62,35 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
-        case .macros: .defaultPink
+        case .macros: .defaultGreen
         case .activity: .defaultOrange
+        case .sleep: .defaultBlue
         }
     }
 
     var styles: [HealthWidgetStyle] {
         switch self {
         case .heartRate: [.lineChart, .leadingNumber]
-        case .intake: [.bars]
-        case .macros: [.macroBars]
+        case .intake: [.bars, .intakeRing]
+        case .macros: [.macroBars, .macroRings, .macroRing]
+        case .sleep: [.sleepRings]
         case .activity: [.bars, .activeEnergyBars, .stepBars]
+        }
+    }
+}
+
+enum HealthMacro: String, CaseIterable, Codable, Identifiable {
+    case carbs
+    case fats
+    case protein
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .carbs: "Carbs"
+        case .fats: "Fats"
+        case .protein: "Protein"
         }
     }
 }
@@ -71,6 +104,11 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case activeEnergyBars
     case stepBars
     case macroBars
+    case macroRings
+    // One macro on its own, picked in the sheet.
+    case macroRing
+    case intakeRing
+    case sleepRings
 
     var id: Self { self }
 
@@ -78,6 +116,9 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .leadingNumber: [.small, .medium]
         case .macroBars: [.medium, .large]
+        case .macroRings: [.small, .medium]
+        case .macroRing, .intakeRing: [.small]
+        case .sleepRings: [.medium]
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -89,6 +130,8 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .leadingNumber: [.latest]
         case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
         case .macroBars: [.week]
+        case .macroRings, .macroRing, .intakeRing: [.today]
+        case .sleepRings: [.lastNight]
         }
     }
 }
@@ -99,6 +142,7 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
     var style = HealthWidgetStyle.lineChart
     var size: BrightWidgetSizeV5
     var range = BrightWidgetRangeV5.rolling1h
+    var macro = HealthMacro.carbs
 
     init(kind: HealthWidgetKind, style: HealthWidgetStyle = .lineChart, size: BrightWidgetSizeV5) {
         self.kind = kind
@@ -106,12 +150,12 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
         adopt(style)
     }
 
-    // Switches style, falling back to its largest size and its first range where the
-    // current ones aren't offered.
+    // Switches style, falling back to its first size and first range where the current
+    // ones aren't offered.
     mutating func adopt(_ style: HealthWidgetStyle) {
         self.style = style
-        if !style.sizes.contains(size), let largest = style.sizes.last {
-            size = largest
+        if !style.sizes.contains(size), let first = style.sizes.first {
+            size = first
         }
         if !style.ranges.isEmpty, !style.ranges.contains(range), let first = style.ranges.first {
             range = first

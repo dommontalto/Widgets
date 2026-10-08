@@ -16,6 +16,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
     case fixed12h
     case today
     case week
+    case lastNight
     // Just the most recent reading, for widgets that show a single value.
     case latest
 
@@ -32,7 +33,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .rolling1h, .rolling6h, .rolling12h: .rolling
         case .fixed6h, .fixed12h: .fixed
-        case .today, .week: .calendar
+        case .today, .week, .lastNight: .calendar
         case .latest: .current
         }
     }
@@ -42,6 +43,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .today: "Today"
         case .week: "This week"
+        case .lastNight: "Last night"
         case .latest: "Latest reading"
         default: hours == 1 ? "1 hour" : "\(hours) hours"
         }
@@ -117,7 +119,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         case .rolling6h, .fixed6h: 6
         case .rolling12h, .fixed12h: 12
         case .latest: 1
-        case .today: 24
+        case .today, .lastNight: 24
         case .week: 7 * 24
         }
     }

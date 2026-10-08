@@ -23,7 +23,7 @@ struct AddWidgetSheet: View {
                 VStack(spacing: .spacing4x) {
                     BrightRowGroupV5(color: .defaultSheetModalCards) {
                         ForEach(HealthWidgetKind.allCases) { kind in
-                            BrightRowV5(kind.rowTitle, icon: .symbol(kind.systemImage, tint: kind.tint)) {
+                            BrightRowV5(kind.rowTitle, icon: .template(kind.rowIcon)) {
                                 path.append(kind)
                             }
                         }
@@ -168,6 +168,7 @@ private struct WidgetOptions: View {
         }
         .animation(.brightBouncy, value: widget.size)
         .animation(.brightEaseInOut, value: widget.range)
+        .animation(.brightEaseInOut, value: widget.macro)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -207,7 +208,7 @@ private struct WidgetOptions: View {
         let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
 
         return HealthWidgetView(widget: shown)
-            .id(shown.range)
+            .id("\(shown.range)-\(shown.macro)")
             .transition(.blurReplace)
             .frame(width: frame.width, height: frame.height)
             .scaleEffect(scale)
@@ -247,6 +248,17 @@ private struct WidgetOptions: View {
                 .transition(.opacity)
             }
 
+            if widget.style == .macroRing {
+                BrightRowGroupV5(header: "Macro") {
+                    ForEach(HealthMacro.allCases) { option in
+                        BrightRowV5(option.title, trailing: .tick(option == widget.macro)) {
+                            BrightHaptic.light.play()
+                            widget.macro = option
+                        }
+                    }
+                }
+            }
+
             // Every style offers at least one range, so a widget with a single option
             // still says what it shows, ticked.
             ForEach(BrightWidgetRangeV5.Section.allCases, id: \.self) { section in
@@ -270,7 +282,7 @@ private struct WidgetOptions: View {
         }
     }
 
-    // A style that can't be shown at the current size takes its largest one instead.
+    // A style that can't be shown at the current size takes its first size instead.
     private func select(_ style: HealthWidgetStyle) {
         BrightHaptic.light.play()
         widget.adopt(style)
