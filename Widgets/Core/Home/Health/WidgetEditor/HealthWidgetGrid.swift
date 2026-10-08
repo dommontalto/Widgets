@@ -33,7 +33,9 @@ struct HealthWidgetView: View {
                 ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
             }
         case (.water, .waterRing):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.waterRings, size: widget.size, allowsSelection: allowsSelection)
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.waterRings, size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
+            }
         case (.water, _):
             barChart(HealthWidgetDemo.water)
         case (.weight, .leadingNumber):
@@ -85,7 +87,9 @@ struct HealthWidgetView: View {
                 latest: HealthWidgetDemo.heartRate.last?.date ?? .now
             )
         case (.macros, .macroRings):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size, allowsSelection: allowsSelection)
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(widget.kind.rowTitle, color: widget.kind.tint)
+            }
         case (.macros, .macroRing):
             BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.macroRing(widget.macro)], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.macro.title, color: HealthWidgetDemo.macroRing(widget.macro).color)

@@ -112,12 +112,13 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private var expandedLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(alignment: .top, spacing: .spacing1x) {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            // Stacked rather than side by side, so the subtitle can run under the reading
+            // instead of being cut short by it.
+            ZStack(alignment: .top) {
                 header
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .brightDebugBackgroundV5(.red)
-
-                Spacer(minLength: .spacing0x)
 
                 VStack(alignment: .trailing, spacing: .spacing05x) {
                     reading(valueSize: size == .large ? .standout1 : .standout3)
@@ -128,6 +129,7 @@ struct BrightBarChartWidgetV5: View {
                             .brightDebugBackgroundV5(.cyan)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
             plotArea(showsGuides: !isSegmented)

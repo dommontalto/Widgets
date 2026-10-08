@@ -47,7 +47,7 @@ struct BrightDottedLineChartWidgetV5: View {
     @State private var selectedDate: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
+        VStack(alignment: .leading, spacing: .spacing1x) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
 

@@ -393,9 +393,7 @@ struct BrightLineChartWidgetV5: View {
             GuideLabel(value: low, color: .defaultCyan, weight: .light),
         ]
         if size == .large {
-            labels += [domain.upperBound, domain.lowerBound].map {
-                GuideLabel(value: $0, color: .textColor.opacity(.veryLowOpacity), weight: .regular)
-            }
+            labels.append(GuideLabel(value: domain.lowerBound, color: .textColor.opacity(.veryLowOpacity), weight: .regular))
         }
         return labels
     }
@@ -461,12 +459,12 @@ struct BrightLineChartWidgetV5: View {
         visibleSamples.last?.value ?? 0
     }
 
-    // Rounded out to the next step either side so the extremes never touch the edge.
+    // The high line is the top of the graph; the floor is rounded down a step so the
+    // low never touches the bottom.
     private var domain: ClosedRange<Double> {
         let step = Constants.domainStep
         let lower = max(((low - step) / step).rounded(.down) * step, 0)
-        let upper = ((high + step) / step).rounded(.up) * step
-        return lower ... upper
+        return lower ... max(high, lower + 1)
     }
 
     private var sparklineDomain: ClosedRange<Double> {
