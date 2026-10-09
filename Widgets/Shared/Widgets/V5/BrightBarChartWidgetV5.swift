@@ -574,61 +574,16 @@ struct BrightBarChartWidgetV5: View {
     // MARK: - Summary
 
     private func summaryGrid(_ summary: Summary) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(summaryTitle(summary), size: .body3, color: .semiLightTextColor, weight: .regular)
-                .contentTransition(.numericText())
-
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: .spacing1x, alignment: .leading), count: 3),
-                alignment: .leading,
-                spacing: .spacing2x
-            ) {
-                ForEach(summaryBars(summary)) { bar in
-                    summaryCell(for: bar, summary: summary)
-                }
-            }
+        BrightThisWeekSectionV5(days: summaryBars(summary).map(\.value), style: summaryStyle(summary)) {
+            [display($0), unit].compactMap(\.self).joined(separator: " ")
         }
     }
 
-    private func summaryCell(for bar: Bar, summary: Summary) -> some View {
-        let isToday = bar.index == summaryBars(summary).last { $0.value != nil }?.index
-
-        return HStack(spacing: .spacing1x) {
-            BrightText(
-                Constants.weekdayInitials[bar.index],
-                size: .body5,
-                color: isToday ? .defaultBlack : .defaultCyan,
-                weight: isToday ? .regular : .light
-            )
-            .frame(width: Constants.dayBadgeSize, height: Constants.dayBadgeSize)
-            .background(Circle().fill(isToday ? Color.defaultCyan : Color.defaultCyan.opacity(.minimalOpacity)))
-
-            if let value = bar.value {
-                switch summary {
-                case .values:
-                    BrightText([display(value), unit].compactMap(\.self).joined(separator: " "), size: .body3, color: .semiLightTextColor)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                case let .targets(_, target):
-                    HStack(spacing: .spacing05x) {
-                        Image(systemName: value >= target ? "arrow.up" : "arrow.down")
-                            .font(.standard(size: .body3, weight: .light))
-
-                        BrightText([display(abs(value - target)), unit].compactMap(\.self).joined(separator: " "), size: .body3, color: .semiLightTextColor)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                    }
-                    .foregroundStyle(Color.semiLightTextColor)
-                }
-            } else {
-                BrightText("-", size: .body3, color: .semiLightTextColor)
-            }
+    private func summaryStyle(_ summary: Summary) -> BrightThisWeekSectionV5.Style {
+        switch summary {
+        case .values: .values
+        case let .targets(_, target): .targets(target)
         }
-        .lineLimit(1)
-    }
-
-    private func summaryTitle(_ summary: Summary) -> String {
-        if case .targets = summary { "Weekly Targets" } else { "This week" }
     }
 
     private func summaryBars(_ summary: Summary) -> [Bar] {
@@ -776,7 +731,6 @@ struct BrightBarChartWidgetV5: View {
         static let targetMarkHeight: CGFloat = .spacing05x
         static let segmentMarkHeight: CGFloat = 2
         static let risingGreenStop = 0.24
-        static let dayBadgeSize: CGFloat = 20
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]
     }
 }

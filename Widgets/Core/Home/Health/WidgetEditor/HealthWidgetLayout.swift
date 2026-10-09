@@ -7,95 +7,96 @@
 
 import SwiftUI
 
+// In alphabetical order of their row names, and every switch over them follows it.
 enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
+    case activity
     case heartRate
     case intake
     case macros
-    case activity
+    case menstrual
     case sleep
     case water
     case weight
-    case menstrual
 
     var id: Self { self }
 
     var title: String {
         switch self {
+        case .activity: "Total Energy"
         case .heartRate: "Heart Rate"
         case .intake: "Intake"
         case .macros: "Weekly Macros"
-        case .activity: "Total Energy"
+        case .menstrual: "Menstrual"
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
-        case .menstrual: "Menstrual"
         }
     }
 
     // The shorter name it's listed under in the add sheet.
     var rowTitle: String {
         switch self {
+        case .activity: "Activity"
         case .heartRate: "Heart"
         case .intake: "Intake"
         case .macros: "Macros"
-        case .activity: "Activity"
+        case .menstrual: "Menstrual"
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
-        case .menstrual: "Menstrual"
         }
     }
 
     var systemImage: String {
         switch self {
+        case .activity: "flame.fill"
         case .heartRate: "heart.fill"
         case .intake: "arrow.right"
         case .macros: "chart.pie.fill"
-        case .activity: "flame.fill"
+        case .menstrual: "moonphase.waxing.crescent"
         case .sleep: "bed.double.fill"
         case .water: "drop.fill"
         case .weight: "scalemass.fill"
-        case .menstrual: "moonphase.waxing.crescent"
         }
     }
 
     // The black-and-white icon its row shows in the add sheet.
     var rowIcon: String {
         switch self {
+        case .activity: ImageNames.activityAlertsIconV5
         case .heartRate: ImageNames.heartDashIconV4
         case .intake: ImageNames.logFoodIconV1
         case .macros: ImageNames.macronutrientGraphV5
-        case .activity: ImageNames.activityAlertsIconV5
+        case .menstrual: ImageNames.cycleTrackingMainV5
         case .sleep: ImageNames.sleepInfoV4
         case .water: ImageNames.waterIconV5
         case .weight: ImageNames.weightIconV4
-        case .menstrual: ImageNames.cycleTrackingMainV5
         }
     }
 
     var tint: Color {
         switch self {
+        case .activity: .defaultOrange
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
         case .macros: .defaultGreen
-        case .activity: .defaultOrange
+        case .menstrual: .defaultPink
         case .sleep: .defaultBlue
         case .water: .defaultCyan
         case .weight: .defaultPurple
-        case .menstrual: .defaultPink
         }
     }
 
     var styles: [HealthWidgetStyle] {
         switch self {
+        case .activity: [.bars, .activeEnergyBars, .stepBars]
         case .heartRate: [.lineChart, .leadingNumber, .vo2Line, .vo2Number]
         case .intake: [.bars, .intakeRing]
         case .macros: [.macroBars, .macroRings, .macroRing]
-        case .sleep: [.sleepRings, .sleepVitals]
-        case .water: [.bars, .leadingNumber, .waterRing]
-        case .weight: [.dottedLine, .leadingNumber]
         case .menstrual: [.menstrualCycle]
-        case .activity: [.bars, .activeEnergyBars, .stepBars]
+        case .sleep: [.sleepRings, .sleepVitals]
+        case .water: [.bars, .leadingNumber, .waterRing, .waterTank]
+        case .weight: [.dottedLine, .leadingNumber]
         }
     }
 }
@@ -146,47 +147,67 @@ enum HealthWidgetCatalog {
 }
 
 // The alternative designs a kind can be shown as, swiped between in the add and edit sheets.
+// Grouped by the kind they belong to, in the kinds' order, after the ones several share.
 enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
-    case lineChart
-    case leadingNumber
-    // The kind's main measure as bars: intake, or total energy for activity.
+    // MARK: Shared
     case bars
+    case leadingNumber
+
+    // MARK: Activity
     case activeEnergyBars
     case stepBars
+
+    // MARK: Heart
+    case lineChart
+    case vo2Line
+    case vo2Number
+
+    // MARK: Intake
+    case intakeRing
+
+    // MARK: Macros
     case macroBars
     case macroRings
-    // One macro on its own, picked in the sheet.
     case macroRing
-    case intakeRing
-    case waterRing
-    case sleepRings
-    case sleepVitals
-    case dottedLine
-    // VO2 Max as a dotted line, which only comes in medium.
-    case vo2Line
-    // VO2 Max's latest reading, alongside heart rate's own number.
-    case vo2Number
+
+    // MARK: Menstrual
     case menstrualCycle
 
-    // Which shared widget draws it.
+    // MARK: Sleep
+    case sleepRings
+    case sleepVitals
+
+    // MARK: Water
+    case waterRing
+    case waterTank
+
+    // MARK: Weight
+    case dottedLine
+
+    // Which widget draws it, grouped as the widget folders are.
     enum Family: CaseIterable {
-        case line
+        // MARK: Reusable, in Shared/Widgets/V5
+        case bar
         case dottedLine
         case dottedRange
-        case menstrual
-        case bar
+        case line
         case number
         case ring
 
+        // MARK: Features, in Shared/Widgets/V5/Features
+        case menstrual
+        case water
+
         var title: String {
             switch self {
-            case .line: "BrightLineChartWidgetV5"
+            case .bar: "BrightBarChartWidgetV5"
             case .dottedLine: "BrightDottedLineChartWidgetV5"
             case .dottedRange: "BrightDottedRangeChartWidgetV5"
-            case .menstrual: "BrightMenstrualWidgetV5"
-            case .bar: "BrightBarChartWidgetV5"
+            case .line: "BrightLineChartWidgetV5"
             case .number: "BrightLeadingNumberWidgetV5"
             case .ring: "BrightRingGroupWidgetV5"
+            case .menstrual: "BrightMenstrualWidgetV5"
+            case .water: "BrightWaterWidgetV5"
             }
         }
     }
@@ -195,27 +216,37 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var family: Family {
         switch self {
+        case .bars: .bar
+        case .leadingNumber: .number
+        case .activeEnergyBars, .stepBars: .bar
         case .lineChart: .line
-        case .bars, .activeEnergyBars, .stepBars, .macroBars: .bar
-        case .leadingNumber, .vo2Number: .number
-        case .macroRings, .macroRing, .intakeRing, .waterRing, .sleepRings: .ring
-        case .dottedLine, .vo2Line: .dottedLine
-        case .sleepVitals: .dottedRange
+        case .vo2Line: .dottedLine
+        case .vo2Number: .number
+        case .intakeRing: .ring
+        case .macroBars: .bar
+        case .macroRings, .macroRing: .ring
         case .menstrualCycle: .menstrual
+        case .sleepRings: .ring
+        case .sleepVitals: .dottedRange
+        case .waterRing: .ring
+        case .waterTank: .water
+        case .dottedLine: .dottedLine
         }
     }
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
-        case .leadingNumber, .vo2Number: [.small]
+        case .leadingNumber: [.small]
+        case .vo2Line: [.medium]
+        case .vo2Number: [.small]
+        case .intakeRing: [.small]
         case .macroBars: [.medium, .large]
         case .macroRings: [.small, .medium]
-        case .macroRing, .intakeRing: [.small]
+        case .macroRing: [.small]
+        case .sleepRings: [.small, .medium]
+        case .sleepVitals: [.small, .medium]
         case .waterRing: [.small, .medium]
-        case .sleepRings, .sleepVitals: [.small, .medium]
         case .dottedLine: [.medium, .large]
-        case .vo2Line: [.medium]
-        case .menstrualCycle: BrightWidgetSizeV5.allCases
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -223,14 +254,19 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     // The ranges it can be set to, the first being where it starts; always at least one.
     var ranges: [BrightWidgetRangeV5] {
         switch self {
+        case .bars: [.today, .rolling12h, .week]
+        case .leadingNumber: [.latest]
+        case .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
         case .lineChart: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
-        case .leadingNumber, .vo2Number: [.latest]
-        case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
+        case .vo2Line: [.lastReadings]
+        case .vo2Number: [.latest]
+        case .intakeRing: [.today]
         case .macroBars: [.week]
-        case .macroRings, .macroRing, .intakeRing, .waterRing: [.today]
-        case .sleepRings, .sleepVitals: [.lastNight]
-        case .dottedLine, .vo2Line: [.lastReadings]
+        case .macroRings, .macroRing: [.today]
         case .menstrualCycle: [.today]
+        case .sleepRings, .sleepVitals: [.lastNight]
+        case .waterRing, .waterTank: [.today]
+        case .dottedLine: [.lastReadings]
         }
     }
 }

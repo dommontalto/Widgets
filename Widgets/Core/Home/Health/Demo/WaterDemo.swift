@@ -24,6 +24,13 @@ extension HealthWidgetDemo {
 
     static let waterGoal: Double = 4
 
+    // Today's drinks so far, counted back from now so they always come to 2 L.
+    static var waterDrinks: [BrightWaterWidgetV5.Drink] {
+        [(420, 0.4), (330, 0.25), (240, 0.35), (150, 0.3), (90, 0.4), (25, 0.3)].map { minutes, litres in
+            .init(date: minutesAgo(minutes), litres: litres)
+        }
+    }
+
     static var waterToday: Double {
         water.bars(for: .today).compactMap(\.value).reduce(0, +)
     }

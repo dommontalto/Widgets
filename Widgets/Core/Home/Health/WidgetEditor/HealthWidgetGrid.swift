@@ -32,6 +32,16 @@ struct HealthWidgetView: View {
             BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.waterRing], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
             }
+        case (.water, .waterTank):
+            BrightWaterWidgetV5(
+                appearance: HealthWidgetDemo.water.appearance,
+                drinks: HealthWidgetDemo.waterDrinks,
+                goal: HealthWidgetDemo.waterGoal,
+                yesterday: HealthWidgetDemo.water.yesterday,
+                week: HealthWidgetDemo.water.weekBars.map(\.value),
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.water, .waterRing):
             BrightRingGroupWidgetV5(rings: HealthWidgetDemo.waterRings, size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
