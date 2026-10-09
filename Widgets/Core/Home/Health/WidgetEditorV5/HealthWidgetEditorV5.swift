@@ -1,5 +1,5 @@
 //
-//  HealthWidgetEditor.swift
+//  HealthWidgetEditorV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -10,8 +10,8 @@ import SwiftUI
 // Edit-mode state for the Health grid: jiggle, the add/edit sheets, dragging,
 // and auto-scrolling the page while a widget is held near an edge.
 @MainActor @Observable
-final class HealthWidgetEditor {
-    let layout = HealthWidgetLayout()
+final class HealthWidgetEditorV5 {
+    let layout = HealthWidgetLayoutV5()
 
     var isEditing = false {
         didSet {
@@ -22,7 +22,7 @@ final class HealthWidgetEditor {
     }
 
     var isShowingAddSheet = false
-    var editingWidget: HealthWidgetItem?
+    var editingWidget: HealthWidgetItemV5?
 
     var isShowingSheet: Bool {
         isShowingAddSheet || editingWidget != nil
@@ -40,7 +40,7 @@ final class HealthWidgetEditor {
         var origin: CGPoint
         var translation: CGSize = .zero
         var scrollOffset: CGFloat = 0
-        var target: HealthGridPosition?
+        var target: HealthGridPositionV5?
         var isLifted = true
 
         var location: CGPoint {
@@ -69,7 +69,7 @@ final class HealthWidgetEditor {
 
     // Adds a widget at the end of the grid, then scrolls down to it once the sheet
     // has gone. The first widget on an empty grid also starts edit mode.
-    func add(_ widget: HealthWidgetItem) {
+    func add(_ widget: HealthWidgetItemV5) {
         let wasEmpty = layout.widgets.isEmpty
         layout.add(widget)
 
@@ -87,7 +87,7 @@ final class HealthWidgetEditor {
         }
     }
 
-    func remove(_ widget: HealthWidgetItem) {
+    func remove(_ widget: HealthWidgetItemV5) {
         BrightHaptic.success.play()
         withAnimation(.brightSpring) {
             layout.remove(id: widget.id)
@@ -96,12 +96,12 @@ final class HealthWidgetEditor {
 
     // MARK: - Dragging
 
-    func dragChanged(_ value: DragGesture.Value, widget: HealthWidgetItem, cellSize: CGFloat, viewportHeight: CGFloat) {
+    func dragChanged(_ value: DragGesture.Value, widget: HealthWidgetItemV5, cellSize: CGFloat, viewportHeight: CGFloat) {
         if dragging?.widgetID != widget.id {
             guard let position = layout.positions[widget.id] else { return }
             dragStartScrollY = scrollOffsetY
             withAnimation(.brightSpring) {
-                dragging = Drag(widgetID: widget.id, origin: HealthWidgetGridMetrics.origin(of: position, cellSize: cellSize))
+                dragging = Drag(widgetID: widget.id, origin: HealthWidgetGridMetricsV5.origin(of: position, cellSize: cellSize))
             }
         }
         dragging?.translation = value.translation
@@ -115,7 +115,7 @@ final class HealthWidgetEditor {
             }
         }
 
-        let halfHeight = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize).height / 2
+        let halfHeight = HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize).height / 2
         let edgeZone = viewportHeight / Constants.edgeZoneFraction
         if value.location.y + halfHeight > viewportHeight - edgeZone {
             startAutoScroll(direction: 1)
@@ -126,14 +126,14 @@ final class HealthWidgetEditor {
         }
     }
 
-    func dragEnded(widget: HealthWidgetItem, cellSize: CGFloat) {
+    func dragEnded(widget: HealthWidgetItemV5, cellSize: CGFloat) {
         endAutoScroll()
         guard var drag = dragging, let landing = layout.positions[widget.id] else { return }
 
         // Re-base onto the landing cell so the release springs from where the finger let go.
         drag.scrollOffset = scrollOffsetY - dragStartScrollY
         let current = drag.location
-        drag.origin = HealthWidgetGridMetrics.origin(of: landing, cellSize: cellSize)
+        drag.origin = HealthWidgetGridMetricsV5.origin(of: landing, cellSize: cellSize)
         drag.translation = CGSize(width: current.x - drag.origin.x, height: current.y - drag.origin.y)
         drag.scrollOffset = 0
         dragging = drag

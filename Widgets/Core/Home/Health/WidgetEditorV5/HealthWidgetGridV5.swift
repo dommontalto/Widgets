@@ -1,5 +1,5 @@
 //
-//  HealthWidgetGrid.swift
+//  HealthWidgetGridV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct HealthWidgetView: View {
-    let widget: HealthWidgetItem
+struct HealthWidgetViewV5: View {
+    let widget: HealthWidgetItemV5
     var allowsSelection = true
 
     var body: some View {
@@ -16,142 +16,142 @@ struct HealthWidgetView: View {
         case (.heartRate, .heartLine):
             BrightLineChartWidgetV5(
                 appearance: heartRateAppearance,
-                samples: HealthWidgetDemo.heartRate,
-                events: HealthWidgetDemo.heartRateEvents,
+                samples: HealthWidgetDemoV5.heartRate,
+                events: HealthWidgetDemoV5.heartRateEvents,
                 range: widget.range,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.water, .waterNumber):
             BrightLeadingNumberWidgetV5(
-                appearance: HealthWidgetDemo.water.appearance,
-                value: HealthWidgetDemo.waterToday,
-                latest: HealthWidgetDemo.anchor
+                appearance: HealthWidgetDemoV5.water.appearance,
+                value: HealthWidgetDemoV5.waterToday,
+                latest: HealthWidgetDemoV5.anchor
             )
         case (.water, .waterRing) where widget.size == .small:
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.waterRing], size: widget.size, allowsSelection: allowsSelection) {
-                ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemoV5.waterRing], size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(HealthWidgetDemoV5.water.appearance.title, systemImage: HealthWidgetDemoV5.water.appearance.systemImage, color: widget.kind.tint)
             }
         case (.water, .waterTank):
             BrightWaterWidgetV5(
-                appearance: HealthWidgetDemo.water.appearance,
-                drinks: HealthWidgetDemo.waterDrinks,
-                goal: HealthWidgetDemo.waterGoal,
-                yesterday: HealthWidgetDemo.water.yesterday,
-                week: HealthWidgetDemo.water.weekBars.map(\.value),
+                appearance: HealthWidgetDemoV5.water.appearance,
+                drinks: HealthWidgetDemoV5.waterDrinks,
+                goal: HealthWidgetDemoV5.waterGoal,
+                yesterday: HealthWidgetDemoV5.water.yesterday,
+                week: HealthWidgetDemoV5.water.weekBars.map(\.value),
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.water, .waterRing):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.waterRings, size: widget.size, allowsSelection: allowsSelection) {
-                ringHeader(HealthWidgetDemo.water.appearance.title, systemImage: HealthWidgetDemo.water.appearance.systemImage, color: widget.kind.tint)
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.waterRings, size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(HealthWidgetDemoV5.water.appearance.title, systemImage: HealthWidgetDemoV5.water.appearance.systemImage, color: widget.kind.tint)
             }
         case (.water, _):
-            barChart(HealthWidgetDemo.water)
+            barChart(HealthWidgetDemoV5.water)
         case (.weight, .weightNumber):
             BrightLeadingNumberWidgetV5(
-                appearance: HealthWidgetDemo.weightAppearance,
-                value: HealthWidgetDemo.weightPoints.last?.value ?? 0,
-                latest: HealthWidgetDemo.weightPoints.last?.date ?? .now
+                appearance: HealthWidgetDemoV5.weightAppearance,
+                value: HealthWidgetDemoV5.weightPoints.last?.value ?? 0,
+                latest: HealthWidgetDemoV5.weightPoints.last?.date ?? .now
             )
         case (.heartRate, .vo2Number):
             BrightLeadingNumberWidgetV5(
-                appearance: HealthWidgetDemo.vo2MaxAppearance,
-                value: HealthWidgetDemo.vo2MaxPoints.last?.value ?? 0,
-                latest: HealthWidgetDemo.vo2MaxPoints.last?.date ?? .now
+                appearance: HealthWidgetDemoV5.vo2MaxAppearance,
+                value: HealthWidgetDemoV5.vo2MaxPoints.last?.value ?? 0,
+                latest: HealthWidgetDemoV5.vo2MaxPoints.last?.date ?? .now
             )
         case (.weight, _):
             BrightDottedLineChartWidgetV5(
-                appearance: HealthWidgetDemo.weightAppearance,
-                subtitle: HealthWidgetDemo.anchor.formatted(.brightTimestamp),
-                points: HealthWidgetDemo.weightPoints,
+                appearance: HealthWidgetDemoV5.weightAppearance,
+                subtitle: HealthWidgetDemoV5.anchor.formatted(.brightTimestamp),
+                points: HealthWidgetDemoV5.weightPoints,
                 trend: .init(systemImage: "arrow.down", text: "0.36kg Weekly AVG"),
                 showsTrendLine: true,
-                changes: HealthWidgetDemo.weightChanges,
-                note: HealthWidgetDemo.weightNote,
+                changes: HealthWidgetDemoV5.weightChanges,
+                note: HealthWidgetDemoV5.weightNote,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.heartRate, .vo2Line):
             BrightDottedLineChartWidgetV5(
-                appearance: HealthWidgetDemo.vo2MaxAppearance,
-                subtitle: "Latest: \(HealthWidgetDemo.anchor.formatted(.brightTimestamp))",
-                points: HealthWidgetDemo.vo2MaxPoints,
+                appearance: HealthWidgetDemoV5.vo2MaxAppearance,
+                subtitle: "Latest: \(HealthWidgetDemoV5.anchor.formatted(.brightTimestamp))",
+                points: HealthWidgetDemoV5.vo2MaxPoints,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.menstrual, _):
             BrightMenstrualWidgetV5(
-                cycle: HealthWidgetDemo.menstrualCycle,
-                today: HealthWidgetDemo.menstrualToday,
-                nextPeriod: HealthWidgetDemo.nextPeriod,
-                daysUntilPeriod: HealthWidgetDemo.daysUntilPeriod,
-                details: HealthWidgetDemo.menstrualDetails,
+                cycle: HealthWidgetDemoV5.menstrualCycle,
+                today: HealthWidgetDemoV5.menstrualToday,
+                nextPeriod: HealthWidgetDemoV5.nextPeriod,
+                daysUntilPeriod: HealthWidgetDemoV5.daysUntilPeriod,
+                details: HealthWidgetDemoV5.menstrualDetails,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
                 appearance: heartRateAppearance,
-                value: HealthWidgetDemo.heartRate.last?.value ?? 0,
-                latest: HealthWidgetDemo.heartRate.last?.date ?? .now
+                value: HealthWidgetDemoV5.heartRate.last?.value ?? 0,
+                latest: HealthWidgetDemoV5.heartRate.last?.date ?? .now
             )
         case (.macros, .macroRings):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.macroRings, size: widget.size, allowsSelection: allowsSelection) {
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.macroRings, size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.rowTitle, color: widget.kind.tint)
             }
         case (.macros, .macroRing):
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.macroRing(widget.macro)], size: widget.size, allowsSelection: allowsSelection) {
-                ringHeader(widget.macro.title, color: HealthWidgetDemo.macroRing(widget.macro).color)
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemoV5.macroRing(widget.macro)], size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(widget.macro.title, color: HealthWidgetDemoV5.macroRing(widget.macro).color)
             }
         case (.intake, .intakeRing):
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size, allowsSelection: allowsSelection) {
+            BrightRingGroupWidgetV5(rings: [HealthWidgetDemoV5.intakeRing], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.title, color: widget.kind.tint)
             }
         case (.sleep, .sleepStages):
             BrightSleepWidgetV5(
-                segments: HealthWidgetDemo.sleepSegments,
-                asleepMinutes: HealthWidgetDemo.sleepAsleepMinutes,
-                inBedMinutes: HealthWidgetDemo.sleepInBedMinutes,
-                score: HealthWidgetDemo.sleepScore,
-                restingHeartRate: HealthWidgetDemo.sleepRestingHeartRate,
-                heartRateVariability: HealthWidgetDemo.sleepHeartRateVariability,
+                segments: HealthWidgetDemoV5.sleepSegments,
+                asleepMinutes: HealthWidgetDemoV5.sleepAsleepMinutes,
+                inBedMinutes: HealthWidgetDemoV5.sleepInBedMinutes,
+                score: HealthWidgetDemoV5.sleepScore,
+                restingHeartRate: HealthWidgetDemoV5.sleepRestingHeartRate,
+                heartRateVariability: HealthWidgetDemoV5.sleepHeartRateVariability,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.sleep, .sleepVitals):
             BrightDottedRangeChartWidgetV5(
-                appearance: HealthWidgetDemo.sleepVitalsAppearance,
-                measures: HealthWidgetDemo.sleepVitals,
+                appearance: HealthWidgetDemoV5.sleepVitalsAppearance,
+                measures: HealthWidgetDemoV5.sleepVitals,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.sleep, _):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size, allowsSelection: allowsSelection) {
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.sleepRings, size: widget.size, allowsSelection: allowsSelection) {
                 BrightSleepSummaryV5(
-                    asleepMinutes: HealthWidgetDemo.sleepAsleepMinutes,
-                    inBedMinutes: HealthWidgetDemo.sleepInBedMinutes,
-                    score: HealthWidgetDemo.sleepScore
+                    asleepMinutes: HealthWidgetDemoV5.sleepAsleepMinutes,
+                    inBedMinutes: HealthWidgetDemoV5.sleepInBedMinutes,
+                    score: HealthWidgetDemoV5.sleepScore
                 )
             }
         case (.macros, _):
             BrightBarChartWidgetV5(
-                appearance: HealthWidgetDemo.macrosAppearance,
-                subtitle: HealthWidgetDemo.macrosYesterday,
+                appearance: HealthWidgetDemoV5.macrosAppearance,
+                subtitle: HealthWidgetDemoV5.macrosYesterday,
                 range: .week,
-                bars: HealthWidgetDemo.macroWeek,
+                bars: HealthWidgetDemoV5.macroWeek,
                 headline: .split,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
         case (.intake, _):
-            barChart(HealthWidgetDemo.intake)
+            barChart(HealthWidgetDemoV5.intake)
         case (.activity, .activeEnergyBars):
-            barChart(HealthWidgetDemo.activeEnergy)
+            barChart(HealthWidgetDemoV5.activeEnergy)
         case (.activity, .stepBars):
-            barChart(HealthWidgetDemo.steps)
+            barChart(HealthWidgetDemoV5.steps)
         case (.activity, _):
-            barChart(HealthWidgetDemo.totalEnergy)
+            barChart(HealthWidgetDemoV5.totalEnergy)
         }
     }
 
@@ -173,7 +173,7 @@ struct HealthWidgetView: View {
     }
 
     // Small and medium weeks lead with the average; large leads with today and lists the week below.
-    private func barChart(_ metric: HealthWidgetDemo.BarMetric) -> some View {
+    private func barChart(_ metric: HealthWidgetDemoV5.BarMetric) -> some View {
         let range = widget.range
         let isLarge = widget.size == .large
         let headline: BrightBarChartWidgetV5.Headline = range.isWeek ? (isLarge ? .current : .average) : .total
@@ -194,19 +194,20 @@ struct HealthWidgetView: View {
     }
 }
 
-struct HealthWidgetGrid: View {
-    @Bindable var editor: HealthWidgetEditor
+struct HealthWidgetGridV5: View {
+    @Bindable var editor: HealthWidgetEditorV5
+    var onOpen: (HealthWidgetItemV5) -> Void = { _ in }
 
     @State private var containerWidth: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
     @State private var jigglePhase = false
 
-    private var layout: HealthWidgetLayout {
+    private var layout: HealthWidgetLayoutV5 {
         editor.layout
     }
 
     var body: some View {
-        let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: containerWidth)
+        let cellSize = HealthWidgetGridMetricsV5.cellSize(containerWidth: containerWidth)
 
         ZStack(alignment: .topLeading) {
             ForEach(Array(layout.widgets.enumerated()), id: \.element.id) { index, widget in
@@ -215,7 +216,7 @@ struct HealthWidgetGrid: View {
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .frame(
-            height: max(layout.height(cellSize: cellSize), cellSize + HealthWidgetGridMetrics.spacing * 2),
+            height: max(layout.height(cellSize: cellSize), cellSize + HealthWidgetGridMetricsV5.spacing * 2),
             alignment: .top
         )
         .onGeometryChange(for: CGFloat.self, of: \.size.width) { containerWidth = $0 }
@@ -245,14 +246,14 @@ struct HealthWidgetGrid: View {
     }
 
     @ViewBuilder
-    private func tile(_ widget: HealthWidgetItem, index: Int, cellSize: CGFloat) -> some View {
+    private func tile(_ widget: HealthWidgetItemV5, index: Int, cellSize: CGFloat) -> some View {
         if let position = layout.positions[widget.id] {
             let drag = editor.dragging?.widgetID == widget.id ? editor.dragging : nil
             let isLifted = drag?.isLifted == true
-            let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
-            let origin = drag?.location ?? HealthWidgetGridMetrics.origin(of: position, cellSize: cellSize)
+            let frame = HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize)
+            let origin = drag?.location ?? HealthWidgetGridMetricsV5.origin(of: position, cellSize: cellSize)
 
-            HealthWidgetView(widget: widget, allowsSelection: !editor.isEditing)
+            HealthWidgetViewV5(widget: widget, allowsSelection: !editor.isEditing)
                 .frame(width: frame.width, height: frame.height)
                 .contentShape(.rect(cornerRadius: .cardCornerRadius))
                 .overlay(alignment: .topTrailing) {
@@ -273,11 +274,21 @@ struct HealthWidgetGrid: View {
                     BrightHaptic.medium.play()
                     editor.editingWidget = widget
                 }
+                .simultaneousGesture(openGesture(for: widget), isEnabled: !editor.isEditing)
                 .gesture(editor.isEditing ? dragGesture(for: widget, cellSize: cellSize) : nil)
         }
     }
 
-    private func dragGesture(for widget: HealthWidgetItem, cellSize: CGFloat) -> some Gesture {
+    private func openGesture(for widget: HealthWidgetItemV5) -> some Gesture {
+        LongPressGesture(minimumDuration: Constants.openMaxPressDuration)
+            .exclusively(before: TapGesture())
+            .onEnded { value in
+                guard case .second = value else { return }
+                onOpen(widget)
+            }
+    }
+
+    private func dragGesture(for widget: HealthWidgetItemV5, cellSize: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: Constants.dragMinimumDistance, coordinateSpace: .global)
             .onChanged { value in
                 editor.dragChanged(value, widget: widget, cellSize: cellSize, viewportHeight: viewportHeight)
@@ -287,7 +298,7 @@ struct HealthWidgetGrid: View {
             }
     }
 
-    private func removeButton(for widget: HealthWidgetItem) -> some View {
+    private func removeButton(for widget: HealthWidgetItemV5) -> some View {
         BrightRoundButton(systemImage: "minus", size: .extraSmall, haptic: nil) {
             editor.remove(widget)
         }
@@ -299,6 +310,7 @@ struct HealthWidgetGrid: View {
         static let removedScale: CGFloat = 0.92
         static let liftedShadowRadius: CGFloat = 10
         static let dragMinimumDistance: CGFloat = 5
+        static let openMaxPressDuration: Double = 0.3
         static let jiggleInterval: Duration = .milliseconds(100)
     }
 }

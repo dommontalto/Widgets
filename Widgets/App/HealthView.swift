@@ -11,7 +11,7 @@ struct HealthView: View {
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
 
     @State private var selectedPage = HomePage.health.rawValue
-    @State private var editor = HealthWidgetEditor()
+    @State private var editor = HealthWidgetEditorV5()
 
     var body: some View {
         NavigationStack {
@@ -60,7 +60,7 @@ struct HealthView: View {
                     }
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
-                    AddWidgetSheet(widgetCount: editor.layout.widgets.count) {
+                    AddWidgetSheetV5(widgetCount: editor.layout.widgets.count) {
                         editor.add($0)
                     } onReset: {
                         editor.layout.reset()
@@ -77,7 +77,7 @@ struct HealthView: View {
                     .presentationContentInteraction(.scrolls)
                 }
                 .sheet(item: $editor.editingWidget) { widget in
-                    EditWidgetSheet(widget: widget) { edited in
+                    EditWidgetSheetV5(widget: widget) { edited in
                         withAnimation(.brightSpring) {
                             editor.layout.update(edited)
                         }
@@ -126,7 +126,7 @@ struct HealthView: View {
 
     private var healthPage: some View {
         VStack(spacing: .spacing0x) {
-            HealthWidgetGrid(editor: editor)
+            HealthWidgetGridV5(editor: editor)
 
             // Room below the last widget to drag into while editing.
             Spacer(minLength: editor.isEditing ? Constants.editingBottomRoom : .spacing0x)

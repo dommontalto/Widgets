@@ -1,5 +1,5 @@
 //
-//  HealthWidgetSheet.swift
+//  HealthWidgetSheetV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct AddWidgetSheet: View {
+struct AddWidgetSheetV5: View {
     // How many widgets are on the grid now, for the debug stats.
     var widgetCount: Int?
-    let onAdd: (HealthWidgetItem) -> Void
+    let onAdd: (HealthWidgetItemV5) -> Void
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
     var onRemoveAll: (() -> Void)?
     var onShowAll: ((BrightWidgetSizeV5) -> Void)?
-    var onShowFamily: ((HealthWidgetStyle.Family) -> Void)?
+    var onShowFamily: ((HealthWidgetStyleV5.Family) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -26,7 +26,7 @@ struct AddWidgetSheet: View {
             ScrollView {
                 VStack(spacing: .spacing4x) {
                     BrightRowGroupV5(color: .defaultSheetModalCards) {
-                        ForEach(HealthWidgetKind.allCases.sorted { $0.rowTitle < $1.rowTitle }) { kind in
+                        ForEach(HealthWidgetKindV5.allCases.sorted { $0.rowTitle < $1.rowTitle }) { kind in
                             BrightRowV5(kind.rowTitle, icon: .template(kind.rowIcon)) {
                                 path.append(kind)
                             }
@@ -63,7 +63,7 @@ struct AddWidgetSheet: View {
                         }
 
                         if let onShowFamily {
-                            ForEach(HealthWidgetStyle.Family.allCases, id: \.self) { family in
+                            ForEach(HealthWidgetStyleV5.Family.allCases, id: \.self) { family in
                                 BrightRowV5(
                                     "Show \(family.title)",
                                     icon: .symbol("square.stack", tint: .defaultSkyBlue),
@@ -92,16 +92,16 @@ struct AddWidgetSheet: View {
                             BrightRowV5("On the grid", trailing: .value("\(widgetCount)"))
                         }
 
-                        BrightRowV5("Rows", trailing: .value("\(HealthWidgetKind.allCases.count)"))
+                        BrightRowV5("Rows", trailing: .value("\(HealthWidgetKindV5.allCases.count)"))
 
-                        BrightRowV5("Designs", trailing: .value("\(HealthWidgetCatalog.designCount)"))
+                        BrightRowV5("Designs", trailing: .value("\(HealthWidgetCatalogV5.designCount)"))
 
-                        BrightRowV5("With every size", trailing: .value("\(HealthWidgetCatalog.sizedCount)"))
+                        BrightRowV5("With every size", trailing: .value("\(HealthWidgetCatalogV5.sizedCount)"))
 
-                        BrightRowV5("With every option", trailing: .value("\(HealthWidgetCatalog.optionCount)"))
+                        BrightRowV5("With every option", trailing: .value("\(HealthWidgetCatalogV5.optionCount)"))
 
-                        ForEach(HealthWidgetStyle.Family.allCases, id: \.self) { family in
-                            BrightRowV5(family.title, trailing: .value("\(HealthWidgetCatalog.optionCount(of: family))"))
+                        ForEach(HealthWidgetStyleV5.Family.allCases, id: \.self) { family in
+                            BrightRowV5(family.title, trailing: .value("\(HealthWidgetCatalogV5.optionCount(of: family))"))
                         }
                     }
                     #endif
@@ -109,8 +109,8 @@ struct AddWidgetSheet: View {
                 .padding(.vertical, .spacing3x)
             }
             .scrollIndicators(.hidden)
-            .navigationDestination(for: HealthWidgetKind.self) { kind in
-                ChooseWidgetSizePage(kind: kind) { widget in
+            .navigationDestination(for: HealthWidgetKindV5.self) { kind in
+                ChooseWidgetSizePageV5(kind: kind) { widget in
                     onAdd(widget)
                     dismiss()
                 }
@@ -130,13 +130,13 @@ struct AddWidgetSheet: View {
     }
 }
 
-struct EditWidgetSheet: View {
-    let onSave: (HealthWidgetItem) -> Void
+struct EditWidgetSheetV5: View {
+    let onSave: (HealthWidgetItemV5) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var widget: HealthWidgetItem
+    @State private var widget: HealthWidgetItemV5
 
-    init(widget: HealthWidgetItem, onSave: @escaping (HealthWidgetItem) -> Void) {
+    init(widget: HealthWidgetItemV5, onSave: @escaping (HealthWidgetItemV5) -> Void) {
         self.onSave = onSave
         _widget = State(initialValue: widget)
     }
@@ -158,14 +158,14 @@ struct EditWidgetSheet: View {
     }
 }
 
-private struct ChooseWidgetSizePage: View {
-    let onAdd: (HealthWidgetItem) -> Void
+struct ChooseWidgetSizePageV5: View {
+    let onAdd: (HealthWidgetItemV5) -> Void
 
-    @State private var widget: HealthWidgetItem
+    @State private var widget: HealthWidgetItemV5
 
-    init(kind: HealthWidgetKind, onAdd: @escaping (HealthWidgetItem) -> Void) {
+    init(kind: HealthWidgetKindV5, onAdd: @escaping (HealthWidgetItemV5) -> Void) {
         self.onAdd = onAdd
-        _widget = State(initialValue: HealthWidgetItem(kind: kind, style: kind.styles.first ?? .heartLine, size: .small))
+        _widget = State(initialValue: HealthWidgetItemV5(kind: kind, style: kind.styles.first ?? .heartLine, size: .small))
     }
 
     var body: some View {
@@ -191,15 +191,15 @@ private struct ChooseWidgetSizePage: View {
 
 // The widget on top, swiped between its styles, and its settings below.
 private struct WidgetOptions: View {
-    @Binding var widget: HealthWidgetItem
+    @Binding var widget: HealthWidgetItemV5
 
-    @State private var stylePosition = ScrollPosition(idType: HealthWidgetStyle.self)
+    @State private var stylePosition = ScrollPosition(idType: HealthWidgetStyleV5.self)
     @State private var edgeProgress: CGFloat = 0
 
     var body: some View {
         GeometryReader { geometry in
-            let cellSize = HealthWidgetGridMetrics.cellSize(containerWidth: geometry.size.width)
-            let frame = HealthWidgetGridMetrics.frame(for: widget.size, cellSize: cellSize)
+            let cellSize = HealthWidgetGridMetricsV5.cellSize(containerWidth: geometry.size.width)
+            let frame = HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize)
             // Floored at zero: the first layout pass can measure the sheet as zero tall.
             let previewHeight = max(
                 min(
@@ -219,8 +219,8 @@ private struct WidgetOptions: View {
             }
         }
         .animation(.brightBouncy, value: widget.size)
-        .animation(.brightEaseInOut, value: widget.range)
-        .animation(.brightEaseInOut, value: widget.macro)
+        .animation(.brightBouncy, value: widget.range)
+        .animation(.brightBouncy, value: widget.macro)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -241,7 +241,7 @@ private struct WidgetOptions: View {
             .scrollIndicators(.hidden)
             .scrollTargetBehavior(.paging)
             .scrollPosition($stylePosition)
-            .onScrollTargetVisibilityChange(idType: HealthWidgetStyle.self, threshold: Constants.visibilityThreshold) { visible in
+            .onScrollTargetVisibilityChange(idType: HealthWidgetStyleV5.self, threshold: Constants.visibilityThreshold) { visible in
                 if let style = visible.first, style != widget.style {
                     select(style)
                 }
@@ -253,13 +253,13 @@ private struct WidgetOptions: View {
     }
 
     // Shrinks to fit when the sheet is too short to show it at grid size.
-    private func preview(of style: HealthWidgetStyle, cellSize: CGFloat, room: CGFloat) -> some View {
+    private func preview(of style: HealthWidgetStyleV5, cellSize: CGFloat, room: CGFloat) -> some View {
         var shown = widget
         shown.adopt(style)
-        let frame = HealthWidgetGridMetrics.frame(for: shown.size, cellSize: cellSize)
+        let frame = HealthWidgetGridMetricsV5.frame(for: shown.size, cellSize: cellSize)
         let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
 
-        return HealthWidgetView(widget: shown)
+        return HealthWidgetViewV5(widget: shown)
             .frame(width: frame.width, height: frame.height)
             .scaleEffect(scale)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -300,7 +300,7 @@ private struct WidgetOptions: View {
 
             if widget.style == .macroRing {
                 BrightRowGroupV5(header: "Macro") {
-                    ForEach(HealthMacro.allCases) { option in
+                    ForEach(HealthMacroV5.allCases) { option in
                         BrightRowV5(option.title, trailing: .tick(option == widget.macro)) {
                             BrightHaptic.light.play()
                             widget.macro = option
@@ -333,7 +333,7 @@ private struct WidgetOptions: View {
     }
 
     // A style that can't be shown at the current size takes its first size instead.
-    private func select(_ style: HealthWidgetStyle) {
+    private func select(_ style: HealthWidgetStyleV5) {
         BrightHaptic.light.play()
         widget.adopt(style)
     }

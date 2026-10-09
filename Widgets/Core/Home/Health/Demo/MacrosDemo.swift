@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     static let macrosAppearance = BrightWidgetAppearanceV5(
         title: "Weekly Macros",
         systemImage: "chart.pie.fill",
@@ -23,7 +23,7 @@ extension HealthWidgetDemo {
         .init(label: "Protein", shortLabel: "P", value: 102, goal: 140, color: .defaultPink),
     ]
 
-    static func macroRing(_ macro: HealthMacro) -> BrightRingGroupWidgetV5.Ring {
+    static func macroRing(_ macro: HealthMacroV5) -> BrightRingGroupWidgetV5.Ring {
         switch macro {
         case .carbs: macroRings[0]
         case .fats: macroRings[1]

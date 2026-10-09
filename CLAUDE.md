@@ -39,7 +39,7 @@ Widgets/
 │   │   ├── Health/
 │   │   │   ├── Dashboard/Components/
 │   │   │   ├── Demo/         — demo data for the home widgets
-│   │   │   └── WidgetEditor/ — grid layout, jiggle/drag edit mode, add and edit sheets
+│   │   │   └── WidgetEditorV5/ — grid layout, jiggle/drag edit mode, add and edit sheets
 │   │   └── Waypoint/
 │   ├── Lighthouse/         — Demo, Models, Shared, Views
 │   ├── Profile/            — addresses, cards, orders, side menu

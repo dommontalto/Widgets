@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     static let weightAppearance = BrightWidgetAppearanceV5(
         title: "Weight",
         systemImage: "scalemass.fill",

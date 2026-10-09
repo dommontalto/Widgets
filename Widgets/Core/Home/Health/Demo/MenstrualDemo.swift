@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     // A 34-day cycle, ten days in: period for five, the window from 14 to 19 with
     // ovulation on 18, and the luteal days showing from 27.
     static let menstrualCycle = BrightMenstrualWidgetV5.Cycle(

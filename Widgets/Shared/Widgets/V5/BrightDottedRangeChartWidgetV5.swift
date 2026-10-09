@@ -31,11 +31,23 @@ struct BrightDottedRangeChartWidgetV5: View {
             !normalRange.contains(value)
         }
 
+        var band: Band {
+            if value > normalRange.upperBound { return .upper }
+            if value < normalRange.lowerBound { return .lower }
+            return .normal
+        }
+
         var reading: String {
             let number = value.formatted(.number.precision(.fractionLength(0 ... decimals)))
             let signed = isSigned && value > 0 ? "+\(number)" : number
             return [signed, unit].compactMap(\.self).joined(separator: " ")
         }
+    }
+
+    enum Band {
+        case upper
+        case normal
+        case lower
     }
 
     let appearance: BrightWidgetAppearanceV5
@@ -112,15 +124,18 @@ struct BrightDottedRangeChartWidgetV5: View {
     // MARK: - Bands
 
     // Out of range above, normal, out of range below, each washing down from a line
-    // along its top.
+    // along its top. Holding a column leaves only the band its dot sits in.
     private var bands: some View {
         GeometryReader { geometry in
             let layout = BandLayout(height: geometry.size.height)
 
             ZStack(alignment: .topLeading) {
                 band(Constants.outerColor, top: layout.upperTop, height: layout.outerHeight)
+                    .opacity(opacity(of: .upper))
                 band(Color.defaultCyan, top: layout.normalTop, height: layout.normalHeight)
+                    .opacity(opacity(of: .normal))
                 band(Constants.outerColor, top: layout.lowerTop, height: layout.outerHeight)
+                    .opacity(opacity(of: .lower))
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
         }
@@ -252,6 +267,11 @@ struct BrightDottedRangeChartWidgetV5: View {
         selectedID == nil || selectedID == measure.id ? .opaque : .ultraLowOpacity
     }
 
+    private func opacity(of band: Band) -> Double {
+        guard let selectedMeasure else { return .opaque }
+        return selectedMeasure.band == band ? .opaque : .ultraLowOpacity
+    }
+
     private func columnCentre(_ index: Int, in width: CGFloat) -> CGFloat {
         width * (CGFloat(index) + 0.5) / CGFloat(max(measures.count, 1))
     }
@@ -275,11 +295,10 @@ struct BrightDottedRangeChartWidgetV5: View {
 
         func y(for measure: Measure, inset: CGFloat) -> CGFloat {
             let range = measure.normalRange
-            if measure.value > range.upperBound {
-                return upperTop + outerHeight / 2
-            }
-            if measure.value < range.lowerBound {
-                return lowerTop + outerHeight / 2
+            switch measure.band {
+            case .upper: return upperTop + outerHeight / 2
+            case .lower: return lowerTop + outerHeight / 2
+            case .normal: break
             }
             let span = range.upperBound - range.lowerBound
             let share = span > 0 ? (measure.value - range.lowerBound) / span : 0.5

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     static let heartRate: [BrightLineChartWidgetV5.Sample] = heartRateValues.enumerated().map { minute, value in
         BrightLineChartWidgetV5.Sample(date: minutesAgo(heartRateValues.count - 1 - minute), value: value)
     }

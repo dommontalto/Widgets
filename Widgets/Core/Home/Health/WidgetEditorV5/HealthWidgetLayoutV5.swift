@@ -1,5 +1,5 @@
 //
-//  HealthWidgetLayout.swift
+//  HealthWidgetLayoutV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -8,7 +8,7 @@
 import SwiftUI
 
 // In alphabetical order of their row names, and every switch over them follows it.
-enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
+enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity
     case heartRate
     case intake
@@ -87,7 +87,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         }
     }
 
-    var styles: [HealthWidgetStyle] {
+    var styles: [HealthWidgetStyleV5] {
         switch self {
         case .activity: [.totalEnergyBars, .activeEnergyBars, .stepBars]
         case .heartRate: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
@@ -101,7 +101,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
     }
 }
 
-enum HealthMacro: String, CaseIterable, Codable, Identifiable {
+enum HealthMacroV5: String, CaseIterable, Codable, Identifiable {
     case carbs
     case fats
     case protein
@@ -118,10 +118,10 @@ enum HealthMacro: String, CaseIterable, Codable, Identifiable {
 }
 
 // Counts across everything the add sheet can make, for the debug stats.
-enum HealthWidgetCatalog {
+enum HealthWidgetCatalogV5 {
     // Each kind's designs, paired with it.
-    static var designs: [(kind: HealthWidgetKind, style: HealthWidgetStyle)] {
-        HealthWidgetKind.allCases.flatMap { kind in kind.styles.map { (kind, $0) } }
+    static var designs: [(kind: HealthWidgetKindV5, style: HealthWidgetStyleV5)] {
+        HealthWidgetKindV5.allCases.flatMap { kind in kind.styles.map { (kind, $0) } }
     }
 
     static var designCount: Int {
@@ -136,20 +136,20 @@ enum HealthWidgetCatalog {
         designs.reduce(0) { $0 + options(of: $1.style) }
     }
 
-    static func optionCount(of family: HealthWidgetStyle.Family) -> Int {
+    static func optionCount(of family: HealthWidgetStyleV5.Family) -> Int {
         designs.filter { $0.style.family == family }.reduce(0) { $0 + options(of: $1.style) }
     }
 
     // Every size, range and macro a design can be set to.
-    private static func options(of style: HealthWidgetStyle) -> Int {
-        style.sizes.count * max(style.ranges.count, 1) * (style == .macroRing ? HealthMacro.allCases.count : 1)
+    private static func options(of style: HealthWidgetStyleV5) -> Int {
+        style.sizes.count * max(style.ranges.count, 1) * (style == .macroRing ? HealthMacroV5.allCases.count : 1)
     }
 }
 
 // The alternative designs a kind can be shown as, swiped between in the add and edit sheets.
 // Each belongs to one kind, named for what it shows, and grouped in the kinds' order;
 // `family` says which widget draws it.
-enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
+enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable {
     // MARK: Activity
     case totalEnergyBars
     case activeEnergyBars
@@ -287,23 +287,31 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     }
 }
 
-struct HealthWidgetItem: Identifiable, Codable, Equatable {
+struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
     var id = UUID()
-    var kind: HealthWidgetKind
-    var style = HealthWidgetStyle.heartLine
+    var kind: HealthWidgetKindV5
+    var style = HealthWidgetStyleV5.heartLine
     var size: BrightWidgetSizeV5
     var range = BrightWidgetRangeV5.rolling1h
-    var macro = HealthMacro.carbs
+    var macro = HealthMacroV5.carbs
 
-    init(kind: HealthWidgetKind, style: HealthWidgetStyle = .heartLine, size: BrightWidgetSizeV5) {
+    init(
+        kind: HealthWidgetKindV5,
+        style: HealthWidgetStyleV5 = .heartLine,
+        size: BrightWidgetSizeV5,
+        range: BrightWidgetRangeV5? = nil
+    ) {
         self.kind = kind
         self.size = size
         adopt(style)
+        if let range, style.ranges.contains(range) {
+            self.range = range
+        }
     }
 
     // Switches style, falling back to its first size and first range where the current
     // ones aren't offered.
-    mutating func adopt(_ style: HealthWidgetStyle) {
+    mutating func adopt(_ style: HealthWidgetStyleV5) {
         self.style = style
         if !style.sizes.contains(size), let first = style.sizes.first {
             size = first
@@ -314,13 +322,13 @@ struct HealthWidgetItem: Identifiable, Codable, Equatable {
     }
 }
 
-struct HealthGridPosition: Equatable, Hashable {
+struct HealthGridPositionV5: Equatable, Hashable {
     var row: Int
     var col: Int
 }
 
 // Shared by the grid and the size picker so a preview is drawn at the size it lands at.
-enum HealthWidgetGridMetrics {
+enum HealthWidgetGridMetricsV5 {
     static let columns = 2
     static let spacing: CGFloat = .spacing205x
 
@@ -337,21 +345,27 @@ enum HealthWidgetGridMetrics {
         return cellSize * count + spacing * (count - 1)
     }
 
-    static func origin(of position: HealthGridPosition, cellSize: CGFloat) -> CGPoint {
+    static func origin(of position: HealthGridPositionV5, cellSize: CGFloat) -> CGPoint {
         let stride = cellSize + spacing
         return CGPoint(x: CGFloat(position.col) * stride + spacing, y: CGFloat(position.row) * stride + spacing)
     }
 }
 
 @Observable
-final class HealthWidgetLayout {
-    private(set) var widgets: [HealthWidgetItem]
-    private(set) var positions: [UUID: HealthGridPosition] = [:]
+final class HealthWidgetLayoutV5 {
+    private(set) var widgets: [HealthWidgetItemV5]
+    private(set) var positions: [UUID: HealthGridPositionV5] = [:]
 
-    static let defaultWidgets: [HealthWidgetItem] = [
-        HealthWidgetItem(kind: .heartRate, size: .small),
-        HealthWidgetItem(kind: .heartRate, size: .medium),
-        HealthWidgetItem(kind: .heartRate, size: .large),
+    static let defaultWidgets: [HealthWidgetItemV5] = [
+        HealthWidgetItemV5(kind: .activity, style: .totalEnergyBars, size: .small, range: .week),
+        HealthWidgetItemV5(kind: .activity, style: .stepBars, size: .small),
+        HealthWidgetItemV5(kind: .macros, style: .macroBars, size: .medium),
+        HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium),
+        HealthWidgetItemV5(kind: .sleep, style: .sleepStages, size: .medium),
+        HealthWidgetItemV5(kind: .sleep, style: .sleepVitals, size: .medium),
+        HealthWidgetItemV5(kind: .water, style: .waterRing, size: .medium),
+        HealthWidgetItemV5(kind: .weight, style: .weightLine, size: .large),
+        HealthWidgetItemV5(kind: .menstrual, style: .menstrualCycle, size: .medium),
     ]
 
     init() {
@@ -361,7 +375,7 @@ final class HealthWidgetLayout {
 
     // MARK: - Editing
 
-    func add(_ widget: HealthWidgetItem) {
+    func add(_ widget: HealthWidgetItemV5) {
         widgets.append(widget)
         commit()
     }
@@ -373,17 +387,17 @@ final class HealthWidgetLayout {
     }
 
     // The same, for every size of one family of widget, such as all the line charts.
-    func showAll(_ family: HealthWidgetStyle.Family) {
+    func showAll(_ family: HealthWidgetStyleV5.Family) {
         showAll { style, _ in style.family == family }
     }
 
-    private func showAll(where includes: (HealthWidgetStyle, BrightWidgetSizeV5) -> Bool) {
-        widgets = HealthWidgetKind.allCases.flatMap { kind in
+    private func showAll(where includes: (HealthWidgetStyleV5, BrightWidgetSizeV5) -> Bool) {
+        widgets = HealthWidgetKindV5.allCases.flatMap { kind in
             kind.styles.flatMap { style in
                 style.sizes.filter { includes(style, $0) }.flatMap { size in
                     style.ranges.flatMap { range in
-                        (style == .macroRing ? HealthMacro.allCases : [HealthMacro.carbs]).map { macro in
-                            var widget = HealthWidgetItem(kind: kind, style: style, size: size)
+                        (style == .macroRing ? HealthMacroV5.allCases : [HealthMacroV5.carbs]).map { macro in
+                            var widget = HealthWidgetItemV5(kind: kind, style: style, size: size)
                             widget.range = range
                             widget.macro = macro
                             return widget
@@ -402,10 +416,10 @@ final class HealthWidgetLayout {
 
     // Every kind in every style at every size it comes in, for checking them all at once.
     func addAll() {
-        for kind in HealthWidgetKind.allCases {
+        for kind in HealthWidgetKindV5.allCases {
             for style in kind.styles {
                 for size in style.sizes {
-                    widgets.append(HealthWidgetItem(kind: kind, style: style, size: size))
+                    widgets.append(HealthWidgetItemV5(kind: kind, style: style, size: size))
                 }
             }
         }
@@ -417,7 +431,7 @@ final class HealthWidgetLayout {
         commit()
     }
 
-    func update(_ widget: HealthWidgetItem) {
+    func update(_ widget: HealthWidgetItemV5) {
         guard let index = widgets.firstIndex(where: { $0.id == widget.id }) else { return }
         widgets[index] = widget
         commit()
@@ -429,14 +443,14 @@ final class HealthWidgetLayout {
     }
 
     // Repacks around a widget held at `position` while it is being dragged.
-    func preview(_ widget: HealthWidgetItem, at position: HealthGridPosition) {
+    func preview(_ widget: HealthWidgetItemV5, at position: HealthGridPositionV5) {
         let lastRow = widgets
             .filter { $0.id != widget.id }
             .compactMap { other in positions[other.id].map { $0.row + other.size.rows } }
             .max() ?? 0
-        let pinned = HealthGridPosition(
+        let pinned = HealthGridPositionV5(
             row: min(max(position.row, 0), lastRow + 1),
-            col: min(position.col, HealthWidgetGridMetrics.columns - widget.size.columns)
+            col: min(position.col, HealthWidgetGridMetricsV5.columns - widget.size.columns)
         )
         pack(pinning: (widget, pinned))
     }
@@ -452,25 +466,25 @@ final class HealthWidgetLayout {
 
     // MARK: - Geometry
 
-    func cell(at point: CGPoint, cellSize: CGFloat) -> HealthGridPosition? {
-        let spacing = HealthWidgetGridMetrics.spacing
+    func cell(at point: CGPoint, cellSize: CGFloat) -> HealthGridPositionV5? {
+        let spacing = HealthWidgetGridMetricsV5.spacing
         let stride = cellSize + spacing
         guard point.x >= 0, point.y >= 0 else { return nil }
 
         let row = Int(point.y / stride)
         let col = point.x < stride + spacing / 2 ? 0 : 1
-        guard point.x < stride * CGFloat(HealthWidgetGridMetrics.columns) + spacing else { return nil }
+        guard point.x < stride * CGFloat(HealthWidgetGridMetricsV5.columns) + spacing else { return nil }
 
         let cellTop = CGFloat(row) * stride + spacing
         guard point.y >= cellTop - spacing / 2, point.y <= cellTop + cellSize + spacing / 2 else { return nil }
-        return HealthGridPosition(row: row, col: col)
+        return HealthGridPositionV5(row: row, col: col)
     }
 
     func height(cellSize: CGFloat) -> CGFloat {
         let rows = widgets
             .compactMap { widget in positions[widget.id].map { $0.row + widget.size.rows } }
             .max() ?? 0
-        return CGFloat(rows) * (cellSize + HealthWidgetGridMetrics.spacing) + HealthWidgetGridMetrics.spacing
+        return CGFloat(rows) * (cellSize + HealthWidgetGridMetricsV5.spacing) + HealthWidgetGridMetricsV5.spacing
     }
 
     // MARK: - Private
@@ -482,9 +496,9 @@ final class HealthWidgetLayout {
 
     // First-fit packing in reading order. A pinned widget claims its cells first
     // and everything else flows around it.
-    private func pack(pinning pinned: (widget: HealthWidgetItem, position: HealthGridPosition)? = nil) {
+    private func pack(pinning pinned: (widget: HealthWidgetItemV5, position: HealthGridPositionV5)? = nil) {
         var occupancy = Occupancy()
-        var placed: [UUID: HealthGridPosition] = [:]
+        var placed: [UUID: HealthGridPositionV5] = [:]
 
         if let pinned {
             occupancy.mark(pinned.position, size: pinned.widget.size)
@@ -505,19 +519,19 @@ final class HealthWidgetLayout {
         UserDefaults.standard.set(data, forKey: Constants.storageKey)
     }
 
-    private static func loadSaved() -> [HealthWidgetItem]? {
+    private static func loadSaved() -> [HealthWidgetItemV5]? {
         guard let data = UserDefaults.standard.data(forKey: Constants.storageKey) else { return nil }
-        return try? JSONDecoder().decode([HealthWidgetItem].self, from: data)
+        return try? JSONDecoder().decode([HealthWidgetItemV5].self, from: data)
     }
 
     private struct Occupancy {
         private var rows: [[Bool]] = []
 
-        mutating func firstFit(for size: BrightWidgetSizeV5) -> HealthGridPosition {
+        mutating func firstFit(for size: BrightWidgetSizeV5) -> HealthGridPositionV5 {
             var row = 0
             while true {
-                for col in 0 ... (HealthWidgetGridMetrics.columns - size.columns) {
-                    let position = HealthGridPosition(row: row, col: col)
+                for col in 0 ... (HealthWidgetGridMetricsV5.columns - size.columns) {
+                    let position = HealthGridPositionV5(row: row, col: col)
                     if isFree(position, size: size) {
                         return position
                     }
@@ -526,7 +540,7 @@ final class HealthWidgetLayout {
             }
         }
 
-        mutating func mark(_ position: HealthGridPosition, size: BrightWidgetSizeV5) {
+        mutating func mark(_ position: HealthGridPositionV5, size: BrightWidgetSizeV5) {
             grow(to: position.row + size.rows)
             for row in position.row ..< position.row + size.rows {
                 for col in position.col ..< position.col + size.columns {
@@ -535,7 +549,7 @@ final class HealthWidgetLayout {
             }
         }
 
-        private mutating func isFree(_ position: HealthGridPosition, size: BrightWidgetSizeV5) -> Bool {
+        private mutating func isFree(_ position: HealthGridPositionV5, size: BrightWidgetSizeV5) -> Bool {
             grow(to: position.row + size.rows)
             for row in position.row ..< position.row + size.rows {
                 for col in position.col ..< position.col + size.columns where rows[row][col] {
@@ -547,12 +561,12 @@ final class HealthWidgetLayout {
 
         private mutating func grow(to count: Int) {
             while rows.count < count {
-                rows.append(Array(repeating: false, count: HealthWidgetGridMetrics.columns))
+                rows.append(Array(repeating: false, count: HealthWidgetGridMetricsV5.columns))
             }
         }
     }
 
     private enum Constants {
-        static let storageKey = "healthWidgetLayout"
+        static let storageKey = "healthWidgetLayoutV5"
     }
 }

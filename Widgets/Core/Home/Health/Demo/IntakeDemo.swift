@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     static let intake = BarMetric(
         appearance: BrightWidgetAppearanceV5(title: "Intake", systemImage: "arrow.right", tint: .defaultGreen, unit: "Cal"),
         fill: .solid(.defaultGreen),

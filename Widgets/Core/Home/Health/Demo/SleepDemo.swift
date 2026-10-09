@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     // Last night's stages, each as a share of the time asleep. The captions are written
     // out until the date-format file has a duration style.
     static let sleepRings: [BrightRingGroupWidgetV5.Ring] = [

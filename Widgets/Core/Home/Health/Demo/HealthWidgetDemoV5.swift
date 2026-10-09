@@ -1,5 +1,5 @@
 //
-//  HealthWidgetDemo.swift
+//  HealthWidgetDemoV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -9,7 +9,7 @@ import SwiftUI
 
 // Demo readings for the home widgets, one file per measure. All of it is dated from
 // launch, so the widgets always look live.
-enum HealthWidgetDemo {
+enum HealthWidgetDemoV5 {
     static let anchor = Date.now
 
     // One bar measure: its readings for each hour of a day and for the last seven days,
@@ -40,12 +40,12 @@ enum HealthWidgetDemo {
             if range.isRolling {
                 // Wraps into yesterday, which the demo treats as the same day again.
                 return (0 ..< range.slotCount).map { index in
-                    let hour = (HealthWidgetDemo.currentHour - (range.slotCount - 1) + index + 24) % 24
+                    let hour = (HealthWidgetDemoV5.currentHour - (range.slotCount - 1) + index + 24) % 24
                     return BrightBarChartWidgetV5.Bar(index: index, value: hourly[hour])
                 }
             }
-            let start = Calendar.current.component(.hour, from: range.interval(endingAt: HealthWidgetDemo.anchor).start)
-            let current = HealthWidgetDemo.currentHour - start
+            let start = Calendar.current.component(.hour, from: range.interval(endingAt: HealthWidgetDemoV5.anchor).start)
+            let current = HealthWidgetDemoV5.currentHour - start
             return (0 ..< range.slotCount).map { index in
                 BrightBarChartWidgetV5.Bar(index: index, value: index <= current ? hourly[(start + index) % 24] : nil)
             }
@@ -60,11 +60,11 @@ enum HealthWidgetDemo {
         }
 
         func subtitle(for range: BrightWidgetRangeV5) -> String {
-            customSubtitle?(range) ?? "Latest: \(HealthWidgetDemo.currentHourRange)"
+            customSubtitle?(range) ?? "Latest: \(HealthWidgetDemoV5.currentHourRange)"
         }
 
         var weekBars: [BrightBarChartWidgetV5.Bar] {
-            let today = HealthWidgetDemo.currentWeekday
+            let today = HealthWidgetDemoV5.currentWeekday
             return (0 ..< daily.count).map { index in
                 guard index <= today else {
                     return BrightBarChartWidgetV5.Bar(index: index, value: nil)

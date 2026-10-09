@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension HealthWidgetDemo {
+extension HealthWidgetDemoV5 {
     static let water = BarMetric(
         appearance: BrightWidgetAppearanceV5(
             title: "Water",
