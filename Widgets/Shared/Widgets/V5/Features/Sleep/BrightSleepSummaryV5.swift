@@ -17,11 +17,13 @@ struct BrightSleepSummaryV5: View {
     var isCompact = false
 
     var body: some View {
-        HStack(spacing: isCompact ? .spacing1x : .spacing3x) {
-            total(systemImage: "bed.double", color: .defaultCyan, minutes: inBedMinutes)
+        HStack(spacing: .spacing0x) {
+            HStack(spacing: .spacing3x) {
+                total(systemImage: "bed.double", color: .defaultCyan, minutes: inBedMinutes)
 
-            if !isCompact {
-                total(systemImage: "zzz", color: .defaultBrightViolet, minutes: asleepMinutes)
+                if !isCompact {
+                    total(systemImage: "zzz", color: .defaultBrightViolet, minutes: asleepMinutes)
+                }
             }
 
             Spacer(minLength: .spacing0x)
