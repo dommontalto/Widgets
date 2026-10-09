@@ -13,7 +13,7 @@ struct HealthWidgetView: View {
 
     var body: some View {
         switch (widget.kind, widget.style) {
-        case (.heartRate, .lineChart):
+        case (.heartRate, .heartLine):
             BrightLineChartWidgetV5(
                 appearance: heartRateAppearance,
                 samples: HealthWidgetDemo.heartRate,
@@ -22,7 +22,7 @@ struct HealthWidgetView: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
-        case (.water, .leadingNumber):
+        case (.water, .waterNumber):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemo.water.appearance,
                 value: HealthWidgetDemo.waterToday,
@@ -48,7 +48,7 @@ struct HealthWidgetView: View {
             }
         case (.water, _):
             barChart(HealthWidgetDemo.water)
-        case (.weight, .leadingNumber):
+        case (.weight, .weightNumber):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemo.weightAppearance,
                 value: HealthWidgetDemo.weightPoints.last?.value ?? 0,
@@ -108,6 +108,17 @@ struct HealthWidgetView: View {
             BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.title, color: widget.kind.tint)
             }
+        case (.sleep, .sleepStages):
+            BrightSleepWidgetV5(
+                segments: HealthWidgetDemo.sleepSegments,
+                asleepMinutes: HealthWidgetDemo.sleepAsleepMinutes,
+                inBedMinutes: HealthWidgetDemo.sleepInBedMinutes,
+                score: HealthWidgetDemo.sleepScore,
+                restingHeartRate: HealthWidgetDemo.sleepRestingHeartRate,
+                heartRateVariability: HealthWidgetDemo.sleepHeartRateVariability,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.sleep, .sleepVitals):
             BrightDottedRangeChartWidgetV5(
                 appearance: HealthWidgetDemo.sleepVitalsAppearance,
@@ -117,7 +128,11 @@ struct HealthWidgetView: View {
             )
         case (.sleep, _):
             BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size, allowsSelection: allowsSelection) {
-                SleepRingsHeader()
+                BrightSleepSummaryV5(
+                    asleepMinutes: HealthWidgetDemo.sleepAsleepMinutes,
+                    inBedMinutes: HealthWidgetDemo.sleepInBedMinutes,
+                    score: HealthWidgetDemo.sleepScore
+                )
             }
         case (.macros, _):
             BrightBarChartWidgetV5(

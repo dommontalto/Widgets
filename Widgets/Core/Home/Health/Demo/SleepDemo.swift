@@ -18,6 +18,25 @@ extension HealthWidgetDemo {
     ]
 
     static let sleepScore = 82
+    static let sleepAsleepMinutes = 8 * 60 + 24
+    static let sleepInBedMinutes = 8 * 60 + 45
+    static let sleepRestingHeartRate = 46
+    static let sleepHeartRateVariability = 76
+
+    // Last night's stages from a 10:45 PM bedtime, each lasting this many minutes.
+    static var sleepSegments: [BrightSleepWidgetV5.Segment] {
+        let stages: [(BrightSleepWidgetV5.Stage, Double)] = [
+            (.awake, 11), (.rem, 26), (.core, 18), (.rem, 6), (.core, 13), (.deep, 53), (.rem, 5), (.awake, 5),
+            (.rem, 14), (.core, 18), (.core, 61), (.core, 19), (.awake, 8), (.rem, 27), (.deep, 69), (.rem, 16),
+            (.core, 46), (.rem, 6), (.awake, 5), (.rem, 22), (.awake, 3), (.rem, 6), (.awake, 5), (.rem, 6),
+            (.awake, 13), (.rem, 13), (.awake, 32),
+        ]
+        let bedtime = Calendar.current.startOfDay(for: anchor).addingTimeInterval(-75 * 60)
+        return stages.indices.map { index in
+            let start = bedtime.addingTimeInterval(stages[..<index].reduce(0) { $0 + $1.1 } * 60)
+            return .init(stage: stages[index].0, start: start, end: start.addingTimeInterval(stages[index].1 * 60))
+        }
+    }
 
     static let sleepVitalsAppearance = BrightWidgetAppearanceV5(title: "Sleep Vitals", systemImage: "moon.fill", tint: .defaultCyan)
 
@@ -29,42 +48,5 @@ extension HealthWidgetDemo {
         .init(label: "HRV", systemImage: "waveform.path.ecg.rectangle.fill", iconColor: .defaultRed, value: 34, normalRange: 30 ... 70, unit: "ms"),
     ]
 
-    private static let sleepMinutes: Double = 8 * 60 + 24
-}
-
-// Time asleep, time in bed, and the night's score.
-struct SleepRingsHeader: View {
-    var body: some View {
-        HStack(spacing: .spacing3x) {
-            total(systemImage: "zzz", color: .defaultBrightViolet, hours: 8, minutes: 24)
-
-            total(systemImage: "bed.double", color: .defaultCyan, hours: 8, minutes: 45)
-
-            Spacer(minLength: .spacing0x)
-
-            HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                BrightText("\(HealthWidgetDemo.sleepScore)", size: .heading, color: .defaultGreen, weight: .regular)
-                    .monospacedDigit()
-
-                BrightText("%", size: .body5, color: .defaultGreen.opacity(.lowOpacity), weight: .regular)
-            }
-            .padding(.horizontal, .spacing1x)
-            .padding(.vertical, .spacing05x)
-            .background(Capsule().fill(Color.defaultGreen.opacity(.minimalOpacity)))
-        }
-        .lineLimit(1)
-    }
-
-    private func total(systemImage: String, color: Color, hours: Int, minutes: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            Image(systemName: systemImage)
-                .font(.standard(size: .heading, weight: .light))
-                .foregroundStyle(color)
-
-            BrightText("\(hours)", size: .standout3)
-            BrightText("hr", size: .body3, color: .lightTextColor)
-            BrightText("\(minutes)", size: .standout3)
-            BrightText("m", size: .body3, color: .lightTextColor)
-        }
-    }
+    private static let sleepMinutes = Double(sleepAsleepMinutes)
 }

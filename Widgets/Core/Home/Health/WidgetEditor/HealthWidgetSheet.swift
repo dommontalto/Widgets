@@ -165,7 +165,7 @@ private struct ChooseWidgetSizePage: View {
 
     init(kind: HealthWidgetKind, onAdd: @escaping (HealthWidgetItem) -> Void) {
         self.onAdd = onAdd
-        _widget = State(initialValue: HealthWidgetItem(kind: kind, style: kind.styles.first ?? .lineChart, size: .small))
+        _widget = State(initialValue: HealthWidgetItem(kind: kind, style: kind.styles.first ?? .heartLine, size: .small))
     }
 
     var body: some View {
