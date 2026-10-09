@@ -27,6 +27,7 @@ struct BrightRingGroupWidgetV5: View {
         var decimals = 0
         // Going over turns the amount orange; off for goals where more is fine, like water.
         var warnsWhenOver = true
+        var image: String?
 
         var id: String { label }
 
@@ -114,7 +115,7 @@ struct BrightRingGroupWidgetV5: View {
     // The first ring on top with its amount above, the other two below with theirs underneath.
     // The bottom pair tuck up under the top ring, so the three sit packed together.
     private var triangleLayout: some View {
-        VStack(spacing: -.spacing1x) {
+        VStack(spacing: Constants.triangleRowSpacing) {
             if let top = rings.first {
                 VStack(spacing: .spacing05x) {
                     caption(for: top)
@@ -124,7 +125,7 @@ struct BrightRingGroupWidgetV5: View {
                 .opacity(opacity(of: top))
             }
 
-            HStack(alignment: .top, spacing: .spacing105x) {
+            HStack(alignment: .top, spacing: Constants.triangleGap) {
                 ForEach(rings.dropFirst()) { ring in
                     VStack(spacing: .spacing05x) {
                         self.ring(ring, showsLabel: true)
@@ -214,6 +215,7 @@ struct BrightRingGroupWidgetV5: View {
             progress: ring.progress,
             color: ring.color,
             label: showsLabel ? ring.shortLabel : nil,
+            image: ring.image,
             size: ringSize ?? (size == .small ? .small : .medium),
             overColor: overColor(of: ring)
         )
@@ -353,6 +355,14 @@ struct BrightRingGroupWidgetV5: View {
 
     private func display(_ value: Double, of ring: Ring) -> String {
         value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
+    }
+
+    private enum Constants {
+        static let triangleGap: CGFloat = .spacing105x
+        static let triangleRowSpacing: CGFloat = {
+            let diameter = BrightRingV5.Size.small.diameter
+            return (diameter + triangleGap) * sqrt(3) / 2 - diameter
+        }()
     }
 }
 

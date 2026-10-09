@@ -17,6 +17,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case sleep
     case water
     case weight
+    case wellbeing
 
     var id: Self { self }
 
@@ -30,6 +31,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
+        case .wellbeing: "Wellbeing"
         }
     }
 
@@ -44,6 +46,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
+        case .wellbeing: "Wellbeing"
         }
     }
 
@@ -57,6 +60,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: "bed.double.fill"
         case .water: "drop.fill"
         case .weight: "scalemass.fill"
+        case .wellbeing: "arrow.triangle.2.circlepath"
         }
     }
 
@@ -71,6 +75,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: ImageNames.sleepInfoV4
         case .water: ImageNames.waterIconV5
         case .weight: ImageNames.weightIconV4
+        case .wellbeing: ImageNames.recoveryV5
         }
     }
 
@@ -84,6 +89,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: .defaultBlue
         case .water: .defaultCyan
         case .weight: .defaultPurple
+        case .wellbeing: .defaultGreen
         }
     }
 
@@ -97,6 +103,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .sleep: [.sleepRings, .sleepVitals, .sleepStages]
         case .water: [.waterBars, .waterNumber, .waterRing, .waterTank]
         case .weight: [.weightLine, .weightNumber]
+        case .wellbeing: [.wellbeingRings]
         }
     }
 }
@@ -188,6 +195,9 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     case weightLine
     case weightNumber
 
+    // MARK: Wellbeing
+    case wellbeingRings
+
     // Which widget draws it, grouped as the widget folders are.
     enum Family: CaseIterable {
         // MARK: Reusable, in Shared/Widgets/V5
@@ -241,6 +251,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .waterTank: .water
         case .weightLine: .dottedLine
         case .weightNumber: .number
+        case .wellbeingRings: .ring
         }
     }
 
@@ -260,6 +271,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .waterRing: [.small, .medium]
         case .weightLine: [.medium, .large]
         case .weightNumber: [.small]
+        case .wellbeingRings: [.small, .medium]
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -283,6 +295,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .waterRing, .waterTank: [.today]
         case .weightLine: [.lastReadings]
         case .weightNumber: [.latest]
+        case .wellbeingRings: [.today]
         }
     }
 }
@@ -357,16 +370,30 @@ final class HealthWidgetLayoutV5 {
     private(set) var positions: [UUID: HealthGridPositionV5] = [:]
 
     static let defaultWidgets: [HealthWidgetItemV5] = [
+        HealthWidgetItemV5(kind: .activity, style: .stepBars, size: .small, range: .today),
         HealthWidgetItemV5(kind: .activity, style: .totalEnergyBars, size: .small, range: .week),
-        HealthWidgetItemV5(kind: .activity, style: .stepBars, size: .small),
-        HealthWidgetItemV5(kind: .macros, style: .macroBars, size: .medium),
-        HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium),
+        HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium, range: .rolling1h),
         HealthWidgetItemV5(kind: .sleep, style: .sleepStages, size: .medium),
         HealthWidgetItemV5(kind: .sleep, style: .sleepVitals, size: .medium),
-        HealthWidgetItemV5(kind: .water, style: .waterRing, size: .medium),
-        HealthWidgetItemV5(kind: .weight, style: .weightLine, size: .large),
+        HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingRings, size: .small),
+        HealthWidgetItemV5(kind: .water, style: .waterTank, size: .small),
         HealthWidgetItemV5(kind: .menstrual, style: .menstrualCycle, size: .medium),
+        HealthWidgetItemV5(kind: .weight, style: .weightLine, size: .large),
     ]
+
+    var layoutText: String {
+        widgets.map { widget in
+            var line = "HealthWidgetItemV5(kind: .\(widget.kind.rawValue), style: .\(widget.style.rawValue), size: .\(widget.size.rawValue)"
+            if widget.style.ranges.count > 1 {
+                line += ", range: .\(widget.range.rawValue)"
+            }
+            if widget.style == .macroRing {
+                line += ", macro: .\(widget.macro.rawValue)"
+            }
+            return line + "),"
+        }
+        .joined(separator: "\n")
+    }
 
     init() {
         widgets = Self.loadSaved() ?? Self.defaultWidgets

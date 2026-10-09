@@ -18,8 +18,8 @@ extension HealthWidgetDemoV5 {
         ),
         fill: .solid(.defaultCyan),
         hourly: [0, 0, 0, 0, 0, 0, 0.15, 0.4, 0.1, 0.25, 0.2, 0.3, 0.15, 0.45, 0.2, 0.25, 0.3, 0.15, 0.35, 0.25, 0.1, 0.2, 0.05, 0],
-        daily: [3.4, 4.1, 3.2, 3.6, 2.9, 4.4, 2.54],
-        yesterday: 4.4
+        daily: [3.4, 4.1, 3.2, 3.6, 2.9, 3.5, 2.54],
+        yesterday: 3.5
     )
 
     static let waterGoal: Double = 4

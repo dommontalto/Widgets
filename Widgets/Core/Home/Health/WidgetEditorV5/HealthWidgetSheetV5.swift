@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct AddWidgetSheetV5: View {
     // How many widgets are on the grid now, for the debug stats.
     var widgetCount: Int?
+    var layoutText: String?
     let onAdd: (HealthWidgetItemV5) -> Void
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
@@ -105,6 +107,15 @@ struct AddWidgetSheetV5: View {
                         }
                     }
                     #endif
+
+                    if let layoutText {
+                        BrightRowGroupV5(color: .defaultSheetModalCards) {
+                            ShareLink(item: HealthLayoutFileV5(text: layoutText), preview: SharePreview(HealthLayoutFileV5.name)) {
+                                BrightRowV5("Share current layout", icon: .symbol("square.and.arrow.up"), trailing: .none) {}
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                    }
                 }
                 .padding(.vertical, .spacing3x)
             }
@@ -126,6 +137,20 @@ struct AddWidgetSheetV5: View {
             } message: {
                 Text("Your widgets go back to the default layout.")
             }
+        }
+    }
+}
+
+struct HealthLayoutFileV5: Transferable {
+    static let name = "Home Layout.txt"
+
+    let text: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .plainText) { file in
+            let url = FileManager.default.temporaryDirectory.appending(path: name)
+            try file.text.write(to: url, atomically: true, encoding: .utf8)
+            return SentTransferredFile(url)
         }
     }
 }

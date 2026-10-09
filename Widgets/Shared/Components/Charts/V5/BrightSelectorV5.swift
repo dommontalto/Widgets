@@ -35,7 +35,7 @@ struct BrightSelectorV5<X: Plottable>: ChartContent {
 private enum Constants {
     static let hairline: CGFloat = 0.5
     static let dotDiameter: CGFloat = 8
-    static let ringDiameter: CGFloat = 14
+    static let ringDiameter: CGFloat = 10
 }
 
 extension BrightSelectorV5 where X == Date {

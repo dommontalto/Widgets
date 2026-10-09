@@ -146,6 +146,10 @@ struct HealthWidgetViewV5: View {
             )
         case (.intake, _):
             barChart(HealthWidgetDemoV5.intake)
+        case (.wellbeing, _):
+            BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.wellbeingRings(size: widget.size), size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(widget.kind.title, systemImage: widget.kind.systemImage, color: widget.kind.tint)
+            }
         case (.activity, .activeEnergyBars):
             barChart(HealthWidgetDemoV5.activeEnergy)
         case (.activity, .stepBars):

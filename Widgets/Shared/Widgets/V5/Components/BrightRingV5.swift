@@ -42,6 +42,7 @@ struct BrightRingV5: View {
     let color: Color
     // Drawn in the hole, e.g. "C".
     var label: String?
+    var image: String?
     var size: Size = .small
     // The outer arc's colour once past the goal; the ring's own when going over is fine.
     var overColor: Color?
@@ -85,7 +86,14 @@ struct BrightRingV5: View {
                     .padding(-(lineWidth / 2 + lineWidth * Constants.lapGapRatio))
             }
 
-            if let label {
+            if let image {
+                Image(image)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(color)
+                    .frame(width: size.diameter * Constants.imageRatio)
+            } else if let label {
                 BrightText(label, size: .body5, color: .semiLightTextColor)
             }
         }
@@ -98,6 +106,7 @@ struct BrightRingV5: View {
         static let lapRatio: CGFloat = 0.25
         static let lapGapRatio: CGFloat = 0.25
         static let seamOverlap = 0.004
+        static let imageRatio: CGFloat = 0.27
     }
 }
 

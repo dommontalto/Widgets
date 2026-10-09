@@ -11,8 +11,7 @@ import SwiftUI
 // Today's water as a tank filling towards the goal, with rulers either side, the level
 // marked across it and the total in the middle. Large adds this week's days below.
 //
-// Holding scrubs through the day: the level falls back to what had been drunk by then,
-// and the latest drink rolls over to the one at that time.
+// Holding shows yesterday's level in its place.
 struct BrightWaterWidgetV5: View {
     struct Drink: Identifiable, Hashable {
         let date: Date
@@ -31,7 +30,7 @@ struct BrightWaterWidgetV5: View {
     let size: BrightWidgetSizeV5
     var allowsSelection = true
 
-    @State private var selectedDrink: Drink?
+    @State private var isHolding = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -53,10 +52,10 @@ struct BrightWaterWidgetV5: View {
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .onChange(of: allowsSelection) { _, allows in
             if !allows {
-                selectedDrink = nil
+                isHolding = false
             }
         }
-        .animation(.brightEaseInOut, value: selectedDrink)
+        .animation(.brightEaseInOut, value: isHolding)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(appearance.title), \(full(level)) of \(full(goal))")
     }
@@ -71,7 +70,7 @@ struct BrightWaterWidgetV5: View {
             VStack(alignment: .leading, spacing: .spacing05x) {
                 title
 
-                latestText(color: .lightTextColor)
+                latestText(size: .body2, color: .lightTextColor)
             }
         } else {
             HStack(spacing: .spacing1x) {
@@ -83,7 +82,7 @@ struct BrightWaterWidgetV5: View {
 
                 Spacer(minLength: .spacing0x)
 
-                latestText(color: .semiLightTextColor)
+                latestText(size: .body4, color: .semiLightTextColor)
             }
         }
     }
@@ -105,15 +104,22 @@ struct BrightWaterWidgetV5: View {
             .lineLimit(1)
     }
 
-    // The held drink, or the latest: "+0.5L, Today, 2:00 PM".
+    // The latest drink, "+0.5L, Today, 2:00 PM", or "Yesterday" while held.
     @ViewBuilder
-    private func latestText(color: Color) -> some View {
-        if let drink = shownDrink {
-            BrightText("+\(compact(drink.litres)), \(drink.date.formatted(.brightTimestamp))", size: .body4, color: color)
+    private func latestText(size: FontSizes, color: Color) -> some View {
+        if let text = subtitle {
+            BrightText(text, size: size, color: color)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .lineLimit(1)
         }
+    }
+
+    private var subtitle: String? {
+        if isHolding {
+            return "Yesterday"
+        }
+        return drinks.last.map { "+\(compact($0.litres)), \($0.date.formatted(.brightTimestamp))" }
     }
 
     // MARK: - Tank
@@ -207,7 +213,7 @@ struct BrightWaterWidgetV5: View {
     // MARK: - Holding
 
     // An empty chart laid over the tank, so holding it uses the same gesture as the charts
-    // and the page still scrolls. Across the tank runs from the first drink to now.
+    // and the page still scrolls.
     @ViewBuilder
     private var touchLayer: some View {
         if allowsSelection, let first = drinks.first {
@@ -223,15 +229,13 @@ struct BrightWaterWidgetV5: View {
         }
     }
 
-    // Snaps to the latest drink at or before the finger.
     private var selection: Binding<Date?> {
         Binding {
-            selectedDrink?.date
+            isHolding ? drinks.first?.date : nil
         } set: { date in
-            let drink = date.flatMap { date in drinks.last { $0.date <= date } ?? drinks.first }
-            guard drink != selectedDrink else { return }
-            selectedDrink = drink
-            if drink != nil {
+            guard (date != nil) != isHolding else { return }
+            isHolding = date != nil
+            if isHolding {
                 BrightHaptic.light.play()
             }
         }
@@ -239,14 +243,8 @@ struct BrightWaterWidgetV5: View {
 
     // MARK: - Values
 
-    private var shownDrink: Drink? {
-        selectedDrink ?? drinks.last
-    }
-
-    // Everything drunk up to the held drink, or all of today.
     private var level: Double {
-        guard let shownDrink else { return 0 }
-        return drinks.prefix { $0.date <= shownDrink.date }.reduce(0) { $0 + $1.litres }
+        isHolding ? yesterday : drinks.reduce(0) { $0 + $1.litres }
     }
 
     // "2.13 L", for the total.

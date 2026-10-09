@@ -60,7 +60,7 @@ struct HealthView: View {
                     }
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
-                    AddWidgetSheetV5(widgetCount: editor.layout.widgets.count) {
+                    AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
                         editor.add($0)
                     } onReset: {
                         editor.layout.reset()
