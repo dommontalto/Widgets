@@ -4,3 +4,6 @@ Info.plist
 
 build/
 DerivedData/
+
+# Per-user Xcode state: scheme order, breakpoints.
+xcuserdata/
