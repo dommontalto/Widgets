@@ -30,8 +30,13 @@ extension HealthWidgetDemo {
 
     static var menstrualDetails: BrightMenstrualWidgetV5.Details {
         let window = menstrualCycle.ovulationWindow
+        let start = day(window.lowerBound - menstrualToday)
+        let end = day(window.upperBound - menstrualToday)
+        // Within one month the start drops its month: "14 – 19 Oct".
+        let sameMonth = Calendar.current.isDate(start, equalTo: end, toGranularity: .month)
+        let startText = sameMonth ? start.formatted(.brightDay) : start.formatted(.brightDate)
         return .init(
-            ovulationWindow: "\(day(window.lowerBound - menstrualToday).formatted(.brightDate)) – \(day(window.upperBound - menstrualToday).formatted(.brightDate))",
+            ovulationWindow: "\(startText) – \(end.formatted(.brightDate))",
             ovulation: day(menstrualCycle.ovulationDay - menstrualToday).formatted(.brightDate),
             temperatureDeviation: "+0.1",
             restingHeartRate: "56"

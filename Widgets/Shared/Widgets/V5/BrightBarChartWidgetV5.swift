@@ -672,8 +672,9 @@ struct BrightBarChartWidgetV5: View {
         }
     }
 
+    // Small has no room for "AVG" beside its number.
     private var unitLabel: String {
-        let suffix = headline == .average && selectedIndex == nil ? "AVG" : nil
+        let suffix = headline == .average && selectedIndex == nil && size != .small ? "AVG" : nil
         return [unit, suffix].compactMap(\.self).joined(separator: " ")
     }
 

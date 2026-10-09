@@ -8,42 +8,42 @@
 import Foundation
 
 enum FontSizes: CGFloat {
-    // Largest body size 16.
-    case body1 = 16
-    // Body size 15.
-    case body2 = 15
+    // Largest body size 15.
+    case body1 = 15
     // Body size 14.
-    case body3 = 14
+    case body2 = 14
     // Body size 13.
-    case body4 = 13
+    case body3 = 13
     // Body size 12.
-    case body5 = 12
-    // Smallest body size 9.
-    case body6 = 9
-    // Largest body size 17.
-    case subheading2 = 17
-    // Subheading font size 18.
-    case subheading = 18
-    // Subheading1 font size 19.
-    case subheading1 = 19
-    // Heading font size 20.
-    case heading = 20
-    // Smallest standout font size 22.
-    case standout3 = 22
-    // Second largest standout font size 26.
-    case standout2 = 26
-    // Largest standout font size 30.
-    case standout1 = 30
-    // More third huge font size 32.
-    case huge3 = 32
-    // More second and a half huge font size 34.
-    case huge205 = 34
-    // More second huge font size 36.
-    case huge2 = 36
-    // More huge font size 40.
-    case huge = 40
-    // Giant font size 50.
-    case giant = 50
-    // Enormous font size 65.
-    case enormous = 65
+    case body4 = 12
+    // Body size 11.
+    case body5 = 11
+    // Smallest body size 8.
+    case body6 = 8
+    // Largest body size 16.
+    case subheading2 = 16
+    // Subheading font size 17.
+    case subheading = 17
+    // Subheading1 font size 18.
+    case subheading1 = 18
+    // Heading font size 19.
+    case heading = 19
+    // Smallest standout font size 21.
+    case standout3 = 21
+    // Second largest standout font size 25.
+    case standout2 = 25
+    // Largest standout font size 29.
+    case standout1 = 29
+    // More third huge font size 31.
+    case huge3 = 31
+    // More second and a half huge font size 33.
+    case huge205 = 33
+    // More second huge font size 35.
+    case huge2 = 35
+    // More huge font size 39.
+    case huge = 39
+    // Giant font size 49.
+    case giant = 49
+    // Enormous font size 64.
+    case enormous = 64
 }

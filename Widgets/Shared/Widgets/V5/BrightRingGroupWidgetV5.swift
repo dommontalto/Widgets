@@ -148,18 +148,17 @@ struct BrightRingGroupWidgetV5: View {
                         VStack(spacing: .spacing05x) {
                             self.ring(ring, showsLabel: false, size: .extraSmall)
                                 .overlay {
-                                    // Holding a ring swaps its share for its caption, such as the time.
-                                    BrightText(
-                                        selectedRingID == ring.id ? ring.caption ?? percent(of: ring) : percent(of: ring),
-                                        size: .body5,
-                                        color: .semiLightTextColor
-                                    )
-                                    .monospacedDigit()
-                                    .contentTransition(.numericText())
+                                    BrightText(percent(of: ring), size: .body5, color: .semiLightTextColor)
+                                        .monospacedDigit()
                                 }
 
-                            BrightText(ring.label, size: .body5, color: .semiLightTextColor)
-                                .lineLimit(1)
+                            // Holding a ring swaps its name for its caption, such as the time.
+                            steady(isHeld: selectedRingID == ring.id) { isHeld in
+                                BrightText(isHeld ? ring.caption ?? ring.label : ring.label, size: .body5, color: isHeld ? .textColor : .semiLightTextColor)
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .lineLimit(1)
+                            }
                         }
                         .opacity(opacity(of: ring))
                     }

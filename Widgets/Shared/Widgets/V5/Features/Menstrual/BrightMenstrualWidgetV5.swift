@@ -86,6 +86,7 @@ struct BrightMenstrualWidgetV5: View {
     var allowsSelection = true
 
     @State private var selectedDay: Int?
+    @State private var detailsWidth: CGFloat = 0
 
     var body: some View {
         Group {
@@ -226,7 +227,7 @@ struct BrightMenstrualWidgetV5: View {
                         let day = firstDay + offset
                         let style = colour(day)
 
-                        pill(selectedDay == day ? style.outlined : style)
+                        pill(selectedDay == day ? style.lit : style)
                             .opacity(selectedDay == nil || selectedDay == day ? .opaque : .ultraLowOpacity)
                     }
                 }
@@ -306,9 +307,9 @@ struct BrightMenstrualWidgetV5: View {
         var glow: Color?
         var arrow: Color
 
-        // The held day keeps its own fill and gains today's outline, in its phase's colour.
-        var outlined: PillStyle {
-            PillStyle(fill: fill, outline: outline ?? arrow, glow: glow, arrow: arrow)
+        // The held day fills solid in its phase's colour.
+        var lit: PillStyle {
+            PillStyle(fill: arrow, glow: glow, arrow: arrow)
         }
     }
 
@@ -432,8 +433,10 @@ struct BrightMenstrualWidgetV5: View {
 
                 detail(systemImage: "thermometer.variable", tint: .defaultOrange, title: "Temp Deviation", value: details.temperatureDeviation)
             }
-            // As wide as its longest value needs; the divider follows it.
+            // Half the width so the divider sits centred, widening only when its longest
+            // value needs more; the divider follows it.
             .fixedSize(horizontal: true, vertical: false)
+            .frame(minWidth: max(detailsWidth / 2 - .spacing2x, 0), alignment: .leading)
 
             BrightDividerV5(.vertical)
                 .padding(.horizontal, .spacing2x)
@@ -446,6 +449,7 @@ struct BrightMenstrualWidgetV5: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { detailsWidth = $0 }
     }
 
     private func detail(systemImage: String, tint: Color, title: String, value: String, unit: String? = nil) -> some View {
@@ -504,7 +508,7 @@ struct BrightMenstrualWidgetV5: View {
                 today: 10,
                 nextPeriod: nextPeriod,
                 daysUntilPeriod: 24,
-                details: .init(ovulationWindow: "14 Oct – 19 Oct", ovulation: "18 Oct", temperatureDeviation: "+0.1", restingHeartRate: "56"),
+                details: .init(ovulationWindow: "14 – 19 Oct", ovulation: "18 Oct", temperatureDeviation: "+0.1", restingHeartRate: "56"),
                 size: .large
             )
             .frame(width: 363, height: 363)
