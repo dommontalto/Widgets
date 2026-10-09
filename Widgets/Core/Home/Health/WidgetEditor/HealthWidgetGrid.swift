@@ -98,6 +98,13 @@ struct HealthWidgetView: View {
             BrightRingGroupWidgetV5(rings: [HealthWidgetDemo.intakeRing], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.title, color: widget.kind.tint)
             }
+        case (.sleep, .sleepVitals):
+            BrightDottedRangeChartWidgetV5(
+                appearance: HealthWidgetDemo.sleepVitalsAppearance,
+                measures: HealthWidgetDemo.sleepVitals,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.sleep, _):
             BrightRingGroupWidgetV5(rings: HealthWidgetDemo.sleepRings, size: widget.size, allowsSelection: allowsSelection) {
                 SleepRingsHeader()

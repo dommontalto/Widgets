@@ -68,12 +68,16 @@ struct BrightRingV5: View {
                 )
                 .rotationEffect(.degrees(-90))
 
-            if overflow > 0 {
+            // The second lap, started a sliver before 12 so it covers the seam where the
+            // first lap's ends meet; at exactly the goal it's only that sliver.
+            if filled >= 1 {
                 Circle()
-                    .trim(from: 0, to: overflow)
+                    .trim(from: 0, to: overflow + Constants.seamOverlap)
                     .stroke(color, style: StrokeStyle(lineWidth: lineWidth))
-                    .rotationEffect(.degrees(-90))
+                    .rotationEffect(.degrees(-90 - 360 * Constants.seamOverlap))
+            }
 
+            if overflow > 0 {
                 Circle()
                     .trim(from: 0, to: overflow)
                     .stroke(overColor ?? color, style: StrokeStyle(lineWidth: lineWidth * Constants.lapRatio, lineCap: .round))
@@ -93,6 +97,7 @@ struct BrightRingV5: View {
     private enum Constants {
         static let lapRatio: CGFloat = 0.25
         static let lapGapRatio: CGFloat = 0.25
+        static let seamOverlap = 0.004
     }
 }
 

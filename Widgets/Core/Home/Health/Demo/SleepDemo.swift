@@ -19,6 +19,16 @@ extension HealthWidgetDemo {
 
     static let sleepScore = 82
 
+    static let sleepVitalsAppearance = BrightWidgetAppearanceV5(title: "Sleep Vitals", systemImage: "moon.fill", tint: .defaultCyan)
+
+    // Last night's vitals against each one's usual range; temperature ran warm.
+    static let sleepVitals: [BrightDottedRangeChartWidgetV5.Measure] = [
+        .init(label: "RHR", systemImage: "heart.fill", iconColor: .defaultRed, value: 56, normalRange: 45 ... 62, unit: "BPM"),
+        .init(label: "Resp.", systemImage: "lungs.fill", iconColor: .defaultCyan, value: 14.2, normalRange: 12 ... 17, unit: "br/min", decimals: 1),
+        .init(label: "Temp.", systemImage: "thermometer.variable", iconColor: .defaultOrange, value: 0.7, normalRange: -0.5 ... 0.5, unit: "°C", decimals: 1, isSigned: true),
+        .init(label: "HRV", systemImage: "waveform.path.ecg.rectangle.fill", iconColor: .defaultRed, value: 34, normalRange: 30 ... 70, unit: "ms"),
+    ]
+
     private static let sleepMinutes: Double = 8 * 60 + 24
 }
 

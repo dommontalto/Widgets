@@ -91,7 +91,7 @@ enum HealthWidgetKind: String, CaseIterable, Codable, Hashable, Identifiable {
         case .heartRate: [.lineChart, .leadingNumber, .vo2Line, .vo2Number]
         case .intake: [.bars, .intakeRing]
         case .macros: [.macroBars, .macroRings, .macroRing]
-        case .sleep: [.sleepRings]
+        case .sleep: [.sleepRings, .sleepVitals]
         case .water: [.bars, .leadingNumber, .waterRing]
         case .weight: [.dottedLine, .leadingNumber]
         case .menstrual: [.menstrualCycle]
@@ -160,6 +160,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     case intakeRing
     case waterRing
     case sleepRings
+    case sleepVitals
     case dottedLine
     // VO2 Max as a dotted line, which only comes in medium.
     case vo2Line
@@ -171,6 +172,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
     enum Family: CaseIterable {
         case line
         case dottedLine
+        case dottedRange
         case menstrual
         case bar
         case number
@@ -180,6 +182,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
             switch self {
             case .line: "BrightLineChartWidgetV5"
             case .dottedLine: "BrightDottedLineChartWidgetV5"
+            case .dottedRange: "BrightDottedRangeChartWidgetV5"
             case .menstrual: "BrightMenstrualWidgetV5"
             case .bar: "BrightBarChartWidgetV5"
             case .number: "BrightLeadingNumberWidgetV5"
@@ -197,6 +200,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .leadingNumber, .vo2Number: .number
         case .macroRings, .macroRing, .intakeRing, .waterRing, .sleepRings: .ring
         case .dottedLine, .vo2Line: .dottedLine
+        case .sleepVitals: .dottedRange
         case .menstrualCycle: .menstrual
         }
     }
@@ -208,7 +212,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macroRings: [.small, .medium]
         case .macroRing, .intakeRing: [.small]
         case .waterRing: [.small, .medium]
-        case .sleepRings: [.small, .medium]
+        case .sleepRings, .sleepVitals: [.small, .medium]
         case .dottedLine: [.medium, .large]
         case .vo2Line: [.medium]
         case .menstrualCycle: BrightWidgetSizeV5.allCases
@@ -224,7 +228,7 @@ enum HealthWidgetStyle: String, CaseIterable, Codable, Hashable, Identifiable {
         case .bars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
         case .macroBars: [.week]
         case .macroRings, .macroRing, .intakeRing, .waterRing: [.today]
-        case .sleepRings: [.lastNight]
+        case .sleepRings, .sleepVitals: [.lastNight]
         case .dottedLine, .vo2Line: [.lastReadings]
         case .menstrualCycle: [.today]
         }
