@@ -19,6 +19,7 @@ struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
     @State private var lighthouse: LighthousePresentation?
     @State private var showingGenome = false
+    @State private var showingGuidedTesting = false
     @AppStorage("lighthouseShowsOnboarding") private var showingLighthouseOnboarding = true
 
     private var tabSelection: Binding<MainDockTab> {
@@ -120,9 +121,23 @@ struct MainDockView: View {
                                 .frame(width: Constants.genomeSize, height: Constants.genomeSize)
                         }
                     }
+                    if #available(iOS 26, *) {
+                        ToolbarSpacer(.fixed, placement: .topBarLeading)
+                    }
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            showingGuidedTesting = true
+                        } label: {
+                            Label("Guided Testing", systemImage: "testtube.2")
+                                .labelStyle(.iconOnly)
+                        }
+                    }
                 }
                 .navigationDestination(isPresented: $showingGenome) {
                     GenomeView()
+                }
+                .navigationDestination(isPresented: $showingGuidedTesting) {
+                    VaultGuidedTestingScreen()
                 }
         }
     }

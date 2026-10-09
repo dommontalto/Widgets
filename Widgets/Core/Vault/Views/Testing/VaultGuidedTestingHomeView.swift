@@ -15,14 +15,13 @@ struct VaultGuidedTestingHomeView: View {
 
     let onOrder: (VaultTestOrder) -> Void
 
-    @State private var sortOrder = VaultTestingSortOrder.proximity
     @State private var showingMap = false
     @State private var showingCart = false
 
     private let catalog = LabCatalog.shared
 
     private var clinics: [VaultTestingClinic] {
-        sortOrder.sorted(VaultTestingClinic.all)
+        VaultTestingSortOrder.proximity.sorted(VaultTestingClinic.all)
     }
 
     var body: some View {
@@ -42,9 +41,6 @@ struct VaultGuidedTestingHomeView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                LabRegionMenu()
-            }
             if catalog.region == .au {
                 ToolbarItem(placement: .topBarTrailing) {
                     LabCartButton { showingCart = true }
@@ -75,7 +71,7 @@ struct VaultGuidedTestingHomeView: View {
                 .padding(.top, .spacing3x)
 
             BrightWidgetTitleV5(icon: .symbol("location"), title: "All Clinics Near Me") {
-                sortMenu
+                LabRegionMenu(showsTitle: true)
                     .padding(.trailing, .spacing3x)
             } content: {
                 VStack(spacing: .spacing3x) {
@@ -87,31 +83,7 @@ struct VaultGuidedTestingHomeView: View {
             }
         }
         .padding(.bottom, .spacing10x)
-        .animation(.brightEaseInOut, value: sortOrder)
-    }
-
-    private var sortMenu: some View {
-        Menu {
-            ForEach(VaultTestingSortOrder.allCases) { order in
-                Button {
-                    sortOrder = order
-                } label: {
-                    Label {
-                        Text(order.rawValue)
-                    } icon: {
-                        if order == sortOrder {
-                            Image(systemName: "checkmark")
-                        } else {
-                            Image(systemName: order.systemImage)
-                        }
-                    }
-                }
-            }
-        } label: {
-            BrightPillButton(sortOrder.rawValue, systemImage: "line.3.horizontal.decrease", buttonSize: .small) {}
-                .allowsHitTesting(false)
-        }
-        .brightHapticV5(.light, trigger: sortOrder)
+        .animation(.brightEaseInOut, value: catalog.region)
     }
 
     // MARK: - My Orders
@@ -421,6 +393,8 @@ struct VaultTestCategoriesView: View {
 }
 
 struct LabRegionMenu: View {
+    var showsTitle = false
+
     private let catalog = LabCatalog.shared
 
     var body: some View {
@@ -441,8 +415,13 @@ struct LabRegionMenu: View {
                 }
             }
         } label: {
-            Label("Region", systemImage: catalog.region?.systemImage ?? "globe")
-                .labelStyle(.iconOnly)
+            if showsTitle {
+                BrightPillButton(catalog.region?.title ?? "Region", systemImage: catalog.region?.systemImage ?? "globe", buttonSize: .small) {}
+                    .allowsHitTesting(false)
+            } else {
+                Label("Region", systemImage: catalog.region?.systemImage ?? "globe")
+                    .labelStyle(.iconOnly)
+            }
         }
         .brightHapticV5(.light, trigger: catalog.region)
     }

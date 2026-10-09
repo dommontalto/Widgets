@@ -176,6 +176,7 @@ private struct CentreMiniSheet: View {
 
     @Environment(\.openURL) private var openURL
     @State private var query = ""
+    @State private var sheetWidth: CGFloat = 0
 
     private var shown: [LabCentreTest] {
         let needle = query.trimmingCharacters(in: .whitespaces)
@@ -231,13 +232,14 @@ private struct CentreMiniSheet: View {
             ScrollView {
                 FlowLayout(spacing: .spacing1x) {
                     ForEach(shown) { test in
-                        BrightChipV5(
+                        CentreTestChip(
                             title: test.genetic ? "\(test.name) · Genetic" : test.name,
                             tint: test.genetic ? .defaultPurple : .defaultBlue,
-                            fill: (test.genetic ? Color.defaultPurple : Color.defaultBlue).opacity(.veryMinimalOpacity)
+                            maxWidth: max(0, sheetWidth - .spacing4x * 2)
                         )
                     }
                 }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                 if shown.isEmpty {
                     BrightText("No tests match “\(query)”.", size: .body1, color: .lightTextColor)
@@ -249,7 +251,16 @@ private struct CentreMiniSheet: View {
             .frame(height: Constants.testsHeight)
         }
         .padding(.spacing4x)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+        .background {
+            Color.clear
+                .containerRelativeFrame(.horizontal)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { width in
+                    sheetWidth = width
+                }
+        }
     }
 
     private enum Constants {
@@ -260,5 +271,54 @@ private struct CentreMiniSheet: View {
 #Preview {
     NavigationStack {
         LabCollectionCentresMapView()
+    }
+}
+
+private struct CentreTestChip: View {
+    let title: String
+    let tint: Color
+    let maxWidth: CGFloat
+
+    @State private var textWidth: CGFloat = 0
+    @State private var isScrolled = false
+
+    private var visibleWidth: CGFloat {
+        max(0, maxWidth - .spacing2x * 2)
+    }
+
+    private var overflow: CGFloat {
+        maxWidth > 0 ? max(0, textWidth - visibleWidth) : 0
+    }
+
+    var body: some View {
+        BrightText(title, size: .body1, color: tint)
+            .lineLimit(1)
+            .fixedSize()
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.width
+            } action: { width in
+                textWidth = width
+            }
+            .offset(x: isScrolled ? -overflow : 0)
+            .frame(width: overflow > 0 ? visibleWidth : nil, alignment: .leading)
+            .clipped()
+            .padding(.horizontal, .spacing2x)
+            .padding(.vertical, .spacing1x)
+            .modifier(BrightCardModifierV5(color: tint.opacity(.veryMinimalOpacity), cornerRadius: .cardCornerRadius))
+            .task(id: overflow) {
+                isScrolled = false
+                guard overflow > 0 else { return }
+                let duration = overflow / Constants.pointsPerSecond
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(Constants.pause))
+                    withAnimation(.linear(duration: duration)) { isScrolled.toggle() }
+                    try? await Task.sleep(for: .seconds(duration))
+                }
+            }
+    }
+
+    private enum Constants {
+        static let pointsPerSecond: CGFloat = 30
+        static let pause: TimeInterval = 1.5
     }
 }
