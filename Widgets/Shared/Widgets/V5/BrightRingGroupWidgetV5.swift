@@ -102,7 +102,7 @@ struct BrightRingGroupWidgetV5: View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             header
 
-            BrightRingV5(progress: ring.progress, color: ring.color, size: .large)
+            BrightRingV5(progress: ring.progress, color: ring.color, size: .large, overColor: overColor(of: ring))
                 .overlay { touchLayer }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -214,8 +214,13 @@ struct BrightRingGroupWidgetV5: View {
             progress: ring.progress,
             color: ring.color,
             label: showsLabel ? ring.shortLabel : nil,
-            size: ringSize ?? (size == .small ? .small : .medium)
+            size: ringSize ?? (size == .small ? .small : .medium),
+            overColor: overColor(of: ring)
         )
+    }
+
+    private func overColor(of ring: Ring) -> Color? {
+        ring.warnsWhenOver ? .defaultOrange : nil
     }
 
     // The held ring stays bright while the rest, with their numbers and names, dim.

@@ -8,8 +8,9 @@
 import SwiftUI
 
 // A thick progress ring at one of three sizes: a dim track in its colour, and a sweep
-// that brightens from where it starts to where it's reached. Going past the goal laps
-// a thin outer arc for the extra and marks the goal at the top.
+// that brightens from where it starts to where it's reached. Going past the goal carries
+// on round in the solid colour over the full lap, and laps the extra again as a thin
+// outer arc.
 struct BrightRingV5: View {
     enum Size {
         case extraSmall
@@ -42,6 +43,8 @@ struct BrightRingV5: View {
     // Drawn in the hole, e.g. "C".
     var label: String?
     var size: Size = .small
+    // The outer arc's colour once past the goal; the ring's own when going over is fine.
+    var overColor: Color?
 
     var body: some View {
         let lineWidth = size.diameter * size.thicknessRatio
@@ -66,11 +69,14 @@ struct BrightRingV5: View {
                 .rotationEffect(.degrees(-90))
 
             if overflow > 0 {
-                goalMark(lineWidth: lineWidth)
+                Circle()
+                    .trim(from: 0, to: overflow)
+                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth))
+                    .rotationEffect(.degrees(-90))
 
                 Circle()
                     .trim(from: 0, to: overflow)
-                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth * Constants.lapRatio, lineCap: .round))
+                    .stroke(overColor ?? color, style: StrokeStyle(lineWidth: lineWidth * Constants.lapRatio, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .padding(-(lineWidth / 2 + lineWidth * Constants.lapGapRatio))
             }
@@ -84,26 +90,16 @@ struct BrightRingV5: View {
         .animation(.brightEaseInOut, value: progress)
     }
 
-    // A short card-coloured cut across the ring at the top, where the goal was reached.
-    private func goalMark(lineWidth: CGFloat) -> some View {
-        Capsule()
-            .fill(Color.defaultHomeCards)
-            .frame(width: Constants.goalMarkWidth, height: lineWidth)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .offset(y: -lineWidth / 2)
-    }
-
     private enum Constants {
         static let lapRatio: CGFloat = 0.25
         static let lapGapRatio: CGFloat = 0.25
-        static let goalMarkWidth: CGFloat = 2
     }
 }
 
 #Preview {
     HStack(spacing: .spacing4x) {
         BrightRingV5(progress: 0.37, color: .defaultGreen)
-        BrightRingV5(progress: 1.26, color: .defaultYellow, label: "F")
+        BrightRingV5(progress: 1.17, color: .defaultYellow, label: "F", overColor: .defaultOrange)
         BrightRingV5(progress: 0.73, color: .defaultPink)
     }
     .padding(.spacing3x)
