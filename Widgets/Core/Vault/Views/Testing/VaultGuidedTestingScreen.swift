@@ -23,6 +23,7 @@ struct VaultGuidedTestingScreen: View {
             .sheet(item: $receipt) { order in
                 BrightReceiptSheetV5(order: order)
             }
+            .task { await LabCatalog.shared.loadIfNeeded() }
     }
 
     private var home: some View {

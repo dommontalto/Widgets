@@ -41,6 +41,7 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
             currency: LabOrdersDemo.currency,
             tracking: nil,
             referralUrl: nil,
+            referrals: nil,
             createdAt: Date.now.brightISOZoned
         )
         Self.orders.insert(order, at: 0)
@@ -76,6 +77,7 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
             currency: LabOrdersDemo.eirlyCurrency,
             tracking: nil,
             referralUrl: nil,
+            referrals: LabOrdersDemo.referrals(for: tests, orderId: id),
             createdAt: Date.now.brightISOZoned
         )
         Self.orders.insert(order, at: 0)
@@ -103,7 +105,7 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
     }
 
     func getResults(id: String) async throws -> LabResults {
-        LabResults(results: LabOrdersDemo.results)
+        LabResults(results: LabOrdersDemo.results, missingResults: nil)
     }
 
     func simulate(id: String) async throws -> LabOrder {
@@ -114,6 +116,7 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
         let steps = order.isEirly ? LabOrdersDemo.eirlySteps : LabOrdersDemo.steps
         let next = min(order.completedSteps, steps.count - 1)
         let step = steps[next]
+        let referralReady = step.status == "referral_ready"
         let advanced = LabOrder(
             id: order.id,
             provider: order.provider,
@@ -125,7 +128,8 @@ final class LabOrdersMockService: LabOrdersServiceProtocol {
             amountTotal: order.amountTotal,
             currency: order.currency,
             tracking: step.status == "shipping" ? LabOrdersDemo.tracking : order.tracking,
-            referralUrl: step.status == "referral_ready" ? LabOrdersDemo.referralUrl : order.referralUrl,
+            referralUrl: referralReady ? LabOrdersDemo.referralUrl : order.referralUrl,
+            referrals: referralReady ? order.referrals.map(LabOrdersDemo.issued) : order.referrals,
             createdAt: order.createdAt
         )
         Self.orders[index] = advanced
@@ -196,7 +200,7 @@ enum LabOrdersDemo {
         ),
         JunctionLabTest(
             id: "jx-heart-health",
-            name: "Heart Health Panel",
+            name: "Lipid Panel: At Home",
             method: "testkit",
             sampleType: "dried_blood_spot",
             price: 79,
@@ -207,7 +211,7 @@ enum LabOrdersDemo {
         ),
         JunctionLabTest(
             id: "jx-metabolic",
-            name: "Metabolic Panel",
+            name: "CMP",
             method: "testkit",
             sampleType: "dried_blood_spot",
             price: 59,
@@ -232,11 +236,60 @@ enum LabOrdersDemo {
     static let eirlyTests: [EirlyTest] = [
         EirlyTest(id: "tft", name: "Thyroid Function Test", testType: "blood", price: 30),
         EirlyTest(id: "fbc", name: "Full Blood Count", testType: "blood", price: 18),
-        EirlyTest(id: "iron", name: "Iron Studies", testType: "blood", price: 25),
-        EirlyTest(id: "vitd", name: "Vitamin D", testType: "blood", price: 35),
+        EirlyTest(id: "iron-studies-inc-ferretin", name: "Iron Studies", testType: "blood", price: 25),
+        EirlyTest(id: "vitamin-d", name: "Vitamin D", testType: "blood", price: 35),
+        EirlyTest(id: "hba1c", name: "HbA1c", testType: "blood", price: 20),
+        EirlyTest(id: "lipid-studies-inc-hdl", name: "Lipid Studies", testType: "blood", price: 22),
+        EirlyTest(id: "testosterone", name: "Testosterone", testType: "blood", price: 30),
+        EirlyTest(id: "anti-mullerian-hormone", name: "Anti-Mullerian Hormone", testType: "blood", price: 75),
+        EirlyTest(id: "apolipoprotein-e", name: "Apolipoprotein E Genotype", testType: "blood", price: 95),
+        EirlyTest(id: "microba-explorer-essentials", name: "Microba Explorer Essentials", testType: "stool-kit", price: 299),
+        EirlyTest(id: "calprotectin-stool-nutripath-2001", name: "Calprotectin", testType: "stool-kit", price: 110),
+        EirlyTest(id: "cortisol-awakening-response-nutripath-1012", name: "Cortisol Awakening Response", testType: "saliva-kit", price: 160),
     ]
 
+    static func referrals(for tests: [EirlyTest], orderId: String) -> [LabOrder.Referral] {
+        let clinic = tests.filter { !$0.isKit }
+        let kits = tests.filter(\.isKit)
+        let clinicReferral = clinic.isEmpty ? [] : [
+            LabOrder.Referral(uuid: "\(orderId)-blood", kit: false, tests: clinic.map(\.id), status: "pending", referralUrl: nil),
+        ]
+        return clinicReferral + kits.map { test in
+            LabOrder.Referral(uuid: "\(orderId)-\(test.id)", kit: true, tests: [test.id], status: "pending", referralUrl: nil)
+        }
+    }
+
+    static func issued(_ referrals: [LabOrder.Referral]) -> [LabOrder.Referral] {
+        referrals.map { referral in
+            LabOrder.Referral(
+                uuid: referral.uuid,
+                kit: referral.kit,
+                tests: referral.tests,
+                status: "issued",
+                referralUrl: referral.kit ? nil : referralUrl
+            )
+        }
+    }
+
     static let orders: [LabOrder] = [
+        LabOrder(
+            id: "lab_demo_split",
+            provider: LabProvider.eirly.rawValue,
+            status: "referral_ready",
+            statusLabel: "Referral ready",
+            completedSteps: 2,
+            totalSteps: 4,
+            labTest: LabOrder.Test(id: "hba1c", name: "3 pathology tests", method: nil, sampleType: "blood"),
+            amountTotal: 37_600,
+            currency: eirlyCurrency,
+            tracking: nil,
+            referralUrl: referralUrl,
+            referrals: [
+                LabOrder.Referral(uuid: "lab_demo_split-blood", kit: false, tests: ["hba1c", "lipid-studies-inc-hdl"], status: "issued", referralUrl: referralUrl),
+                LabOrder.Referral(uuid: "lab_demo_split-microba", kit: true, tests: ["microba-explorer-essentials"], status: "issued", referralUrl: nil),
+            ],
+            createdAt: daysAgo(0)
+        ),
         LabOrder(
             id: "lab_demo_referral",
             provider: LabProvider.eirly.rawValue,
@@ -249,6 +302,7 @@ enum LabOrdersDemo {
             currency: eirlyCurrency,
             tracking: nil,
             referralUrl: referralUrl,
+            referrals: nil,
             createdAt: daysAgo(1)
         ),
         LabOrder(
@@ -263,6 +317,7 @@ enum LabOrdersDemo {
             currency: currency,
             tracking: tracking,
             referralUrl: nil,
+            referrals: nil,
             createdAt: daysAgo(2)
         ),
         LabOrder(
@@ -272,11 +327,12 @@ enum LabOrdersDemo {
             statusLabel: "Results ready",
             completedSteps: 6,
             totalSteps: 6,
-            labTest: LabOrder.Test(id: "jx-heart-health", name: "Heart Health Panel", method: "testkit", sampleType: "dried_blood_spot"),
+            labTest: LabOrder.Test(id: "jx-heart-health", name: "Lipid Panel: At Home", method: "testkit", sampleType: "dried_blood_spot"),
             amountTotal: 7900,
             currency: currency,
             tracking: nil,
             referralUrl: nil,
+            referrals: nil,
             createdAt: daysAgo(18)
         ),
     ]
@@ -327,6 +383,11 @@ struct EirlyTest: Codable, Hashable {
     let name: String
     let testType: String?
     let price: Double?
+
+    var isKit: Bool {
+        let kind = testType?.lowercased() ?? ""
+        return kind.contains("kit") || kind.contains("card")
+    }
 }
 
 struct EirlyQuote: Codable, Hashable {
@@ -417,6 +478,20 @@ struct LabOrder: Codable, Identifiable, Hashable {
         let inboundTrackingUrl: String?
     }
 
+    struct Referral: Codable, Hashable, Identifiable {
+        let uuid: String
+        let kit: Bool
+        let tests: [String]?
+        let status: String?
+        let referralUrl: String?
+
+        var id: String { uuid }
+
+        var referralURL: URL? {
+            referralUrl.flatMap(URL.init(string:))
+        }
+    }
+
     let id: String
     let provider: String?
     let status: String
@@ -428,6 +503,7 @@ struct LabOrder: Codable, Identifiable, Hashable {
     let currency: String?
     let tracking: Tracking?
     let referralUrl: String?
+    let referrals: [Referral]?
     let createdAt: String?
 
     var isEirly: Bool { provider == "eirly" }
@@ -448,12 +524,19 @@ struct LabOrder: Codable, Identifiable, Hashable {
         referralUrl.flatMap(URL.init(string:))
     }
 
+    var eirlyReferrals: [Referral] {
+        if let referrals, !referrals.isEmpty { return referrals }
+        return [Referral(uuid: id, kit: false, tests: nil, status: nil, referralUrl: referralUrl)]
+    }
+
     var providerName: String {
         isEirly ? "Eirly" : "Junction"
     }
 
     var availability: VaultTestAvailability {
-        isEirly ? .inPerson : .atHomeKit
+        guard isEirly else { return .atHomeKit }
+        let referrals = referrals ?? []
+        return !referrals.isEmpty && referrals.allSatisfy(\.kit) ? .atHomeKit : .inPerson
     }
 
     var trackingURL: URL? {
@@ -494,4 +577,10 @@ struct LabResults: Codable {
     }
 
     let results: [Biomarker]
+    let missingResults: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case results
+        case missingResults = "missing_results"
+    }
 }

@@ -18,7 +18,7 @@ struct VaultClinicSheet: View {
 
     private var tests: [VaultClinicTest] {
         guard let selectedCategoryId else { return clinic.tests }
-        return clinic.tests.filter { $0.categoryId == selectedCategoryId }
+        return clinic.tests.filter { $0.categoryIds.contains(selectedCategoryId) }
     }
 
     var body: some View {
@@ -42,7 +42,7 @@ struct VaultClinicSheet: View {
 
                         VStack(spacing: .spacing3x) {
                             ForEach(tests) { test in
-                                testCard(test)
+                                VaultClinicTestCard(test: test) { selectedTest = test }
                             }
                         }
                     }
@@ -102,52 +102,6 @@ struct VaultClinicSheet: View {
         BrightTagV5(title: title, systemImage: systemImage, isSelected: selectedCategoryId == id) {
             withAnimation(.brightSnappy) { selectedCategoryId = id }
         }
-    }
-
-    private func testCard(_ test: VaultClinicTest) -> some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(spacing: .spacing105x) {
-                Image(systemName: test.type.systemImage)
-                    .font(.standard(size: .heading, weight: .light))
-                    .foregroundStyle(Color.semiLightTextColor)
-
-                BrightText(test.name, size: .heading, color: .semiLightTextColor, weight: .regular)
-
-                Spacer(minLength: .spacing0x)
-
-                BrightRoundButton(systemImage: "chevron.right", size: .small) {
-                    selectedTest = test
-                }
-            }
-
-            HStack(spacing: .spacing1x) {
-                Image(systemName: "checkmark.rectangle.stack")
-                    .font(.standard(size: .body1, weight: .light))
-                    .foregroundStyle(Color.semiLightTextColor)
-
-                BrightText("Available", size: .body1, color: .semiLightTextColor, weight: .regular)
-            }
-
-            HStack(spacing: .spacing1x) {
-                ForEach(test.availability) { availability in
-                    BrightChipV5(
-                        title: availability.rawValue,
-                        tint: .defaultBlue,
-                        fill: .defaultBlue.opacity(.veryMinimalOpacity)
-                    )
-                }
-            }
-
-            BrightDividerV5()
-
-            BrightText(test.detail, size: .body1, color: .lightTextColor)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
-        .contentShape(Rectangle())
-        .onTapGesture { selectedTest = test }
     }
 }
 

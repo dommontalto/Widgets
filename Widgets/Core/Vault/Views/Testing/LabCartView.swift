@@ -27,7 +27,7 @@ struct LabCartView: View {
                 id: item.testId,
                 name: item.name,
                 detail: "",
-                categoryId: "",
+                categoryIds: LabTestTypes.eirly(item.labTestId),
                 included: [item.name],
                 availability: [.inPerson],
                 price: item.price,

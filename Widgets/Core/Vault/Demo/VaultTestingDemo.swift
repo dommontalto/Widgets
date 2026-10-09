@@ -74,6 +74,10 @@ extension VaultTestCategory {
     static func named(_ id: String) -> VaultTestCategory? {
         demo.first { $0.id == id }
     }
+
+    @MainActor static var offered: [VaultTestCategory] {
+        demo.filter { VaultTestingClinic.testCount(in: $0.id) > 0 }
+    }
 }
 
 extension VaultTestOrder {
@@ -102,8 +106,10 @@ extension VaultTestingClinic {
         demo.first { $0.id == clinicId }?.tests ?? []
     }
 
-    @MainActor static func count(offering categoryId: String) -> Int {
-        all.filter { $0.offers(categoryId) }.count
+    @MainActor static func testCount(in categoryId: String) -> Int {
+        LabCatalog.shared.clinics.reduce(0) { count, clinic in
+            count + clinic.tests.filter { $0.categoryIds.contains(categoryId) }.count
+        }
     }
 
     static let demo: [VaultTestingClinic] = [
@@ -120,7 +126,7 @@ extension VaultTestingClinic {
                     id: "heart-panel-0",
                     name: "Heart Health Panel",
                     detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
-                    categoryId: "heart",
+                    categoryIds: ["heart"],
                     included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -128,7 +134,7 @@ extension VaultTestingClinic {
                     id: "longevity-panel",
                     name: "Longevity Panel",
                     detail: "A broad blood panel covering the markers most linked to biological ageing and long-term disease risk.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Complete blood count", "Lipid profile", "HbA1c", "hs-CRP", "Liver function", "Kidney function"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -136,7 +142,7 @@ extension VaultTestingClinic {
                     id: "metabolic-panel",
                     name: "Metabolic Panel",
                     detail: "Blood sugar regulation and insulin sensitivity alongside your cholesterol picture.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Fasting glucose", "HbA1c", "Fasting insulin", "Lipid profile"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -144,7 +150,7 @@ extension VaultTestingClinic {
                     id: "inflammation-markers",
                     name: "Inflammation Markers",
                     detail: "The main circulating markers of chronic inflammation, useful for tracking recovery and diet changes.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["hs-CRP", "ESR", "Ferritin"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -152,7 +158,7 @@ extension VaultTestingClinic {
                     id: "hormone-baseline",
                     name: "Hormone Baseline",
                     detail: "A starting read on the hormones behind energy, mood and recovery.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Testosterone", "Estradiol", "TSH", "Cortisol"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -160,7 +166,7 @@ extension VaultTestingClinic {
                     id: "gut-health-screen",
                     name: "Gut Health Screen",
                     detail: "A first-pass stool screen for the causes behind bloating and irregularity.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["Calprotectin", "Pathogen screen", "Occult blood"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -168,7 +174,7 @@ extension VaultTestingClinic {
                     id: "fertility-overview",
                     name: "Fertility Overview",
                     detail: "The cycle and reserve markers worth knowing before any fertility planning.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "FSH", "LH", "Progesterone"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -187,7 +193,7 @@ extension VaultTestingClinic {
                     id: "sleep-study-1",
                     name: "Sleep Study",
                     detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
-                    categoryId: "sleep",
+                    categoryIds: ["sleep"],
                     included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -195,7 +201,7 @@ extension VaultTestingClinic {
                     id: "vitamin-panel-1",
                     name: "Vitamins & Minerals",
                     detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
-                    categoryId: "vitamins",
+                    categoryIds: ["vitamins"],
                     included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -203,7 +209,7 @@ extension VaultTestingClinic {
                     id: "hormone-panel",
                     name: "Hormone Panel",
                     detail: "Sex and adrenal hormones that shape energy, mood, libido, sleep and body composition.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Total testosterone", "Free testosterone", "Estradiol", "SHBG", "DHEA-S", "LH and FSH"],
                     availability: [.atHomeKit, .inPerson, .homeVisit]
                 ),
@@ -211,7 +217,7 @@ extension VaultTestingClinic {
                     id: "thyroid-function",
                     name: "Thyroid Function",
                     detail: "A full thyroid picture, including the antibodies that flag autoimmune thyroid conditions.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["TSH", "Free T4", "Free T3", "Thyroid antibodies"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -219,7 +225,7 @@ extension VaultTestingClinic {
                     id: "cortisol-rhythm",
                     name: "Cortisol Rhythm",
                     detail: "Four saliva samples across the day map how your stress hormone rises and falls.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Waking cortisol", "Midday cortisol", "Evening cortisol", "Bedtime cortisol"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -227,7 +233,7 @@ extension VaultTestingClinic {
                     id: "longevity-bloods",
                     name: "Longevity Bloods",
                     detail: "The everyday bloods that track how well you are ageing, repeated quarterly.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Complete blood count", "hs-CRP", "HbA1c", "Liver function", "Kidney function"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -235,7 +241,7 @@ extension VaultTestingClinic {
                     id: "glucose-and-lipids",
                     name: "Glucose and Lipids",
                     detail: "Sugar handling and cholesterol in one fasting draw.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Fasting glucose", "HbA1c", "Lipid profile", "ApoB"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -243,7 +249,7 @@ extension VaultTestingClinic {
                     id: "gut-symptom-panel",
                     name: "Gut Symptom Panel",
                     detail: "Digestion, absorption and inflammation markers read together.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["Pancreatic elastase", "Calprotectin", "Secretory IgA", "Zonulin"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -251,7 +257,7 @@ extension VaultTestingClinic {
                     id: "fertility-hormones",
                     name: "Fertility Hormones",
                     detail: "Day-three hormones timed to the cycle, with reserve markers alongside.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "Day 3 FSH", "Estradiol", "Prolactin"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -270,7 +276,7 @@ extension VaultTestingClinic {
                     id: "vitamin-panel-2",
                     name: "Vitamins & Minerals",
                     detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
-                    categoryId: "vitamins",
+                    categoryIds: ["vitamins"],
                     included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -278,7 +284,7 @@ extension VaultTestingClinic {
                     id: "microbiome-map",
                     name: "Microbiome Map",
                     detail: "Sequences the bacteria in a stool sample to score diversity and screen for pathogens.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["16S sequencing", "Diversity score", "Pathogen screen", "Short-chain fatty acids"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -286,7 +292,7 @@ extension VaultTestingClinic {
                     id: "food-sensitivity",
                     name: "Food Sensitivity",
                     detail: "IgG reactions to 96 common foods, to help narrow down what is driving digestive symptoms.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["96-food IgG panel", "Reaction ranking", "Elimination guide"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -294,7 +300,7 @@ extension VaultTestingClinic {
                     id: "heavy-metals",
                     name: "Heavy Metals",
                     detail: "Blood levels of the metals that accumulate from diet, water and the environment.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Lead", "Mercury", "Arsenic", "Cadmium"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -302,7 +308,7 @@ extension VaultTestingClinic {
                     id: "metabolic-genomics",
                     name: "Metabolic Genomics",
                     detail: "The gene variants that shape how you handle carbs, fats and caffeine.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Carbohydrate response", "Lipid metabolism", "Caffeine clearance", "Lactose tolerance"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -321,7 +327,7 @@ extension VaultTestingClinic {
                     id: "heart-panel-3",
                     name: "Heart Health Panel",
                     detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
-                    categoryId: "heart",
+                    categoryIds: ["heart"],
                     included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -329,7 +335,7 @@ extension VaultTestingClinic {
                     id: "heart-health",
                     name: "Heart Health",
                     detail: "The advanced lipid markers and a resting ECG that together size up cardiovascular risk.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["ApoB", "Lipoprotein(a)", "Lipid profile", "hs-CRP", "Resting ECG"],
                     availability: [.inPerson, .homeVisit, .atHomeKit]
                 ),
@@ -337,7 +343,7 @@ extension VaultTestingClinic {
                     id: "glucose-control",
                     name: "Glucose Control",
                     detail: "How well your body handles sugar day to day and over the last three months.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Fasting glucose", "HbA1c", "Fasting insulin"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -345,7 +351,7 @@ extension VaultTestingClinic {
                     id: "cardio-longevity-bloods",
                     name: "Cardio Longevity Bloods",
                     detail: "Heart markers read as an ageing signal rather than a one-off risk score.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["ApoB", "Lipoprotein(a)", "hs-CRP", "Homocysteine"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -353,7 +359,7 @@ extension VaultTestingClinic {
                     id: "stress-hormones",
                     name: "Stress Hormones",
                     detail: "Cortisol through the day for when training load and sleep stop adding up.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Waking cortisol", "Midday cortisol", "Evening cortisol", "DHEA-S"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -372,7 +378,7 @@ extension VaultTestingClinic {
                     id: "sleep-study-4",
                     name: "Sleep Study",
                     detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
-                    categoryId: "sleep",
+                    categoryIds: ["sleep"],
                     included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -380,7 +386,7 @@ extension VaultTestingClinic {
                     id: "fertility-panel",
                     name: "Fertility Panel",
                     detail: "Ovarian reserve and the cycle hormones that matter most when planning to conceive.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "FSH", "LH", "Estradiol", "Progesterone"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -388,7 +394,7 @@ extension VaultTestingClinic {
                     id: "semen-analysis",
                     name: "Semen Analysis",
                     detail: "Count, movement and shape of sperm, assessed in the lab within an hour of collection.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["Sperm count", "Motility", "Morphology", "Volume and pH"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -396,7 +402,7 @@ extension VaultTestingClinic {
                     id: "vitamin-panel",
                     name: "Vitamin Panel",
                     detail: "The vitamins and minerals most often low in an otherwise healthy diet.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Vitamin D", "Vitamin B12", "Folate", "Iron studies"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -404,7 +410,7 @@ extension VaultTestingClinic {
                     id: "cycle-hormones",
                     name: "Cycle Hormones",
                     detail: "Hormones sampled across a full cycle to map how it actually runs.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Estradiol", "Progesterone", "LH", "FSH", "Prolactin"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -423,7 +429,7 @@ extension VaultTestingClinic {
                     id: "vitamin-panel-5",
                     name: "Vitamins & Minerals",
                     detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
-                    categoryId: "vitamins",
+                    categoryIds: ["vitamins"],
                     included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -431,7 +437,7 @@ extension VaultTestingClinic {
                     id: "full-blood-screen",
                     name: "Full Blood Screen",
                     detail: "The standard screen most GPs start with, covering blood cells, iron and the common deficiencies.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Complete blood count", "Iron studies", "Vitamin D", "Vitamin B12", "Folate"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -439,7 +445,7 @@ extension VaultTestingClinic {
                     id: "thyroid-check",
                     name: "Thyroid Check",
                     detail: "A first look at thyroid function when energy, weight or temperature feel off.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["TSH", "Free T4", "Free T3"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -458,7 +464,7 @@ extension VaultTestingClinic {
                     id: "heart-panel-6",
                     name: "Heart Health Panel",
                     detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
-                    categoryId: "heart",
+                    categoryIds: ["heart"],
                     included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -466,7 +472,7 @@ extension VaultTestingClinic {
                     id: "sleep-study-6",
                     name: "Sleep Study",
                     detail: "A night of monitoring at home to see how long you sleep, how deeply, and how well you breathe.",
-                    categoryId: "sleep",
+                    categoryIds: ["sleep"],
                     included: ["Sleep stages", "Oxygen saturation", "Breathing events", "Heart rate", "Melatonin"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -474,7 +480,7 @@ extension VaultTestingClinic {
                     id: "sleep-and-stress",
                     name: "Sleep and Stress Panel",
                     detail: "Cortisol and melatonin through the day, read against the hormones that shape sleep quality.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Waking cortisol", "Evening cortisol", "Melatonin", "DHEA-S"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -482,7 +488,7 @@ extension VaultTestingClinic {
                     id: "testosterone-check",
                     name: "Testosterone Check",
                     detail: "Total and free testosterone with the binding protein needed to read them properly.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Total testosterone", "Free testosterone", "SHBG", "LH"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -501,7 +507,7 @@ extension VaultTestingClinic {
                     id: "vitamin-panel-7",
                     name: "Vitamins & Minerals",
                     detail: "The nutrients most often low in active people, from iron stores to vitamin D.",
-                    categoryId: "vitamins",
+                    categoryIds: ["vitamins"],
                     included: ["Vitamin D", "B12", "Folate", "Iron studies", "Magnesium", "Zinc"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -509,7 +515,7 @@ extension VaultTestingClinic {
                     id: "liver-kidney-panel",
                     name: "Liver and Kidney Panel",
                     detail: "How well the two organs clearing your bloodstream are keeping up.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["ALT and AST", "GGT", "Bilirubin", "eGFR", "Creatinine"],
                     availability: [.inPerson, .homeVisit, .atHomeKit]
                 ),
@@ -517,7 +523,7 @@ extension VaultTestingClinic {
                     id: "insulin-resistance",
                     name: "Insulin Resistance",
                     detail: "Fasting markers that flag insulin resistance years before glucose starts to drift.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Fasting insulin", "Fasting glucose", "HOMA-IR", "HbA1c"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -536,7 +542,7 @@ extension VaultTestingClinic {
                     id: "heart-panel-8",
                     name: "Heart Health Panel",
                     detail: "Cholesterol, inflammation and the markers most closely tied to cardiovascular risk.",
-                    categoryId: "heart",
+                    categoryIds: ["heart"],
                     included: ["ApoB", "Lipid profile", "Lp(a)", "hs-CRP", "Homocysteine"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -544,7 +550,7 @@ extension VaultTestingClinic {
                     id: "gut-repair-panel",
                     name: "Gut Repair Panel",
                     detail: "Digestive markers that show how well the gut lining is absorbing and holding up.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["Calprotectin", "Zonulin", "Pancreatic elastase", "Secretory IgA"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -552,7 +558,7 @@ extension VaultTestingClinic {
                     id: "omega-3-index",
                     name: "Omega-3 Index",
                     detail: "The share of omega-3 in your red blood cells, the marker used in longevity research.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Omega-3 index", "EPA", "DHA", "Omega-6 to omega-3 ratio"],
                     availability: [.homeVisit, .atHomeKit]
                 ),
@@ -571,7 +577,7 @@ extension VaultTestingClinic {
                     id: "ovarian-reserve",
                     name: "Ovarian Reserve",
                     detail: "AMH and the early-cycle hormones that estimate how many eggs are left in reserve.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "Day 3 FSH", "Day 3 LH", "Estradiol"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -579,7 +585,7 @@ extension VaultTestingClinic {
                     id: "thyroid-antibodies",
                     name: "Thyroid Antibodies",
                     detail: "The antibodies behind Hashimoto's and Graves', for when thyroid results keep moving.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["TPO antibodies", "Thyroglobulin antibodies", "TSH receptor antibodies"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -598,7 +604,7 @@ extension VaultTestingClinic {
                     id: "coeliac-screen",
                     name: "Coeliac Screen",
                     detail: "The antibody screen for gluten sensitivity, taken while you are still eating gluten.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["Tissue transglutaminase IgA", "Total IgA", "Deamidated gliadin peptide"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -606,7 +612,7 @@ extension VaultTestingClinic {
                     id: "inflammation-baseline",
                     name: "Inflammation Baseline",
                     detail: "A starting point for tracking inflammation through a training block or diet change.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["hs-CRP", "ESR", "White cell differential"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -625,7 +631,7 @@ extension VaultTestingClinic {
                     id: "cardio-risk-panel",
                     name: "Cardio Risk Panel",
                     detail: "Blood pressure, an ECG and the blood markers that together score heart risk.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Resting ECG", "Blood pressure", "Lipid profile", "hs-CRP"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -633,7 +639,7 @@ extension VaultTestingClinic {
                     id: "advanced-lipids",
                     name: "Advanced Lipids",
                     detail: "The particle-level cholesterol markers a standard lipid panel leaves out.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["ApoB", "ApoA1", "Lipoprotein(a)", "LDL particle number"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -652,7 +658,7 @@ extension VaultTestingClinic {
                     id: "biological-age-panel",
                     name: "Biological Age Panel",
                     detail: "An epigenetic read of biological age alongside the bloods that explain the number.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["Epigenetic age", "Telomere length", "hs-CRP", "HbA1c", "Lipid profile"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -660,7 +666,7 @@ extension VaultTestingClinic {
                     id: "executive-hormone-screen",
                     name: "Executive Hormone Screen",
                     detail: "A broad hormone sweep aimed at energy, recovery and body composition under load.",
-                    categoryId: "hormones",
+                    categoryIds: ["hormones"],
                     included: ["Testosterone", "Cortisol", "Thyroid panel", "IGF-1", "DHEA-S"],
                     availability: [.inPerson, .homeVisit]
                 ),
@@ -668,7 +674,7 @@ extension VaultTestingClinic {
                     id: "gut-and-microbiome-screen",
                     name: "Gut and Microbiome Screen",
                     detail: "Full microbiome sequencing paired with the markers of a leaky or inflamed gut.",
-                    categoryId: "gut",
+                    categoryIds: ["gut"],
                     included: ["16S sequencing", "Diversity score", "Calprotectin", "Zonulin", "Short-chain fatty acids"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -676,7 +682,7 @@ extension VaultTestingClinic {
                     id: "metabolic-performance-panel",
                     name: "Metabolic Performance Panel",
                     detail: "Fuel use under load, from fasting insulin through to advanced lipids.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Fasting insulin", "HbA1c", "ApoB", "Lipoprotein(a)", "Liver function"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -684,7 +690,7 @@ extension VaultTestingClinic {
                     id: "family-planning-check",
                     name: "Family Planning Check",
                     detail: "Reserve, thyroid and immunity checks for couples thinking a year ahead.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "Thyroid panel", "Rubella immunity", "Semen analysis"],
                     availability: [.inPerson, .atHomeKit, .homeVisit]
                 ),
@@ -703,7 +709,7 @@ extension VaultTestingClinic {
                     id: "preconception-panel",
                     name: "Preconception Panel",
                     detail: "The hormone, iron and immunity checks recommended in the months before trying.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["AMH", "Thyroid panel", "Iron studies", "Rubella immunity", "Vitamin D"],
                     availability: [.inPerson, .atHomeKit]
                 ),
@@ -711,7 +717,7 @@ extension VaultTestingClinic {
                     id: "carrier-screening",
                     name: "Carrier Screening",
                     detail: "Screens both partners for the inherited conditions most often passed on together.",
-                    categoryId: "fertility",
+                    categoryIds: ["fertility"],
                     included: ["Cystic fibrosis", "Spinal muscular atrophy", "Fragile X", "Expanded panel"],
                     availability: [.atHomeKit, .homeVisit]
                 ),
@@ -730,7 +736,7 @@ extension VaultTestingClinic {
                     id: "metabolic-deep-dive",
                     name: "Metabolic Deep Dive",
                     detail: "Two weeks of continuous glucose paired with the bloods that explain the curves.",
-                    categoryId: "metabolic",
+                    categoryIds: ["metabolic"],
                     included: ["Continuous glucose monitor", "HbA1c", "Fasting insulin", "Lipid profile", "Liver function"],
                     availability: [.atHomeKit, .inPerson]
                 ),
@@ -738,7 +744,7 @@ extension VaultTestingClinic {
                     id: "kidney-function",
                     name: "Kidney Function",
                     detail: "Filtration rate and urine protein, the pair that catch kidney strain early.",
-                    categoryId: "longevity",
+                    categoryIds: ["longevity"],
                     included: ["eGFR", "Creatinine", "Urea", "Urine albumin to creatinine ratio"],
                     availability: [.inPerson, .homeVisit]
                 ),

@@ -43,24 +43,19 @@ struct VaultGuidedTestingHomeView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                regionMenu
+                LabRegionMenu()
             }
             if catalog.region == .au {
                 ToolbarItem(placement: .topBarTrailing) {
                     LabCartButton { showingCart = true }
                 }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingMap = true
-                } label: {
-                    Label("Map", systemImage: "map")
-                        .labelStyle(.iconOnly)
+                ToolbarItem(placement: .topBarTrailing) {
+                    LabCentresMapButton { showingMap = true }
                 }
             }
         }
         .navigationDestination(isPresented: $showingMap) {
-            VaultClinicsMapView(clinics: clinics.filter { !$0.shipsToYou }, onSelectClinic: onSelectClinic)
+            LabCollectionCentresMapView()
         }
         .navigationDestination(isPresented: $showingCart) {
             if let clinic = catalog.clinic(for: .au) {
@@ -72,35 +67,11 @@ struct VaultGuidedTestingHomeView: View {
         }
     }
 
-    private var regionMenu: some View {
-        Menu {
-            ForEach(LabRegion.allCases) { region in
-                Button {
-                    Task { await catalog.select(region) }
-                } label: {
-                    Label {
-                        Text(region.title)
-                    } icon: {
-                        if region == catalog.region {
-                            Image(systemName: "checkmark")
-                        } else {
-                            Image(systemName: region.systemImage)
-                        }
-                    }
-                }
-            }
-        } label: {
-            Label("Region", systemImage: catalog.region?.systemImage ?? "globe")
-                .labelStyle(.iconOnly)
-        }
-        .brightHapticV5(.light, trigger: catalog.region)
-    }
-
     // MARK: - Explore
 
     private var explore: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            VaultTestBrowse(blur: true, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
+            VaultTestBrowse(blur: true, onOrder: onOrder)
                 .padding(.top, .spacing3x)
 
             BrightWidgetTitleV5(icon: .symbol("location"), title: "All Clinics Near Me") {
@@ -369,27 +340,37 @@ struct VaultClinicLogo: View {
 
 struct VaultTestBrowse: View {
     var blur = false
-    var sortOrder = VaultTestingSortOrder.proximity
-    let onSelectClinic: (VaultTestingClinic) -> Void
+    let onOrder: (VaultTestOrder) -> Void
 
     @State private var showsAllCategories = false
     @State private var selectedCategory: VaultTestCategory?
 
+    private var categories: [VaultTestCategory] {
+        VaultTestCategory.offered
+    }
+
     var body: some View {
-        BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
-            BrightTileRowV5(blur: blur) {
-                ForEach(VaultTestCategory.demo) { category in
-                    VaultTestCategoryTile(category: category) { selectedCategory = category }
+        if !categories.isEmpty {
+            BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
+                BrightTileRowV5(blur: blur) {
+                    ForEach(categories) { category in
+                        VaultTestCategoryTile(category: category) { selectedCategory = category }
+                    }
                 }
             }
+            .navigationDestination(isPresented: $showsAllCategories) {
+                VaultTestCategoriesView(onOrder: order)
+            }
+            .navigationDestination(item: $selectedCategory) { category in
+                VaultTestCategoryView(category: category, onOrder: order)
+            }
         }
-        .navigationDestination(isPresented: $showsAllCategories) {
-            VaultTestCategoriesView(sortOrder: sortOrder, onSelectClinic: onSelectClinic)
-        }
-        .task { await LabCatalog.shared.loadIfNeeded() }
-        .navigationDestination(item: $selectedCategory) { category in
-            VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
-        }
+    }
+
+    private func order(_ order: VaultTestOrder) {
+        showsAllCategories = false
+        selectedCategory = nil
+        onOrder(order)
     }
 }
 
@@ -398,10 +379,14 @@ struct VaultTestCategoryTile: View {
     var fillsWidth = false
     let onTap: () -> Void
 
+    private var count: Int {
+        VaultTestingClinic.testCount(in: category.id)
+    }
+
     var body: some View {
         BrightTileV5(
             category.name,
-            subtitle: "\(VaultTestingClinic.count(offering: category.id)) clinics",
+            subtitle: "\(count) \(count == 1 ? "test" : "tests")",
             backgroundImage: category.tileName,
             fillsWidth: fillsWidth,
             onTap: onTap
@@ -413,22 +398,63 @@ struct VaultTestCategoryTile: View {
 
 // Every test category at once, laid out like Genome's categories.
 struct VaultTestCategoriesView: View {
-    let sortOrder: VaultTestingSortOrder
-    let onSelectClinic: (VaultTestingClinic) -> Void
+    let onOrder: (VaultTestOrder) -> Void
 
     @State private var selectedCategory: VaultTestCategory?
 
     var body: some View {
         BrightPageViewV5(title: "Guided Testing") {
             BrightCardGridV5(spacing: .spacing3x) {
-                ForEach(VaultTestCategory.demo) { category in
+                ForEach(VaultTestCategory.offered) { category in
                     VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }
                 }
             }
             .padding(.bottom, .spacing4x)
         }
         .navigationDestination(item: $selectedCategory) { category in
-            VaultTestCategoryView(category: category, sortOrder: sortOrder, onSelectClinic: onSelectClinic)
+            VaultTestCategoryView(category: category) { order in
+                selectedCategory = nil
+                onOrder(order)
+            }
+        }
+    }
+}
+
+struct LabRegionMenu: View {
+    private let catalog = LabCatalog.shared
+
+    var body: some View {
+        Menu {
+            ForEach(LabRegion.allCases) { region in
+                Button {
+                    Task { await catalog.select(region) }
+                } label: {
+                    Label {
+                        Text(region.title)
+                    } icon: {
+                        if region == catalog.region {
+                            Image(systemName: "checkmark")
+                        } else {
+                            Image(systemName: region.systemImage)
+                        }
+                    }
+                }
+            }
+        } label: {
+            Label("Region", systemImage: catalog.region?.systemImage ?? "globe")
+                .labelStyle(.iconOnly)
+        }
+        .brightHapticV5(.light, trigger: catalog.region)
+    }
+}
+
+struct LabCentresMapButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("Collection Centres", systemImage: "map")
+                .labelStyle(.iconOnly)
         }
     }
 }

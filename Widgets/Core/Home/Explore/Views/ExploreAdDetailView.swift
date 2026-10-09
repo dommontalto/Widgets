@@ -20,12 +20,12 @@ struct ExploreAdDetailView: View {
     @State private var receipt: VaultTestOrder?
 
     private var categories: [VaultTestCategory] {
-        VaultTestCategory.demo.filter { category in clinic.tests.contains { $0.categoryId == category.id } }
+        VaultTestCategory.demo.filter { clinic.testingClinic.offers($0.id) }
     }
 
     private var tests: [VaultClinicTest] {
         guard let filter else { return clinic.tests }
-        return clinic.tests.filter { $0.categoryId == filter.id }
+        return clinic.tests.filter { $0.categoryIds.contains(filter.id) }
     }
 
     var body: some View {
@@ -164,7 +164,7 @@ struct ExploreAdDetailView: View {
     private func testCard(_ test: VaultClinicTest) -> some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             HStack(spacing: .spacing2x) {
-                if let category = VaultTestCategory.named(test.categoryId) {
+                if let category = test.categoryId.flatMap(VaultTestCategory.named) {
                     categoryBadge(category)
                 }
 

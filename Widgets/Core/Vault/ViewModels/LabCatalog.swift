@@ -23,6 +23,11 @@ final class LabCatalog {
         self.service = service ?? LabOrdersMockService()
     }
 
+    var isLoading: Bool {
+        guard let region else { return true }
+        return loadingRegions.contains(region)
+    }
+
     func clinic(for region: LabRegion) -> VaultTestingClinic? {
         loaded[region]
     }
@@ -92,9 +97,9 @@ final class LabCatalog {
             distanceKm: 0,
             latitude: 0,
             longitude: 0,
-            services: Array(Set(tests.map(\.categoryId))).sorted().compactMap { id in
-                VaultTestCategory.demo.first { $0.id == id }?.name
-            },
+            services: VaultTestCategory.demo.filter { category in
+                tests.contains { $0.categoryIds.contains(category.id) }
+            }.map(\.name),
             tests: tests,
             shipsToYou: true
         )
@@ -106,7 +111,7 @@ final class LabCatalog {
             id: test.id,
             name: test.name,
             detail: junctionDetail(for: test),
-            categoryId: category(for: test.name, markers: markers),
+            categoryIds: LabTestTypes.junction(test.name),
             included: markers.isEmpty ? [sampleLabel(test.sampleType) ?? Constants.kitTitle] : markers,
             availability: [.atHomeKit],
             price: test.price ?? 0,
@@ -120,10 +125,10 @@ final class LabCatalog {
         VaultClinicTest(
             id: "eirly-\(test.id)",
             name: test.name,
-            detail: Constants.eirlyDetail,
-            categoryId: category(for: test.name, markers: []),
-            included: [sampleLabel(test.testType).map { "\($0) test" } ?? Constants.referralTitle],
-            availability: [.inPerson],
+            detail: test.isKit ? Constants.eirlyKitDetail : Constants.eirlyDetail,
+            categoryIds: LabTestTypes.eirly(test.id),
+            included: [eirlyIncluded(test)],
+            availability: [test.isKit ? .atHomeKit : .inPerson],
             price: test.price ?? 0,
             currency: Constants.eirlyCurrency,
             labTestId: test.id,
@@ -138,17 +143,17 @@ final class LabCatalog {
         return "\(kit), posted to you. Collect your sample at home, mail it back, and your results appear in Bright.\(fasting)"
     }
 
-    private static func sampleLabel(_ sampleType: String?) -> String? {
-        guard let sampleType, !sampleType.isEmpty else { return nil }
-        let words = sampleType.replacingOccurrences(of: "_", with: " ")
-        return words.prefix(1).uppercased() + words.dropFirst()
+    private static func eirlyIncluded(_ test: EirlyTest) -> String {
+        guard let label = sampleLabel(test.testType) else {
+            return test.isKit ? Constants.kitTitle : Constants.referralTitle
+        }
+        return test.isKit ? label : "\(label) test"
     }
 
-    private static func category(for name: String, markers: [String]) -> String {
-        let text = ([name] + markers).joined(separator: " ").lowercased()
-        return Constants.categoryKeywords.first { _, keywords in
-            keywords.contains { text.contains($0) }
-        }?.id ?? Constants.defaultCategory
+    private static func sampleLabel(_ sampleType: String?) -> String? {
+        guard let sampleType, !sampleType.isEmpty else { return nil }
+        let words = sampleType.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ")
+        return words.prefix(1).uppercased() + words.dropFirst()
     }
 
     private enum Constants {
@@ -159,19 +164,10 @@ final class LabCatalog {
         static let eirlyAddress = "Pathology referrals · Australian collection centres"
         static let eirlyCurrency = "AUD"
         static let eirlyDetail = "A pathology referral emailed to you. Take it to any partner collection centre in Australia, and your results appear in Bright. Collection fees and GST are added at checkout."
+        static let eirlyKitDetail = "A test kit posted to your Australian address. Follow the instructions inside to collect your sample, and your results appear in Bright. Fees and GST are added at checkout."
         static let kitTitle = "At-home test kit"
         static let referralTitle = "Pathology referral"
         static let fastingNote = " Fasting is required before collection."
-        static let defaultCategory = "longevity"
-        static let categoryKeywords: [(id: String, keywords: [String])] = [
-            ("fertility", ["fertility", "amh", "ovarian", "sperm"]),
-            ("hormones", ["hormone", "testosterone", "estradiol", "oestradiol", "estrogen", "thyroid", "tsh", "tft", "cortisol", "dhea"]),
-            ("heart", ["heart", "lipid", "cholesterol", "cardio", "apob", "ldl", "hdl"]),
-            ("metabolic", ["metabolic", "glucose", "a1c", "diabetes", "insulin"]),
-            ("vitamins", ["vitamin", "ferritin", "iron", "b12", "folate", "magnesium", "zinc"]),
-            ("gut", ["gut", "stool", "microbiome", "coeliac", "celiac", "digest"]),
-            ("sleep", ["sleep", "melatonin"]),
-        ]
     }
 }
 

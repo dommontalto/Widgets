@@ -161,7 +161,7 @@ final class LabOrderViewModel {
             id: tests.map(\.id).joined(separator: "+"),
             name: title,
             detail: detail,
-            categoryId: tests.first?.categoryId ?? "",
+            categoryIds: tests.first?.categoryIds ?? [],
             included: tests.map(\.name),
             availability: [type],
             price: price,

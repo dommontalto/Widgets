@@ -73,7 +73,7 @@ struct ExploreView: View {
                 agents
             }
 
-            VaultTestBrowse { selectedClinic = $0 }
+            VaultTestBrowse(onOrder: place)
 
             BrightWidgetTitleV5(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
                 clinics

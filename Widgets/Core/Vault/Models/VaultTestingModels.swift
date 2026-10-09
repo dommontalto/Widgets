@@ -5,7 +5,7 @@
 //  Created by Dom Montalto on 18/9/2026.
 //
 
-import Foundation
+import SwiftUI
 
 struct VaultTestCategory: Identifiable, Hashable {
     let id: String
@@ -28,6 +28,13 @@ enum VaultTestAvailability: String, CaseIterable, Identifiable {
         case .atHomeKit: "cross.case"
         case .inPerson: "figure.walk"
         case .homeVisit: "house"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .atHomeKit: .defaultOrange
+        case .inPerson, .homeVisit: .defaultBlue
         }
     }
 
@@ -56,7 +63,7 @@ struct VaultClinicTest: Identifiable, Hashable {
     let id: String
     let name: String
     let detail: String
-    let categoryId: String
+    let categoryIds: [String]
     let included: [String]
     let availability: [VaultTestAvailability]
     var price: Double = 499.99
@@ -66,6 +73,10 @@ struct VaultClinicTest: Identifiable, Hashable {
 
     var type: VaultTestAvailability {
         availability.first ?? .inPerson
+    }
+
+    var categoryId: String? {
+        categoryIds.first
     }
 
     var priceText: String {
@@ -97,7 +108,17 @@ struct VaultTestingClinic: Identifiable, Hashable {
     }
 
     func offers(_ categoryId: String) -> Bool {
-        tests.contains { $0.categoryId == categoryId }
+        tests.contains { $0.categoryIds.contains(categoryId) }
+    }
+
+    func tests(in categoryId: String) -> (primary: [VaultClinicTest], also: [VaultClinicTest]) {
+        let byName: (VaultClinicTest, VaultClinicTest) -> Bool = {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+        return (
+            tests.filter { $0.categoryId == categoryId }.sorted(by: byName),
+            tests.filter { $0.categoryId != categoryId && $0.categoryIds.contains(categoryId) }.sorted(by: byName)
+        )
     }
 }
 
