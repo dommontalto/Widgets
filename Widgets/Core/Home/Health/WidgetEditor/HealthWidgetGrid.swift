@@ -131,6 +131,7 @@ struct HealthWidgetView: View {
                 .foregroundStyle(color)
 
             BrightText(title, size: .body1, weight: .regular)
+                .contentTransition(.numericText())
         }
         .lineLimit(1)
     }

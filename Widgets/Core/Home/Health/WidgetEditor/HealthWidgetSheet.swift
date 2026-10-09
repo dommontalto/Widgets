@@ -260,8 +260,6 @@ private struct WidgetOptions: View {
         let scale = min(max((room - .spacing4x * 2) / frame.height, 0), 1)
 
         return HealthWidgetView(widget: shown)
-            .id("\(shown.range)-\(shown.macro)")
-            .transition(.blurReplace)
             .frame(width: frame.width, height: frame.height)
             .scaleEffect(scale)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

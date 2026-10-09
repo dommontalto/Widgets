@@ -170,6 +170,7 @@ struct BrightLineChartWidgetV5: View {
             .lineLimit(1)
 
             BrightText("Latest: \(latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+                .contentTransition(.numericText())
         }
     }
 
@@ -180,6 +181,7 @@ struct BrightLineChartWidgetV5: View {
 
             BrightText(display(value), size: .body3, color: color, weight: .regular)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
         .foregroundStyle(color)
     }
@@ -198,6 +200,7 @@ struct BrightLineChartWidgetV5: View {
                 .animation(.brightEaseInOut, value: display(value))
 
             BrightText(unit, size: unitSize, color: .lightTextColor, weight: weight)
+                .contentTransition(.numericText())
         }
         .lineLimit(1)
     }
@@ -301,6 +304,7 @@ struct BrightLineChartWidgetV5: View {
             ForEach(Array(guideLabels.enumerated()), id: \.offset) { _, label in
                 BrightText(display(label.value), size: .body5, color: label.color, weight: label.weight)
                     .monospacedDigit()
+                    .contentTransition(.numericText())
                     .lineLimit(1)
                     .fixedSize()
                     .frame(width: geometry.size.width, alignment: .leading)
@@ -350,9 +354,11 @@ struct BrightLineChartWidgetV5: View {
 
         return HStack(spacing: .spacing0x) {
             BrightText(labels.leading, size: .body5, color: color)
+                .contentTransition(.numericText())
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             BrightText(labels.trailing, size: .body5, color: color)
+                .contentTransition(.numericText())
                 .frame(maxWidth: .infinity, alignment: range.isRolling ? .trailing : .leading)
         }
         .lineLimit(1)

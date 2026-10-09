@@ -159,6 +159,7 @@ struct BrightBarChartWidgetV5: View {
             .lineLimit(1)
 
             BrightText(subtitle, size: .body2, color: .lightTextColor)
+                .contentTransition(.numericText())
                 .lineLimit(1)
         }
     }
@@ -166,6 +167,7 @@ struct BrightBarChartWidgetV5: View {
     private func comparisonText(_ text: String) -> some View {
         BrightText(text, size: .body5, color: .defaultCyan.opacity(.lowOpacity))
             .monospacedDigit()
+            .contentTransition(.numericText())
             .lineLimit(1)
     }
 
@@ -187,6 +189,7 @@ struct BrightBarChartWidgetV5: View {
 
             if !unitLabel.isEmpty {
                 BrightText(unitLabel, size: .body1, color: .lightTextColor, weight: size == .small ? .light : .regular)
+                    .contentTransition(.numericText())
             }
         }
         .lineLimit(1)
@@ -396,6 +399,7 @@ struct BrightBarChartWidgetV5: View {
 
             BrightText(display(value), size: .body6, color: .semiLightTextColor)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
         .foregroundStyle(Color.semiLightTextColor)
         .fixedSize()
@@ -416,6 +420,7 @@ struct BrightBarChartWidgetV5: View {
     private func guideLabel(_ value: Double) -> some View {
         BrightText(display(value), size: .body5, color: .lightTextColor)
             .monospacedDigit()
+            .contentTransition(.numericText())
             .lineLimit(1)
             .fixedSize()
     }
@@ -450,26 +455,20 @@ struct BrightBarChartWidgetV5: View {
                     }
                 }
                 .animation(.brightEaseInOut, value: selectedIndex)
-        } else if range.isRolling {
-            let labels = range.labels(for: interval)
-
-            HStack(spacing: .spacing0x) {
-                BrightText(labels.leading, size: .body5, color: .semiLightTextColor)
-
-                Spacer(minLength: .spacing0x)
-
-                BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
-            }
-            .lineLimit(1)
         } else {
-            // The start at the leading edge, and the halfway hour from its bar's leading edge.
+            // Rolling ranges put "Now" at the trailing edge; fixed ones put the halfway hour
+            // at its bar's leading edge. One pair of labels serves both, so switching
+            // between them rolls "12h ago" into "12 AM" rather than swapping the row.
             let labels = range.labels(for: interval)
 
             ZStack(alignment: .leading) {
                 BrightText(labels.leading, size: .body5, color: .semiLightTextColor)
+                    .contentTransition(.numericText())
 
                 BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
-                    .offset(x: slotCentre(range.slotCount / 2, in: plotWidth) - barWidth(in: plotWidth) / 2)
+                    .contentTransition(.numericText())
+                    .frame(maxWidth: .infinity, alignment: range.isRolling ? .trailing : .leading)
+                    .offset(x: range.isRolling ? .zero : slotCentre(range.slotCount / 2, in: plotWidth) - barWidth(in: plotWidth) / 2)
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -577,6 +576,7 @@ struct BrightBarChartWidgetV5: View {
     private func summaryGrid(_ summary: Summary) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText(summaryTitle(summary), size: .body3, color: .semiLightTextColor, weight: .regular)
+                .contentTransition(.numericText())
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: .spacing1x, alignment: .leading), count: 3),
@@ -608,6 +608,7 @@ struct BrightBarChartWidgetV5: View {
                 case .values:
                     BrightText([display(value), unit].compactMap(\.self).joined(separator: " "), size: .body3, color: .semiLightTextColor)
                         .monospacedDigit()
+                        .contentTransition(.numericText())
                 case let .targets(_, target):
                     HStack(spacing: .spacing05x) {
                         Image(systemName: value >= target ? "arrow.up" : "arrow.down")
@@ -615,6 +616,7 @@ struct BrightBarChartWidgetV5: View {
 
                         BrightText([display(abs(value - target)), unit].compactMap(\.self).joined(separator: " "), size: .body3, color: .semiLightTextColor)
                             .monospacedDigit()
+                            .contentTransition(.numericText())
                     }
                     .foregroundStyle(Color.semiLightTextColor)
                 }
