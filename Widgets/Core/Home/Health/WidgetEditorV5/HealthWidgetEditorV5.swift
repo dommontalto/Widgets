@@ -18,6 +18,7 @@ final class HealthWidgetEditorV5 {
             guard !isEditing else { return }
             endAutoScroll()
             dragging = nil
+            resizing = nil
         }
     }
 
@@ -45,6 +46,76 @@ final class HealthWidgetEditorV5 {
 
         var location: CGPoint {
             CGPoint(x: origin.x + translation.width, y: origin.y + translation.height + scrollOffset)
+        }
+    }
+
+    private(set) var resizing: Resize?
+
+    // Held by its top corner on the side away from the handle, so the frame stretches
+    // from a fixed point however the grid reflows underneath it.
+    struct Resize: Equatable {
+        let widgetID: UUID
+        let row: Int
+        let startColumn: Int
+        let anchor: CGPoint
+        let growsLeading: Bool
+        let startFrame: CGSize
+        var translation: CGSize = .zero
+
+        // The frame under the finger, rubber-banding past the style's smallest and
+        // largest sizes the way a scroll view does past its ends.
+        func frame(for sizes: [BrightWidgetSizeV5], cellSize: CGFloat) -> CGSize {
+            let raw = rawFrame
+            let frames = sizes.map { HealthWidgetGridMetricsV5.frame(for: $0, cellSize: cellSize) }
+            return CGSize(
+                width: Self.rubberBand(raw.width, between: frames.map(\.width)),
+                height: Self.rubberBand(raw.height, between: frames.map(\.height))
+            )
+        }
+
+        func isPastLimit(for sizes: [BrightWidgetSizeV5], cellSize: CGFloat) -> Bool {
+            let raw = rawFrame
+            let frames = sizes.map { HealthWidgetGridMetricsV5.frame(for: $0, cellSize: cellSize) }
+            return Self.isOutside(raw.width, frames.map(\.width)) || Self.isOutside(raw.height, frames.map(\.height))
+        }
+
+        private var rawFrame: CGSize {
+            CGSize(
+                width: startFrame.width + (growsLeading ? -translation.width : translation.width),
+                height: startFrame.height + translation.height
+            )
+        }
+
+        private static func isOutside(_ value: CGFloat, _ limits: [CGFloat]) -> Bool {
+            guard let lower = limits.min(), let upper = limits.max() else { return false }
+            return value < lower || value > upper
+        }
+
+        private static func rubberBand(_ value: CGFloat, between limits: [CGFloat]) -> CGFloat {
+            guard let lower = limits.min(), let upper = limits.max() else { return value }
+            if value < lower {
+                return lower - resisted(lower - value)
+            }
+            if value > upper {
+                return upper + resisted(value - upper)
+            }
+            return value
+        }
+
+        // Eases towards `reach` however far the finger goes.
+        private static func resisted(_ overshoot: CGFloat) -> CGFloat {
+            let reach = CGFloat.spacing4x
+            return reach * (1 - 1 / (overshoot / reach * Constants.rubberBandStiffness + 1))
+        }
+
+        func origin(for frame: CGSize) -> CGPoint {
+            growsLeading ? CGPoint(x: anchor.x - frame.width, y: anchor.y) : anchor
+        }
+
+        // The cell a size lands in, its anchored edge kept where it started.
+        func position(for size: BrightWidgetSizeV5) -> HealthGridPositionV5 {
+            let lastColumn = HealthWidgetGridMetricsV5.columns - size.columns
+            return HealthGridPositionV5(row: row, col: growsLeading ? lastColumn : min(startColumn, lastColumn))
         }
     }
 
@@ -149,6 +220,55 @@ final class HealthWidgetEditorV5 {
         layout.commitDrag()
     }
 
+    // MARK: - Resizing
+
+    // The frame follows the finger while the size underneath snaps to whichever of the
+    // style's sizes it's closest to, reflowing the grid around it as it goes.
+    func resizeChanged(_ value: DragGesture.Value, widget: HealthWidgetItemV5, cellSize: CGFloat) {
+        guard let current = layout.widgets.first(where: { $0.id == widget.id }) else { return }
+        if resizing?.widgetID != widget.id {
+            guard let position = layout.positions[widget.id] else { return }
+            let frame = HealthWidgetGridMetricsV5.frame(for: current.size, cellSize: cellSize)
+            let origin = HealthWidgetGridMetricsV5.origin(of: position, cellSize: cellSize)
+            let growsLeading = position.col > 0
+            resizing = Resize(
+                widgetID: widget.id,
+                row: position.row,
+                startColumn: position.col,
+                anchor: growsLeading ? CGPoint(x: origin.x + frame.width, y: origin.y) : origin,
+                growsLeading: growsLeading,
+                startFrame: frame
+            )
+        }
+        let wasPastLimit = resizing?.isPastLimit(for: current.style.sizes, cellSize: cellSize) == true
+        resizing?.translation = value.translation
+        if !wasPastLimit, resizing?.isPastLimit(for: current.style.sizes, cellSize: cellSize) == true {
+            BrightHaptic.light.play()
+        }
+
+        guard let resizing,
+              let size = HealthWidgetGridMetricsV5.nearestSize(
+                  to: resizing.frame(for: current.style.sizes, cellSize: cellSize),
+                  in: current.style.sizes,
+                  cellSize: cellSize
+              ),
+              size != current.size else { return }
+
+        BrightHaptic.light.play()
+        withAnimation(.brightSpring) {
+            layout.resize(current, to: size, at: resizing.position(for: size))
+        }
+    }
+
+    // Bounces the frame onto the size it snapped to.
+    func resizeEnded() {
+        guard resizing != nil else { return }
+        layout.commitDrag()
+        withAnimation(.brightBouncy) {
+            resizing = nil
+        }
+    }
+
     // MARK: - Auto-scroll
 
     private func startAutoScroll(direction: CGFloat) {
@@ -181,5 +301,6 @@ final class HealthWidgetEditorV5 {
         static let autoScrollSpeed: CGFloat = 5
         static let autoScrollFrame: Duration = .milliseconds(16)
         static let revealDelay: Duration = .milliseconds(300)
+        static let rubberBandStiffness: CGFloat = 0.55
     }
 }

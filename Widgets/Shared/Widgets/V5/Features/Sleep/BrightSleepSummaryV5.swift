@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-// The night at a glance along a sleep widget's top: time asleep, time in bed, and the
-// night's score in a pill on the right. Small widgets have no room for the totals, so a
-// title takes their place, with the time asleep under it.
+// The night at a glance along a sleep widget's top: time in bed, time asleep, and the
+// night's score in a pill on the right. Small widgets have room for just the time in bed,
+// set smaller.
 struct BrightSleepSummaryV5: View {
     let asleepMinutes: Int
     let inBedMinutes: Int
@@ -17,24 +17,11 @@ struct BrightSleepSummaryV5: View {
     var isCompact = false
 
     var body: some View {
-        HStack(spacing: .spacing3x) {
-            if isCompact {
-                VStack(alignment: .leading, spacing: .spacing05x) {
-                    HStack(spacing: .spacing05x) {
-                        Image(systemName: "moon.fill")
-                            .font(.standard(size: .subheading, weight: .light))
-                            .foregroundStyle(Color.defaultCyan)
+        HStack(spacing: isCompact ? .spacing1x : .spacing3x) {
+            total(systemImage: "bed.double", color: .defaultCyan, minutes: inBedMinutes)
 
-                        BrightText("Sleep", size: .body1, weight: .regular)
-                    }
-
-                    BrightText("\(asleepMinutes / 60) h \(asleepMinutes % 60) m asleep", size: .body2, color: .lightTextColor)
-                        .monospacedDigit()
-                }
-            } else {
+            if !isCompact {
                 total(systemImage: "zzz", color: .defaultBrightViolet, minutes: asleepMinutes)
-
-                total(systemImage: "bed.double", color: .defaultCyan, minutes: inBedMinutes)
             }
 
             Spacer(minLength: .spacing0x)
@@ -56,15 +43,15 @@ struct BrightSleepSummaryV5: View {
     private func total(systemImage: String, color: Color, minutes: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
             Image(systemName: systemImage)
-                .font(.standard(size: .heading, weight: .light))
+                .font(.standard(size: isCompact ? .subheading : .heading, weight: .light))
                 .foregroundStyle(color)
 
-            BrightText("\(minutes / 60)", size: .standout3)
+            BrightText("\(minutes / 60)", size: isCompact ? .heading : .standout3)
                 .monospacedDigit()
-            BrightText("hr", size: .body3, color: .lightTextColor)
-            BrightText("\(minutes % 60)", size: .standout3)
+            BrightText("hr", size: isCompact ? .body4 : .body3, color: .lightTextColor)
+            BrightText("\(minutes % 60)", size: isCompact ? .heading : .standout3)
                 .monospacedDigit()
-            BrightText("m", size: .body3, color: .lightTextColor)
+            BrightText("m", size: isCompact ? .body4 : .body3, color: .lightTextColor)
         }
     }
 }

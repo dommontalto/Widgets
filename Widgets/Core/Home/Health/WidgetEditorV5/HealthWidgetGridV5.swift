@@ -254,8 +254,13 @@ struct HealthWidgetGridV5: View {
         if let position = layout.positions[widget.id] {
             let drag = editor.dragging?.widgetID == widget.id ? editor.dragging : nil
             let isLifted = drag?.isLifted == true
-            let frame = HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize)
-            let origin = drag?.location ?? HealthWidgetGridMetricsV5.origin(of: position, cellSize: cellSize)
+            let resize = editor.resizing?.widgetID == widget.id ? editor.resizing : nil
+            let frame = resize?.frame(for: widget.style.sizes, cellSize: cellSize)
+                ?? HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize)
+            let origin = drag?.location
+                ?? resize?.origin(for: frame)
+                ?? HealthWidgetGridMetricsV5.origin(of: position, cellSize: cellSize)
+            let growsLeading = resize?.growsLeading ?? (position.col > 0)
 
             HealthWidgetViewV5(widget: widget, allowsSelection: !editor.isEditing)
                 .frame(width: frame.width, height: frame.height)
@@ -265,16 +270,21 @@ struct HealthWidgetGridV5: View {
                         removeButton(for: widget)
                     }
                 }
-                .modifier(HealthJiggleModifier(isEnabled: isJiggling, phase: jigglePhase, seed: index))
+                .overlay(alignment: growsLeading ? .bottomLeading : .bottomTrailing) {
+                    if editor.isEditing, widget.style.sizes.count > 1, drag == nil {
+                        resizeHandle(for: widget, growsLeading: growsLeading, cellSize: cellSize)
+                    }
+                }
+                .modifier(HealthJiggleModifier(isEnabled: isJiggling && resize == nil, phase: jigglePhase, seed: index))
                 .animation(.brightJigglePhase, value: jigglePhase)
                 .scaleEffect(isLifted ? Constants.liftedScale : 1)
                 .shadow(color: .black.opacity(isLifted ? .veryLowOpacity : .zero), radius: Constants.liftedShadowRadius)
                 .offset(x: origin.x, y: origin.y)
-                .zIndex(drag == nil ? 0 : 1)
-                .animation(drag == nil ? .brightSpring : nil, value: position)
+                .zIndex(drag == nil && resize == nil ? 0 : 1)
+                .animation(drag == nil && resize == nil ? .brightSpring : nil, value: position)
                 .transition(.scale(scale: Constants.removedScale).combined(with: .opacity))
                 .onTapGesture {
-                    guard editor.isEditing, editor.dragging == nil else { return }
+                    guard editor.isEditing, editor.dragging == nil, editor.resizing == nil else { return }
                     BrightHaptic.medium.play()
                     editor.editingWidget = widget
                 }
@@ -302,6 +312,27 @@ struct HealthWidgetGridV5: View {
             }
     }
 
+    // Sits on the bottom corner facing open space: a widget in the right-hand column
+    // grows leftward. A drag-only target, so a tap on it doesn't open the edit sheet.
+    private func resizeHandle(for widget: HealthWidgetItemV5, growsLeading: Bool, cellSize: CGFloat) -> some View {
+        Color.clear
+            .glassEffect(.clear.interactive(), in: HealthResizeHandleShape())
+            .scaleEffect(x: growsLeading ? -1 : 1)
+            .frame(width: .cardCornerRadius, height: .cardCornerRadius)
+            .frame(width: .spacing8x, height: .spacing8x, alignment: growsLeading ? .bottomLeading : .bottomTrailing)
+            .contentShape(Rectangle())
+            .transition(.opacity)
+            .gesture(
+                DragGesture(minimumDistance: .zero, coordinateSpace: .global)
+                    .onChanged { value in
+                        editor.resizeChanged(value, widget: widget, cellSize: cellSize)
+                    }
+                    .onEnded { _ in
+                        editor.resizeEnded()
+                    }
+            )
+    }
+
     private func removeButton(for widget: HealthWidgetItemV5) -> some View {
         BrightRoundButton(systemImage: "minus", size: .extraSmall, haptic: nil) {
             editor.remove(widget)
@@ -316,6 +347,29 @@ struct HealthWidgetGridV5: View {
         static let dragMinimumDistance: CGFloat = 5
         static let openMaxPressDuration: Double = 0.3
         static let jiggleInterval: Duration = .milliseconds(100)
+    }
+}
+
+// The middle of a quarter arc tracing the card's bottom-trailing corner, its centre at
+// the rect's top-leading point, outlined as a solid shape so glass can fill it.
+private struct HealthResizeHandleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.addArc(
+                center: CGPoint(x: rect.minX, y: rect.minY),
+                radius: rect.width,
+                startAngle: Constants.startAngle,
+                endAngle: Constants.endAngle,
+                clockwise: false
+            )
+        }
+        .strokedPath(StrokeStyle(lineWidth: Constants.thickness, lineCap: .round))
+    }
+
+    private enum Constants {
+        static let startAngle: Angle = .degrees(20)
+        static let endAngle: Angle = .degrees(70)
+        static let thickness: CGFloat = 9
     }
 }
 

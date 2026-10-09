@@ -353,6 +353,20 @@ enum HealthWidgetGridMetricsV5 {
         CGSize(width: span(size.columns, cellSize: cellSize), height: span(size.rows, cellSize: cellSize))
     }
 
+    // The size whose cells best match a frame being stretched by the resize handle.
+    static func nearestSize(to extent: CGSize, in sizes: [BrightWidgetSizeV5], cellSize: CGFloat) -> BrightWidgetSizeV5? {
+        let stride = cellSize + spacing
+        let columns = (extent.width + spacing) / stride
+        let rows = (extent.height + spacing) / stride
+        return sizes.min { lhs, rhs in
+            distance(of: lhs, columns: columns, rows: rows) < distance(of: rhs, columns: columns, rows: rows)
+        }
+    }
+
+    private static func distance(of size: BrightWidgetSizeV5, columns: CGFloat, rows: CGFloat) -> CGFloat {
+        pow(CGFloat(size.columns) - columns, 2) + pow(CGFloat(size.rows) - rows, 2)
+    }
+
     private static func span(_ cells: Int, cellSize: CGFloat) -> CGFloat {
         let count = CGFloat(cells)
         return cellSize * count + spacing * (count - 1)
@@ -482,7 +496,15 @@ final class HealthWidgetLayoutV5 {
         pack(pinning: (widget, pinned))
     }
 
-    // Adopts the dragged arrangement as the new reading order.
+    // Changes size in place while the resize handle is held, everything else flowing
+    // around it; `commitDrag` saves it on release.
+    func resize(_ widget: HealthWidgetItemV5, to size: BrightWidgetSizeV5, at position: HealthGridPositionV5) {
+        guard let index = widgets.firstIndex(where: { $0.id == widget.id }) else { return }
+        widgets[index].size = size
+        pack(pinning: (widgets[index], position))
+    }
+
+    // Adopts the dragged or resized arrangement as the new reading order.
     func commitDrag() {
         widgets.sort { lhs, rhs in
             guard let left = positions[lhs.id], let right = positions[rhs.id] else { return false }

@@ -9,8 +9,8 @@ import Charts
 import SwiftUI
 
 // Last night as a strip of its stages from bedtime to waking, under the night's totals
-// and score, with resting heart rate and HRV along the bottom. Small swaps the totals for
-// a title and keeps just the readings. Small and medium only.
+// and score, with resting heart rate and HRV along the bottom. Small keeps just the time in
+// bed and the readings. Small and medium only.
 //
 // Holding picks out the stage under the finger and swaps the bottom row for its name
 // and when it ran.
