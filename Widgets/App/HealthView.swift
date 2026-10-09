@@ -102,6 +102,7 @@ struct HealthView: View {
             },
             verticalScrollPosition: $editor.scrollPosition,
             scrollControlledPageIndex: HomePage.health.rawValue,
+            verticalScrollDisabledPageIndex: editor.isResizing ? HomePage.health.rawValue : nil,
             selectedIndex: $selectedPage
         ) { index in
             switch HomePage(rawValue: index) ?? .health {

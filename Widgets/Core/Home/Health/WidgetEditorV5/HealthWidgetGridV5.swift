@@ -205,6 +205,8 @@ struct HealthWidgetGridV5: View {
     @State private var containerWidth: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
     @State private var jigglePhase = false
+    // Resets when the touch ends or is cancelled; `onEnded` only fires on the first.
+    @GestureState private var isHoldingResizeHandle = false
 
     private var layout: HealthWidgetLayoutV5 {
         editor.layout
@@ -228,6 +230,11 @@ struct HealthWidgetGridV5: View {
             proxy.bounds(of: .scrollView)?.height ?? 0
         } action: {
             viewportHeight = $0
+        }
+        .onChange(of: isHoldingResizeHandle) { _, isHolding in
+            if !isHolding {
+                editor.resizeEnded()
+            }
         }
         .task(id: isJiggling) {
             guard isJiggling else {
@@ -271,7 +278,7 @@ struct HealthWidgetGridV5: View {
                     }
                 }
                 .overlay(alignment: growsLeading ? .bottomLeading : .bottomTrailing) {
-                    if editor.isEditing, widget.style.sizes.count > 1, drag == nil {
+                    if editor.isEditing, widget.style.sizes.count > 1 {
                         resizeHandle(for: widget, growsLeading: growsLeading, cellSize: cellSize)
                     }
                 }
@@ -315,8 +322,7 @@ struct HealthWidgetGridV5: View {
     // Sits on the bottom corner facing open space: a widget in the right-hand column
     // grows leftward. A drag-only target, so a tap on it doesn't open the edit sheet.
     private func resizeHandle(for widget: HealthWidgetItemV5, growsLeading: Bool, cellSize: CGFloat) -> some View {
-        Color.clear
-            .glassEffect(.clear.interactive(), in: HealthResizeHandleShape())
+        resizeHandleGlass
             .scaleEffect(x: growsLeading ? -1 : 1)
             .frame(width: .cardCornerRadius, height: .cardCornerRadius)
             .frame(width: .spacing8x, height: .spacing8x, alignment: growsLeading ? .bottomLeading : .bottomTrailing)
@@ -324,13 +330,22 @@ struct HealthWidgetGridV5: View {
             .transition(.opacity)
             .gesture(
                 DragGesture(minimumDistance: .zero, coordinateSpace: .global)
+                    .updating($isHoldingResizeHandle) { _, isHolding, _ in
+                        isHolding = true
+                    }
                     .onChanged { value in
                         editor.resizeChanged(value, widget: widget, cellSize: cellSize)
                     }
-                    .onEnded { _ in
-                        editor.resizeEnded()
-                    }
             )
+    }
+
+    @ViewBuilder
+    private var resizeHandleGlass: some View {
+        if #available(iOS 26.0, *) {
+            Color.clear.glassEffect(.clear.interactive(), in: HealthResizeHandleShape())
+        } else {
+            HealthResizeHandleShape().fill(.ultraThinMaterial)
+        }
     }
 
     private func removeButton(for widget: HealthWidgetItemV5) -> some View {
@@ -367,9 +382,9 @@ private struct HealthResizeHandleShape: Shape {
     }
 
     private enum Constants {
-        static let startAngle: Angle = .degrees(20)
-        static let endAngle: Angle = .degrees(70)
-        static let thickness: CGFloat = 9
+        static let startAngle: Angle = .degrees(12)
+        static let endAngle: Angle = .degrees(78)
+        static let thickness: CGFloat = 10
     }
 }
 

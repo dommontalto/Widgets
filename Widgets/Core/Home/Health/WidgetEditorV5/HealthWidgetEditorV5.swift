@@ -19,6 +19,7 @@ final class HealthWidgetEditorV5 {
             endAutoScroll()
             dragging = nil
             resizing = nil
+            isResizing = false
         }
     }
 
@@ -50,6 +51,9 @@ final class HealthWidgetEditorV5 {
     }
 
     private(set) var resizing: Resize?
+    // Kept apart from `resizing` so the page can stop scrolling under the handle without
+    // redrawing on every frame of the drag.
+    private(set) var isResizing = false
 
     // Held by its top corner on the side away from the handle, so the frame stretches
     // from a fixed point however the grid reflows underneath it.
@@ -239,6 +243,7 @@ final class HealthWidgetEditorV5 {
                 growsLeading: growsLeading,
                 startFrame: frame
             )
+            isResizing = true
         }
         let wasPastLimit = resizing?.isPastLimit(for: current.style.sizes, cellSize: cellSize) == true
         resizing?.translation = value.translation
@@ -260,9 +265,11 @@ final class HealthWidgetEditorV5 {
         }
     }
 
-    // Bounces the frame onto the size it snapped to.
+    // Bounces the frame onto the size it snapped to. Also runs when the touch is cancelled,
+    // so a resize can never be left half-held for the next one to pick up.
     func resizeEnded() {
         guard resizing != nil else { return }
+        isResizing = false
         layout.commitDrag()
         withAnimation(.brightBouncy) {
             resizing = nil
