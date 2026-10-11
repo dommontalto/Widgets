@@ -18,6 +18,7 @@ struct AddWidgetSheetV5: View {
     var onRemoveAll: (() -> Void)?
     var onShowAll: ((BrightWidgetSizeV5) -> Void)?
     var onShowFamily: ((HealthWidgetStyleV5.Family) -> Void)?
+    var onShowRandom: ((Int) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -75,6 +76,18 @@ struct AddWidgetSheetV5: View {
                                     onShowFamily(family)
                                     dismiss()
                                 }
+                            }
+                        }
+
+                        if let onShowRandom {
+                            BrightRowV5(
+                                "Show random \(Constants.randomCount)",
+                                icon: .symbol("shuffle", tint: .defaultSkyBlue),
+                                trailing: .none
+                            ) {
+                                BrightHaptic.medium.play()
+                                onShowRandom(Constants.randomCount)
+                                dismiss()
                             }
                         }
 
@@ -138,6 +151,10 @@ struct AddWidgetSheetV5: View {
                 Text("Your widgets go back to the default layout.")
             }
         }
+    }
+
+    private enum Constants {
+        static let randomCount = 10
     }
 }
 

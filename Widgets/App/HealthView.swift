@@ -72,6 +72,8 @@ struct HealthView: View {
                         editor.layout.showAll(size)
                     } onShowFamily: { family in
                         editor.layout.showAll(family)
+                    } onShowRandom: { count in
+                        editor.layout.showRandom(count)
                     }
                     .presentationDragIndicator(.hidden)
                     .presentationContentInteraction(.scrolls)

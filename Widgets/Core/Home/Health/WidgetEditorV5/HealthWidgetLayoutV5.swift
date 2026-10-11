@@ -432,8 +432,19 @@ final class HealthWidgetLayoutV5 {
         showAll { style, _ in style.family == family }
     }
 
+    // A handful picked at random from every variant, for a fresh mix to check against.
+    func showRandom(_ count: Int) {
+        widgets = Array(variants { _, _ in true }.shuffled().prefix(count))
+        commit()
+    }
+
     private func showAll(where includes: (HealthWidgetStyleV5, BrightWidgetSizeV5) -> Bool) {
-        widgets = HealthWidgetKindV5.allCases.flatMap { kind in
+        widgets = variants(where: includes)
+        commit()
+    }
+
+    private func variants(where includes: (HealthWidgetStyleV5, BrightWidgetSizeV5) -> Bool) -> [HealthWidgetItemV5] {
+        HealthWidgetKindV5.allCases.flatMap { kind in
             kind.styles.flatMap { style in
                 style.sizes.filter { includes(style, $0) }.flatMap { size in
                     style.ranges.flatMap { range in
@@ -447,7 +458,6 @@ final class HealthWidgetLayoutV5 {
                 }
             }
         }
-        commit()
     }
 
     func removeAll() {
