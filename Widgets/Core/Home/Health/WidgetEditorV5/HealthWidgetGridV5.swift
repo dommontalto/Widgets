@@ -28,10 +28,6 @@ struct HealthWidgetViewV5: View {
                 value: HealthWidgetDemoV5.waterToday,
                 latest: HealthWidgetDemoV5.anchor
             )
-        case (.water, .waterRing) where widget.size == .small:
-            BrightRingGroupWidgetV5(rings: [HealthWidgetDemoV5.waterRing], size: widget.size, allowsSelection: allowsSelection) {
-                ringHeader(HealthWidgetDemoV5.water.appearance.title, systemImage: HealthWidgetDemoV5.water.appearance.systemImage, color: widget.kind.tint)
-            }
         case (.water, .waterTank):
             BrightWaterWidgetV5(
                 appearance: HealthWidgetDemoV5.water.appearance,
@@ -42,8 +38,13 @@ struct HealthWidgetViewV5: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
+        // One case for both sizes, so resizing keeps the same widget and glides its rings.
         case (.water, .waterRing):
-            BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.waterRings, size: widget.size, allowsSelection: allowsSelection) {
+            BrightRingGroupWidgetV5(
+                rings: widget.size == .small ? [HealthWidgetDemoV5.waterRing] : HealthWidgetDemoV5.waterRings,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            ) {
                 ringHeader(HealthWidgetDemoV5.water.appearance.title, systemImage: HealthWidgetDemoV5.water.appearance.systemImage, color: widget.kind.tint)
             }
         case (.water, _):

@@ -47,6 +47,7 @@ struct BrightLineChartWidgetV5: View {
 
     @State private var selectedDate: Date?
     @State private var heldLabelWidth: CGFloat = 0
+    @Namespace private var namespace
 
     init(
         appearance: BrightWidgetAppearanceV5,
@@ -81,72 +82,56 @@ struct BrightLineChartWidgetV5: View {
     private var unit: String { appearance.unit ?? "" }
 
     var body: some View {
-        Group {
-            if size == .small {
-                compactLayout
-            } else {
-                expandedLayout
+        layout
+            .padding(.spacing205x)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+            .onChange(of: allowsSelection) { _, allows in
+                if !allows {
+                    selectedDate = nil
+                }
             }
-        }
-        .padding(.spacing205x)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .modifier(BrightCardModifierV5(color: .defaultHomeCards))
-        .onChange(of: allowsSelection) { _, allows in
-            if !allows {
-                selectedDate = nil
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(title), average \(display(average)) \(unit), high \(display(high)), low \(display(low))"
-        )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(
+                "\(title), average \(display(average)) \(unit), high \(display(high)), low \(display(low))"
+            )
     }
 
-    // MARK: - Layouts
+    // MARK: - Layout
 
-    private var compactLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            header
-                .brightDebugBackgroundV5(.red)
-
-            chart(domain: sparklineDomain)
-                .frame(maxHeight: .infinity)
-                .brightDebugBackgroundV5(.blue)
-                .padding(.trailing, .spacing1x)
-
-            VStack(alignment: .leading, spacing: .spacing0x) {
-                windowLabels(color: .lightTextColor)
-                    .brightDebugBackgroundV5(.green)
-                    .padding(.trailing, .spacing1x)
-
-                reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .light)
-                    // Digits never use the room every line keeps below its baseline, so
-                    // it's pulled into the padding rather than lifting the number.
-                    .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
-                    .brightDebugBackgroundV5(.yellow)
-            }
-        }
-    }
-
-    private var expandedLayout: some View {
-        VStack(alignment: .leading, spacing: size == .large ? .spacing4x : .spacing2x) {
+    // One layout for every size, so resizing stretches the header and chart in place
+    // rather than swapping them out. Small reads the latest value big under the chart;
+    // medium and large read the average in the top corner.
+    private var layout: some View {
+        VStack(alignment: .leading, spacing: layoutSpacing) {
             HStack(alignment: .top, spacing: .spacing1x) {
                 header
                     .brightDebugBackgroundV5(.red)
 
                 Spacer(minLength: .spacing0x)
 
-                reading(
-                    selectedSample?.value ?? average,
-                    unit: unit,
-                    valueSize: size == .large ? .huge2 : .standout3,
-                    unitSize: .body1,
-                    weight: .regular
-                )
-                .brightDebugBackgroundV5(.yellow)
+                if size != .small {
+                    reading(
+                        selectedSample?.value ?? average,
+                        unit: unit,
+                        valueSize: size == .large ? .huge2 : .standout3,
+                        unitSize: .body1,
+                        weight: .regular
+                    )
+                    .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
+                    .brightDebugBackgroundV5(.yellow)
+                }
             }
 
             plotArea
+        }
+    }
+
+    private var layoutSpacing: CGFloat {
+        switch size {
+        case .small: .spacing1x
+        case .medium: .spacing2x
+        case .large: .spacing4x
         }
     }
 
@@ -207,28 +192,49 @@ struct BrightLineChartWidgetV5: View {
 
     // MARK: - Chart
 
+    // Small drops the guide labels and ticks for a bare sparkline, with the reading under
+    // its window labels.
     private var plotArea: some View {
-        VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing1x) {
-                guideLabelColumn
-                    .frame(width: Constants.axisLabelWidth)
-                    .brightDebugBackgroundV5(.purple)
+        let isSmall = size == .small
 
-                chart(domain: domain)
+        return VStack(alignment: .leading, spacing: isSmall ? .spacing1x : .spacing05x) {
+            HStack(spacing: .spacing1x) {
+                if !isSmall {
+                    guideLabelColumn
+                        .frame(width: Constants.axisLabelWidth)
+                        .brightDebugBackgroundV5(.purple)
+                }
+
+                chart(domain: isSmall ? sparklineDomain : domain)
                     .overlay { eventIcons }
                     .brightDebugBackgroundV5(.blue)
             }
+            .frame(maxHeight: .infinity)
+            .padding(.trailing, .spacing1x)
 
-            VStack(spacing: .spacing05x) {
-                ticks
-                    .brightDebugBackgroundV5(.orange)
+            VStack(alignment: .leading, spacing: .spacing0x) {
+                VStack(spacing: .spacing05x) {
+                    if !isSmall {
+                        ticks
+                            .brightDebugBackgroundV5(.orange)
+                    }
 
-                windowLabels(color: .semiLightTextColor)
-                    .brightDebugBackgroundV5(.green)
+                    windowLabels(color: isSmall ? .lightTextColor : .semiLightTextColor)
+                        .brightDebugBackgroundV5(.green)
+                }
+                .padding(.leading, isSmall ? .spacing0x : Constants.axisLabelWidth + .spacing1x)
+                .padding(.trailing, .spacing1x)
+
+                if isSmall {
+                    reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .light)
+                        // Digits never use the room every line keeps below its baseline, so
+                        // it's pulled into the padding rather than lifting the number.
+                        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
+                        .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
+                        .brightDebugBackgroundV5(.yellow)
+                }
             }
-            .padding(.leading, Constants.axisLabelWidth + .spacing1x)
         }
-        .padding(.trailing, .spacing1x)
     }
 
     private func chart(domain: ClosedRange<Double>) -> some View {
@@ -510,6 +516,7 @@ struct BrightLineChartWidgetV5: View {
         static let lineWidth: CGFloat = 1
         static let startTickHeight: CGFloat = 7
         static let eventIconOffset: CGFloat = .spacing2x
+        static let readingID = "reading"
     }
 }
 

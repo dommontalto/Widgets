@@ -67,6 +67,7 @@ struct BrightBarChartWidgetV5: View {
     @State private var plotWidth: CGFloat = 0
     @State private var selectedIndex: Int?
     @State private var heldLabelWidth: CGFloat = 0
+    @Namespace private var namespace
 
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
@@ -74,44 +75,25 @@ struct BrightBarChartWidgetV5: View {
     private var unit: String? { appearance.unit }
 
     var body: some View {
-        Group {
-            if size == .small {
-                compactLayout
-            } else {
-                expandedLayout
+        layout
+            .padding(.spacing205x)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+            .onChange(of: allowsSelection) { _, allows in
+                if !allows {
+                    selectedIndex = nil
+                }
             }
-        }
-        .padding(.spacing205x)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .modifier(BrightCardModifierV5(color: .defaultHomeCards))
-        .onChange(of: allowsSelection) { _, allows in
-            if !allows {
-                selectedIndex = nil
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(display(headlineValue)) \(unitLabel)")
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title), \(display(headlineValue)) \(unitLabel)")
     }
 
-    // MARK: - Layouts
+    // MARK: - Layout
 
-    private var compactLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            header
-                .brightDebugBackgroundV5(.red)
-
-            plotArea(showsGuides: false)
-                .frame(maxHeight: .infinity)
-
-            reading(valueSize: .huge205)
-                // Digits never use the room every line keeps below its baseline, so
-                // it's pulled into the padding rather than lifting the number.
-                .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .light)?.descender ?? 0)
-                .brightDebugBackgroundV5(.yellow)
-        }
-    }
-
-    private var expandedLayout: some View {
+    // One layout for every size, so resizing stretches the header and plot in place
+    // rather than swapping them out. Small reads big under the plot; medium and large
+    // read in the top corner.
+    private var layout: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             // Stacked rather than side by side, so the subtitle can run under the reading
             // instead of being cut short by it.
@@ -120,20 +102,32 @@ struct BrightBarChartWidgetV5: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .brightDebugBackgroundV5(.red)
 
-                VStack(alignment: .trailing, spacing: .spacing05x) {
-                    reading(valueSize: size == .large ? .standout1 : .standout3)
-                        .brightDebugBackgroundV5(.yellow)
+                if size != .small {
+                    VStack(alignment: .trailing, spacing: .spacing05x) {
+                        reading(valueSize: size == .large ? .standout1 : .standout3)
+                            .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
+                            .brightDebugBackgroundV5(.yellow)
 
-                    if let comparison {
-                        comparisonText(comparison)
-                            .brightDebugBackgroundV5(.cyan)
+                        if let comparison {
+                            comparisonText(comparison)
+                                .brightDebugBackgroundV5(.cyan)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
-            plotArea(showsGuides: !isSegmented)
+            plotArea(showsGuides: size != .small && !isSegmented)
                 .frame(maxHeight: .infinity)
+
+            if size == .small {
+                reading(valueSize: .huge205)
+                    // Digits never use the room every line keeps below its baseline, so
+                    // it's pulled into the padding rather than lifting the number.
+                    .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .light)?.descender ?? 0)
+                    .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
+                    .brightDebugBackgroundV5(.yellow)
+            }
 
             if size == .large, let summary {
                 BrightDividerV5()
@@ -732,6 +726,7 @@ struct BrightBarChartWidgetV5: View {
         static let segmentMarkHeight: CGFloat = 2
         static let risingGreenStop = 0.24
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]
+        static let readingID = "reading"
     }
 }
 

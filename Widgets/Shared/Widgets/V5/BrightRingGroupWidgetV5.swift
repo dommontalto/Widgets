@@ -12,6 +12,8 @@ import SwiftUI
 // three in a triangle or four in a square; medium and large lay them out in a row.
 //
 // Holding picks out the ring under the finger and swaps its numbers for the detail.
+// Each ring, its numbers, its name and the header are matched across the layouts, so
+// resizing glides them from one arrangement to the next.
 struct BrightRingGroupWidgetV5: View {
     struct Ring: Identifiable, Hashable {
         let label: String
@@ -53,6 +55,7 @@ struct BrightRingGroupWidgetV5: View {
     @State private var selectedRingID: String?
     @State private var touchX: Double?
     @State private var touchY: Double?
+    @Namespace private var namespace
 
     init(rings: [Ring], size: BrightWidgetSizeV5, allowsSelection: Bool = true) {
         self.rings = rings
@@ -102,12 +105,15 @@ struct BrightRingGroupWidgetV5: View {
     private func singleLayout(_ ring: Ring) -> some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             header
+                .matched(.header, in: namespace)
 
             BrightRingV5(progress: ring.progress, color: ring.color, size: .large, overColor: overColor(of: ring))
+                .matched(.ring(ring.id), in: namespace)
                 .overlay { touchLayer }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
+                .matched(.amount(ring.id), in: namespace)
                 .frame(maxWidth: .infinity)
         }
     }
@@ -119,8 +125,10 @@ struct BrightRingGroupWidgetV5: View {
             if let top = rings.first {
                 VStack(spacing: .spacing05x) {
                     caption(for: top)
+                        .matched(.amount(top.id), in: namespace)
 
                     ring(top, showsLabel: true)
+                        .matched(.ring(top.id), in: namespace)
                 }
                 .opacity(opacity(of: top))
             }
@@ -129,8 +137,10 @@ struct BrightRingGroupWidgetV5: View {
                 ForEach(rings.dropFirst()) { ring in
                     VStack(spacing: .spacing05x) {
                         self.ring(ring, showsLabel: true)
+                            .matched(.ring(ring.id), in: namespace)
 
                         caption(for: ring)
+                            .matched(.amount(ring.id), in: namespace)
                     }
                     .opacity(opacity(of: ring))
                 }
@@ -148,6 +158,7 @@ struct BrightRingGroupWidgetV5: View {
                     ForEach(rings[(row * 2) ..< (row * 2 + 2)]) { ring in
                         VStack(spacing: .spacing05x) {
                             self.ring(ring, showsLabel: false, size: .extraSmall)
+                                .matched(.ring(ring.id), in: namespace)
                                 .overlay {
                                     BrightText(percent(of: ring), size: .body5, color: .semiLightTextColor)
                                         .monospacedDigit()
@@ -160,6 +171,7 @@ struct BrightRingGroupWidgetV5: View {
                                     .contentTransition(.numericText())
                                     .lineLimit(1)
                             }
+                            .matched(.label(ring.id), in: namespace)
                         }
                         .opacity(opacity(of: ring))
                     }
@@ -173,6 +185,7 @@ struct BrightRingGroupWidgetV5: View {
     private var rowLayout: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
+                .matched(.header, in: namespace)
 
             Spacer(minLength: .spacing1x)
 
@@ -181,6 +194,7 @@ struct BrightRingGroupWidgetV5: View {
                 GridRow {
                     ForEach(rings) { ring in
                         caption(for: ring)
+                            .matched(.amount(ring.id), in: namespace)
                             .opacity(opacity(of: ring))
                     }
                 }
@@ -188,6 +202,7 @@ struct BrightRingGroupWidgetV5: View {
                 GridRow {
                     ForEach(rings) { ring in
                         self.ring(ring, showsLabel: false)
+                            .matched(.ring(ring.id), in: namespace)
                             .opacity(opacity(of: ring))
                     }
                 }
@@ -196,6 +211,7 @@ struct BrightRingGroupWidgetV5: View {
                     ForEach(rings) { ring in
                         BrightText(ring.label, size: .body3, color: .semiLightTextColor)
                             .lineLimit(1)
+                            .matched(.label(ring.id), in: namespace)
                             .opacity(opacity(of: ring))
                     }
                 }
@@ -363,6 +379,21 @@ struct BrightRingGroupWidgetV5: View {
             let diameter = BrightRingV5.Size.small.diameter
             return (diameter + triangleGap) * sqrt(3) / 2 - diameter
         }()
+    }
+}
+
+// What a piece is matched by across the layouts. Position only: each layout draws its
+// rings and text at its own size, so the pieces glide while their sizes crossfade.
+private enum RingGroupPiece: Hashable {
+    case header
+    case ring(String)
+    case amount(String)
+    case label(String)
+}
+
+private extension View {
+    func matched(_ piece: RingGroupPiece, in namespace: Namespace.ID) -> some View {
+        matchedGeometryEffect(id: piece, in: namespace, properties: .position)
     }
 }
 

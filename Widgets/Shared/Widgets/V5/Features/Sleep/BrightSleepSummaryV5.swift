@@ -8,8 +8,7 @@
 import SwiftUI
 
 // The night at a glance along a sleep widget's top: time in bed, time asleep, and the
-// night's score in a pill on the right. Small widgets have room for just the time in bed,
-// set smaller.
+// night's score in a pill on the right. Small widgets have room for just the time in bed.
 struct BrightSleepSummaryV5: View {
     let asleepMinutes: Int
     let inBedMinutes: Int
@@ -18,7 +17,7 @@ struct BrightSleepSummaryV5: View {
 
     var body: some View {
         HStack(spacing: .spacing0x) {
-            HStack(spacing: .spacing3x) {
+            HStack(spacing: .spacing1x) {
                 total(systemImage: "bed.double", color: .defaultCyan, minutes: inBedMinutes)
 
                 if !isCompact {
@@ -45,15 +44,15 @@ struct BrightSleepSummaryV5: View {
     private func total(systemImage: String, color: Color, minutes: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
             Image(systemName: systemImage)
-                .font(.standard(size: isCompact ? .subheading : .heading, weight: .light))
+                .font(.standard(size: .subheading, weight: .light))
                 .foregroundStyle(color)
 
-            BrightText("\(minutes / 60)", size: isCompact ? .heading : .standout3)
+            BrightText("\(minutes / 60)", size: .heading)
                 .monospacedDigit()
-            BrightText("hr", size: isCompact ? .body4 : .body3, color: .lightTextColor)
-            BrightText("\(minutes % 60)", size: isCompact ? .heading : .standout3)
+            BrightText("hr", size: .body4, color: .lightTextColor)
+            BrightText("\(minutes % 60)", size: .heading)
                 .monospacedDigit()
-            BrightText("m", size: isCompact ? .body4 : .body3, color: .lightTextColor)
+            BrightText("m", size: .body4, color: .lightTextColor)
         }
     }
 }

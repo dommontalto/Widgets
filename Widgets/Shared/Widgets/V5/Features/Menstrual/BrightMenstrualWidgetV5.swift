@@ -89,64 +89,56 @@ struct BrightMenstrualWidgetV5: View {
     @State private var detailsWidth: CGFloat = 0
 
     var body: some View {
-        Group {
-            if size == .small {
-                compactLayout
-            } else {
-                expandedLayout
+        layout
+            .padding(.spacing205x)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+            .onChange(of: allowsSelection) { _, allows in
+                if !allows {
+                    selectedDay = nil
+                }
             }
-        }
-        .padding(.spacing205x)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .modifier(BrightCardModifierV5(color: .defaultHomeCards))
-        .onChange(of: allowsSelection) { _, allows in
-            if !allows {
-                selectedDay = nil
-            }
-        }
-        .animation(.brightEaseInOut, value: selectedDay)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(cycle.phase(of: today).title), cycle day \(today) of \(cycle.length), next period in \(daysUntilPeriod) days")
+            .animation(.brightEaseInOut, value: selectedDay)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(cycle.phase(of: today).title), cycle day \(today) of \(cycle.length), next period in \(daysUntilPeriod) days")
     }
 
-    // MARK: - Layouts
+    // MARK: - Layout
 
-    // The ovulation window, with the best day picked out.
-    private var compactLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            header(phase: .ovulation, subtitle: "Period: in \(daysUntilPeriod) Days")
+    // One layout for every size, so resizing stretches the header and strip in place
+    // rather than swapping them out. Small centres on the ovulation window with the best
+    // day picked out; medium and large centre on today, with the phases under it.
+    private var layout: some View {
+        let isSmall = size == .small
+        let phase: Phase = isSmall ? .ovulation : cycle.phase(of: selectedDay ?? today)
+        let subtitle: String = isSmall ? "Period: in \(daysUntilPeriod) Days" : expandedSubtitle
+        let firstDay: Int = isSmall ? cycle.ovulationDay - Constants.compactLeadingDays : today - Constants.expandedLeadingDays
+        let arrowDay: Int = isSmall ? cycle.ovulationDay : today
+        let colour: (Int) -> PillStyle = { day in isSmall ? compactFill(day) : cycleFill(day) }
 
-            Spacer(minLength: .spacing0x)
-
-            strip(firstDay: cycle.ovulationDay - Constants.compactLeadingDays, arrowDay: cycle.ovulationDay, colour: compactFill)
-
-            BrightText(selectedDay.map { dayCaption($0) } ?? "Optimal Day", size: .body4, color: .lightTextColor)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .frame(maxWidth: .infinity)
-
-            Spacer(minLength: .spacing0x)
-        }
-    }
-
-    private var expandedLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
+        return VStack(alignment: .leading, spacing: .spacing1x) {
             HStack(alignment: .top, spacing: .spacing1x) {
-                header(
-                    phase: cycle.phase(of: selectedDay ?? today),
-                    subtitle: selectedDay.map { dayCaption($0) } ?? "Cycle day: \(today)/\(cycle.length)"
-                )
+                header(phase: phase, subtitle: subtitle)
 
                 Spacer(minLength: .spacing0x)
 
-                nextPeriodSummary
+                if !isSmall {
+                    nextPeriodSummary
+                }
             }
 
             Spacer(minLength: .spacing0x)
 
-            strip(firstDay: today - Constants.expandedLeadingDays, arrowDay: today, colour: cycleFill)
+            strip(firstDay: firstDay, arrowDay: arrowDay, colour: colour)
 
-            phaseMarkers
+            if isSmall {
+                BrightText(selectedDay.map { dayCaption($0) } ?? "Optimal Day", size: .body4, color: .lightTextColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .frame(maxWidth: .infinity)
+            } else {
+                phaseMarkers
+            }
 
             Spacer(minLength: .spacing0x)
 
@@ -158,6 +150,10 @@ struct BrightMenstrualWidgetV5: View {
                     .padding(.top, .spacing1x)
             }
         }
+    }
+
+    private var expandedSubtitle: String {
+        selectedDay.map { dayCaption($0) } ?? "Cycle day: \(today)/\(cycle.length)"
     }
 
     // MARK: - Header
