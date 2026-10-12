@@ -20,16 +20,14 @@ struct RollingNumberText: View {
             BrightText(
                 value.withCommas,
                 size: size,
-                color: color,
-                kerning: .mediumKerning
+                color: color
             )
             .hidden()
 
             BrightText(
                 displayed.withCommas,
                 size: size,
-                color: color,
-                kerning: .mediumKerning
+                color: color
             )
             .contentTransition(.numericText(value: Double(displayed)))
         }
@@ -65,8 +63,7 @@ struct RollingDecimalText: View {
                 String(format: format, value),
                 size: size,
                 color: color,
-                weight: weight,
-                kerning: .mediumKerning
+                weight: weight
             )
             .hidden()
 
@@ -74,8 +71,7 @@ struct RollingDecimalText: View {
                 String(format: format, displayed),
                 size: size,
                 color: color,
-                weight: weight,
-                kerning: .mediumKerning
+                weight: weight
             )
             .contentTransition(.numericText())
         }

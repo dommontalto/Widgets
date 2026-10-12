@@ -181,7 +181,7 @@ struct BrightLineChartWidgetV5: View {
         weight: Font.Weight
     ) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            BrightText(display(value), size: valueSize, weight: weight)
+            BrightText(revealed(display(value)), size: valueSize, weight: weight)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightEaseInOut, value: display(value))
@@ -190,6 +190,11 @@ struct BrightLineChartWidgetV5: View {
                 .contentTransition(.numericText())
         }
         .lineLimit(1)
+    }
+
+    // All zeros until revealed, so the number rolls up without changing width.
+    private func revealed(_ text: String) -> String {
+        isRevealed ? text : text.zeroedDigits
     }
 
     // MARK: - Chart
@@ -246,9 +251,22 @@ struct BrightLineChartWidgetV5: View {
             guides(domain: domain)
 
             readings(domain: domain)
-                .brightDrawRevealV5(isRevealed)
+                .brightDrawRevealV5(isRevealed, following: path(domain: domain))
         }
         .brightRevealV5($isRevealed)
+    }
+
+    // The readings from 0 to 1 across the window and down the scale, for the draw to follow.
+    private func path(domain: ClosedRange<Double>) -> [CGPoint] {
+        let span = end.timeIntervalSince(start)
+        let height = domain.upperBound - domain.lowerBound
+        guard span > 0, height > 0 else { return [] }
+        return visibleSamples.map { sample in
+            CGPoint(
+                x: sample.date.timeIntervalSince(start) / span,
+                y: 1 - (sample.value - domain.lowerBound) / height
+            )
+        }
     }
 
     private func guides(domain: ClosedRange<Double>) -> some View {

@@ -15,6 +15,9 @@ struct BrightSleepSummaryV5: View {
     let score: Int
     var isCompact = false
 
+    // The totals and score roll up from zero the first time it shows.
+    @State private var isRevealed = false
+
     var body: some View {
         HStack(spacing: .spacing0x) {
             HStack(spacing: .spacing1x) {
@@ -28,8 +31,9 @@ struct BrightSleepSummaryV5: View {
             Spacer(minLength: .spacing0x)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                BrightText("\(score)", size: .heading, color: .defaultGreen, weight: .regular)
+                BrightText(revealed("\(score)"), size: .heading, color: .defaultGreen, weight: .regular)
                     .monospacedDigit()
+                    .contentTransition(.numericText())
 
                 BrightText("%", size: .body5, color: .defaultGreen.opacity(.lowOpacity), weight: .regular)
             }
@@ -38,6 +42,12 @@ struct BrightSleepSummaryV5: View {
             .background(Capsule().fill(Color.defaultGreen.opacity(.minimalOpacity)))
         }
         .lineLimit(1)
+        .brightRevealV5($isRevealed)
+    }
+
+    // All zeros until revealed, so the number rolls up without changing width.
+    private func revealed(_ text: String) -> String {
+        isRevealed ? text : text.zeroedDigits
     }
 
     // A duration as "8 hr 24 m", the units dimmer than the numbers.
@@ -47,11 +57,13 @@ struct BrightSleepSummaryV5: View {
                 .font(.standard(size: .subheading, weight: .light))
                 .foregroundStyle(color)
 
-            BrightText("\(minutes / 60)", size: .heading)
+            BrightText(revealed("\(minutes / 60)"), size: .heading)
                 .monospacedDigit()
+                .contentTransition(.numericText())
             BrightText("hr", size: .body4, color: .lightTextColor)
-            BrightText("\(minutes % 60)", size: .heading)
+            BrightText(revealed("\(minutes % 60)"), size: .heading)
                 .monospacedDigit()
+                .contentTransition(.numericText())
             BrightText("m", size: .body4, color: .lightTextColor)
         }
     }

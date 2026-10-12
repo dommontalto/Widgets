@@ -17,6 +17,8 @@ struct BrightText: View {
     var isItalic: Bool
     var scaleTextSize: CGFloat
     var allowsTightening: Bool
+    // Room between wrapped lines, for paragraphs.
+    var lineSpacing: LineSpacing?
 
     var paddingSize: CGFloat {
         // Reduce extra vertical padding around text for .standout.
@@ -34,7 +36,8 @@ struct BrightText: View {
         weight: Font.Weight = .light,
         kerning: CGFloat = .defaultKerning,
         isItalic: Bool = false,
-        scaleTextSize: CGFloat = 1
+        scaleTextSize: CGFloat = 1,
+        lineSpacing: LineSpacing? = nil
     ) {
         self.text = AttributedString(text)
         self.size = size
@@ -43,6 +46,7 @@ struct BrightText: View {
         self.kerning = kerning
         self.isItalic = isItalic
         self.scaleTextSize = scaleTextSize
+        self.lineSpacing = lineSpacing
         if scaleTextSize != 1 {
             allowsTightening = true
         } else {
@@ -57,7 +61,8 @@ struct BrightText: View {
         weight: Font.Weight = .regular,
         kerning: CGFloat = .defaultKerning,
         isItalic: Bool = false,
-        scaleTextSize: CGFloat = 1
+        scaleTextSize: CGFloat = 1,
+        lineSpacing: LineSpacing? = nil
     ) {
         self.text = text
         self.size = size
@@ -66,6 +71,7 @@ struct BrightText: View {
         self.kerning = kerning
         self.isItalic = isItalic
         self.scaleTextSize = scaleTextSize
+        self.lineSpacing = lineSpacing
         if scaleTextSize != 1 {
             allowsTightening = true
         } else {
@@ -80,7 +86,8 @@ struct BrightText: View {
         weight: Font.Weight = .light,
         kerning: CGFloat = .defaultKerning,
         isItalic: Bool = false,
-        scaleTextSize: CGFloat = 1
+        scaleTextSize: CGFloat = 1,
+        lineSpacing: LineSpacing? = nil
     ) {
         text = AttributedString(String(localized: String.LocalizationValue(key)))
         self.size = size
@@ -89,6 +96,7 @@ struct BrightText: View {
         self.kerning = kerning
         self.isItalic = isItalic
         self.scaleTextSize = scaleTextSize
+        self.lineSpacing = lineSpacing
         if scaleTextSize != 1 {
             allowsTightening = true
         } else {
@@ -101,6 +109,7 @@ struct BrightText: View {
             .font(.standard(size: size, weight: weight))
             .foregroundColor(color)
             .kerning(kerning)
+            .lineSpacing(lineSpacing?.rawValue ?? 0)
             .italic(isItalic)
             .minimumScaleFactor(scaleTextSize)
             .allowsTightening(allowsTightening)

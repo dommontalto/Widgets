@@ -146,7 +146,7 @@ struct BrightDottedLineChartWidgetV5: View {
                     .alignmentGuide(.firstTextBaseline) { $0[.bottom] - Constants.checkmarkBaselineLift }
             }
 
-            BrightText(appearance.format(shownPoint?.value ?? 0), size: size == .large ? .standout1 : .standout3, weight: .regular)
+            BrightText(revealed(appearance.format(shownPoint?.value ?? 0)), size: size == .large ? .standout1 : .standout3, weight: .regular)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightEaseInOut, value: shownPoint)
@@ -156,6 +156,11 @@ struct BrightDottedLineChartWidgetV5: View {
             }
         }
         .lineLimit(1)
+    }
+
+    // All zeros until revealed, so the number rolls up without changing width.
+    private func revealed(_ text: String) -> String {
+        isRevealed ? text : text.zeroedDigits
     }
 
     // MARK: - Plot
@@ -187,9 +192,21 @@ struct BrightDottedLineChartWidgetV5: View {
             trendChart
 
             readings
-                .brightDrawRevealV5(isRevealed)
+                .brightDrawRevealV5(isRevealed, following: path)
         }
         .brightRevealV5($isRevealed)
+    }
+
+    // The readings from 0 to 1 across and down the scale, for the draw to follow.
+    private var path: [CGPoint] {
+        let height = domain.upperBound - domain.lowerBound
+        guard height > 0 else { return [] }
+        return shownPoints.enumerated().map { index, point in
+            CGPoint(
+                x: Double(index) / Double(max(lastIndex, 1)),
+                y: 1 - (point.value - domain.lowerBound) / height
+            )
+        }
     }
 
     private var trendChart: some View {

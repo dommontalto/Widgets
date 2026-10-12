@@ -85,8 +85,7 @@ struct IntakeBreakdownWidget: View {
                     title,
                     size: .body2,
                     color: .lightTextColor,
-                    weight: .regular,
-                    kerning: .smallKerning
+                    weight: .regular
                 )
                 .frame(
                     maxWidth: .infinity,
@@ -161,8 +160,7 @@ struct IntakeBreakdownWidget: View {
                 RowCircleIcon(color: color)
                 BrightText(
                     title,
-                    size: .body2,
-                    kerning: .mediumKerning
+                    size: .body2
                 )
                 Spacer()
                 HStack(
@@ -171,13 +169,11 @@ struct IntakeBreakdownWidget: View {
                 ) {
                     BrightText(
                         String(value),
-                        size: .subheading,
-                        kerning: .mediumKerning
+                        size: .subheading
                     )
                     BrightText(
                         unit,
-                        size: .body3,
-                        kerning: .mediumKerning
+                        size: .body3
                     )
                 }
             }

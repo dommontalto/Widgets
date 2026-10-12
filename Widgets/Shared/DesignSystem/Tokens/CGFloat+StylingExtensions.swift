@@ -64,14 +64,8 @@ nonisolated extension CGFloat {
 
     // MARK: - Kerning
 
-    // Kerning size 0.
-    static var defaultKerning: CGFloat = 0
-
-    // Kerning size 0.2381.
-    static var smallKerning: CGFloat = 0.2381
-
-    // Kerning size 0.5.
-    static var mediumKerning: CGFloat = 0.5
+    // Every piece of text uses this one letter spacing.
+    static var defaultKerning: CGFloat = -0.1
 
     // MARK: - Corner Radius
 

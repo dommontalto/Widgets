@@ -22,12 +22,36 @@ struct BrightSelectorV5<X: Plottable>: ChartContent {
 
         PointMark(x: .value("Selected", x), y: .value("Value", value))
             .symbol {
-                Circle()
-                    .fill(Color.textColor)
-                    .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
-                    .frame(width: Constants.ringDiameter, height: Constants.ringDiameter)
-                    .background(Circle().fill(Color.defaultHomeCards))
+                BrightSelectorDotV5()
             }
+    }
+}
+
+struct BrightSelectorDotV5: View {
+    var body: some View {
+        Circle()
+            .fill(Color.textColor)
+            .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
+            .frame(width: Constants.ringDiameter, height: Constants.ringDiameter)
+            .background(Circle().fill(Color.defaultHomeCards))
+    }
+}
+
+// The same marker laid over a chart rather than plotted in it, at a point in the chart's
+// own frame, such as the tip of a line as it draws.
+struct BrightSelectorOverlayV5: View {
+    let point: CGPoint
+
+    var body: some View {
+        GeometryReader { geometry in
+            Rectangle()
+                .fill(Color.textColor)
+                .frame(width: Constants.hairline, height: geometry.size.height)
+                .position(x: point.x, y: geometry.size.height / 2)
+
+            BrightSelectorDotV5()
+                .position(point)
+        }
     }
 }
 

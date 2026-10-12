@@ -179,7 +179,7 @@ struct BrightBarChartWidgetV5: View {
 
     private func numberReading(valueSize: FontSizes) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            BrightText(display(headlineValue), size: valueSize, weight: size == .small ? .light : .regular)
+            BrightText(revealed(display(headlineValue)), size: valueSize, weight: size == .small ? .light : .regular)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightEaseInOut, value: display(headlineValue))
@@ -190,6 +190,11 @@ struct BrightBarChartWidgetV5: View {
             }
         }
         .lineLimit(1)
+    }
+
+    // All zeros until revealed, so the number rolls up without changing width.
+    private func revealed(_ text: String) -> String {
+        isRevealed ? text : text.zeroedDigits
     }
 
     // The held day's split, or the average of every day with readings.
@@ -203,7 +208,7 @@ struct BrightBarChartWidgetV5: View {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
                     BrightText("\(part.label):", size: .body1, color: .lightTextColor, weight: .regular)
 
-                    BrightText(display(part.value), size: .subheading, color: part.color, weight: .regular)
+                    BrightText(revealed(display(part.value)), size: .subheading, color: part.color, weight: .regular)
                         .monospacedDigit()
                         .contentTransition(.numericText())
                 }

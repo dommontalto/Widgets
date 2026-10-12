@@ -14,6 +14,9 @@ extension Animation {
     static let brightBouncy: Animation = .bouncy(duration: 0.3)
     // Eases in, then overshoots and settles back, so a reveal lands with a bounce.
     static let brightReveal: Animation = .timingCurve(0.65, 0, 0.35, 1.5, duration: 0.5)
+    // A line drawing across: an even pace that eases into its end, given longer than a
+    // reveal since it travels the whole width.
+    static let brightDraw: Animation = .timingCurve(0.33, 0.33, 0.4, 1, duration: 0.9)
     static let brightSpring: Animation = .spring(response: 0.3, dampingFraction: 1.0, blendDuration: 1.0)
     static let brightRepeatForever: Animation = .linear(duration: 2.0).repeatForever(autoreverses: false)
     static let brightChartReveal: Animation = .easeInOut(duration: 0.5)

@@ -57,7 +57,7 @@ struct BrightLeadingNumberWidgetV5: View {
 
     private var reading: some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            BrightText(appearance.format(isRevealed ? value : 0), size: .huge)
+            BrightText(isRevealed ? display : display.zeroedDigits, size: .huge)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightBouncy, value: display)

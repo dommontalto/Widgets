@@ -61,6 +61,8 @@ struct BrightRingGroupWidgetV5: View {
     // Each ring's text above and below, so the rings make room for the tallest.
     @State private var aboveHeights: [String: CGFloat] = [:]
     @State private var belowHeights: [String: CGFloat] = [:]
+    // The amounts roll up from zero as the rings fill, the first time the widget shows.
+    @State private var isRevealed = false
 
     init(rings: [Ring], size: BrightWidgetSizeV5, allowsSelection: Bool = true) {
         self.rings = rings
@@ -112,6 +114,7 @@ struct BrightRingGroupWidgetV5: View {
             }
         }
         .animation(.brightEaseInOut, value: selectedRingID)
+        .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(rings.map { "\($0.label) \(display($0.value, of: $0)) of \(display($0.goal, of: $0))" }.joined(separator: ", "))
     }
@@ -320,7 +323,7 @@ struct BrightRingGroupWidgetV5: View {
 
     private func amountText(_ ring: Ring, isHeld: Bool, valueSize: FontSizes, suffixSize: FontSizes, valueColor: Color) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-            BrightText(display(isHeld ? abs(ring.goal - ring.value) : ring.value, of: ring), size: valueSize, color: valueColor)
+            BrightText(amountValue(ring, isHeld: isHeld), size: valueSize, color: valueColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
 
@@ -333,6 +336,15 @@ struct BrightRingGroupWidgetV5: View {
             .contentTransition(.numericText())
         }
         .lineLimit(1)
+    }
+
+    // Held, what's left or over; otherwise the amount, all zeros until the rings fill.
+    private func amountValue(_ ring: Ring, isHeld: Bool) -> String {
+        if isHeld {
+            return display(abs(ring.goal - ring.value), of: ring)
+        }
+        let amount = display(ring.value, of: ring)
+        return isRevealed ? amount : amount.zeroedDigits
     }
 
     // Takes the room of the wider of its held and resting text, so swapping one for the

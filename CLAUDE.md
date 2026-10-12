@@ -50,7 +50,7 @@ Widgets/
 │   ├── DesignSystem/
 │   │   ├── Color/          — Color+StylingExtensions (named colours), ThemeColor
 │   │   ├── Tokens/         — CGFloat+ (spacing, corner radius), Double+ (opacity)
-│   │   └── Typography/     — Font+StylingExtensions, FontSizes, FontKerning, LineSpacing
+│   │   └── Typography/     — Font+StylingExtensions, FontSizes, LineSpacing
 │   ├── Effects/            — BorderBeam, Foil, Ripple, Shaders
 │   ├── Errors/             — BrightError, BrightErrorSurface, V5/
 │   ├── Flows/Checkout/V5/

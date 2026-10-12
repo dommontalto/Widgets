@@ -158,7 +158,7 @@ struct BrightWaterWidgetV5: View {
                 levelMarker
                     .offset(y: levelY - Constants.markerSize / 2)
 
-                BrightText(full(shownLevel), size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
+                BrightText(isRevealed ? full(level) : full(level).zeroedDigits, size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     .lineLimit(1)
