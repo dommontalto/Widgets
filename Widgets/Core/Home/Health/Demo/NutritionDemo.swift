@@ -18,6 +18,17 @@ extension HealthWidgetDemoV5 {
     }
 
     static var mealsLoggedToday: Double {
-        Double(intake.bars(for: .today).compactMap(\.value).filter { $0 >= 300 }.count)
+        Double(mealHours.count)
+    }
+
+    static var mealDetails: [BrightLeadingNumberWidgetV5.Detail] {
+        let midnight = Calendar.current.startOfDay(for: anchor)
+        return zip(["Breakfast", "Lunch", "Dinner", "Snack"], mealHours).map { name, hour in
+            .init(label: name, value: midnight.addingTimeInterval((Double(hour) + 0.5) * 60 * 60).formatted(.brightTime))
+        }
+    }
+
+    private static var mealHours: [Int] {
+        (0 ... currentHour).filter { intake.hourly[$0] >= 300 }
     }
 }

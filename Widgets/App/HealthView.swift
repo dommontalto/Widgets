@@ -85,6 +85,9 @@ struct HealthView: View {
                         editor.layout.showAll(family)
                     } onShowRandom: { count in
                         editor.layout.showRandom(count)
+                    } onShowNew: {
+                        editor.layout.removeAll()
+                        newWidgets.forEach(editor.layout.add)
                     }
                     .presentationDragIndicator(.hidden)
                     .presentationContentInteraction(.scrolls)
@@ -99,6 +102,24 @@ struct HealthView: View {
                     .presentationContentInteraction(.scrolls)
                 }
         }
+    }
+
+    private var newWidgets: [HealthWidgetItemV5] {
+        [
+            HealthWidgetItemV5(kind: .nutrition, style: .nutritionNumber, size: .small),
+            HealthWidgetItemV5(kind: .journal, style: .journalChecklist, size: .small),
+            HealthWidgetItemV5(kind: .intake, style: .intakeMeter, size: .small),
+            HealthWidgetItemV5(kind: .water, style: .waterMeter, size: .small),
+            HealthWidgetItemV5(kind: .macros, style: .macroMeters, size: .small),
+            HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeters, size: .small),
+            HealthWidgetItemV5(kind: .macros, style: .macroMeters, size: .medium),
+            HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeters, size: .medium),
+        ]
+            + HealthWidgetItemV5(kind: .macros, style: .macroMeter, size: .small).picks
+            + HealthWidgetItemV5(kind: .sleep, style: .sleepStageMeter, size: .small).picks
+            + HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeter, size: .small).picks
+            + HealthWidgetItemV5(kind: .sleep, style: .sleepStageRing, size: .small).picks
+            + HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingRing, size: .small).picks
     }
 
     private var content: some View {

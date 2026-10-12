@@ -31,6 +31,8 @@ struct BrightRingGroupWidgetV5: View {
         // Going over turns the amount orange; off for goals where more is fine, like water.
         var warnsWhenOver = true
         var image: String?
+        var isDuration = false
+        var heldText: String?
 
         var id: String { label }
 
@@ -247,7 +249,22 @@ struct BrightRingGroupWidgetV5: View {
     private func below(_ ring: Ring, index: Int) -> some View {
         switch arrangement {
         case .single:
-            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
+            if let heldText = ring.heldText {
+                steady(isHeld: selectedRingID == ring.id) { isHeld in
+                    if isHeld {
+                        BrightText(heldText, size: .heading, color: ring.color, weight: .regular)
+                            .lineLimit(1)
+                    } else if ring.isDuration {
+                        duration(ring)
+                    } else {
+                        amountText(ring, isHeld: false, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
+                    }
+                }
+            } else if ring.isDuration {
+                duration(ring)
+            } else {
+                amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
+            }
         case .triangle:
             if index > 0 {
                 caption(for: ring)
@@ -336,6 +353,28 @@ struct BrightRingGroupWidgetV5: View {
             .contentTransition(.numericText())
         }
         .lineLimit(1)
+    }
+
+    private func duration(_ ring: Ring) -> some View {
+        let minutes = Int(ring.value.rounded())
+        return HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+            BrightText(revealedDigits("\(minutes / 60)"), size: .standout3, color: ring.color)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            BrightText("hr", size: .body1, color: .lightTextColor)
+
+            BrightText(revealedDigits("\(minutes % 60)"), size: .standout3, color: ring.color)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            BrightText("m", size: .body1, color: .lightTextColor)
+        }
+        .lineLimit(1)
+    }
+
+    private func revealedDigits(_ text: String) -> String {
+        isRevealed ? text : text.zeroedDigits
     }
 
     // Held, what's left or over; otherwise the amount, all zeros until the rings fill.

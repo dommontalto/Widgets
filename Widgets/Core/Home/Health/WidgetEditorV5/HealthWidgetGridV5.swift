@@ -14,24 +14,24 @@ struct HealthWidgetViewV5: View {
     var body: some View {
         switch (widget.kind, widget.style) {
         case (.intake, .intakeMeter):
-            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.intakeBar], subtitle: HealthWidgetDemoV5.intakeBehind, size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.intakeBar], subtitle: HealthWidgetDemoV5.intakeBehind, size: widget.size, allowsSelection: allowsSelection)
         case (.water, .waterMeter):
-            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.waterBar], subtitle: HealthWidgetDemoV5.waterBehind, size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.waterBar], subtitle: HealthWidgetDemoV5.waterBehind, size: widget.size, allowsSelection: allowsSelection)
         case (.macros, .macroMeter):
-            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.macroBar(widget.macro)], subtitle: HealthWidgetDemoV5.macroBehind(widget.macro), size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.macroBar(widget.macro)], subtitle: HealthWidgetDemoV5.macroBehind(widget.macro), size: widget.size, allowsSelection: allowsSelection)
         case (.macros, .macroMeters):
-            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.macroBars, size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.macroBars, size: widget.size, allowsSelection: allowsSelection)
         case (.sleep, .sleepStageMeter):
-            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.sleepStageBar(widget.stage)], subtitle: HealthWidgetDemoV5.sleepStageShare(widget.stage), size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.sleepStageBar(widget.stage)], subtitle: HealthWidgetDemoV5.sleepStageShare(widget.stage), size: widget.size, allowsSelection: allowsSelection)
         case (.sleep, .sleepStageRing):
             let ring = HealthWidgetDemoV5.sleepStageRing(widget.stage)
             BrightRingGroupWidgetV5(rings: [ring], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(ring.label, systemImage: widget.kind.systemImage, color: ring.color)
             }
         case (.wellbeing, .wellbeingMeter):
-            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.scoreBar(widget.score)], size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.scoreBar(widget.score)], size: widget.size, allowsSelection: allowsSelection)
         case (.wellbeing, .wellbeingMeters):
-            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.scoreBars, size: widget.size)
+            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.scoreBars, size: widget.size, allowsSelection: allowsSelection)
         case (.wellbeing, .wellbeingRing):
             let ring = HealthWidgetDemoV5.scoreRing(widget.score)
             BrightRingGroupWidgetV5(rings: [ring], size: widget.size, allowsSelection: allowsSelection) {
@@ -121,19 +121,24 @@ struct HealthWidgetViewV5: View {
                 tint: widget.kind.tint,
                 days: HealthWidgetDemoV5.journalDays,
                 streak: HealthWidgetDemoV5.journalStreak,
-                unit: "Day Streak"
+                unit: "Day Streak",
+                allowsSelection: allowsSelection
             )
         case (.mind, _):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.mindAppearance,
                 value: HealthWidgetDemoV5.mindMinutesToday,
-                latest: HealthWidgetDemoV5.mindLatest
+                latest: HealthWidgetDemoV5.mindLatest,
+                details: HealthWidgetDemoV5.mindDetails,
+                allowsSelection: allowsSelection
             )
         case (.nutrition, _):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.nutritionAppearance,
                 value: HealthWidgetDemoV5.mealsLoggedToday,
-                latest: HealthWidgetDemoV5.latestMeal
+                latest: HealthWidgetDemoV5.latestMeal,
+                details: HealthWidgetDemoV5.mealDetails,
+                allowsSelection: allowsSelection
             )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
@@ -206,10 +211,8 @@ struct HealthWidgetViewV5: View {
 
     // The icon-and-name header the single rings use; intake and macros keep the arrow.
     private func ringHeader(_ title: String, systemImage: String = "arrow.right", color: Color) -> some View {
-        HStack(spacing: .spacing05x) {
-            Image(systemName: systemImage)
-                .font(.standard(size: .subheading, weight: .light))
-                .foregroundStyle(color)
+        HStack(spacing: .spacing1x) {
+            BrightWidgetIconV5(systemImage: systemImage, style: color)
 
             BrightText(title, size: .body1, weight: .regular)
                 .contentTransition(.numericText())

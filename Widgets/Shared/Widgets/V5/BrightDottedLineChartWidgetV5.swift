@@ -121,10 +121,8 @@ struct BrightDottedLineChartWidgetV5: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing05x) {
-                Image(systemName: appearance.systemImage)
-                    .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(appearance.iconStyle)
+            HStack(spacing: .spacing1x) {
+                BrightWidgetIconV5(systemImage: appearance.systemImage, style: appearance.iconStyle)
 
                 BrightText(appearance.title, size: .body1, weight: .regular)
             }

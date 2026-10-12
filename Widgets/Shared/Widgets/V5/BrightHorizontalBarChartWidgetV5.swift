@@ -21,6 +21,8 @@ struct BrightHorizontalBarChartWidgetV5: View {
         var decimals = 0
         var reading: String?
         var goalReading: String?
+        var heldReading: String?
+        var heldUnit: String?
 
         var id: String { label }
 
@@ -36,6 +38,14 @@ struct BrightHorizontalBarChartWidgetV5: View {
             goalReading ?? goal.formatted(.number.precision(.fractionLength(0 ... decimals)))
         }
 
+        var formattedGap: String {
+            heldReading ?? abs(goal - value).formatted(.number.precision(.fractionLength(0 ... decimals)))
+        }
+
+        var gapUnit: String {
+            heldUnit ?? (value > goal ? "over" : "left")
+        }
+
         var fill: AnyShapeStyle {
             if let gradient {
                 AnyShapeStyle(LinearGradient(colors: gradient, startPoint: .leading, endPoint: .trailing))
@@ -49,14 +59,28 @@ struct BrightHorizontalBarChartWidgetV5: View {
     var subtitle: String?
     var subtitleColor: Color = .defaultCyan
     let size: BrightWidgetSizeV5
+    var allowsSelection = true
 
     @State private var isRevealed = false
+    @State private var heldID: String?
+    @State private var touch: UnitPoint?
+    @State private var cardHeight: CGFloat = 0
+    @State private var barMids: [String: CGFloat] = [:]
     @Namespace private var namespace
 
     var body: some View {
         content
             .padding(.spacing205x)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .coordinateSpace(.named(Constants.space))
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { cardHeight = $0 }
+            .overlay {
+                if allowsSelection {
+                    BrightWidgetTouchLayerV5(touch: $touch)
+                }
+            }
+            .onChange(of: touch) { resolveTouch() }
+            .animation(.brightEaseInOut, value: heldID)
             .modifier(BrightCardModifierV5(color: .defaultHomeCards))
             .brightRevealV5($isRevealed)
             .accessibilityElement(children: .ignore)
@@ -76,7 +100,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
 
     private func single(_ bar: Bar) -> some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            HStack(spacing: .spacing05x) {
+            HStack(spacing: .spacing1x) {
                 icon(bar, size: Constants.iconSize)
 
                 BrightText(bar.label, size: .body1, weight: .regular)
@@ -84,12 +108,14 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .lineLimit(1)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(revealed(bar.formattedValue), size: .huge2, weight: .regular)
+                BrightText(isHeld(bar) ? bar.formattedGap : revealed(bar.formattedValue), size: .huge2, weight: .regular)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
-                if !bar.unit.isEmpty {
-                    BrightText(bar.unit, size: .body1, color: .lightTextColor, weight: .regular)
+                let unit = isHeld(bar) ? bar.gapUnit : bar.unit
+                if !unit.isEmpty {
+                    BrightText(unit, size: .body1, color: .lightTextColor, weight: .regular)
+                        .contentTransition(.numericText())
                 }
             }
             .lineLimit(1)
@@ -103,18 +129,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
 
             Spacer(minLength: .spacing0x)
 
-            HStack {
-                BrightText("0", size: .body4, color: .lightTextColor, weight: .regular)
-
-                Spacer(minLength: .spacing1x)
-
-                BrightText(bar.formattedGoal, size: .body4, color: .lightTextColor, weight: .regular)
-            }
-            .monospacedDigit()
-            .padding(.horizontal, .spacing05x)
-            .padding(.bottom, .spacing1x)
-
-            track(bar, outlined: false)
+            barColumn
         }
     }
 
@@ -131,21 +146,26 @@ struct BrightHorizontalBarChartWidgetV5: View {
                         }
 
                         HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                            BrightText(revealed(bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
+                            BrightText(isHeld(bar) ? bar.formattedGap : revealed(bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
 
-                            if isMedium {
-                                BrightText(bar.unit, size: .body3, color: .lightTextColor, weight: .regular)
+                            if isMedium || isHeld(bar) {
+                                BrightText(isHeld(bar) ? bar.gapUnit : bar.unit, size: isMedium ? .body3 : .body5, color: .lightTextColor, weight: .regular)
+                                    .contentTransition(.numericText())
                                     .transition(.opacity)
                             }
                         }
                         .lineLimit(1)
+                        .minimumScaleFactor(Constants.minimumScale)
+                        .scaleEffect(isHeld(bar) ? Constants.heldScale : 1, anchor: isMedium ? .leading : .center)
                     }
                     .frame(maxWidth: isMedium ? nil : .infinity)
+                    .opacity(opacity(of: bar))
                 }
             }
             .padding(.leading, isMedium ? Constants.mediumIconSize + .spacing2x : .spacing0x)
+            .padding(.top, isMedium ? .spacing2x : .spacing0x)
 
             Spacer(minLength: .spacing0x)
 
@@ -156,6 +176,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
                             icon(bar, size: Constants.mediumIconSize)
                                 .frame(width: Constants.mediumIconSize, height: Constants.barHeight)
                                 .matchedGeometryEffect(id: bar.id, in: namespace, properties: .position)
+                                .opacity(opacity(of: bar))
                         }
                     }
                 }
@@ -173,7 +194,13 @@ struct BrightHorizontalBarChartWidgetV5: View {
         VStack(spacing: .spacing0x) {
             VStack(spacing: .spacing3x) {
                 ForEach(bars) { bar in
-                    track(bar, outlined: true)
+                    track(bar)
+                        .opacity(opacity(of: bar))
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.frame(in: .named(Constants.space)).midY
+                        } action: {
+                            barMids[bar.id] = $0
+                        }
                 }
             }
 
@@ -182,25 +209,22 @@ struct BrightHorizontalBarChartWidgetV5: View {
 
                 Spacer(minLength: .spacing1x)
 
-                BrightText("100%", size: .body3, color: .lightTextColor)
+                BrightText("100", size: .body3, color: .lightTextColor)
             }
-            .padding(.horizontal, .spacing05x)
             .padding(.top, .spacing1x)
         }
     }
 
     // MARK: - Pieces
 
-    private func track(_ bar: Bar, outlined: Bool) -> some View {
+    private func track(_ bar: Bar) -> some View {
         ZStack {
             Capsule()
                 .fill(bar.fill)
                 .opacity(.minimalOpacity)
 
-            if outlined {
-                Capsule()
-                    .strokeBorder(bar.color.opacity(.veryLowOpacity), lineWidth: Constants.outlineWidth)
-            }
+            Capsule()
+                .strokeBorder(bar.color.opacity(.veryLowOpacity), lineWidth: Constants.outlineWidth)
 
             HealthProgressCapsuleShape(progress: isRevealed ? bar.progress : 0)
                 .fill(bar.fill)
@@ -218,10 +242,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
                 .scaledToFit()
                 .frame(width: size, height: size)
         } else if let systemImage = bar.systemImage {
-            Image(systemName: systemImage)
-                .font(.standard(size: .subheading, weight: .light))
-                .foregroundStyle(bar.color)
-                .frame(width: size, height: size)
+            BrightWidgetIconV5(systemImage: systemImage, style: bar.color)
         } else {
             BrightText(bar.shortLabel, size: .body3, color: bar.color, weight: .regular)
                 .frame(width: size, height: size)
@@ -232,12 +253,36 @@ struct BrightHorizontalBarChartWidgetV5: View {
         isRevealed ? text : text.zeroedDigits
     }
 
+    // MARK: - Holding
+
+    private func isHeld(_ bar: Bar) -> Bool {
+        heldID == bar.id
+    }
+
+    private func opacity(of bar: Bar) -> Double {
+        heldID == nil || heldID == bar.id || bars.count == 1 ? .opaque : .ultraLowOpacity
+    }
+
+    private func resolveTouch() {
+        guard let touch else {
+            heldID = nil
+            return
+        }
+        let y = touch.y * cardHeight
+        let nearest = bars.min { abs((barMids[$0.id] ?? 0) - y) < abs((barMids[$1.id] ?? 0) - y) }
+        guard nearest?.id != heldID else { return }
+        heldID = nearest?.id
+        BrightHaptic.light.play()
+    }
+
     private enum Constants {
         static let barHeight: CGFloat = 10
         static let outlineWidth: CGFloat = 0.5
         static let iconSize: CGFloat = 18
         static let mediumIconSize: CGFloat = 20
         static let minimumScale: CGFloat = 0.6
+        static let heldScale: CGFloat = 1.1
+        static let space = "horizontalBarCard"
     }
 }
 

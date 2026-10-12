@@ -9,9 +9,16 @@ import SwiftUI
 
 // A single latest reading, large in the bottom corner. Small and medium only.
 struct BrightLeadingNumberWidgetV5: View {
+    struct Detail: Hashable {
+        let label: String
+        let value: String
+    }
+
     let appearance: BrightWidgetAppearanceV5
     let value: Double
     let latest: Date
+    var details: [Detail] = []
+    var allowsSelection = true
 
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
@@ -20,32 +27,67 @@ struct BrightLeadingNumberWidgetV5: View {
 
     // The number rolls up from zero the first time the widget shows.
     @State private var isRevealed = false
+    @State private var touch: UnitPoint?
+
+    private var isHeld: Bool {
+        touch != nil && !details.isEmpty
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
                 .brightDebugBackgroundV5(.red)
 
-            Spacer(minLength: .spacing0x)
-                .brightDebugBackgroundV5(.blue)
+            ZStack(alignment: .topLeading) {
+                Color.clear
+
+                if isHeld {
+                    detailList
+                        .transition(.opacity)
+                }
+            }
+            .frame(maxHeight: .infinity)
+            .brightDebugBackgroundV5(.blue)
 
             reading
                 .brightDebugBackgroundV5(.yellow)
         }
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .overlay {
+            if allowsSelection && !details.isEmpty {
+                BrightWidgetTouchLayerV5(touch: $touch)
+            }
+        }
+        .animation(.brightEaseInOut, value: isHeld)
+        .brightHapticV5(.light, trigger: isHeld)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(display) \(unit ?? "")")
     }
 
+    private var detailList: some View {
+        VStack(alignment: .leading, spacing: .spacing05x) {
+            ForEach(details, id: \.self) { detail in
+                HStack(spacing: .spacing1x) {
+                    BrightText(detail.label, size: .body3, color: .lightTextColor)
+
+                    Spacer(minLength: .spacing1x)
+
+                    BrightText(detail.value, size: .body3, weight: .regular)
+                        .monospacedDigit()
+                }
+                .lineLimit(1)
+            }
+        }
+        .padding(.top, .spacing2x)
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing05x) {
-                Image(systemName: systemImage)
-                    .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(appearance.iconStyle)
+            HStack(spacing: .spacing1x) {
+                BrightWidgetIconV5(systemImage: systemImage, style: appearance.iconStyle)
 
                 BrightText(title, size: .body1, weight: .regular)
             }

@@ -163,10 +163,8 @@ struct BrightMenstrualWidgetV5: View {
 
     private func header(phase: Phase, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            HStack(spacing: .spacing05x) {
-                Image(systemName: phase.systemImage)
-                    .font(.standard(size: .subheading, weight: .light))
-                    .foregroundStyle(phase.color)
+            HStack(spacing: .spacing1x) {
+                BrightWidgetIconV5(systemImage: phase.systemImage, style: phase.color)
 
                 BrightText(phase.title, size: .body1, weight: .regular)
                     .contentTransition(.numericText())

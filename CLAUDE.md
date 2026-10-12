@@ -421,3 +421,10 @@ struct ExampleWidget: View {
 
 **ContentView** shows each widget under a named section. The Vault widget uses
 `.padding(.horizontal, -.spacing3x)` to go full-width (edge-to-edge screen).
+
+## Home widgets (V5) hold and resize
+
+Every new home widget (`Shared/Widgets/V5`) ships with both of these, never as a follow-up:
+
+- **Tap and hold does something.** Holding reveals extra detail in place — what's left or over, a day's status, a list of entries, a share of the whole — with a light haptic as the held element changes, and the rest dimmed. Use `BrightWidgetTouchLayerV5` for the gesture (it keeps the page scrolling) and take an `allowsSelection` flag so the grid can turn it off while editing.
+- **Resizing moves, grows and shrinks the same elements.** One layout for every size: never branch to a different view tree per size, or the widget pops. Keep each element's identity and let it slide, enlarge or shrink — `matchedGeometryEffect(id:in:properties: .position)` for pieces that change parent, conditional spacing and padding for the rest (see `BrightLineChartWidgetV5`, `BrightHorizontalBarChartWidgetV5`).

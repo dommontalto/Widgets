@@ -17,7 +17,16 @@ extension HealthWidgetDemoV5 {
 
     static let mindMinutesToday: Double = 24
 
+    static let mindWeeklyAverage: Double = 18
+
     static var mindLatest: Date {
         minutesAgo(45)
+    }
+
+    static var mindDetails: [BrightLeadingNumberWidgetV5.Detail] {
+        [
+            .init(label: "Today", value: "\(Int(mindMinutesToday)) min"),
+            .init(label: "Weekly avg", value: "\(Int(mindWeeklyAverage)) min"),
+        ]
     }
 }

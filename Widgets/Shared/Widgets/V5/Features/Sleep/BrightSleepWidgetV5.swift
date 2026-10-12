@@ -64,7 +64,7 @@ struct BrightSleepWidgetV5: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            BrightSleepSummaryV5(asleepMinutes: asleepMinutes, inBedMinutes: inBedMinutes, score: score, isCompact: size == .small)
+            BrightSleepSummaryV5(asleepMinutes: asleepMinutes, inBedMinutes: inBedMinutes, score: score, isCompact: size == .small, boxesIcons: true)
 
             Spacer(minLength: .spacing2x)
 

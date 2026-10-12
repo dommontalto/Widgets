@@ -14,6 +14,7 @@ struct BrightSleepSummaryV5: View {
     let inBedMinutes: Int
     let score: Int
     var isCompact = false
+    var boxesIcons = false
 
     // The totals and score roll up from zero the first time it shows.
     @State private var isRevealed = false
@@ -53,9 +54,13 @@ struct BrightSleepSummaryV5: View {
     // A duration as "8 hr 24 m", the units dimmer than the numbers.
     private func total(systemImage: String, color: Color, minutes: Int) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            Image(systemName: systemImage)
-                .font(.standard(size: .subheading, weight: .light))
-                .foregroundStyle(color)
+            if boxesIcons {
+                BrightWidgetIconV5(systemImage: systemImage, style: color)
+            } else {
+                Image(systemName: systemImage)
+                    .font(.standard(size: .subheading, weight: .light))
+                    .foregroundStyle(color)
+            }
 
             BrightText(revealed("\(minutes / 60)"), size: .heading)
                 .monospacedDigit()

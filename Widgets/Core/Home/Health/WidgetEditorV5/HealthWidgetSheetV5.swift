@@ -19,6 +19,7 @@ struct AddWidgetSheetV5: View {
     var onShowAll: ((BrightWidgetSizeV5) -> Void)?
     var onShowFamily: ((HealthWidgetStyleV5.Family) -> Void)?
     var onShowRandom: ((Int) -> Void)?
+    var onShowNew: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
@@ -87,6 +88,14 @@ struct AddWidgetSheetV5: View {
                             ) {
                                 BrightHaptic.medium.play()
                                 onShowRandom(Constants.randomCount)
+                                dismiss()
+                            }
+                        }
+
+                        if let onShowNew {
+                            BrightRowV5("Show new", icon: .symbol("sparkles", tint: .defaultYellow), trailing: .none) {
+                                BrightHaptic.medium.play()
+                                onShowNew()
                                 dismiss()
                             }
                         }
