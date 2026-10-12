@@ -77,10 +77,25 @@ final class HealthWidgetEditorV5 {
             )
         }
 
-        func isPastLimit(for sizes: [BrightWidgetSizeV5], cellSize: CGFloat) -> Bool {
+        func isPastLimit(for sizes: [BrightWidgetSizeV5], current: BrightWidgetSizeV5, cellSize: CGFloat) -> Bool {
             let raw = rawFrame
-            let frames = sizes.map { HealthWidgetGridMetricsV5.frame(for: $0, cellSize: cellSize) }
-            return Self.isOutside(raw.width, frames.map(\.width)) || Self.isOutside(raw.height, frames.map(\.height))
+            let slack = Constants.limitSlack
+            let cells = { (size: BrightWidgetSizeV5) in size.columns * size.rows }
+            guard let largest = sizes.max(by: { cells($0) < cells($1) }),
+                  let smallest = sizes.min(by: { cells($0) < cells($1) }) else { return false }
+            if current == largest {
+                let frame = HealthWidgetGridMetricsV5.frame(for: largest, cellSize: cellSize)
+                if raw.width > frame.width + slack || raw.height > frame.height + slack {
+                    return true
+                }
+            }
+            if current == smallest {
+                let frame = HealthWidgetGridMetricsV5.frame(for: smallest, cellSize: cellSize)
+                if raw.width < frame.width - slack || raw.height < frame.height - slack {
+                    return true
+                }
+            }
+            return false
         }
 
         private var rawFrame: CGSize {
@@ -88,11 +103,6 @@ final class HealthWidgetEditorV5 {
                 width: startFrame.width + (growsLeading ? -translation.width : translation.width),
                 height: startFrame.height + translation.height
             )
-        }
-
-        private static func isOutside(_ value: CGFloat, _ limits: [CGFloat]) -> Bool {
-            guard let lower = limits.min(), let upper = limits.max() else { return false }
-            return value < lower || value > upper
         }
 
         private static func rubberBand(_ value: CGFloat, between limits: [CGFloat]) -> CGFloat {
@@ -245,10 +255,10 @@ final class HealthWidgetEditorV5 {
             )
             isResizing = true
         }
-        let wasPastLimit = resizing?.isPastLimit(for: current.style.sizes, cellSize: cellSize) == true
+        let wasPastLimit = resizing?.isPastLimit(for: current.style.sizes, current: current.size, cellSize: cellSize) == true
         resizing?.translation = value.translation
-        if !wasPastLimit, resizing?.isPastLimit(for: current.style.sizes, cellSize: cellSize) == true {
-            BrightHaptic.light.play()
+        if !wasPastLimit, resizing?.isPastLimit(for: current.style.sizes, current: current.size, cellSize: cellSize) == true {
+            BrightHaptic.soft.play()
         }
 
         guard let resizing,
@@ -309,5 +319,6 @@ final class HealthWidgetEditorV5 {
         static let autoScrollFrame: Duration = .milliseconds(16)
         static let revealDelay: Duration = .milliseconds(300)
         static let rubberBandStiffness: CGFloat = 0.55
+        static let limitSlack: CGFloat = .spacing4x
     }
 }

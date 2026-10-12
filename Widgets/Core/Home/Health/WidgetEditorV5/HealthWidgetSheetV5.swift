@@ -30,7 +30,7 @@ struct AddWidgetSheetV5: View {
                 VStack(spacing: .spacing4x) {
                     BrightRowGroupV5(color: .defaultSheetModalCards) {
                         ForEach(HealthWidgetKindV5.allCases.sorted { $0.rowTitle < $1.rowTitle }) { kind in
-                            BrightRowV5(kind.rowTitle, icon: .template(kind.rowIcon)) {
+                            BrightRowV5(kind.rowTitle, icon: kind.rowIcon) {
                                 path.append(kind)
                             }
                         }
@@ -263,6 +263,8 @@ private struct WidgetOptions: View {
         .animation(.brightBouncy, value: widget.size)
         .animation(.brightBouncy, value: widget.range)
         .animation(.brightBouncy, value: widget.macro)
+        .animation(.brightBouncy, value: widget.stage)
+        .animation(.brightBouncy, value: widget.score)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -340,7 +342,8 @@ private struct WidgetOptions: View {
                 .transition(.opacity)
             }
 
-            if widget.style == .macroRing {
+            switch widget.style.pick {
+            case .macro:
                 BrightRowGroupV5(header: "Macro") {
                     ForEach(HealthMacroV5.allCases) { option in
                         BrightRowV5(option.title, trailing: .tick(option == widget.macro)) {
@@ -349,6 +352,26 @@ private struct WidgetOptions: View {
                         }
                     }
                 }
+            case .stage:
+                BrightRowGroupV5(header: "Stage") {
+                    ForEach(HealthSleepStageV5.allCases) { option in
+                        BrightRowV5(option.title, trailing: .tick(option == widget.stage)) {
+                            BrightHaptic.light.play()
+                            widget.stage = option
+                        }
+                    }
+                }
+            case .score:
+                BrightRowGroupV5(header: "Score") {
+                    ForEach(HealthScoreV5.allCases) { option in
+                        BrightRowV5(option.title, trailing: .tick(option == widget.score)) {
+                            BrightHaptic.light.play()
+                            widget.score = option
+                        }
+                    }
+                }
+            case nil:
+                EmptyView()
             }
 
             // Every style offers at least one range, so a widget with a single option

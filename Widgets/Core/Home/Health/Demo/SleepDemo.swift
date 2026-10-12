@@ -19,6 +19,19 @@ extension HealthWidgetDemoV5 {
         ]
     }
 
+    static func sleepStageRing(_ stage: HealthSleepStageV5) -> BrightRingGroupWidgetV5.Ring {
+        sleepRings[HealthSleepStageV5.allCases.firstIndex(of: stage) ?? 0]
+    }
+
+    static func sleepStageBar(_ stage: HealthSleepStageV5) -> BrightHorizontalBarChartWidgetV5.Bar {
+        let ring = sleepStageRing(stage)
+        return bar(ring, systemImage: "bed.double.fill", reading: ring.caption, goalReading: "100%")
+    }
+
+    static func sleepStageShare(_ stage: HealthSleepStageV5) -> String {
+        "\(Int((sleepStageRing(stage).progress * 100).rounded()))% of the night"
+    }
+
     static let sleepScore = 82
     static let sleepRestingHeartRate = 56
     static let sleepHeartRateVariability = 34

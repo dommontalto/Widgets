@@ -38,23 +38,35 @@ extension HealthWidgetDemoV5 {
         }
     }
 
+    static func macroBar(_ macro: HealthMacroV5) -> BrightHorizontalBarChartWidgetV5.Bar {
+        bar(macroRing(macro), unit: "g", systemImage: "arrow.right")
+    }
+
+    static func macroBehind(_ macro: HealthMacroV5) -> String {
+        behind(macroRing(macro), unit: "g")
+    }
+
+    static var macroBars: [BrightHorizontalBarChartWidgetV5.Bar] {
+        macroRings.map { bar($0, unit: "g") }
+    }
+
     // Each day's intake calories, split into carbs, fat and protein as shares of them,
     // oldest first and ending today.
-    static var macroWeek: [BrightBarChartWidgetV5.Bar] {
+    static var macroWeek: [BrightVerticalBarChartWidgetV5.Bar] {
         let calories = intake.daily + [intake.today]
         let weekday = currentWeekday
         return (0 ..< macroShares.count).map { index in
             guard index <= weekday else {
-                return BrightBarChartWidgetV5.Bar(index: index, value: nil)
+                return BrightVerticalBarChartWidgetV5.Bar(index: index, value: nil)
             }
             let day = macroShares.count - 1 - (weekday - index)
             let shares = macroShares[day]
             let segments = [
-                BrightBarChartWidgetV5.Segment(label: "C", value: shares.carbs, color: .defaultGreen),
-                BrightBarChartWidgetV5.Segment(label: "F", value: shares.fat, color: .defaultYellow),
-                BrightBarChartWidgetV5.Segment(label: "P", value: shares.protein, color: .defaultPink),
+                BrightVerticalBarChartWidgetV5.Segment(label: "C", value: shares.carbs, color: .defaultGreen),
+                BrightVerticalBarChartWidgetV5.Segment(label: "F", value: shares.fat, color: .defaultYellow),
+                BrightVerticalBarChartWidgetV5.Segment(label: "P", value: shares.protein, color: .defaultPink),
             ]
-            return BrightBarChartWidgetV5.Bar(index: index, value: calories[day], segments: segments)
+            return BrightVerticalBarChartWidgetV5.Bar(index: index, value: calories[day], segments: segments)
         }
     }
 

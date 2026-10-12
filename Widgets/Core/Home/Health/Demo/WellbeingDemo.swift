@@ -16,4 +16,16 @@ extension HealthWidgetDemoV5 {
             .init(label: "Readiness", shortLabel: "R", value: 45, goal: 100, color: .defaultCyan, caption: names ? "Readiness" : nil, warnsWhenOver: false, image: ImageNames.stressV5),
         ]
     }
+
+    static func scoreRing(_ score: HealthScoreV5) -> BrightRingGroupWidgetV5.Ring {
+        wellbeingRings(size: .medium)[HealthScoreV5.allCases.firstIndex(of: score) ?? 0]
+    }
+
+    static func scoreBar(_ score: HealthScoreV5) -> BrightHorizontalBarChartWidgetV5.Bar {
+        bar(scoreRing(score), unit: "%", goalReading: "100%")
+    }
+
+    static var scoreBars: [BrightHorizontalBarChartWidgetV5.Bar] {
+        wellbeingRings(size: .medium).map { bar($0, unit: "%") }
+    }
 }

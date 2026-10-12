@@ -19,6 +19,7 @@ nonisolated class ImageNames {
     static let waterIconV5 = "water_icon_v5"
     static let weightIconV4 = "weight_icon_v4"
     static let cycleTrackingMainV5 = "cycle_tracking_main_v5"
+    static let pencilBlueV5 = "pencil_blue_v5"
 
     // MARK: - Genome
 

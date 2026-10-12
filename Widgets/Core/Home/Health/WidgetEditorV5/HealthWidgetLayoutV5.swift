@@ -12,8 +12,11 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity
     case heartRate
     case intake
+    case journal
     case macros
     case menstrual
+    case mind
+    case nutrition
     case sleep
     case water
     case weight
@@ -26,8 +29,11 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "Total Energy"
         case .heartRate: "Heart Rate"
         case .intake: "Intake"
+        case .journal: "Journal"
         case .macros: "Weekly Macros"
         case .menstrual: "Menstrual"
+        case .mind: "Mind"
+        case .nutrition: "Nutrition"
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
@@ -41,8 +47,11 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "Activity"
         case .heartRate: "Heart"
         case .intake: "Intake"
+        case .journal: "Journal"
         case .macros: "Macros"
         case .menstrual: "Menstrual"
+        case .mind: "Mind"
+        case .nutrition: "Nutrition"
         case .sleep: "Sleep"
         case .water: "Water"
         case .weight: "Weight"
@@ -55,8 +64,11 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "flame.fill"
         case .heartRate: "heart.fill"
         case .intake: "arrow.right"
+        case .journal: "pencil.line"
         case .macros: "chart.pie.fill"
         case .menstrual: "moonphase.waxing.crescent"
+        case .mind: "brain.head.profile"
+        case .nutrition: "fork.knife"
         case .sleep: "bed.double.fill"
         case .water: "drop.fill"
         case .weight: "scalemass.fill"
@@ -65,17 +77,20 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     }
 
     // The black-and-white icon its row shows in the add sheet.
-    var rowIcon: String {
+    var rowIcon: BrightRowV5Icon {
         switch self {
-        case .activity: ImageNames.activityAlertsIconV5
-        case .heartRate: ImageNames.heartDashIconV4
-        case .intake: ImageNames.logFoodIconV1
-        case .macros: ImageNames.macronutrientGraphV5
-        case .menstrual: ImageNames.cycleTrackingMainV5
-        case .sleep: ImageNames.sleepInfoV4
-        case .water: ImageNames.waterIconV5
-        case .weight: ImageNames.weightIconV4
-        case .wellbeing: ImageNames.recoveryV5
+        case .activity: .template(ImageNames.activityAlertsIconV5)
+        case .heartRate: .template(ImageNames.heartDashIconV4)
+        case .intake: .template(ImageNames.logFoodIconV1)
+        case .journal: .template(ImageNames.pencilBlueV5)
+        case .macros: .template(ImageNames.macronutrientGraphV5)
+        case .menstrual: .template(ImageNames.cycleTrackingMainV5)
+        case .mind: .symbol(systemImage)
+        case .nutrition: .symbol(systemImage)
+        case .sleep: .template(ImageNames.sleepInfoV4)
+        case .water: .template(ImageNames.waterIconV5)
+        case .weight: .template(ImageNames.weightIconV4)
+        case .wellbeing: .template(ImageNames.recoveryV5)
         }
     }
 
@@ -84,8 +99,11 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: .defaultOrange
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
+        case .journal: .defaultCyan
         case .macros: .defaultGreen
         case .menstrual: .defaultPink
+        case .mind: .defaultBrightPink
+        case .nutrition: .defaultGreen
         case .sleep: .defaultBlue
         case .water: .defaultCyan
         case .weight: .defaultPurple
@@ -97,13 +115,16 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: [.totalEnergyBars, .activeEnergyBars, .stepBars]
         case .heartRate: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
-        case .intake: [.intakeBars, .intakeRing]
-        case .macros: [.macroBars, .macroRings, .macroRing]
+        case .intake: [.intakeBars, .intakeRing, .intakeMeter]
+        case .journal: [.journalChecklist]
+        case .macros: [.macroBars, .macroRings, .macroRing, .macroMeter, .macroMeters]
         case .menstrual: [.menstrualCycle]
-        case .sleep: [.sleepRings, .sleepVitals, .sleepStages]
-        case .water: [.waterBars, .waterNumber, .waterRing, .waterTank]
+        case .mind: [.mindNumber]
+        case .nutrition: [.nutritionNumber]
+        case .sleep: [.sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter]
+        case .water: [.waterBars, .waterNumber, .waterRing, .waterTank, .waterMeter]
         case .weight: [.weightLine, .weightNumber]
-        case .wellbeing: [.wellbeingRings]
+        case .wellbeing: [.wellbeingRings, .wellbeingRing, .wellbeingMeter, .wellbeingMeters]
         }
     }
 }
@@ -120,6 +141,40 @@ enum HealthMacroV5: String, CaseIterable, Codable, Identifiable {
         case .carbs: "Carbs"
         case .fats: "Fats"
         case .protein: "Protein"
+        }
+    }
+}
+
+enum HealthSleepStageV5: String, CaseIterable, Codable, Identifiable {
+    case awake
+    case rem
+    case core
+    case deep
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .awake: "Awake"
+        case .rem: "REM"
+        case .core: "Core"
+        case .deep: "Deep"
+        }
+    }
+}
+
+enum HealthScoreV5: String, CaseIterable, Codable, Identifiable {
+    case recovery
+    case fatigue
+    case readiness
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .recovery: "Recovery"
+        case .fatigue: "Fatigue"
+        case .readiness: "Readiness"
         }
     }
 }
@@ -149,7 +204,7 @@ enum HealthWidgetCatalogV5 {
 
     // Every size, range and macro a design can be set to.
     private static func options(of style: HealthWidgetStyleV5) -> Int {
-        style.sizes.count * max(style.ranges.count, 1) * (style == .macroRing ? HealthMacroV5.allCases.count : 1)
+        style.sizes.count * max(style.ranges.count, 1) * style.pickCount
     }
 }
 
@@ -171,25 +226,40 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // MARK: Intake
     case intakeBars
     case intakeRing
+    case intakeMeter
+
+    // MARK: Journal
+    case journalChecklist
 
     // MARK: Macros
     case macroBars
     case macroRings
     case macroRing
+    case macroMeter
+    case macroMeters
 
     // MARK: Menstrual
     case menstrualCycle
+
+    // MARK: Mind
+    case mindNumber
+
+    // MARK: Nutrition
+    case nutritionNumber
 
     // MARK: Sleep
     case sleepRings
     case sleepVitals
     case sleepStages
+    case sleepStageRing
+    case sleepStageMeter
 
     // MARK: Water
     case waterBars
     case waterNumber
     case waterRing
     case waterTank
+    case waterMeter
 
     // MARK: Weight
     case weightLine
@@ -197,13 +267,18 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
     // MARK: Wellbeing
     case wellbeingRings
+    case wellbeingRing
+    case wellbeingMeter
+    case wellbeingMeters
 
     // Which widget draws it, grouped as the widget folders are.
     enum Family: CaseIterable {
         // MARK: Reusable, in Shared/Widgets/V5
         case bar
+        case checklist
         case dottedLine
         case dottedRange
+        case horizontalBar
         case line
         case number
         case ring
@@ -215,9 +290,11 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
         var title: String {
             switch self {
-            case .bar: "BrightBarChartWidgetV5"
+            case .bar: "BrightVerticalBarChartWidgetV5"
+            case .checklist: "BrightChecklistWidgetV5"
             case .dottedLine: "BrightDottedLineChartWidgetV5"
             case .dottedRange: "BrightDottedRangeChartWidgetV5"
+            case .horizontalBar: "BrightHorizontalBarChartWidgetV5"
             case .line: "BrightLineChartWidgetV5"
             case .number: "BrightLeadingNumberWidgetV5"
             case .ring: "BrightRingGroupWidgetV5"
@@ -239,19 +316,29 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .vo2Number: .number
         case .intakeBars: .bar
         case .intakeRing: .ring
+        case .intakeMeter: .horizontalBar
+        case .journalChecklist: .checklist
         case .macroBars: .bar
         case .macroRings, .macroRing: .ring
+        case .macroMeter, .macroMeters: .horizontalBar
         case .menstrualCycle: .menstrual
+        case .mindNumber: .number
+        case .nutritionNumber: .number
         case .sleepRings: .ring
         case .sleepVitals: .dottedRange
         case .sleepStages: .sleep
+        case .sleepStageRing: .ring
+        case .sleepStageMeter: .horizontalBar
         case .waterBars: .bar
         case .waterNumber: .number
         case .waterRing: .ring
         case .waterTank: .water
+        case .waterMeter: .horizontalBar
         case .weightLine: .dottedLine
         case .weightNumber: .number
         case .wellbeingRings: .ring
+        case .wellbeingRing: .ring
+        case .wellbeingMeter, .wellbeingMeters: .horizontalBar
         }
     }
 
@@ -260,18 +347,26 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .heartNumber: [.small]
         case .vo2Line: [.medium]
         case .vo2Number: [.small]
-        case .intakeRing: [.small]
+        case .intakeRing, .intakeMeter: [.small]
+        case .journalChecklist: [.small]
         case .macroBars: [.medium, .large]
         case .macroRings: [.small, .medium]
-        case .macroRing: [.small]
+        case .macroRing, .macroMeter: [.small]
+        case .macroMeters: [.small, .medium]
+        case .mindNumber: [.small]
+        case .nutritionNumber: [.small]
         case .sleepRings: [.small, .medium]
         case .sleepVitals: [.small, .medium]
         case .sleepStages: [.small, .medium]
+        case .sleepStageRing, .sleepStageMeter: [.small]
         case .waterNumber: [.small]
         case .waterRing: [.small, .medium]
+        case .waterMeter: [.small]
         case .weightLine: [.medium, .large]
         case .weightNumber: [.small]
         case .wellbeingRings: [.small, .medium]
+        case .wellbeingRing, .wellbeingMeter: [.small]
+        case .wellbeingMeters: [.small, .medium]
         default: BrightWidgetSizeV5.allCases
         }
     }
@@ -285,17 +380,44 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .vo2Line: [.lastReadings]
         case .vo2Number: [.latest]
         case .intakeBars: [.today, .rolling12h, .week]
-        case .intakeRing: [.today]
+        case .intakeRing, .intakeMeter: [.today]
+        case .journalChecklist: [.today]
         case .macroBars: [.week]
-        case .macroRings, .macroRing: [.today]
+        case .macroRings, .macroRing, .macroMeter, .macroMeters: [.today]
         case .menstrualCycle: [.today]
-        case .sleepRings, .sleepVitals, .sleepStages: [.lastNight]
+        case .mindNumber: [.latest]
+        case .nutritionNumber: [.latest]
+        case .sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter: [.lastNight]
         case .waterBars: [.today, .rolling12h, .week]
         case .waterNumber: [.latest]
-        case .waterRing, .waterTank: [.today]
+        case .waterRing, .waterTank, .waterMeter: [.today]
         case .weightLine: [.lastReadings]
         case .weightNumber: [.latest]
-        case .wellbeingRings: [.today]
+        case .wellbeingRings, .wellbeingRing, .wellbeingMeter, .wellbeingMeters: [.today]
+        }
+    }
+
+    enum Pick {
+        case macro
+        case stage
+        case score
+    }
+
+    var pick: Pick? {
+        switch self {
+        case .macroRing, .macroMeter: .macro
+        case .sleepStageRing, .sleepStageMeter: .stage
+        case .wellbeingRing, .wellbeingMeter: .score
+        default: nil
+        }
+    }
+
+    var pickCount: Int {
+        switch pick {
+        case .macro: HealthMacroV5.allCases.count
+        case .stage: HealthSleepStageV5.allCases.count
+        case .score: HealthScoreV5.allCases.count
+        case nil: 1
         }
     }
 }
@@ -307,6 +429,8 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
     var size: BrightWidgetSizeV5
     var range = BrightWidgetRangeV5.rolling1h
     var macro = HealthMacroV5.carbs
+    var stage = HealthSleepStageV5.awake
+    var score = HealthScoreV5.recovery
 
     init(
         kind: HealthWidgetKindV5,
@@ -320,6 +444,34 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
         if let range, style.ranges.contains(range) {
             self.range = range
         }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        kind = try container.decode(HealthWidgetKindV5.self, forKey: .kind)
+        style = try container.decode(HealthWidgetStyleV5.self, forKey: .style)
+        size = try container.decode(BrightWidgetSizeV5.self, forKey: .size)
+        range = try container.decode(BrightWidgetRangeV5.self, forKey: .range)
+        macro = try container.decodeIfPresent(HealthMacroV5.self, forKey: .macro) ?? .carbs
+        stage = try container.decodeIfPresent(HealthSleepStageV5.self, forKey: .stage) ?? .awake
+        score = try container.decodeIfPresent(HealthScoreV5.self, forKey: .score) ?? .recovery
+    }
+
+    var picks: [HealthWidgetItemV5] {
+        switch style.pick {
+        case .macro: HealthMacroV5.allCases.map { macro in copy { $0.macro = macro } }
+        case .stage: HealthSleepStageV5.allCases.map { stage in copy { $0.stage = stage } }
+        case .score: HealthScoreV5.allCases.map { score in copy { $0.score = score } }
+        case nil: [self]
+        }
+    }
+
+    private func copy(_ change: (inout HealthWidgetItemV5) -> Void) -> HealthWidgetItemV5 {
+        var widget = self
+        widget.id = UUID()
+        change(&widget)
+        return widget
     }
 
     // Switches style, falling back to its first size and first range where the current
@@ -401,8 +553,11 @@ final class HealthWidgetLayoutV5 {
             if widget.style.ranges.count > 1 {
                 line += ", range: .\(widget.range.rawValue)"
             }
-            if widget.style == .macroRing {
-                line += ", macro: .\(widget.macro.rawValue)"
+            switch widget.style.pick {
+            case .macro: line += ", macro: .\(widget.macro.rawValue)"
+            case .stage: line += ", stage: .\(widget.stage.rawValue)"
+            case .score: line += ", score: .\(widget.score.rawValue)"
+            case nil: break
             }
             return line + "),"
         }
@@ -448,12 +603,9 @@ final class HealthWidgetLayoutV5 {
             kind.styles.flatMap { style in
                 style.sizes.filter { includes(style, $0) }.flatMap { size in
                     style.ranges.flatMap { range in
-                        (style == .macroRing ? HealthMacroV5.allCases : [HealthMacroV5.carbs]).map { macro in
-                            var widget = HealthWidgetItemV5(kind: kind, style: style, size: size)
-                            widget.range = range
-                            widget.macro = macro
-                            return widget
-                        }
+                        var widget = HealthWidgetItemV5(kind: kind, style: style, size: size)
+                        widget.range = range
+                        return widget.picks
                     }
                 }
             }

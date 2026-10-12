@@ -1,5 +1,5 @@
 //
-//  BrightBarChartWidgetV5.swift
+//  BrightVerticalBarChartWidgetV5.swift
 //  Widgets
 //
 //  Created by Dom Montalto on 7/10/2026.
@@ -10,7 +10,7 @@ import SwiftUI
 
 // A bar for each hour or each day of the chosen range. Any part of a bar above the
 // target turns orange; the week draws a single dashed line at its average.
-struct BrightBarChartWidgetV5: View {
+struct BrightVerticalBarChartWidgetV5: View {
     struct Bar: Identifiable, Hashable {
         let index: Int
         // Nil for a slot that hasn't happened yet.
@@ -744,14 +744,14 @@ struct BrightBarChartWidgetV5: View {
 #Preview {
     let hourly = [62, 58, 57, 56, 58, 60, 85, 140, 95, 110, 90, 80, 120, 95, 85, 88, 160, 210, 130, 90, 80, 75, 70, 65]
         .enumerated()
-        .map { BrightBarChartWidgetV5.Bar(index: $0, value: $0 <= 17 ? Double($1) : nil) }
+        .map { BrightVerticalBarChartWidgetV5.Bar(index: $0, value: $0 <= 17 ? Double($1) : nil) }
     let daily = [2_394, 5_345, 12_340, 2_388, 9_394, 0, 0]
         .enumerated()
-        .map { BrightBarChartWidgetV5.Bar(index: $0, value: $0 <= 4 ? Double($1) : nil) }
+        .map { BrightVerticalBarChartWidgetV5.Bar(index: $0, value: $0 <= 4 ? Double($1) : nil) }
 
     ScrollView {
         VStack(spacing: .spacing205x) {
-            BrightBarChartWidgetV5(
+            BrightVerticalBarChartWidgetV5(
                 appearance: BrightWidgetAppearanceV5(title: "Total Energy", systemImage: "flame.fill", tint: .defaultOrange, unit: "Cal"),
                 subtitle: "Latest: 5-6 PM",
                 range: .today,
@@ -764,7 +764,7 @@ struct BrightBarChartWidgetV5: View {
             )
             .frame(width: 363, height: 363)
 
-            BrightBarChartWidgetV5(
+            BrightVerticalBarChartWidgetV5(
                 appearance: BrightWidgetAppearanceV5(title: "Steps", systemImage: "shoeprints.fill", tint: .defaultYellow),
                 subtitle: "Latest: 8-9 AM",
                 range: .week,
@@ -777,7 +777,7 @@ struct BrightBarChartWidgetV5: View {
             )
             .frame(width: 363, height: 363)
 
-            BrightBarChartWidgetV5(
+            BrightVerticalBarChartWidgetV5(
                 appearance: BrightWidgetAppearanceV5(title: "Total Energy", systemImage: "flame.fill", tint: .defaultOrange, unit: "Cal"),
                 subtitle: "Latest: 5-6 PM",
                 range: .rolling12h,

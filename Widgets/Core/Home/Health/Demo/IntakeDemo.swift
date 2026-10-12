@@ -24,7 +24,15 @@ extension HealthWidgetDemoV5 {
         .init(label: "Intake", shortLabel: "I", value: intake.today, goal: intake.dayTarget ?? 0, color: .defaultGreen)
     }
 
-    private static let latestMeal = minutesAgo(47)
+    static let latestMeal = minutesAgo(47)
+
+    static var intakeBar: BrightHorizontalBarChartWidgetV5.Bar {
+        bar(intakeRing, unit: "Cal", systemImage: "arrow.right", gradient: [.defaultYellow, .defaultGreen, .defaultCyan])
+    }
+
+    static var intakeBehind: String {
+        behind(intakeRing)
+    }
 
     // The week names the latest meal; a day counts down what's left of the goal.
     private static func intakeSubtitle(for range: BrightWidgetRangeV5) -> String {

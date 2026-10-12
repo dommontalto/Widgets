@@ -35,6 +35,14 @@ extension HealthWidgetDemoV5 {
         }
     }
 
+    static var waterBar: BrightHorizontalBarChartWidgetV5.Bar {
+        bar(.init(label: "Water", shortLabel: "W", value: waterToday, goal: waterGoal, color: .defaultCyan, decimals: 2), unit: "L", systemImage: "drop.fill")
+    }
+
+    static var waterBehind: String {
+        behind(.init(label: "Water", shortLabel: "W", value: waterToday, goal: waterGoal, color: .defaultCyan, decimals: 2), unit: " L")
+    }
+
     static var waterToday: Double {
         water.today
     }

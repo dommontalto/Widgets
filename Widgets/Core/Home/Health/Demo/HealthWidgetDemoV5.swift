@@ -16,9 +16,9 @@ enum HealthWidgetDemoV5 {
     // and what it's held against.
     struct BarMetric {
         let appearance: BrightWidgetAppearanceV5
-        let fill: BrightBarChartWidgetV5.Fill
+        let fill: BrightVerticalBarChartWidgetV5.Fill
         // The week's bars where they differ from the hours'.
-        var weekFill: BrightBarChartWidgetV5.Fill?
+        var weekFill: BrightVerticalBarChartWidgetV5.Fill?
         let hourly: [Double]
         // The six days before today, oldest first and ending yesterday. Today is the sum of
         // its hours so far, so the week, the day and the rings always agree.
@@ -33,7 +33,7 @@ enum HealthWidgetDemoV5 {
         // Replaces the hour now running under the title.
         var customSubtitle: ((BrightWidgetRangeV5) -> String)?
 
-        func bars(for range: BrightWidgetRangeV5) -> [BrightBarChartWidgetV5.Bar] {
+        func bars(for range: BrightWidgetRangeV5) -> [BrightVerticalBarChartWidgetV5.Bar] {
             if range.isWeek {
                 return weekBars
             }
@@ -41,17 +41,17 @@ enum HealthWidgetDemoV5 {
                 // Wraps into yesterday, which the demo treats as the same day again.
                 return (0 ..< range.slotCount).map { index in
                     let hour = (HealthWidgetDemoV5.currentHour - (range.slotCount - 1) + index + 24) % 24
-                    return BrightBarChartWidgetV5.Bar(index: index, value: hourly[hour])
+                    return BrightVerticalBarChartWidgetV5.Bar(index: index, value: hourly[hour])
                 }
             }
             let start = Calendar.current.component(.hour, from: range.interval(endingAt: HealthWidgetDemoV5.anchor).start)
             let current = HealthWidgetDemoV5.currentHour - start
             return (0 ..< range.slotCount).map { index in
-                BrightBarChartWidgetV5.Bar(index: index, value: index <= current ? hourly[(start + index) % 24] : nil)
+                BrightVerticalBarChartWidgetV5.Bar(index: index, value: index <= current ? hourly[(start + index) % 24] : nil)
             }
         }
 
-        func fill(for range: BrightWidgetRangeV5) -> BrightBarChartWidgetV5.Fill {
+        func fill(for range: BrightWidgetRangeV5) -> BrightVerticalBarChartWidgetV5.Fill {
             range.isWeek ? weekFill ?? fill : fill
         }
 
@@ -71,19 +71,19 @@ enum HealthWidgetDemoV5 {
             daily.last ?? 0
         }
 
-        var weekBars: [BrightBarChartWidgetV5.Bar] {
+        var weekBars: [BrightVerticalBarChartWidgetV5.Bar] {
             let week = daily + [today]
             let weekday = HealthWidgetDemoV5.currentWeekday
             return (0 ..< week.count).map { index in
                 guard index <= weekday else {
-                    return BrightBarChartWidgetV5.Bar(index: index, value: nil)
+                    return BrightVerticalBarChartWidgetV5.Bar(index: index, value: nil)
                 }
                 let day = week.count - 1 - (weekday - index)
-                return BrightBarChartWidgetV5.Bar(index: index, value: week[day], target: dailyTargets?[day])
+                return BrightVerticalBarChartWidgetV5.Bar(index: index, value: week[day], target: dailyTargets?[day])
             }
         }
 
-        var summary: BrightBarChartWidgetV5.Summary {
+        var summary: BrightVerticalBarChartWidgetV5.Summary {
             if summarisesTargets, let dayTarget {
                 .targets(weekBars, target: dayTarget)
             } else {
@@ -105,6 +105,35 @@ enum HealthWidgetDemoV5 {
     // Monday is 0.
     static var currentWeekday: Int {
         (Calendar.current.component(.weekday, from: anchor) + 5) % 7
+    }
+
+    static func bar(
+        _ ring: BrightRingGroupWidgetV5.Ring,
+        unit: String = "",
+        systemImage: String? = nil,
+        gradient: [Color]? = nil,
+        reading: String? = nil,
+        goalReading: String? = nil
+    ) -> BrightHorizontalBarChartWidgetV5.Bar {
+        .init(
+            label: ring.label,
+            value: ring.value,
+            goal: ring.goal,
+            color: ring.color,
+            gradient: gradient,
+            systemImage: systemImage,
+            image: ring.image,
+            shortLabel: ring.shortLabel,
+            unit: unit,
+            decimals: ring.decimals,
+            reading: reading,
+            goalReading: goalReading
+        )
+    }
+
+    static func behind(_ ring: BrightRingGroupWidgetV5.Ring, unit: String = "") -> String {
+        let gap = abs(ring.goal - ring.value).formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
+        return "\(gap)\(unit) \(ring.value > ring.goal ? "over" : "behind")"
     }
 
     static func minutesAgo(_ minutes: Int) -> Date {

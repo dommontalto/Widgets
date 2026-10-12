@@ -27,8 +27,6 @@ extension HealthWidgetDemoV5 {
         .init(span: "30d", value: "-1.4"),
     ]
 
-    static let weightNote = "Stress and poor sleep can raise water retention."
-
     static let vo2MaxAppearance = BrightWidgetAppearanceV5(
         title: "VO2 Max",
         systemImage: "lungs.fill",

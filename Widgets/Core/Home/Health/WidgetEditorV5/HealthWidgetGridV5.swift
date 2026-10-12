@@ -13,6 +13,30 @@ struct HealthWidgetViewV5: View {
 
     var body: some View {
         switch (widget.kind, widget.style) {
+        case (.intake, .intakeMeter):
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.intakeBar], subtitle: HealthWidgetDemoV5.intakeBehind, size: widget.size)
+        case (.water, .waterMeter):
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.waterBar], subtitle: HealthWidgetDemoV5.waterBehind, size: widget.size)
+        case (.macros, .macroMeter):
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.macroBar(widget.macro)], subtitle: HealthWidgetDemoV5.macroBehind(widget.macro), size: widget.size)
+        case (.macros, .macroMeters):
+            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.macroBars, size: widget.size)
+        case (.sleep, .sleepStageMeter):
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.sleepStageBar(widget.stage)], subtitle: HealthWidgetDemoV5.sleepStageShare(widget.stage), size: widget.size)
+        case (.sleep, .sleepStageRing):
+            let ring = HealthWidgetDemoV5.sleepStageRing(widget.stage)
+            BrightRingGroupWidgetV5(rings: [ring], size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(ring.label, systemImage: widget.kind.systemImage, color: ring.color)
+            }
+        case (.wellbeing, .wellbeingMeter):
+            BrightHorizontalBarChartWidgetV5(bars: [HealthWidgetDemoV5.scoreBar(widget.score)], size: widget.size)
+        case (.wellbeing, .wellbeingMeters):
+            BrightHorizontalBarChartWidgetV5(bars: HealthWidgetDemoV5.scoreBars, size: widget.size)
+        case (.wellbeing, .wellbeingRing):
+            let ring = HealthWidgetDemoV5.scoreRing(widget.score)
+            BrightRingGroupWidgetV5(rings: [ring], size: widget.size, allowsSelection: allowsSelection) {
+                ringHeader(ring.label, systemImage: widget.kind.systemImage, color: ring.color)
+            }
         case (.heartRate, .heartLine):
             BrightLineChartWidgetV5(
                 appearance: heartRateAppearance,
@@ -69,7 +93,6 @@ struct HealthWidgetViewV5: View {
                 trend: .init(systemImage: "arrow.down", text: "0.36kg Weekly AVG"),
                 showsTrendLine: true,
                 changes: HealthWidgetDemoV5.weightChanges,
-                note: HealthWidgetDemoV5.weightNote,
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
@@ -90,6 +113,27 @@ struct HealthWidgetViewV5: View {
                 details: HealthWidgetDemoV5.menstrualDetails,
                 size: widget.size,
                 allowsSelection: allowsSelection
+            )
+        case (.journal, _):
+            BrightChecklistWidgetV5(
+                title: widget.kind.title,
+                image: ImageNames.pencilBlueV5,
+                tint: widget.kind.tint,
+                days: HealthWidgetDemoV5.journalDays,
+                streak: HealthWidgetDemoV5.journalStreak,
+                unit: "Day Streak"
+            )
+        case (.mind, _):
+            BrightLeadingNumberWidgetV5(
+                appearance: HealthWidgetDemoV5.mindAppearance,
+                value: HealthWidgetDemoV5.mindMinutesToday,
+                latest: HealthWidgetDemoV5.mindLatest
+            )
+        case (.nutrition, _):
+            BrightLeadingNumberWidgetV5(
+                appearance: HealthWidgetDemoV5.nutritionAppearance,
+                value: HealthWidgetDemoV5.mealsLoggedToday,
+                latest: HealthWidgetDemoV5.latestMeal
             )
         case (.heartRate, _):
             BrightLeadingNumberWidgetV5(
@@ -136,7 +180,7 @@ struct HealthWidgetViewV5: View {
                 )
             }
         case (.macros, _):
-            BrightBarChartWidgetV5(
+            BrightVerticalBarChartWidgetV5(
                 appearance: HealthWidgetDemoV5.macrosAppearance,
                 subtitle: HealthWidgetDemoV5.macrosYesterday,
                 range: .week,
@@ -181,9 +225,9 @@ struct HealthWidgetViewV5: View {
     private func barChart(_ metric: HealthWidgetDemoV5.BarMetric) -> some View {
         let range = widget.range
         let isLarge = widget.size == .large
-        let headline: BrightBarChartWidgetV5.Headline = range.isWeek ? (isLarge ? .current : .average) : .total
+        let headline: BrightVerticalBarChartWidgetV5.Headline = range.isWeek ? (isLarge ? .current : .average) : .total
 
-        return BrightBarChartWidgetV5(
+        return BrightVerticalBarChartWidgetV5(
             appearance: metric.appearance,
             subtitle: metric.subtitle(for: range),
             range: range,
