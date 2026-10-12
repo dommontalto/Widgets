@@ -12,8 +12,9 @@ import SwiftUI
 // three in a triangle or four in a square; medium and large lay them out in a row.
 //
 // Holding picks out the ring under the finger and swaps its numbers for the detail.
-// Each ring, its numbers, its name and the header are matched across the layouts, so
-// resizing glides them from one arrangement to the next.
+// Every size draws the same rings, each placed from the card's own size rather than by a
+// stack, so resizing carries them along under the finger and glides them between
+// arrangements.
 struct BrightRingGroupWidgetV5: View {
     struct Ring: Identifiable, Hashable {
         let label: String
@@ -55,7 +56,11 @@ struct BrightRingGroupWidgetV5: View {
     @State private var selectedRingID: String?
     @State private var touchX: Double?
     @State private var touchY: Double?
-    @Namespace private var namespace
+    @State private var area: CGSize = .zero
+    @State private var headerHeight: CGFloat = .zero
+    // Each ring's text above and below, so the rings make room for the tallest.
+    @State private var aboveHeights: [String: CGFloat] = [:]
+    @State private var belowHeights: [String: CGFloat] = [:]
 
     init(rings: [Ring], size: BrightWidgetSizeV5, allowsSelection: Bool = true) {
         self.rings = rings
@@ -72,19 +77,24 @@ struct BrightRingGroupWidgetV5: View {
     }
 
     var body: some View {
-        Group {
-            if size != .small {
-                rowLayout
-            } else if rings.count == 1, let ring = rings.first {
-                singleLayout(ring)
-            } else if rings.count == 4 {
-                gridLayout
-            } else {
-                triangleLayout
+        ZStack(alignment: .topLeading) {
+            if let header {
+                header
+                    .onGeometryChange(for: CGFloat.self, of: \.size.height) { headerHeight = $0 }
+                    .opacity(showsHeader ? .opaque : .zero)
             }
+
+            GeometryReader { geometry in
+                ForEach(Array(rings.enumerated()), id: \.element.id) { index, ring in
+                    piece(ring, index: index, in: geometry.size)
+                        .position(centre(of: index, in: geometry.size))
+                }
+            }
+            .onGeometryChange(for: CGSize.self, of: \.size) { area = $0 }
+            .overlay { touchLayer }
         }
         // The square's two rows of rings need the room more than the usual edge padding.
-        .padding(size == .small && rings.count > 1 ? .spacing1x : .spacing205x)
+        .padding(arrangement == .square || arrangement == .triangle ? .spacing1x : .spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
         .onChange(of: touchX) { resolveTouch() }
@@ -100,141 +110,167 @@ struct BrightRingGroupWidgetV5: View {
         .accessibilityLabel(rings.map { "\($0.label) \(display($0.value, of: $0)) of \(display($0.goal, of: $0))" }.joined(separator: ", "))
     }
 
-    // MARK: - Layouts
+    // MARK: - Arrangement
 
-    private func singleLayout(_ ring: Ring) -> some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            header
-                .matched(.header, in: namespace)
+    // Small shows one ring large, three in a triangle or four in a square; medium and
+    // large lay them out in a row under the header.
+    private enum Arrangement {
+        case single
+        case triangle
+        case square
+        case row
+    }
 
-            BrightRingV5(progress: ring.progress, color: ring.color, size: .large, overColor: overColor(of: ring))
-                .matched(.ring(ring.id), in: namespace)
-                .overlay { touchLayer }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+    private var arrangement: Arrangement {
+        if size != .small {
+            return .row
+        }
+        if rings.count == 1 {
+            return .single
+        }
+        return rings.count == 4 ? .square : .triangle
+    }
 
-            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
-                .matched(.amount(ring.id), in: namespace)
-                .frame(maxWidth: .infinity)
+    private var showsHeader: Bool {
+        arrangement == .single || arrangement == .row
+    }
+
+    private var ringSize: BrightRingV5.Size {
+        switch arrangement {
+        case .single: .large
+        case .triangle: .small
+        case .square: .extraSmall
+        case .row: .medium
         }
     }
 
-    // The first ring on top with its amount above, the other two below with theirs underneath.
-    // The bottom pair tuck up under the top ring, so the three sit packed together.
-    private var triangleLayout: some View {
-        VStack(spacing: Constants.triangleRowSpacing) {
-            if let top = rings.first {
-                VStack(spacing: .spacing05x) {
-                    caption(for: top)
-                        .matched(.amount(top.id), in: namespace)
-
-                    ring(top, showsLabel: true)
-                        .matched(.ring(top.id), in: namespace)
-                }
-                .opacity(opacity(of: top))
-            }
-
-            HStack(alignment: .top, spacing: Constants.triangleGap) {
-                ForEach(rings.dropFirst()) { ring in
-                    VStack(spacing: .spacing05x) {
-                        self.ring(ring, showsLabel: true)
-                            .matched(.ring(ring.id), in: namespace)
-
-                        caption(for: ring)
-                            .matched(.amount(ring.id), in: namespace)
-                    }
-                    .opacity(opacity(of: ring))
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay { touchLayer }
+    private var aboveHeight: CGFloat {
+        rings.compactMap { aboveHeights[$0.id] }.max() ?? .zero
     }
 
-    // Two by two, each ring showing its share in the hole and its name below.
-    private var gridLayout: some View {
-        Grid(horizontalSpacing: .spacing3x, verticalSpacing: .spacing05x) {
-            ForEach(0 ..< 2, id: \.self) { row in
-                GridRow {
-                    ForEach(rings[(row * 2) ..< (row * 2 + 2)]) { ring in
-                        VStack(spacing: .spacing05x) {
-                            self.ring(ring, showsLabel: false, size: .extraSmall)
-                                .matched(.ring(ring.id), in: namespace)
-                                .overlay {
-                                    BrightText(percent(of: ring), size: .body5, color: .semiLightTextColor)
-                                        .monospacedDigit()
-                                }
-
-                            // Holding a ring swaps its name for its caption, such as the time.
-                            steady(isHeld: selectedRingID == ring.id) { isHeld in
-                                BrightText(isHeld ? ring.caption ?? ring.label : ring.label, size: .body5, color: isHeld ? .textColor : .semiLightTextColor)
-                                    .monospacedDigit()
-                                    .contentTransition(.numericText())
-                                    .lineLimit(1)
-                            }
-                            .matched(.label(ring.id), in: namespace)
-                        }
-                        .opacity(opacity(of: ring))
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay { touchLayer }
+    private var belowHeight: CGFloat {
+        rings.compactMap { belowHeights[$0.id] }.max() ?? .zero
     }
 
-    private var rowLayout: some View {
-        VStack(alignment: .leading, spacing: .spacing0x) {
-            header
-                .matched(.header, in: namespace)
+    // Where each ring's middle sits. Worked out from the room rather than stacked, so
+    // the rings move with the card as it's stretched.
+    private func centre(of index: Int, in area: CGSize) -> CGPoint {
+        let diameter = ringSize.diameter
+        let middle = CGPoint(x: area.width / 2, y: area.height / 2)
 
-            Spacer(minLength: .spacing1x)
-
+        switch arrangement {
+        case .single:
+            // Centred in what's left between the header and the amount.
+            let room = area.height - headerHeight - belowHeight - .spacing1x * 2
+            return CGPoint(x: middle.x, y: headerHeight + .spacing1x + room / 2)
+        case .triangle:
+            // The bottom pair tuck up under the top ring, so the three sit packed together.
+            let pitch = diameter + Constants.triangleGap
+            let rise = pitch * sqrt(3) / 4
+            guard index > 0 else {
+                return CGPoint(x: middle.x, y: middle.y - rise)
+            }
+            return CGPoint(x: middle.x + (index == 1 ? -pitch : pitch) / 2, y: middle.y + rise)
+        case .square:
+            let cell = diameter + .spacing05x + belowHeight
+            let top = middle.y - (cell * 2 + .spacing05x) / 2 + diameter / 2
+            return CGPoint(
+                x: middle.x + (index % 2 == 0 ? -1 : 1) * (diameter + .spacing3x) / 2,
+                y: index < 2 ? top : top + cell + .spacing05x
+            )
+        case .row:
             // Fewer than four rings have the room to spread out; four or more sit closer.
-            Grid(horizontalSpacing: rings.count < 4 ? .spacing5x : .spacing3x, verticalSpacing: .spacing1x) {
-                GridRow {
-                    ForEach(rings) { ring in
-                        caption(for: ring)
-                            .matched(.amount(ring.id), in: namespace)
-                            .opacity(opacity(of: ring))
-                    }
-                }
-
-                GridRow {
-                    ForEach(rings) { ring in
-                        self.ring(ring, showsLabel: false)
-                            .matched(.ring(ring.id), in: namespace)
-                            .opacity(opacity(of: ring))
-                    }
-                }
-
-                GridRow {
-                    ForEach(rings) { ring in
-                        BrightText(ring.label, size: .body3, color: .semiLightTextColor)
-                            .lineLimit(1)
-                            .matched(.label(ring.id), in: namespace)
-                            .opacity(opacity(of: ring))
-                    }
-                }
-            }
-            .overlay { touchLayer }
-            .frame(maxWidth: .infinity)
-
-            Spacer(minLength: .spacing0x)
+            let gap: CGFloat = rings.count < 4 ? .spacing5x : .spacing3x
+            let pitch = min(diameter + gap, area.width / CGFloat(max(rings.count, 1)))
+            let offset = CGFloat(index) - CGFloat(rings.count - 1) / 2
+            let centred = (headerHeight + area.height + aboveHeight - belowHeight) / 2
+            let lowest = headerHeight + .spacing1x + aboveHeight + .spacing1x + diameter / 2
+            return CGPoint(x: middle.x + offset * pitch, y: max(centred, lowest))
         }
     }
 
     // MARK: - Pieces
 
-    // Medium widgets' rows get the medium ring; the small widgets' groups use the default.
-    private func ring(_ ring: Ring, showsLabel: Bool, size ringSize: BrightRingV5.Size? = nil) -> some View {
+    // A ring with its text hung above and below it, so placing the ring places the lot.
+    private func piece(_ ring: Ring, index: Int, in area: CGSize) -> some View {
         BrightRingV5(
             progress: ring.progress,
             color: ring.color,
-            label: showsLabel ? ring.shortLabel : nil,
-            image: ring.image,
-            size: ringSize ?? (size == .small ? .small : .medium),
+            label: arrangement == .triangle ? ring.shortLabel : nil,
+            image: arrangement == .single ? nil : ring.image,
+            size: ringSize,
             overColor: overColor(of: ring)
         )
+        .overlay {
+            if arrangement == .square {
+                BrightText(percent(of: ring), size: .body5, color: .semiLightTextColor)
+                    .monospacedDigit()
+            }
+        }
+        .overlay(alignment: .top) {
+            ZStack {
+                above(ring, index: index)
+            }
+            .fixedSize()
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { aboveHeights[ring.id] = $0 }
+            .alignmentGuide(.top) { $0[.bottom] + aboveGap }
+        }
+        .overlay(alignment: .bottom) {
+            ZStack {
+                below(ring, index: index)
+            }
+            .fixedSize()
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { belowHeights[ring.id] = $0 }
+            .alignmentGuide(.bottom) { $0[.top] - belowGap(in: area) }
+        }
+        .opacity(opacity(of: ring))
+    }
+
+    // The amount or caption over the row's rings and the triangle's top one.
+    @ViewBuilder
+    private func above(_ ring: Ring, index: Int) -> some View {
+        if arrangement == .row || (arrangement == .triangle && index == 0) {
+            caption(for: ring)
+        }
+    }
+
+    @ViewBuilder
+    private func below(_ ring: Ring, index: Int) -> some View {
+        switch arrangement {
+        case .single:
+            amount(ring, valueSize: .standout3, suffixSize: .body1, valueColor: ring.showsOverWarning ? .defaultOrange : ring.color)
+        case .triangle:
+            if index > 0 {
+                caption(for: ring)
+            }
+        case .square:
+            // Holding a ring swaps its name for its caption, such as the time.
+            steady(isHeld: selectedRingID == ring.id) { isHeld in
+                BrightText(isHeld ? ring.caption ?? ring.label : ring.label, size: .body5, color: isHeld ? .textColor : .semiLightTextColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+            }
+        case .row:
+            BrightText(ring.label, size: .body3, color: .semiLightTextColor)
+                .lineLimit(1)
+        }
+    }
+
+    private var aboveGap: CGFloat {
+        arrangement == .row ? .spacing1x : .spacing05x
+    }
+
+    // The single ring's amount sits on the bottom edge; the rest hang just under their ring.
+    private func belowGap(in area: CGSize) -> CGFloat {
+        switch arrangement {
+        case .single:
+            max(area.height - belowHeight - centre(of: 0, in: area).y - ringSize.diameter / 2, .spacing0x)
+        case .row:
+            .spacing1x
+        case .triangle, .square:
+            .spacing05x
+        }
     }
 
     private func overColor(of ring: Ring) -> Color? {
@@ -333,25 +369,14 @@ struct BrightRingGroupWidgetV5: View {
             selectedRingID = nil
             return
         }
-        // The chart counts up from the bottom; the layouts are laid out from the top.
-        let point = CGPoint(x: touchX, y: 1 - touchY)
+        // The chart counts up from the bottom; the rings are placed from the top.
+        let point = CGPoint(x: touchX * area.width, y: (1 - touchY) * area.height)
 
-        let nearest = rings.indices.min { distance(from: point, to: centre(of: $0)) < distance(from: point, to: centre(of: $1)) }
+        let nearest = rings.indices.min { distance(from: point, to: centre(of: $0, in: area)) < distance(from: point, to: centre(of: $1, in: area)) }
         let id = nearest.map { rings[$0].id }
         guard id != selectedRingID else { return }
         selectedRingID = id
         BrightHaptic.light.play()
-    }
-
-    // Where each ring sits in its layout, as a share of the layout's width and height.
-    private func centre(of index: Int) -> CGPoint {
-        if size != .small {
-            return CGPoint(x: (Double(index) + 0.5) / Double(rings.count), y: 0.5)
-        }
-        if rings.count == 4 {
-            return CGPoint(x: index % 2 == 0 ? 0.25 : 0.75, y: index < 2 ? 0.25 : 0.75)
-        }
-        return index == 0 ? CGPoint(x: 0.5, y: 0.3) : CGPoint(x: index == 1 ? 0.25 : 0.75, y: 0.75)
     }
 
     // MARK: - Values
@@ -375,25 +400,6 @@ struct BrightRingGroupWidgetV5: View {
 
     private enum Constants {
         static let triangleGap: CGFloat = .spacing105x
-        static let triangleRowSpacing: CGFloat = {
-            let diameter = BrightRingV5.Size.small.diameter
-            return (diameter + triangleGap) * sqrt(3) / 2 - diameter
-        }()
-    }
-}
-
-// What a piece is matched by across the layouts. Position only: each layout draws its
-// rings and text at its own size, so the pieces glide while their sizes crossfade.
-private enum RingGroupPiece: Hashable {
-    case header
-    case ring(String)
-    case amount(String)
-    case label(String)
-}
-
-private extension View {
-    func matched(_ piece: RingGroupPiece, in namespace: Namespace.ID) -> some View {
-        matchedGeometryEffect(id: piece, in: namespace, properties: .position)
     }
 }
 
