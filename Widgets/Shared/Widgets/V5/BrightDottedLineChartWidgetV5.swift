@@ -46,6 +46,8 @@ struct BrightDottedLineChartWidgetV5: View {
     var allowsSelection = true
 
     @State private var selectedIndex: Int?
+    // The line draws across the first time the widget shows.
+    @State private var isRevealed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -178,7 +180,40 @@ struct BrightDottedLineChartWidgetV5: View {
         }
     }
 
+    // The readings draw across over a trend line that's already in place, the two charts
+    // sharing one scale so they line up.
     private var chart: some View {
+        ZStack {
+            trendChart
+
+            readings
+                .brightDrawRevealV5(isRevealed)
+        }
+        .brightRevealV5($isRevealed)
+    }
+
+    private var trendChart: some View {
+        Chart {
+            if showsTrendLine, let fit = trendLine {
+                ForEach([(0, fit.start), (lastIndex, fit.end)], id: \.0) { index, value in
+                    LineMark(
+                        x: .value("Reading", Double(index)),
+                        y: .value(appearance.unit ?? "", value),
+                        series: .value("Series", "Trend")
+                    )
+                    .foregroundStyle(Color.defaultCyan)
+                    .lineStyle(StrokeStyle(lineWidth: Constants.hairline))
+                }
+            }
+        }
+        .chartXScale(domain: 0 ... Double(max(lastIndex, 1)))
+        .chartYScale(domain: domain)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartLegend(.hidden)
+    }
+
+    private var readings: some View {
         Chart {
             ForEach(Array(shownPoints.enumerated()), id: \.element) { index, point in
                 AreaMark(
@@ -205,18 +240,6 @@ struct BrightDottedLineChartWidgetV5: View {
                             .fill(appearance.tint)
                             .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
                     }
-            }
-
-            if showsTrendLine, let fit = trendLine {
-                ForEach([(0, fit.start), (lastIndex, fit.end)], id: \.0) { index, value in
-                    LineMark(
-                        x: .value("Reading", Double(index)),
-                        y: .value(appearance.unit ?? "", value),
-                        series: .value("Series", "Trend")
-                    )
-                    .foregroundStyle(Color.defaultCyan)
-                    .lineStyle(StrokeStyle(lineWidth: Constants.hairline))
-                }
             }
 
             if let markedIndex, let marked = shownPoint {

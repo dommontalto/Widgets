@@ -20,14 +20,14 @@ enum HealthWidgetDemoV5 {
         // The week's bars where they differ from the hours'.
         var weekFill: BrightBarChartWidgetV5.Fill?
         let hourly: [Double]
-        // Oldest first and ending today, so today always shows the last value
-        // whichever day of the week it is.
+        // The six days before today, oldest first and ending yesterday. Today is the sum of
+        // its hours so far, so the week, the day and the rings always agree.
         let daily: [Double]
-        // Each day's own limit, lined up with `daily`, drawn as the mark inside its bar.
+        // Each day's own limit, lined up with the week of `daily` then today, drawn as the
+        // mark inside its bar.
         var dailyTargets: [Double]?
         var hourTarget: Double?
         var dayTarget: Double?
-        let yesterday: Double
         // Large widgets list the week against the day target rather than as plain values.
         var summarisesTargets = false
         // Replaces the hour now running under the title.
@@ -63,14 +63,23 @@ enum HealthWidgetDemoV5 {
             customSubtitle?(range) ?? "Latest: \(HealthWidgetDemoV5.currentHourRange)"
         }
 
+        var today: Double {
+            bars(for: .today).compactMap(\.value).reduce(0, +)
+        }
+
+        var yesterday: Double {
+            daily.last ?? 0
+        }
+
         var weekBars: [BrightBarChartWidgetV5.Bar] {
-            let today = HealthWidgetDemoV5.currentWeekday
-            return (0 ..< daily.count).map { index in
-                guard index <= today else {
+            let week = daily + [today]
+            let weekday = HealthWidgetDemoV5.currentWeekday
+            return (0 ..< week.count).map { index in
+                guard index <= weekday else {
                     return BrightBarChartWidgetV5.Bar(index: index, value: nil)
                 }
-                let day = daily.count - 1 - (today - index)
-                return BrightBarChartWidgetV5.Bar(index: index, value: daily[day], target: dailyTargets?[day])
+                let day = week.count - 1 - (weekday - index)
+                return BrightBarChartWidgetV5.Bar(index: index, value: week[day], target: dailyTargets?[day])
             }
         }
 

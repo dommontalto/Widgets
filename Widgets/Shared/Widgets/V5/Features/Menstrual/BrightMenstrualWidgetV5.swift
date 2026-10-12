@@ -87,6 +87,8 @@ struct BrightMenstrualWidgetV5: View {
 
     @State private var selectedDay: Int?
     @State private var detailsWidth: CGFloat = 0
+    // The pills rise in across the strip the first time the widget shows.
+    @State private var isRevealed = false
 
     var body: some View {
         layout
@@ -99,6 +101,7 @@ struct BrightMenstrualWidgetV5: View {
                 }
             }
             .animation(.brightEaseInOut, value: selectedDay)
+            .brightRevealV5($isRevealed)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(cycle.phase(of: today).title), cycle day \(today) of \(cycle.length), next period in \(daysUntilPeriod) days")
     }
@@ -225,6 +228,8 @@ struct BrightMenstrualWidgetV5: View {
 
                         pill(selectedDay == day ? style.lit : style)
                             .opacity(selectedDay == nil || selectedDay == day ? .opaque : .ultraLowOpacity)
+                            .scaleEffect(y: isRevealed ? 1 : 0, anchor: .bottom)
+                            .animation(.brightReveal.delay(Double(offset) * Constants.revealStagger), value: isRevealed)
                     }
                 }
                 .overlay { edgeFades }
@@ -471,6 +476,7 @@ struct BrightMenstrualWidgetV5: View {
     }
 
     private enum Constants {
+        static let revealStagger = 0.015
         static let pillWidth: CGFloat = 8
         static let pillHeight: CGFloat = 32
         static let pillGap: CGFloat = 2.5

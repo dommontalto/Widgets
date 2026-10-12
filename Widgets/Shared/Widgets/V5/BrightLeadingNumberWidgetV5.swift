@@ -18,6 +18,9 @@ struct BrightLeadingNumberWidgetV5: View {
     private var tint: Color { appearance.tint }
     private var unit: String? { appearance.unit }
 
+    // The number rolls up from zero the first time the widget shows.
+    @State private var isRevealed = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
@@ -32,6 +35,7 @@ struct BrightLeadingNumberWidgetV5: View {
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+        .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(display) \(unit ?? "")")
     }
@@ -53,10 +57,10 @@ struct BrightLeadingNumberWidgetV5: View {
 
     private var reading: some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            BrightText(display, size: .huge)
+            BrightText(appearance.format(isRevealed ? value : 0), size: .huge)
                 .monospacedDigit()
                 .contentTransition(.numericText())
-                .animation(.brightEaseInOut, value: display)
+                .animation(.brightBouncy, value: display)
 
             if let unit {
                 BrightText(unit, size: .body3, color: .lightTextColor)

@@ -18,7 +18,7 @@ extension HealthWidgetDemoV5 {
 
     // The last 14 morning weigh-ins, a few days skipped, ending today.
     static let weightPoints = readings(
-        [(20, 85.2), (18, 84.9), (17, 85.0), (14, 84.6), (12, 84.1), (11, 83.7), (10, 83.8), (8, 83.7), (7, 83.9), (5, 83.5), (4, 83.3), (2, 83.1), (1, 83.0), (0, 82.4)]
+        [(20, 83.5), (18, 83.3), (17, 83.4), (14, 83.1), (12, 83.0), (11, 82.8), (10, 82.9), (8, 82.9), (7, 82.8), (5, 82.6), (4, 82.7), (2, 82.5), (1, 82.6), (0, 82.4)]
     )
 
     static let weightChanges: [BrightDottedLineChartWidgetV5.Change] = [
@@ -27,7 +27,7 @@ extension HealthWidgetDemoV5 {
         .init(span: "30d", value: "-1.4"),
     ]
 
-    static let weightNote = "5h sleep. Stress and poor sleep can raise water retention."
+    static let weightNote = "Stress and poor sleep can raise water retention."
 
     static let vo2MaxAppearance = BrightWidgetAppearanceV5(
         title: "VO2 Max",

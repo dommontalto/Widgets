@@ -13,10 +13,10 @@ extension HealthWidgetDemoV5 {
     }
 
     static let heartRateEvents: [BrightLineChartWidgetV5.Event] = [
-        // Asleep for the first stretch of the twelve hours, so the longer ranges show it.
+        // Last night's sleep, where the longer ranges reach back to it.
         BrightLineChartWidgetV5.Event(
-            start: minutesAgo(11 * 60 + 30),
-            end: minutesAgo(8 * 60),
+            start: sleepSegments.first?.start ?? anchor,
+            end: sleepSegments.last?.end ?? anchor,
             systemImage: "bed.double",
             color: .defaultCyan
         ),

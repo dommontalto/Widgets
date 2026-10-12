@@ -39,7 +39,7 @@ extension HealthWidgetDemoV5 {
             ovulationWindow: "\(startText) – \(end.formatted(.brightDate))",
             ovulation: day(menstrualCycle.ovulationDay - menstrualToday).formatted(.brightDate),
             temperatureDeviation: "+0.1",
-            restingHeartRate: "56"
+            restingHeartRate: "\(sleepRestingHeartRate)"
         )
     }
 

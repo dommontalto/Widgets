@@ -47,6 +47,8 @@ struct BrightLineChartWidgetV5: View {
 
     @State private var selectedDate: Date?
     @State private var heldLabelWidth: CGFloat = 0
+    // The line draws across the first time the widget shows.
+    @State private var isRevealed = false
     @Namespace private var namespace
 
     init(
@@ -237,7 +239,19 @@ struct BrightLineChartWidgetV5: View {
         }
     }
 
+    // The readings draw across over guides that are already in place, the two charts
+    // sharing one scale so they line up.
     private func chart(domain: ClosedRange<Double>) -> some View {
+        ZStack {
+            guides(domain: domain)
+
+            readings(domain: domain)
+                .brightDrawRevealV5(isRevealed)
+        }
+        .brightRevealV5($isRevealed)
+    }
+
+    private func guides(domain: ClosedRange<Double>) -> some View {
         Chart {
             if size == .large {
                 ForEach(visibleEvents) { event in
@@ -257,6 +271,26 @@ struct BrightLineChartWidgetV5: View {
                 }
             }
 
+            RuleMark(y: .value("Average", average))
+                .brightDashedLineV5()
+
+            if size != .small {
+                RuleMark(y: .value("High", high))
+                    .brightDashedLineV5(tint.opacity(.lowOpacity))
+
+                RuleMark(y: .value("Low", low))
+                    .brightDashedLineV5(.defaultCyan.opacity(.lowOpacity))
+            }
+        }
+        .chartXScale(domain: start...end)
+        .chartYScale(domain: domain)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartLegend(.hidden)
+    }
+
+    private func readings(domain: ClosedRange<Double>) -> some View {
+        Chart {
             ForEach(visibleSamples) { sample in
                 AreaMark(
                     x: .value("Time", sample.date),
@@ -277,17 +311,6 @@ struct BrightLineChartWidgetV5: View {
                 )
                 .foregroundStyle(tint)
                 .lineStyle(StrokeStyle(lineWidth: Constants.lineWidth))
-            }
-
-            RuleMark(y: .value("Average", average))
-                .brightDashedLineV5()
-
-            if size != .small {
-                RuleMark(y: .value("High", high))
-                    .brightDashedLineV5(tint.opacity(.lowOpacity))
-
-                RuleMark(y: .value("Low", low))
-                    .brightDashedLineV5(.defaultCyan.opacity(.lowOpacity))
             }
 
             // Sits on the latest reading, and follows the finger while a point is held.

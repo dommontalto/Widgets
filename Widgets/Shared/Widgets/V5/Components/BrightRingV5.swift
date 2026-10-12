@@ -47,10 +47,14 @@ struct BrightRingV5: View {
     // The outer arc's colour once past the goal; the ring's own when going over is fine.
     var overColor: Color?
 
+    // Starts empty and fills to its progress the first time it shows.
+    @State private var isRevealed = false
+
     var body: some View {
         let lineWidth = size.diameter * size.thicknessRatio
-        let filled = min(max(progress, 0), 1)
-        let overflow = min(max(progress - 1, 0), 1)
+        let shown = isRevealed ? progress : 0
+        let filled = min(max(shown, 0), 1)
+        let overflow = min(max(shown - 1, 0), 1)
 
         return ZStack {
             Circle()
@@ -100,6 +104,7 @@ struct BrightRingV5: View {
         .padding(lineWidth / 2)
         .frame(width: size.diameter, height: size.diameter)
         .animation(.brightEaseInOut, value: progress)
+        .brightRevealV5($isRevealed)
     }
 
     private enum Constants {

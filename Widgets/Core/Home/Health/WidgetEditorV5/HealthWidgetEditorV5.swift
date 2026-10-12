@@ -260,7 +260,7 @@ final class HealthWidgetEditorV5 {
               size != current.size else { return }
 
         BrightHaptic.light.play()
-        withAnimation(.brightSpring) {
+        withAnimation(.brightBouncy) {
             layout.resize(current, to: size, at: resizing.position(for: size))
         }
     }

@@ -14,14 +14,21 @@ extension HealthWidgetDemoV5 {
         tint: .textColor
     )
 
-    static let macrosYesterday = "Yesterday: C:50, F:20, P:30"
+    static var macrosYesterday: String {
+        let day = macroShares[macroShares.count - 2]
+        return "Yesterday: C:\(Int(day.carbs)), F:\(Int(day.fat)), P:\(Int(day.protein))"
+    }
 
-    // Today's grams against each goal.
-    static let macroRings: [BrightRingGroupWidgetV5.Ring] = [
-        .init(label: "Carbs", shortLabel: "C", value: 75, goal: 200, color: .defaultGreen),
-        .init(label: "Fats", shortLabel: "F", value: 27, goal: 46, color: .defaultYellow),
-        .init(label: "Protein", shortLabel: "P", value: 102, goal: 140, color: .defaultPink),
-    ]
+    // Today's grams against each goal: today's intake calories split by today's shares.
+    // The goals split the intake target the same way.
+    static var macroRings: [BrightRingGroupWidgetV5.Ring] {
+        let today = macroShares[macroShares.count - 1]
+        return [
+            .init(label: "Carbs", shortLabel: "C", value: grams(intake.today, share: today.carbs, caloriesPerGram: 4), goal: 240, color: .defaultGreen),
+            .init(label: "Fats", shortLabel: "F", value: grams(intake.today, share: today.fat, caloriesPerGram: 9), goal: 60, color: .defaultYellow),
+            .init(label: "Protein", shortLabel: "P", value: grams(intake.today, share: today.protein, caloriesPerGram: 4), goal: 175, color: .defaultPink),
+        ]
+    }
 
     static func macroRing(_ macro: HealthMacroV5) -> BrightRingGroupWidgetV5.Ring {
         switch macro {
@@ -31,31 +38,39 @@ extension HealthWidgetDemoV5 {
         }
     }
 
-    // Each day's calories, split into carbs, fat and protein as shares of them, oldest
-    // first and ending today.
+    // Each day's intake calories, split into carbs, fat and protein as shares of them,
+    // oldest first and ending today.
     static var macroWeek: [BrightBarChartWidgetV5.Bar] {
-        let today = currentWeekday
-        return (0 ..< macroDays.count).map { index in
-            guard index <= today else {
+        let calories = intake.daily + [intake.today]
+        let weekday = currentWeekday
+        return (0 ..< macroShares.count).map { index in
+            guard index <= weekday else {
                 return BrightBarChartWidgetV5.Bar(index: index, value: nil)
             }
-            let day = macroDays[macroDays.count - 1 - (today - index)]
+            let day = macroShares.count - 1 - (weekday - index)
+            let shares = macroShares[day]
             let segments = [
-                BrightBarChartWidgetV5.Segment(label: "C", value: day.carbs, color: .defaultGreen),
-                BrightBarChartWidgetV5.Segment(label: "F", value: day.fat, color: .defaultYellow),
-                BrightBarChartWidgetV5.Segment(label: "P", value: day.protein, color: .defaultPink),
+                BrightBarChartWidgetV5.Segment(label: "C", value: shares.carbs, color: .defaultGreen),
+                BrightBarChartWidgetV5.Segment(label: "F", value: shares.fat, color: .defaultYellow),
+                BrightBarChartWidgetV5.Segment(label: "P", value: shares.protein, color: .defaultPink),
             ]
-            return BrightBarChartWidgetV5.Bar(index: index, value: day.calories, segments: segments)
+            return BrightBarChartWidgetV5.Bar(index: index, value: calories[day], segments: segments)
         }
     }
 
-    private static let macroDays: [(calories: Double, carbs: Double, fat: Double, protein: Double)] = [
-        (2_150, 45, 25, 30),
-        (1_780, 40, 15, 45),
-        (2_400, 30, 25, 45),
-        (1_950, 35, 20, 45),
-        (1_620, 30, 10, 60),
-        (2_280, 55, 25, 20),
-        (1_870, 35, 20, 45),
+    // Each day's percentage of calories from carbs, fat and protein, lined up with the
+    // intake's week and ending today.
+    private static let macroShares: [(carbs: Double, fat: Double, protein: Double)] = [
+        (45, 25, 30),
+        (40, 15, 45),
+        (30, 25, 45),
+        (35, 20, 45),
+        (30, 10, 60),
+        (55, 25, 20),
+        (35, 25, 40),
     ]
+
+    private static func grams(_ calories: Double, share: Double, caloriesPerGram: Double) -> Double {
+        (calories * share / 100 / caloriesPerGram).rounded()
+    }
 }

@@ -59,6 +59,8 @@ struct BrightSleepWidgetV5: View {
     var allowsSelection = true
 
     @State private var selectedSegment: Segment?
+    // The night draws across the first time the widget shows.
+    @State private var isRevealed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -67,6 +69,7 @@ struct BrightSleepWidgetV5: View {
             Spacer(minLength: .spacing2x)
 
             strip
+                .brightDrawRevealV5(isRevealed)
                 .overlay { touchLayer }
                 .frame(height: Constants.stripHeight)
 
@@ -89,6 +92,7 @@ struct BrightSleepWidgetV5: View {
             }
         }
         .animation(.brightEaseInOut, value: selectedSegment)
+        .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "Sleep, \(asleepMinutes / 60) hours \(asleepMinutes % 60) minutes asleep, score \(score), resting heart rate \(restingHeartRate), HRV \(heartRateVariability)"

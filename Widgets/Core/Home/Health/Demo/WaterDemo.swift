@@ -18,21 +18,25 @@ extension HealthWidgetDemoV5 {
         ),
         fill: .solid(.defaultCyan),
         hourly: [0, 0, 0, 0, 0, 0, 0.15, 0.4, 0.1, 0.25, 0.2, 0.3, 0.15, 0.45, 0.2, 0.25, 0.3, 0.15, 0.35, 0.25, 0.1, 0.2, 0.05, 0],
-        daily: [3.4, 4.1, 3.2, 3.6, 2.9, 3.5, 2.54],
-        yesterday: 3.5
+        daily: [3.4, 4.1, 3.2, 3.6, 2.9, 3.5]
     )
 
     static let waterGoal: Double = 4
 
-    // Today's drinks so far, counted back from now so they always come to 2 L.
+    // Today's drinks so far, one in each hour the hourly bars have water, so the tank fills
+    // to the same total as the bars and the rings.
     static var waterDrinks: [BrightWaterWidgetV5.Drink] {
-        [(420, 0.4), (330, 0.25), (240, 0.35), (150, 0.3), (90, 0.4), (25, 0.3)].map { minutes, litres in
-            .init(date: minutesAgo(minutes), litres: litres)
+        let midnight = Calendar.current.startOfDay(for: anchor)
+        return (0 ... currentHour).compactMap { hour in
+            let litres = water.hourly[hour]
+            guard litres > 0 else { return nil }
+            let date = min(midnight.addingTimeInterval((Double(hour) + 0.5) * 60 * 60), anchor)
+            return .init(date: date, litres: litres)
         }
     }
 
     static var waterToday: Double {
-        water.bars(for: .today).compactMap(\.value).reduce(0, +)
+        water.today
     }
 
     // Today's litres so far against the day's goal. Named like today's ring in the row of
@@ -45,7 +49,7 @@ extension HealthWidgetDemoV5 {
     // The last three days, oldest first, each against the day's goal. Today and yesterday
     // say so; the day before goes by its name.
     static var waterRings: [BrightRingGroupWidgetV5.Ring] {
-        let days = Array(water.daily.suffix(3))
+        let days = Array(water.daily.suffix(2)) + [waterToday]
         return days.enumerated().map { index, litres in
             let daysAgo = days.count - 1 - index
             let date = anchor.addingTimeInterval(-Double(daysAgo) * 24 * 60 * 60)

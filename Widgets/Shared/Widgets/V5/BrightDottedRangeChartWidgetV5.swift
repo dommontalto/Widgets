@@ -56,6 +56,8 @@ struct BrightDottedRangeChartWidgetV5: View {
     var allowsSelection = true
 
     @State private var selectedID: String?
+    // The dots rise from the floor to their readings the first time the widget shows.
+    @State private var isRevealed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -87,6 +89,7 @@ struct BrightDottedRangeChartWidgetV5: View {
             }
         }
         .animation(.brightEaseInOut, value: selectedID)
+        .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(appearance.title), " + measures.map { "\($0.label) \($0.reading)\($0.isAbnormal ? ", abnormal" : "")" }.joined(separator: ", ")
@@ -162,11 +165,13 @@ struct BrightDottedRangeChartWidgetV5: View {
 
             ForEach(Array(measures.enumerated()), id: \.element) { index, measure in
                 dot(for: measure)
+                    .scaleEffect(isRevealed ? 1 : 0)
                     .opacity(opacity(of: measure))
                     .position(
                         x: columnCentre(index, in: geometry.size.width),
-                        y: layout.y(for: measure, inset: Constants.dotDiameter)
+                        y: isRevealed ? layout.y(for: measure, inset: Constants.dotDiameter) : geometry.size.height
                     )
+                    .animation(.brightReveal.delay(Double(index) * Constants.revealStagger), value: isRevealed)
             }
         }
     }
@@ -308,6 +313,7 @@ struct BrightDottedRangeChartWidgetV5: View {
     }
 
     private enum Constants {
+        static let revealStagger = 0.05
         static let outerColor = Color.defaultYellow
         static let outerShare: CGFloat = 0.22
         static let lineWidth: CGFloat = 1

@@ -343,7 +343,7 @@ struct HealthWidgetGridV5: View {
     @ViewBuilder
     private var resizeHandleGlass: some View {
         if #available(iOS 26.0, *) {
-            Color.clear.glassEffect(.clear.interactive(), in: HealthResizeHandleShape())
+            Color.clear.glassEffect(.clear, in: HealthResizeHandleShape())
         } else {
             HealthResizeHandleShape().fill(.ultraThinMaterial)
         }

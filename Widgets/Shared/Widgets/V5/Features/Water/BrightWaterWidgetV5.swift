@@ -31,6 +31,8 @@ struct BrightWaterWidgetV5: View {
     var allowsSelection = true
 
     @State private var isHolding = false
+    // The tank fills from empty the first time the widget shows.
+    @State private var isRevealed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -56,6 +58,7 @@ struct BrightWaterWidgetV5: View {
             }
         }
         .animation(.brightEaseInOut, value: isHolding)
+        .brightRevealV5($isRevealed)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(appearance.title), \(full(level)) of \(full(goal))")
     }
@@ -127,7 +130,8 @@ struct BrightWaterWidgetV5: View {
     private var tank: some View {
         GeometryReader { geometry in
             let height = geometry.size.height
-            let levelY = height * (1 - min(level / max(goal, .leastNonzeroMagnitude), 1))
+            let shownLevel = isRevealed ? level : 0
+            let levelY = height * (1 - min(shownLevel / max(goal, .leastNonzeroMagnitude), 1))
 
             ZStack(alignment: .topLeading) {
                 LinearGradient(colors: [appearance.tint.opacity(.veryLowOpacity), .clear], startPoint: .top, endPoint: .bottom)
@@ -154,7 +158,7 @@ struct BrightWaterWidgetV5: View {
                 levelMarker
                     .offset(y: levelY - Constants.markerSize / 2)
 
-                BrightText(full(level), size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
+                BrightText(full(shownLevel), size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     .lineLimit(1)

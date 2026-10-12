@@ -12,6 +12,7 @@ struct HealthView: View {
 
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
+    @State private var revealReplay = 0
 
     var body: some View {
         NavigationStack {
@@ -36,6 +37,16 @@ struct HealthView: View {
                                 Label("Add widget", systemImage: "plus")
                                     .labelStyle(.iconOnly)
                             }
+                        }
+                    }
+
+                    ToolbarItem(placement: .principal) {
+                        Button {
+                            BrightHaptic.light.play()
+                            revealReplay += 1
+                        } label: {
+                            Label("Replay widget animations", systemImage: "arrow.counterclockwise")
+                                .labelStyle(.iconOnly)
                         }
                     }
 
@@ -96,6 +107,7 @@ struct HealthView: View {
             fakeLargeTitle: "",
             showInlineTabs: !editor.isEditing,
             disableHorizontalScroll: editor.isEditing,
+            collapsesTitleToToolbar: false,
             scrollDismissesKeyboardMode: .interactively,
             onPageScroll: { index, y, maxY in
                 guard index == HomePage.health.rawValue else { return }
@@ -105,6 +117,7 @@ struct HealthView: View {
             verticalScrollPosition: $editor.scrollPosition,
             scrollControlledPageIndex: HomePage.health.rawValue,
             verticalScrollDisabledPageIndex: editor.isResizing ? HomePage.health.rawValue : nil,
+            file: nil,
             selectedIndex: $selectedPage
         ) { index in
             switch HomePage(rawValue: index) ?? .health {
@@ -117,6 +130,7 @@ struct HealthView: View {
             }
         }
         .background(Color.defaultBackground.ignoresSafeArea())
+        .environment(\.brightRevealReplay, revealReplay)
         .onChange(of: selectedPage) {
             UIApplication.shared.sendAction(
                 #selector(UIResponder.resignFirstResponder),

@@ -67,6 +67,8 @@ struct BrightBarChartWidgetV5: View {
     @State private var plotWidth: CGFloat = 0
     @State private var selectedIndex: Int?
     @State private var heldLabelWidth: CGFloat = 0
+    // The bars rise from the floor the first time the widget shows.
+    @State private var isRevealed = false
     @Namespace private var namespace
 
     private var title: String { appearance.title }
@@ -84,6 +86,7 @@ struct BrightBarChartWidgetV5: View {
                     selectedIndex = nil
                 }
             }
+            .brightRevealV5($isRevealed)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(title), \(display(headlineValue)) \(unitLabel)")
     }
@@ -258,14 +261,16 @@ struct BrightBarChartWidgetV5: View {
 
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0 {
-                        barShape(bar, value: value, target: bar.target ?? target, width: barWidth, plotHeight: height)
+                        barShape(bar, value: isRevealed ? value : 0, target: bar.target ?? target, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .ultraLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
+                            // Rising left to right, each a beat after the one before.
+                            .animation(.brightReveal.delay(Double(bar.index) * Constants.revealStagger), value: isRevealed)
                     }
                 }
 
-                if showsExtremes, selectedIndex == nil {
+                if showsExtremes, selectedIndex == nil, isRevealed {
                     ForEach(extremes, id: \.bar.index) { extreme in
                         extremeLabel(extreme.systemImage, value: extreme.value)
                             .position(
@@ -711,6 +716,7 @@ struct BrightBarChartWidgetV5: View {
     }
 
     private enum Constants {
+        static let revealStagger = 0.015
         static let axisLabelWidth: CGFloat = 34
         static let hourBarFraction: CGFloat = 0.6
         static let dayBarFraction: CGFloat = 0.48

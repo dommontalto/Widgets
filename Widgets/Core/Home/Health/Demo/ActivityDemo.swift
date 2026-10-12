@@ -18,25 +18,22 @@ extension HealthWidgetDemoV5 {
         ),
         fill: .solid(.defaultCyan),
         hourly: [62, 58, 57, 56, 58, 60, 85, 140, 95, 110, 90, 80, 120, 95, 85, 88, 160, 210, 130, 90, 80, 75, 70, 65],
-        daily: [1_420, 2_150, 1_610, 1_980, 1_240, 2_060, 1_823],
+        daily: [1_420, 2_150, 1_610, 1_980, 1_240, 2_060],
         dailyTargets: [1_150, 1_600, 1_300, 1_500, 1_050, 1_550, 1_400],
-        hourTarget: 160,
-        yesterday: 2_100
+        hourTarget: 160
     )
 
     static let activeEnergy = BarMetric(
         appearance: BrightWidgetAppearanceV5(title: "Active Energy", systemImage: "flame.fill", tint: .defaultOrange, unit: "Cal"),
         fill: .solid(.defaultOrange),
         hourly: [0, 0, 0, 0, 0, 0, 25, 80, 35, 50, 30, 20, 60, 35, 25, 28, 100, 150, 70, 30, 20, 15, 10, 5],
-        daily: [480, 390, 605, 403, 343, 435, 541],
-        yesterday: 2_100
+        daily: [480, 390, 605, 403, 343, 435]
     )
 
     static let steps = BarMetric(
         appearance: BrightWidgetAppearanceV5(title: "Steps", systemImage: "shoeprints.fill", tint: .defaultYellow),
         fill: .solid(.defaultYellow),
         hourly: [30, 0, 0, 0, 0, 60, 320, 1_450, 820, 640, 600, 780, 900, 520, 480, 650, 1_600, 2_100, 800, 560, 300, 180, 90, 40],
-        daily: [7_200, 4_100, 2_394, 5_345, 12_340, 2_388, 8_290],
-        yesterday: 12_839
+        daily: [7_200, 4_100, 2_394, 5_345, 12_340, 2_388]
     )
 }
