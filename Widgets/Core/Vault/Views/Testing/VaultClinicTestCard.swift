@@ -23,7 +23,9 @@ struct VaultClinicTestCard: View {
 
                 Spacer(minLength: .spacing0x)
 
+                // The whole card is the target, so the chevron only marks it.
                 BrightRoundButton(systemImage: "chevron.right", size: .small, onTapCallback: onTap)
+                    .allowsHitTesting(false)
             }
 
             HStack(spacing: .spacing1x) {

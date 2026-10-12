@@ -10,6 +10,8 @@ import MapboxMaps
 import SwiftUI
 
 struct LabCollectionCentresMapView: View {
+    let onOrder: (VaultTestOrder) -> Void
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
@@ -17,13 +19,18 @@ struct LabCollectionCentresMapView: View {
     @State private var failed = false
     @State private var selected: LabCollectionCentre?
     @State private var selectedDistanceKm: Double?
+    @State private var trayDetent = Constants.minimisedDetent
     @State private var pin: UIImage?
-    @State private var viewport: Viewport = .camera(center: Constants.australia, zoom: Constants.australiaZoom)
+    // Starts close in, like the Exercise maps, then flies to wherever the puck is, so it
+    // never opens zoomed out on the globe.
+    @State private var viewport: Viewport = .camera(center: Constants.initialCenter, zoom: Constants.followZoom)
+
+    private let catalog = LabCatalog.shared
 
     var body: some View {
         MapReader { proxy in
             MapboxMaps.Map(viewport: $viewport) {
-                Puck2D(bearing: .heading)
+                Puck2D()
 
                 if let data, let pin {
                     PointAnnotationGroup(data.centres) { centre in
@@ -63,27 +70,41 @@ struct LabCollectionCentresMapView: View {
                 }
             }
 
-            ToolbarItem(placement: .principal) {
-                DebugInlineTitle(title: data.map { "\($0.centres.count.formatted()) collection centres" } ?? "", file: #file)
-            }
-
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: followPuck) {
-                    Label("Locate", systemImage: "location")
+                    Label("My Location", systemImage: "location")
                         .labelStyle(.iconOnly)
                 }
             }
-        }
-        .brightMiniSheetV5(isPresented: sheetShown) {
-            if let selected, let data {
-                CentreMiniSheet(
-                    centre: selected,
-                    tests: data.tests(at: selected),
-                    distanceKm: selectedDistanceKm,
-                    onClose: { self.selected = nil }
-                )
+
+            ToolbarItem(placement: .principal) {
+                DebugInlineTitle(title: data.map { "\($0.centres.count.formatted()) collection centres" } ?? "", file: #file)
             }
         }
+        // The same three heights as Atlas's region tray: the centre at its smallest with
+        // the map still in reach, its tests at medium, a test opened at large.
+        .sheet(isPresented: sheetShown) {
+            Group {
+                if let selected {
+                    CentreTray(
+                        centre: selected,
+                        clinic: catalog.clinic(for: .au),
+                        tests: tests(at: selected),
+                        distanceKm: selectedDistanceKm,
+                        onExpand: { trayDetent = .large },
+                        onClose: { self.selected = nil },
+                        onOrder: order
+                    )
+                    .id(selected.id)
+                }
+            }
+            .presentationDetents(Constants.trayDetents, selection: $trayDetent)
+            .interactiveDismissDisabled(trayDetent != Constants.minimisedDetent)
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(.screenCornerRadius)
+            .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+        }
+        .onAppear(perform: followPuck)
         .task {
             pin = renderPin()
             data = await LabCollectionCentres.load()
@@ -93,7 +114,26 @@ struct LabCollectionCentresMapView: View {
 
     private func select(_ centre: LabCollectionCentre, from location: CLLocationCoordinate2D?) {
         selectedDistanceKm = centre.distanceKm(from: location.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) })
+        if selected == nil {
+            trayDetent = Constants.minimisedDetent
+        }
         selected = centre
+    }
+
+    // Eirly's own tests, narrowed to the ones this centre's network collects.
+    private func tests(at centre: LabCollectionCentre) -> [VaultClinicTest] {
+        guard let clinic = catalog.clinic(for: .au), let data else { return [] }
+        let collected = Set(data.tests(at: centre).map(\.id))
+        return clinic.tests.filter { $0.labTestId.map(collected.contains) == true }
+    }
+
+    // The tray has to be down before the map is left for the receipt.
+    private func order(_ order: VaultTestOrder) {
+        selected = nil
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
+            onOrder(order)
+        }
     }
 
     private func expand(_ context: AnnotationClusterGestureContext) {
@@ -116,7 +156,8 @@ struct LabCollectionCentresMapView: View {
 
     private func followPuck() {
         withViewportAnimation(.easeOut(duration: Constants.zoomDuration)) {
-            viewport = .followPuck(zoom: Constants.followZoom, bearing: .heading)
+            // Centres on the user without turning the map to the way they face.
+            viewport = .followPuck(zoom: Constants.followZoom, bearing: .constant(0), pitch: 0)
         }
     }
 
@@ -138,8 +179,9 @@ struct LabCollectionCentresMapView: View {
     }
 
     private enum Constants {
-        static let australia = CLLocationCoordinate2D(latitude: -27.5, longitude: 134.5)
-        static let australiaZoom: CGFloat = 3.2
+        static let minimisedDetent: PresentationDetent = .height(156)
+        static let trayDetents: Set<PresentationDetent> = [minimisedDetent, .medium, .large]
+        static let initialCenter = CLLocationCoordinate2D(latitude: -33.8769, longitude: 151.2006)
         static let followZoom: CGFloat = 12
         static let pinName = "lab-centre-pin"
         static let pinStroke: CGFloat = 1.5
@@ -166,159 +208,82 @@ struct LabCollectionCentresMapView: View {
     }
 }
 
-// MARK: - Mini sheet
+// MARK: - Tray
 
-private struct CentreMiniSheet: View {
+private struct CentreTray: View {
     let centre: LabCollectionCentre
-    let tests: [LabCentreTest]
+    let clinic: VaultTestingClinic?
+    let tests: [VaultClinicTest]
     let distanceKm: Double?
+    let onExpand: () -> Void
     let onClose: () -> Void
+    let onOrder: (VaultTestOrder) -> Void
 
     @Environment(\.openURL) private var openURL
-    @State private var query = ""
-    @State private var sheetWidth: CGFloat = 0
-
-    private var shown: [LabCentreTest] {
-        let needle = query.trimmingCharacters(in: .whitespaces)
-        let list = needle.isEmpty ? tests : tests.filter { $0.name.localizedCaseInsensitiveContains(needle) }
-        return list.filter(\.genetic) + list.filter { !$0.genetic }
-    }
+    @State private var selectedTest: VaultClinicTest?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack {
-                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: .spacing3x) {
+                    header
 
-                Spacer(minLength: .spacing0x)
-
-                if let phoneURL = centre.phoneURL {
-                    BrightPillButton("Call", systemImage: "phone", buttonSize: .medium) {
-                        openURL(phoneURL)
+                    if let clinic {
+                        VaultClinicTestList(clinic: clinic, tests: tests, color: .defaultSheetModalCards) { test in
+                            onExpand()
+                            selectedTest = test
+                        }
+                    }
+                }
+                .padding(.horizontal, .spacing3x)
+                .padding(.top, .spacing4x)
+                .padding(.bottom, .spacing10x)
+            }
+            .scrollIndicators(.hidden)
+            .toolbarVisibility(.hidden, for: .navigationBar)
+            .navigationDestination(item: $selectedTest) { test in
+                if let clinic {
+                    VaultTestDetailView(test: test, clinic: clinic) { order in
+                        selectedTest = nil
+                        onOrder(order)
                     }
                 }
             }
-            .padding(.bottom, .spacing105x)
+        }
+    }
 
+    private var header: some View {
+        VStack(alignment: .leading, spacing: .spacing105x) {
             HStack(spacing: .spacing105x) {
                 VaultClinicLogo()
 
                 BrightText(centre.name, size: .subheading1, weight: .regular)
-                    .lineLimit(2)
+                    .lineLimit(1)
 
                 Spacer(minLength: .spacing0x)
 
-                if let distanceKm {
-                    BrightText(String(format: "%.1f km away", distanceKm), size: .body1, color: .lightTextColor)
-                }
+                BrightRoundButton(systemImage: "xmark", size: .medium, onTapCallback: onClose)
             }
 
-            BrightText(centre.address, size: .body1, color: .lightTextColor)
-                .fixedSize(horizontal: false, vertical: true)
+            BrightText(details, size: .body1, color: .lightTextColor)
+                .lineLimit(2)
 
-            BrightDividerV5()
-
-            HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
-                BrightText("Tests you can order in Bright", size: .body1, color: .semiLightTextColor, weight: .regular)
-
-                BrightText("\(tests.count)", size: .body3, color: .lightTextColor)
-                    .monospacedDigit()
-            }
-
-            BrightText("Order in Guided Testing. Eirly issues the referral, then collect here.", size: .body4, color: .lightTextColor)
-                .fixedSize(horizontal: false, vertical: true)
-
-            BrightSearchBarV5("Search tests", text: $query)
-
-            ScrollView {
-                FlowLayout(spacing: .spacing1x) {
-                    ForEach(shown) { test in
-                        CentreTestChip(
-                            title: test.genetic ? "\(test.name) · Genetic" : test.name,
-                            tint: test.genetic ? .defaultPurple : .defaultBlue,
-                            maxWidth: max(0, sheetWidth - .spacing4x * 2)
-                        )
-                    }
-                }
-                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-
-                if shown.isEmpty {
-                    BrightText("No tests match “\(query)”.", size: .body1, color: .lightTextColor)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            if let phoneURL = centre.phoneURL {
+                BrightPillButton("Call", systemImage: "phone", buttonSize: .small) {
+                    openURL(phoneURL)
                 }
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-            .frame(height: Constants.testsHeight)
-        }
-        .padding(.spacing4x)
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        .background {
-            Color.clear
-                .containerRelativeFrame(.horizontal)
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.width
-                } action: { width in
-                    sheetWidth = width
-                }
         }
     }
 
-    private enum Constants {
-        static let testsHeight: CGFloat = 220
+    private var details: String {
+        guard let distanceKm else { return centre.address }
+        return String(format: "%.1f km away", distanceKm) + " · " + centre.address
     }
 }
 
 #Preview {
     NavigationStack {
-        LabCollectionCentresMapView()
-    }
-}
-
-private struct CentreTestChip: View {
-    let title: String
-    let tint: Color
-    let maxWidth: CGFloat
-
-    @State private var textWidth: CGFloat = 0
-    @State private var isScrolled = false
-
-    private var visibleWidth: CGFloat {
-        max(0, maxWidth - .spacing2x * 2)
-    }
-
-    private var overflow: CGFloat {
-        maxWidth > 0 ? max(0, textWidth - visibleWidth) : 0
-    }
-
-    var body: some View {
-        BrightText(title, size: .body1, color: tint)
-            .lineLimit(1)
-            .fixedSize()
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.size.width
-            } action: { width in
-                textWidth = width
-            }
-            .offset(x: isScrolled ? -overflow : 0)
-            .frame(width: overflow > 0 ? visibleWidth : nil, alignment: .leading)
-            .clipped()
-            .padding(.horizontal, .spacing2x)
-            .padding(.vertical, .spacing1x)
-            .modifier(BrightCardModifierV5(color: tint.opacity(.veryMinimalOpacity), cornerRadius: .cardCornerRadius))
-            .task(id: overflow) {
-                isScrolled = false
-                guard overflow > 0 else { return }
-                let duration = overflow / Constants.pointsPerSecond
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(Constants.pause))
-                    withAnimation(.linear(duration: duration)) { isScrolled.toggle() }
-                    try? await Task.sleep(for: .seconds(duration))
-                }
-            }
-    }
-
-    private enum Constants {
-        static let pointsPerSecond: CGFloat = 30
-        static let pause: TimeInterval = 1.5
+        LabCollectionCentresMapView { _ in }
     }
 }

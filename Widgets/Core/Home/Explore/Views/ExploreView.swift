@@ -13,8 +13,6 @@ struct ExploreView: View {
     @State private var selectedAgent: ExploreAgent?
     @State private var shownClinic: ExploreClinic?
     @State private var showsAllClinics = false
-    @State private var selectedClinic: VaultTestingClinic?
-    @State private var receipt: VaultTestOrder?
     @State private var shownAd: ExploreSearchClinic?
     @Namespace private var adZoom
 
@@ -48,12 +46,6 @@ struct ExploreView: View {
         .sheet(item: $selectedAgent) { agent in
             ExploreAgentSheet(agent: agent)
         }
-        .sheet(item: $selectedClinic) { clinic in
-            VaultClinicSheet(clinic: clinic, onOrder: place)
-        }
-        .sheet(item: $receipt) { order in
-            BrightReceiptSheetV5(order: order)
-        }
         .fullScreenCover(item: $shownAd) { clinic in
             ExploreAdDetailView(clinic: clinic)
                 .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
@@ -73,8 +65,6 @@ struct ExploreView: View {
                 agents
             }
 
-            VaultTestBrowse(onOrder: place)
-
             BrightWidgetTitleV5(icon: .symbol("globe"), title: "Explore all", onTap: { showsAllClinics = true }) {
                 clinics
                     .padding(.horizontal, .spacing3x)
@@ -85,14 +75,6 @@ struct ExploreView: View {
                     source.clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
                 }
                 .padding(.horizontal, .spacing3x)
-        }
-    }
-
-    private func place(_ order: VaultTestOrder) {
-        selectedClinic = nil
-        Task {
-            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
-            receipt = order
         }
     }
 
@@ -110,7 +92,6 @@ struct ExploreView: View {
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
     }
 
-    // The clinic sheet has to be down before the receipt comes up over it.
     private var clinics: some View {
         HStack(alignment: .top, spacing: .spacing3x) {
             ForEach(ExploreClinic.demo) { clinic in
@@ -122,9 +103,5 @@ struct ExploreView: View {
             SafariView(url: clinic.website) { shownClinic = nil }
                 .ignoresSafeArea()
         }
-    }
-
-    private enum Constants {
-        static let sheetDismissDuration: TimeInterval = 0.35
     }
 }

@@ -8,50 +8,49 @@
 import SwiftUI
 
 struct VaultGuidedTestingHomeView: View {
-    let orders: [VaultTestOrder]
-    @Binding var selectedPage: Int
-    let onSelectClinic: (VaultTestingClinic) -> Void
-    let onSelectOrder: (VaultTestOrder) -> Void
-
     let onOrder: (VaultTestOrder) -> Void
 
+    @State private var selectedPage = 0
     @State private var showingMap = false
     @State private var showingCart = false
+    @State private var selectedTest: VaultClinicTest?
 
     private let catalog = LabCatalog.shared
 
-    private var clinics: [VaultTestingClinic] {
-        VaultTestingSortOrder.proximity.sorted(VaultTestingClinic.all)
+    // One page per lab, Eirly first.
+    private let regions: [LabRegion] = [.au, .us]
+
+    private var region: LabRegion {
+        regions[selectedPage]
     }
 
     var body: some View {
         BrightSwipePageViewV5(
-            pages: [
-                SwipePage(title: "Explore", systemImage: "sparkle.magnifyingglass"),
-                SwipePage(title: "My Orders", systemImage: "shippingbox"),
-            ],
+            pages: regions.map { SwipePage(title: $0.provider.title, systemImage: $0.systemImage) },
             fakeLargeTitle: "Guided Testing",
             backgroundColor: .defaultBackground,
             selectedIndex: $selectedPage
         ) { page in
-            if page == 0 {
-                explore
-            } else {
-                myOrders
-            }
+            lab(regions[page])
         }
         .toolbar {
-            if catalog.region == .au {
-                ToolbarItem(placement: .topBarTrailing) {
-                    LabCartButton { showingCart = true }
-                }
+            if region == .au {
                 ToolbarItem(placement: .topBarTrailing) {
                     LabCentresMapButton { showingMap = true }
+                }
+                if #available(iOS 26, *) {
+                    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    LabCartButton { showingCart = true }
                 }
             }
         }
         .navigationDestination(isPresented: $showingMap) {
-            LabCollectionCentresMapView()
+            LabCollectionCentresMapView { order in
+                showingMap = false
+                onOrder(order)
+            }
         }
         .navigationDestination(isPresented: $showingCart) {
             if let clinic = catalog.clinic(for: .au) {
@@ -61,112 +60,46 @@ struct VaultGuidedTestingHomeView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Explore
-
-    private var explore: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            VaultTestBrowse(blur: true, onOrder: onOrder)
-                .padding(.top, .spacing3x)
-
-            BrightWidgetTitleV5(icon: .symbol("location"), title: "All Clinics Near Me") {
-                LabRegionMenu(showsTitle: true)
-                    .padding(.trailing, .spacing3x)
-            } content: {
-                VStack(spacing: .spacing3x) {
-                    ForEach(clinics) { clinic in
-                        VaultClinicCard(clinic: clinic) { onSelectClinic(clinic) }
-                    }
-                }
-                .padding(.horizontal, .spacing3x)
+        .navigationDestination(item: $selectedTest) { test in
+            if let clinic = catalog.clinic(for: region) {
+                VaultTestDetailView(test: test, clinic: clinic, isSheet: false, onOrder: order)
             }
         }
-        .padding(.bottom, .spacing10x)
-        .animation(.brightEaseInOut, value: catalog.region)
+        .task {
+            await catalog.loadIfNeeded()
+            if let index = catalog.region.flatMap(regions.firstIndex) {
+                selectedPage = index
+            }
+        }
+        .onChange(of: selectedPage) {
+            Task { await catalog.select(region) }
+        }
     }
 
-    // MARK: - My Orders
+    // MARK: - Lab
 
     @ViewBuilder
-    private var myOrders: some View {
-        if orders.isEmpty {
-            BrightPlaceholderViewV5(
-                systemImage: "shippingbox",
-                title: "No orders yet",
-                subtitle: "Tests you order will show up here with their status."
-            )
+    private func lab(_ region: LabRegion) -> some View {
+        if let clinic = catalog.clinic(for: region) {
+            VaultClinicTestList(clinic: clinic, tests: clinic.tests) { selectedTest = $0 }
+                .padding(.horizontal, .spacing3x)
+                .padding(.top, .spacing3x)
+                .padding(.bottom, .spacing10x)
+        } else if catalog.region != region || catalog.isLoading {
+            BrightProgressViewV5()
+                .containerRelativeFrame(.vertical)
         } else {
-            VStack(spacing: .spacing3x) {
-                ForEach(orders) { order in
-                    VaultOrderCard(order: order) { onSelectOrder(order) }
-                }
-            }
-            .padding(.spacing3x)
-            .padding(.bottom, .spacing10x)
+            BrightPlaceholderViewV5(
+                systemImage: "testtube.2",
+                title: "No tests available",
+                subtitle: "\(region.provider.title) tests will appear here once they're available."
+            )
         }
     }
-}
 
-// MARK: - Order card
-
-struct VaultOrderCard: View {
-    let order: VaultTestOrder
-    let onTap: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(alignment: .top, spacing: .spacing2x) {
-                VaultClinicLogo()
-
-                Spacer(minLength: .spacing0x)
-
-                HStack(spacing: .spacing1x) {
-                    Image(systemName: order.type.systemImage)
-                        .font(.standard(size: .body1, weight: .light))
-
-                    BrightText(order.type.rawValue, size: .body1, weight: .regular)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(order.clinic.name, size: .subheading, color: .semiLightTextColor, weight: .regular)
-
-                BrightText(order.test.name, size: .body1, color: .lightTextColor)
-            }
-
-            BrightDividerV5()
-
-            if let delivery = order.delivery {
-                BrightText(delivery.status, size: .body1, weight: .regular)
-
-                VaultOrderDeliveryTrack(progress: delivery.progress)
-            } else {
-                if let address = order.address {
-                    detail("mappin.and.ellipse", address)
-                }
-
-                if let scheduledAt = order.scheduledAt {
-                    detail("clock", scheduledAt.formatted(.brightTimestamp))
-                }
-            }
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(BrightCardModifierV5())
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
-    }
-
-    private func detail(_ systemImage: String, _ title: String) -> some View {
-        HStack(spacing: .spacing1x) {
-            Image(systemName: systemImage)
-                .font(.standard(size: .body1, weight: .light))
-                .foregroundStyle(Color.semiLightTextColor)
-
-            BrightText(title, size: .body1, weight: .regular)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+    private func order(_ order: VaultTestOrder) {
+        selectedTest = nil
+        onOrder(order)
     }
 }
 
@@ -206,54 +139,6 @@ struct VaultOrderDeliveryTrack: View {
 
     private enum Constants {
         static let height: CGFloat = .spacing105x
-    }
-}
-
-// MARK: - Clinic card
-
-struct VaultClinicCard: View {
-    let clinic: VaultTestingClinic
-    let onTap: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(alignment: .top) {
-                VaultClinicLogo()
-
-                Spacer(minLength: .spacing0x)
-
-                BrightPillButton("Find out more", buttonSize: .small, onTapCallback: onTap)
-            }
-
-            BrightText(clinic.name, size: .body1, color: .semiLightTextColor, weight: .regular)
-
-            BrightText(clinic.address, size: .body1, color: .lightTextColor)
-
-            BrightDividerV5()
-
-            HStack(spacing: .spacing1x) {
-                Image(systemName: "pencil.and.list.clipboard")
-                    .font(.standard(size: .body1, weight: .light))
-                    .foregroundStyle(Color.semiLightTextColor)
-
-                BrightText("Services", size: .body1, color: .semiLightTextColor, weight: .regular)
-            }
-
-            FlowLayout(spacing: .spacing1x) {
-                ForEach(clinic.services, id: \.self) { service in
-                    BrightChipV5(
-                        title: service,
-                        tint: .defaultBlue,
-                        fill: .defaultBlue.opacity(.veryMinimalOpacity)
-                    )
-                }
-            }
-        }
-        .padding(.spacing3x)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(BrightCardModifierV5())
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
     }
 }
 
@@ -297,16 +182,8 @@ struct VaultClinicLogo: View {
 }
 
 #Preview {
-    @Previewable @State var page = 0
-
     NavigationStack {
-        VaultGuidedTestingHomeView(
-            orders: [],
-            selectedPage: $page,
-            onSelectClinic: { _ in },
-            onSelectOrder: { _ in },
-            onOrder: { _ in }
-        )
+        VaultGuidedTestingHomeView { _ in }
     }
 }
 

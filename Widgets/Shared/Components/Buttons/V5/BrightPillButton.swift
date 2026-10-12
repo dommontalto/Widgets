@@ -87,7 +87,11 @@ struct BrightPillButton: View {
                                 .frame(width: Constants.imageSize, height: Constants.imageSize)
                                 .foregroundStyle(resolvedTextColor)
                         }
-                        BrightText(title, size: resolvedSize, color: resolvedTextColor)
+                        // An empty title leaves just the icon, so a pill can fold down to it.
+                        if !title.isEmpty {
+                            BrightText(title, size: resolvedSize, color: resolvedTextColor)
+                                .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .leading)))
+                        }
                     }
                     .fixedSize()
                     .transition(.opacity)

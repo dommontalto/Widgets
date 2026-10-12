@@ -51,6 +51,13 @@ enum LabProvider: String, Hashable {
     case junction
     case eirly
 
+    var title: String {
+        switch self {
+        case .junction: "Junction"
+        case .eirly: "Eirly"
+        }
+    }
+
     var countryCode: String {
         switch self {
         case .junction: "US"

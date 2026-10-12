@@ -7,49 +7,28 @@
 
 import SwiftUI
 
-// Guided Testing pushed into the host stack: the clinics home, with each clinic
-// opening in a sheet over it.
+// Guided Testing pushed into the host stack: each lab's tests, with a receipt once
+// one is ordered.
 struct VaultGuidedTestingScreen: View {
-    @State private var selectedClinic: VaultTestingClinic?
     @State private var receipt: VaultTestOrder?
-    @State private var orders = [VaultTestOrder]()
-    @State private var homePage = 0
 
     var body: some View {
-        home
-            .sheet(item: $selectedClinic) { clinic in
-                VaultClinicSheet(clinic: clinic, onOrder: place)
-            }
+        VaultGuidedTestingHomeView(onOrder: place)
             .sheet(item: $receipt) { order in
                 BrightReceiptSheetV5(order: order)
             }
-            .task { await LabCatalog.shared.loadIfNeeded() }
-    }
-
-    private var home: some View {
-        VaultGuidedTestingHomeView(
-            orders: orders,
-            selectedPage: $homePage,
-            onSelectClinic: { selectedClinic = $0 },
-            onSelectOrder: { receipt = $0 },
-            onOrder: place
-        )
     }
 
     private func place(_ order: VaultTestOrder) {
-        orders.insert(order, at: 0)
-        selectedClinic = nil
-        withAnimation(.brightEaseInOut) { homePage = 1 }
-
-        // The clinic sheet has to be down before the receipt comes up over it.
+        // The test has to be popped before the receipt comes up over it.
         Task {
-            try? await Task.sleep(for: .seconds(Constants.sheetDismissDuration))
+            try? await Task.sleep(for: .seconds(Constants.popDuration))
             receipt = order
         }
     }
 
     private enum Constants {
-        static let sheetDismissDuration: TimeInterval = 0.35
+        static let popDuration: TimeInterval = 0.35
     }
 }
 

@@ -107,7 +107,10 @@ struct VaultTestCategoryView: View {
                 .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
         }
         .navigationDestination(isPresented: $showingMap) {
-            LabCollectionCentresMapView()
+            LabCollectionCentresMapView { order in
+                showingMap = false
+                onOrder(order)
+            }
         }
         .navigationDestination(item: $selectedTest) { test in
             if let clinic {

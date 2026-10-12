@@ -609,14 +609,18 @@ private struct FloatingPillOverlay: View {
 
     private var pillRow: some View {
         HStack(spacing: SwipePageConstants.inlineTabSpacing) {
+            // Only the selected pill names its page; the rest fold down to their icon
+            // and open out as they're reached.
             ForEach(pages.indices, id: \.self) { i in
+                let isSelected = marksSelectedPill && activePage == i
                 BrightTagV5(
-                    title: pages[i].title,
+                    title: isSelected ? pages[i].title : "",
                     image: pages[i].image,
                     systemImage: pages[i].systemImage,
-                    isSelected: marksSelectedPill && activePage == i,
+                    isSelected: isSelected,
                     action: { onPillTap(i) }
                 )
+                .accessibilityLabel(pages[i].title)
             }
 
             if let pillAccessory {
@@ -626,6 +630,7 @@ private struct FloatingPillOverlay: View {
         }
         .padding(.leading, .spacing3x)
         .padding(.trailing, pillAccessory == nil ? 0 : .spacing3x)
+        .animation(.brightBouncy, value: activePage)
     }
 }
 
