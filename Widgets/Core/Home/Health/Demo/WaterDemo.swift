@@ -35,9 +35,11 @@ extension HealthWidgetDemoV5 {
         water.bars(for: .today).compactMap(\.value).reduce(0, +)
     }
 
-    // Today's litres so far against the day's goal.
+    // Today's litres so far against the day's goal. Named like today's ring in the row of
+    // days, so resizing between the two keeps the one ring and moves it.
     static var waterRing: BrightRingGroupWidgetV5.Ring {
-        .init(label: "Water", shortLabel: "W", value: waterToday, goal: waterGoal, color: .defaultCyan, decimals: 2, warnsWhenOver: false)
+        let label = anchor.formatted(.brightDate)
+        return .init(label: label, shortLabel: String(label.prefix(1)), value: waterToday, goal: waterGoal, color: .defaultCyan, decimals: 2, warnsWhenOver: false)
     }
 
     // The last three days, oldest first, each against the day's goal. Today and yesterday

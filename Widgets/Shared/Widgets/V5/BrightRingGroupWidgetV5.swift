@@ -86,8 +86,14 @@ struct BrightRingGroupWidgetV5: View {
 
             GeometryReader { geometry in
                 ForEach(Array(rings.enumerated()), id: \.element.id) { index, ring in
+                    let centre = centre(of: index, in: geometry.size)
+
+                    // The card follows the finger without animating, so the next frame of a
+                    // resize would cut a ring's glide short and snap it into place; animating
+                    // every move keeps it springing on to its new spot.
                     piece(ring, index: index, in: geometry.size)
-                        .position(centre(of: index, in: geometry.size))
+                        .position(centre)
+                        .animation(.brightBouncy, value: centre)
                 }
             }
             .onGeometryChange(for: CGSize.self, of: \.size) { area = $0 }
