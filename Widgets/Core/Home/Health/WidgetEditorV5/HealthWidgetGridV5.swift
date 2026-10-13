@@ -261,7 +261,7 @@ struct HealthWidgetGridV5: View {
     var onOpen: (HealthWidgetItemV5) -> Void = { _ in }
 
     @State private var containerWidth: CGFloat = 0
-    @State private var viewportHeight: CGFloat = 0
+    @State private var viewport: CGRect = .zero
     @State private var jigglePhase = false
     // Resets when the touch ends or is cancelled; `onEnded` only fires on the first.
     @GestureState private var isHoldingResizeHandle = false
@@ -284,10 +284,12 @@ struct HealthWidgetGridV5: View {
             alignment: .top
         )
         .onGeometryChange(for: CGFloat.self, of: \.size.width) { containerWidth = $0 }
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.bounds(of: .scrollView)?.height ?? 0
+        .onGeometryChange(for: CGRect.self) { proxy in
+            guard let bounds = proxy.bounds(of: .scrollView) else { return .zero }
+            let origin = proxy.frame(in: .global).origin
+            return bounds.offsetBy(dx: origin.x, dy: origin.y)
         } action: {
-            viewportHeight = $0
+            viewport = $0
         }
         .onChange(of: isHoldingResizeHandle) { _, isHolding in
             if !isHolding {
@@ -370,7 +372,7 @@ struct HealthWidgetGridV5: View {
     private func dragGesture(for widget: HealthWidgetItemV5, cellSize: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: Constants.dragMinimumDistance, coordinateSpace: .global)
             .onChanged { value in
-                editor.dragChanged(value, widget: widget, cellSize: cellSize, viewportHeight: viewportHeight)
+                editor.dragChanged(value, widget: widget, cellSize: cellSize, viewport: viewport)
             }
             .onEnded { _ in
                 editor.dragEnded(widget: widget, cellSize: cellSize)

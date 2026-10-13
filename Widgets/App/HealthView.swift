@@ -19,7 +19,6 @@ struct HealthView: View {
             content
                 .background(Color.defaultBackground)
                 .toolbar {
-                    // Straight to the widgets, editing or not.
                     ToolbarItem(placement: .topBarLeading) {
                         if editor.isEditing {
                             Button("Add") {
@@ -28,25 +27,12 @@ struct HealthView: View {
                             }
                         } else {
                             Button {
-                                BrightHaptic.medium.play()
-                                withAnimation(.brightEaseInOut) {
-                                    selectedPage = HomePage.health.rawValue
-                                }
-                                editor.isShowingAddSheet = true
+                                BrightHaptic.light.play()
+                                revealReplay += 1
                             } label: {
-                                Label("Add widget", systemImage: "plus")
+                                Label("Replay widget animations", systemImage: "arrow.counterclockwise")
                                     .labelStyle(.iconOnly)
                             }
-                        }
-                    }
-
-                    ToolbarItem(placement: .principal) {
-                        Button {
-                            BrightHaptic.light.play()
-                            revealReplay += 1
-                        } label: {
-                            Label("Replay widget animations", systemImage: "arrow.counterclockwise")
-                                .labelStyle(.iconOnly)
                         }
                     }
 
@@ -129,6 +115,7 @@ struct HealthView: View {
             pages: HomePage.allCases.map { SwipePage(title: $0.title, systemImage: $0.systemImage) },
             fakeLargeTitle: "",
             showInlineTabs: !editor.isEditing,
+            pillsInToolbar: true,
             disableHorizontalScroll: editor.isEditing,
             collapsesTitleToToolbar: false,
             scrollDismissesKeyboardMode: .interactively,

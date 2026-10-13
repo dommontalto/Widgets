@@ -96,6 +96,9 @@ struct BrightSwipePageViewV5<Content: View>: View {
     // Hide it to give a page the full sheet, e.g. an expanded map.
     let navigationBarVisibility: Visibility
     let showInlineTabs: Bool
+    // Puts the pills in the nav bar's centre, between its leading and
+    // trailing items, instead of under it.
+    let pillsInToolbar: Bool
     // When `false`, no pill draws as the selected one — for a sheet at a
     // height that shows the row but none of the page under it, where marking
     // one would promise a page that isn't there. The pager still has a
@@ -162,6 +165,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
         pillFollowMaxShift: CGFloat? = SwipePageConstants.pillFollowMaxShift,
         navigationBarVisibility: Visibility = .visible,
         showInlineTabs: Bool = true,
+        pillsInToolbar: Bool = false,
         marksSelectedPill: Bool = true,
         disableHorizontalScroll: Bool = false,
         pagesBringTheirOwnScroll: Bool = false,
@@ -191,6 +195,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
         self.pillFollowMaxShift = pillFollowMaxShift
         self.navigationBarVisibility = navigationBarVisibility
         self.showInlineTabs = showInlineTabs
+        self.pillsInToolbar = pillsInToolbar
         self.marksSelectedPill = marksSelectedPill
         self.disableHorizontalScroll = disableHorizontalScroll
         self.pagesBringTheirOwnScroll = pagesBringTheirOwnScroll
@@ -259,7 +264,18 @@ struct BrightSwipePageViewV5<Content: View>: View {
             .toolbar(navigationBarVisibility, for: .navigationBar)
             .brightSoftScrollEdgesV5()
             .toolbar {
-                if let file {
+                if pillsInToolbar {
+                    if showInlineTabs {
+                        ToolbarItem(placement: .principal) {
+                            SwipePagePillRow(
+                                pages: pages,
+                                marksSelectedPill: marksSelectedPill,
+                                activePage: scrollPosition ?? selectedIndex,
+                                onPillTap: handlePillTap
+                            )
+                        }
+                    }
+                } else if let file {
                     ToolbarItem(placement: .principal) {
                         DebugInlineTitle(
                             title: collapsesTitleToToolbar ? fakeLargeTitle ?? "" : "",
@@ -284,7 +300,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
     }
 
     private var shouldShowFloatingPill: Bool {
-        showInlineTabs
+        showInlineTabs && !pillsInToolbar
     }
 
     // MARK: Pager
@@ -378,16 +394,18 @@ struct BrightSwipePageViewV5<Content: View>: View {
                             // When the floating overlay is present it renders the
                             // visible (pinned) title; the per-page copy only reserves
                             // space so content keeps its position. With no overlay
-                            // (showInlineTabs == false) the per-page title is shown.
-                            .opacity(showInlineTabs ? 0 : 1)
+                            // the per-page title is shown.
+                            .opacity(shouldShowFloatingPill ? 0 : 1)
                             .padding(.bottom, titlePillSpacing)
                         }
                         // Reserve the pill row's height whether or not the inline
                         // tabs are shown, so hiding them (e.g. Health edit mode)
                         // doesn't shift the content up.
-                        Color.clear
-                            .frame(height: SwipePageConstants.pillHeight)
-                            .padding(.bottom, .spacing2x)
+                        if !pillsInToolbar {
+                            Color.clear
+                                .frame(height: SwipePageConstants.pillHeight)
+                                .padding(.bottom, .spacing2x)
+                        }
                         content(i)
                     }
                 }
@@ -398,7 +416,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
                     position: i == scrollControlledPageIndex ? verticalScrollPosition : nil
                 ))
                 .modifier(PageScrollTracking { handlePageScroll(at: i, metrics: $0) })
-            } else if showInlineTabs {
+            } else if shouldShowFloatingPill {
                 content(i)
                     .frame(maxHeight: .infinity)
                     .safeAreaInset(edge: .top, spacing: 0) {
@@ -572,7 +590,15 @@ private struct FloatingPillOverlay: View {
                         state.titleBlockHeight = height
                     }
                 }
-                pillRow
+                SwipePagePillRow(
+                    pages: pages,
+                    marksSelectedPill: marksSelectedPill,
+                    activePage: activePage,
+                    pillAccessory: pillAccessory,
+                    onPillTap: onPillTap
+                )
+                .padding(.leading, .spacing3x)
+                .padding(.trailing, pillAccessory == nil ? 0 : .spacing3x)
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -607,7 +633,16 @@ private struct FloatingPillOverlay: View {
         .animation(.brightBouncy, value: scrollPosition)
     }
 
-    private var pillRow: some View {
+}
+
+private struct SwipePagePillRow: View {
+    let pages: [SwipePage]
+    let marksSelectedPill: Bool
+    let activePage: Int
+    var pillAccessory: AnyView? = nil
+    let onPillTap: (Int) -> Void
+
+    var body: some View {
         HStack(spacing: SwipePageConstants.inlineTabSpacing) {
             // Only the selected pill names its page; the rest fold down to their icon
             // and open out as they're reached.
@@ -628,8 +663,6 @@ private struct FloatingPillOverlay: View {
                 pillAccessory
             }
         }
-        .padding(.leading, .spacing3x)
-        .padding(.trailing, pillAccessory == nil ? 0 : .spacing3x)
         .animation(.brightBouncy, value: activePage)
     }
 }

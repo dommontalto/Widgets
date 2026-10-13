@@ -181,7 +181,7 @@ final class HealthWidgetEditorV5 {
 
     // MARK: - Dragging
 
-    func dragChanged(_ value: DragGesture.Value, widget: HealthWidgetItemV5, cellSize: CGFloat, viewportHeight: CGFloat) {
+    func dragChanged(_ value: DragGesture.Value, widget: HealthWidgetItemV5, cellSize: CGFloat, viewport: CGRect) {
         if dragging?.widgetID != widget.id {
             guard let position = layout.positions[widget.id] else { return }
             dragStartScrollY = scrollOffsetY
@@ -201,10 +201,9 @@ final class HealthWidgetEditorV5 {
         }
 
         let halfHeight = HealthWidgetGridMetricsV5.frame(for: widget.size, cellSize: cellSize).height / 2
-        let edgeZone = viewportHeight / Constants.edgeZoneFraction
-        if value.location.y + halfHeight > viewportHeight - edgeZone {
+        if value.location.y + halfHeight > viewport.maxY - viewport.height / Constants.bottomEdgeZoneFraction {
             startAutoScroll(direction: 1)
-        } else if value.location.y - halfHeight < edgeZone {
+        } else if value.location.y - halfHeight < viewport.minY + viewport.height / Constants.topEdgeZoneFraction {
             startAutoScroll(direction: -1)
         } else {
             endAutoScroll()
@@ -314,7 +313,8 @@ final class HealthWidgetEditorV5 {
     }
 
     private enum Constants {
-        static let edgeZoneFraction: CGFloat = 8
+        static let topEdgeZoneFraction: CGFloat = 8
+        static let bottomEdgeZoneFraction: CGFloat = 14
         static let autoScrollSpeed: CGFloat = 5
         static let autoScrollFrame: Duration = .milliseconds(16)
         static let revealDelay: Duration = .milliseconds(300)

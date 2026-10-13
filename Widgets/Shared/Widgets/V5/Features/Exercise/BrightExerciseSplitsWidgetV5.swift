@@ -30,6 +30,7 @@ struct BrightExerciseSplitsWidgetV5: View {
     @State private var touch: UnitPoint?
     @State private var cardHeight: CGFloat = 0
     @State private var rowMids: [String: CGFloat] = [:]
+    @State private var isRevealed = false
 
     private var isLarge: Bool {
         size == .large
@@ -54,14 +55,15 @@ struct BrightExerciseSplitsWidgetV5: View {
             SplitsPlot(
                 strengthPercent: held.map { Int(($0.strengthFraction * 100).rounded()) } ?? strengthPercent,
                 cardioPercent: held.map { Int(($0.cardioFraction * 100).rounded()) } ?? cardioPercent,
-                rowHeight: isLarge ? Constants.largeRowHeight : Constants.mediumRowHeight
+                rowHeight: isLarge ? Constants.largeRowHeight : Constants.mediumRowHeight,
+                isRevealed: isRevealed
             )
             .padding(.horizontal, .spacing1x)
 
             if isLarge {
                 VStack(spacing: .spacing2x) {
                     ForEach(weeks) { week in
-                        SplitsRow(split: week)
+                        SplitsRow(split: week, isRevealed: isRevealed)
                             .opacity(heldWeek == nil || heldWeek == week.id ? .opaque : .semiLowOpacity)
                             .onGeometryChange(for: CGFloat.self) { proxy in
                                 proxy.frame(in: .named(Constants.space)).midY
@@ -89,6 +91,7 @@ struct BrightExerciseSplitsWidgetV5: View {
         .animation(.brightEaseInOut, value: heldWeek)
         .animation(.brightEaseInOut, value: isHoldingThisWeek)
         .modifier(BrightCardModifierV5(color: .defaultHomeCards))
+        .brightRevealV5($isRevealed)
     }
 
     private enum Constants {
@@ -128,6 +131,7 @@ private struct SplitsPlot: View {
     let strengthPercent: Int
     let cardioPercent: Int
     let rowHeight: CGFloat
+    let isRevealed: Bool
 
     var body: some View {
         GeometryReader { proxy in
@@ -137,14 +141,15 @@ private struct SplitsPlot: View {
             VStack(spacing: .spacing0x) {
                 pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
                     .padding(.leading, .spacing1x)
-                    .padding(.trailing, max(0, width - boundary))
+                    .padding(.trailing, isRevealed ? max(0, width - boundary) : max(0, width - .spacing1x))
                     .frame(height: rowHeight)
 
                 pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
-                    .padding(.leading, boundary)
+                    .padding(.leading, isRevealed ? boundary : max(0, width - .spacing1x))
                     .padding(.trailing, .spacing1x)
                     .frame(height: rowHeight)
             }
+            .animation(.brightBouncy, value: isRevealed)
             .overlay { grid(in: proxy.size) }
         }
         .frame(height: rowHeight * 2)
@@ -166,13 +171,14 @@ private struct SplitsPlot: View {
                     Spacer(minLength: .spacing1x)
 
                     HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                        BrightText("\(percent)", size: .standout3, color: color)
+                        BrightText(isRevealed ? "\(percent)" : "\(percent)".zeroedDigits, size: .standout3, color: color)
                             .contentTransition(.numericText())
                         BrightText("%", size: .body1, color: color)
                     }
                 }
                 .padding(.horizontal, .spacing105x)
             }
+            .clipShape(shape)
             .frame(height: Constants.pillHeight)
     }
 
@@ -223,6 +229,7 @@ private struct SplitsPlot: View {
 
 private struct SplitsRow: View {
     let split: BrightExerciseSplitsWidgetV5.Week
+    let isRevealed: Bool
 
     var body: some View {
         HStack(spacing: .spacing2x) {
@@ -233,11 +240,12 @@ private struct SplitsRow: View {
                 HStack(spacing: .spacing05x) {
                     Capsule()
                         .fill(Color.defaultPink.opacity(.veryMinimalOpacity))
-                        .frame(width: width(of: split.strengthFraction, in: track))
+                        .frame(width: isRevealed ? width(of: split.strengthFraction, in: track) : 0)
                     Capsule()
                         .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
-                        .frame(width: width(of: split.cardioFraction, in: track))
+                        .frame(width: isRevealed ? width(of: split.cardioFraction, in: track) : 0)
                 }
+                .animation(.brightBouncy, value: isRevealed)
             }
             .frame(height: Constants.rowBarHeight)
 

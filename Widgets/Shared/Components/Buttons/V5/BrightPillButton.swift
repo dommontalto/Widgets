@@ -97,7 +97,7 @@ struct BrightPillButton: View {
                     .transition(.opacity)
                 }
             }
-            .padding(.horizontal, isLoading ? .spacing0x : (buttonSize == .large ? .spacing3x : .spacing105x))
+            .padding(.horizontal, isLoading ? .spacing0x : (buttonSize == .large ? .spacing3x : .spacing1x))
             .frame(width: isLoading ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
         }
         .disabled(isLoading)
