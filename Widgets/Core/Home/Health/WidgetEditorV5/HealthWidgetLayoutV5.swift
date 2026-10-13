@@ -10,6 +10,7 @@ import SwiftUI
 // In alphabetical order of their row names, and every switch over them follows it.
 enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity
+    case exercise
     case heartRate
     case intake
     case journal
@@ -27,6 +28,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var title: String {
         switch self {
         case .activity: "Total Energy"
+        case .exercise: "Exercise"
         case .heartRate: "Heart Rate"
         case .intake: "Intake"
         case .journal: "Journal"
@@ -45,6 +47,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var rowTitle: String {
         switch self {
         case .activity: "Activity"
+        case .exercise: "Exercise"
         case .heartRate: "Heart"
         case .intake: "Intake"
         case .journal: "Journal"
@@ -62,6 +65,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var systemImage: String {
         switch self {
         case .activity: "flame.fill"
+        case .exercise: "figure.run"
         case .heartRate: "heart.fill"
         case .intake: "arrow.right"
         case .journal: "pencil.line"
@@ -80,6 +84,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var rowIcon: BrightRowV5Icon {
         switch self {
         case .activity: .template(ImageNames.activityAlertsIconV5)
+        case .exercise: .symbol(systemImage)
         case .heartRate: .template(ImageNames.heartDashIconV4)
         case .intake: .template(ImageNames.logFoodIconV1)
         case .journal: .template(ImageNames.pencilBlueV5)
@@ -97,6 +102,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var tint: Color {
         switch self {
         case .activity: .defaultOrange
+        case .exercise: .defaultSkyBlue
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
         case .journal: .defaultCyan
@@ -114,6 +120,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var styles: [HealthWidgetStyleV5] {
         switch self {
         case .activity: [.totalEnergyBars, .activeEnergyBars, .stepBars]
+        case .exercise: [.exerciseSplits]
         case .heartRate: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
         case .intake: [.intakeBars, .intakeRing, .intakeMeter]
         case .journal: [.journalChecklist]
@@ -217,6 +224,9 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     case activeEnergyBars
     case stepBars
 
+    // MARK: Exercise
+    case exerciseSplits
+
     // MARK: Heart
     case heartLine
     case heartNumber
@@ -284,6 +294,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case ring
 
         // MARK: Features, in Shared/Widgets/V5/Features
+        case exercise
         case menstrual
         case sleep
         case water
@@ -298,6 +309,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
             case .line: "BrightLineChartWidgetV5"
             case .number: "BrightLeadingNumberWidgetV5"
             case .ring: "BrightRingGroupWidgetV5"
+            case .exercise: "BrightExerciseSplitsWidgetV5"
             case .menstrual: "BrightMenstrualWidgetV5"
             case .sleep: "BrightSleepWidgetV5"
             case .water: "BrightWaterWidgetV5"
@@ -310,6 +322,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     var family: Family {
         switch self {
         case .totalEnergyBars, .activeEnergyBars, .stepBars: .bar
+        case .exerciseSplits: .exercise
         case .heartLine: .line
         case .heartNumber: .number
         case .vo2Line: .dottedLine
@@ -344,6 +357,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
     var sizes: [BrightWidgetSizeV5] {
         switch self {
+        case .exerciseSplits: [.medium, .large]
         case .heartNumber: [.small]
         case .vo2Line: [.medium]
         case .vo2Number: [.small]
@@ -375,6 +389,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     var ranges: [BrightWidgetRangeV5] {
         switch self {
         case .totalEnergyBars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
+        case .exerciseSplits: [.latest]
         case .heartLine: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
         case .heartNumber: [.latest]
         case .vo2Line: [.lastReadings]

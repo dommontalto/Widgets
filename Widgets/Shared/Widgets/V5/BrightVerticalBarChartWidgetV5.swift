@@ -503,76 +503,6 @@ struct BrightVerticalBarChartWidgetV5: View {
         .opacity(selectedIndex == nil || isHeld ? .opaque : .zero)
     }
 
-    // MARK: - Selection
-
-    // An empty chart laid over the bars, so holding them selects with the same
-    // gesture as the line chart and the page still scrolls.
-    @ViewBuilder
-    private var selectionLayer: some View {
-        if allowsSelection {
-            Chart {
-                ForEach(0 ..< range.slotCount, id: \.self) { index in
-                    PointMark(x: .value("Slot", Double(slotCentre(index, in: plotWidth))), y: .value("Floor", 0))
-                        .opacity(.zero)
-                }
-            }
-            // Measured in points, so the finger and the bars share one scale.
-            .chartXScale(domain: 0 ... Double(max(plotWidth, 1)))
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartLegend(.hidden)
-            .chartXSelection(value: selection)
-        }
-    }
-
-    // Snaps to the nearest bar, so empty hours and days are passed over rather than held.
-    private var selection: Binding<Double?> {
-        Binding {
-            selectedIndex.map { Double(slotCentre($0, in: plotWidth)) }
-        } set: { position in
-            let filled = bars.filter { ($0.value ?? 0) > 0 }.map(\.index)
-            let index = position.flatMap { position in
-                filled.min { distance($0, from: position) < distance($1, from: position) }
-            }
-            guard index != selectedIndex else { return }
-            selectedIndex = index
-            if index != nil {
-                BrightHaptic.light.play()
-            }
-        }
-    }
-
-    // The held hour, centred over its bar but kept inside the plot. Weeks roll their own letters.
-    @ViewBuilder
-    private var heldLabel: some View {
-        if let selectedIndex, !range.isWeek {
-            let centred = slotCentre(selectedIndex, in: plotWidth) - heldLabelWidth / 2
-
-            BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
-                .monospacedDigit()
-                .fixedSize()
-                .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
-                .offset(x: min(max(centred, 0), max(plotWidth - heldLabelWidth, 0)))
-                .transition(.opacity)
-        }
-    }
-
-    private func slotTitle(_ index: Int) -> String {
-        slotStart(index).formatted(range.isWeek ? .brightWeekday : .brightHour)
-    }
-
-    // Rolling slots end with the hour now running; the rest count on from the range's start.
-    private func slotStart(_ index: Int) -> Date {
-        if range.isWeek {
-            return Calendar.current.date(byAdding: .day, value: index, to: interval.start) ?? interval.start
-        }
-        if range.isRolling {
-            let hourStart = Calendar.current.dateInterval(of: .hour, for: .now)?.start ?? .now
-            return hourStart.addingTimeInterval(-Double(range.slotCount - 1 - index) * 60 * 60)
-        }
-        return interval.start.addingTimeInterval(Double(index) * 60 * 60)
-    }
-
     // MARK: - Summary
 
     private func summaryGrid(_ summary: Summary) -> some View {
@@ -736,6 +666,78 @@ struct BrightVerticalBarChartWidgetV5: View {
         static let risingGreenStop = 0.24
         static let weekdayInitials = ["M", "T", "W", "T", "F", "S", "S"]
         static let readingID = "reading"
+    }
+}
+
+extension BrightVerticalBarChartWidgetV5 {
+    // MARK: - Selection
+
+    // An empty chart laid over the bars, so holding them selects with the same
+    // gesture as the line chart and the page still scrolls.
+    @ViewBuilder
+    private var selectionLayer: some View {
+        if allowsSelection {
+            Chart {
+                ForEach(0 ..< range.slotCount, id: \.self) { index in
+                    PointMark(x: .value("Slot", Double(slotCentre(index, in: plotWidth))), y: .value("Floor", 0))
+                        .opacity(.zero)
+                }
+            }
+            // Measured in points, so the finger and the bars share one scale.
+            .chartXScale(domain: 0 ... Double(max(plotWidth, 1)))
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXSelection(value: selection)
+        }
+    }
+
+    // Snaps to the nearest bar, so empty hours and days are passed over rather than held.
+    private var selection: Binding<Double?> {
+        Binding {
+            selectedIndex.map { Double(slotCentre($0, in: plotWidth)) }
+        } set: { position in
+            let filled = bars.filter { ($0.value ?? 0) > 0 }.map(\.index)
+            let index = position.flatMap { position in
+                filled.min { distance($0, from: position) < distance($1, from: position) }
+            }
+            guard index != selectedIndex else { return }
+            selectedIndex = index
+            if index != nil {
+                BrightHaptic.light.play()
+            }
+        }
+    }
+
+    // The held hour, centred over its bar but kept inside the plot. Weeks roll their own letters.
+    @ViewBuilder
+    private var heldLabel: some View {
+        if let selectedIndex, !range.isWeek {
+            let centred = slotCentre(selectedIndex, in: plotWidth) - heldLabelWidth / 2
+
+            BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
+                .monospacedDigit()
+                .fixedSize()
+                .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
+                .offset(x: min(max(centred, 0), max(plotWidth - heldLabelWidth, 0)))
+                .transition(.opacity)
+        }
+    }
+
+    private func slotTitle(_ index: Int) -> String {
+        slotStart(index).formatted(range.isWeek ? .brightWeekday : .brightHour)
+    }
+
+    // Rolling slots end with the hour now running; the rest count on from the range's start.
+    private func slotStart(_ index: Int) -> Date {
+        if range.isWeek {
+            return Calendar.current.date(byAdding: .day, value: index, to: interval.start) ?? interval.start
+        }
+        if range.isRolling {
+            let hourStart = Calendar.current.dateInterval(of: .hour, for: .now)?.start ?? .now
+            return hourStart.addingTimeInterval(-Double(range.slotCount - 1 - index) * 60 * 60)
+        }
+        return interval.start.addingTimeInterval(Double(index) * 60 * 60)
     }
 }
 

@@ -449,25 +449,6 @@ struct BrightLineChartWidgetV5: View {
         return labels
     }
 
-    private var selectedSample: Sample? {
-        guard let selectedDate else { return nil }
-        return visibleSamples.min {
-            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
-        }
-    }
-
-    private var selection: Binding<Date?> {
-        Binding {
-            selectedDate
-        } set: { newDate in
-            let previous = selectedSample?.date
-            selectedDate = newDate
-            if let current = selectedSample?.date, current != previous {
-                BrightHaptic.light.play()
-            }
-        }
-    }
-
     private var start: Date {
         interval.start
     }
@@ -536,6 +517,38 @@ struct BrightLineChartWidgetV5: View {
         "\(Int(value.rounded()))"
     }
 
+    private enum Constants {
+        static let domainStep: Double = 10
+        static let axisLabelWidth: CGFloat = 26
+        static let lineWidth: CGFloat = 1
+        static let startTickHeight: CGFloat = 7
+        static let eventIconOffset: CGFloat = .spacing2x
+        static let readingID = "reading"
+    }
+}
+
+extension BrightLineChartWidgetV5 {
+    // MARK: - Holding
+
+    private var selectedSample: Sample? {
+        guard let selectedDate else { return nil }
+        return visibleSamples.min {
+            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
+        }
+    }
+
+    private var selection: Binding<Date?> {
+        Binding {
+            selectedDate
+        } set: { newDate in
+            let previous = selectedSample?.date
+            selectedDate = newDate
+            if let current = selectedSample?.date, current != previous {
+                BrightHaptic.light.play()
+            }
+        }
+    }
+
     private struct SelectionModifier: ViewModifier {
         let isEnabled: Bool
         let selection: Binding<Date?>
@@ -547,15 +560,6 @@ struct BrightLineChartWidgetV5: View {
                 content
             }
         }
-    }
-
-    private enum Constants {
-        static let domainStep: Double = 10
-        static let axisLabelWidth: CGFloat = 26
-        static let lineWidth: CGFloat = 1
-        static let startTickHeight: CGFloat = 7
-        static let eventIconOffset: CGFloat = .spacing2x
-        static let readingID = "reading"
     }
 }
 

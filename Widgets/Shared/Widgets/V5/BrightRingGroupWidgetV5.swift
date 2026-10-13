@@ -33,6 +33,7 @@ struct BrightRingGroupWidgetV5: View {
         var image: String?
         var isDuration = false
         var heldText: String?
+        var yesterday: Double?
 
         var id: String { label }
 
@@ -205,7 +206,7 @@ struct BrightRingGroupWidgetV5: View {
     // A ring with its text hung above and below it, so placing the ring places the lot.
     private func piece(_ ring: Ring, index: Int, in area: CGSize) -> some View {
         BrightRingV5(
-            progress: ring.progress,
+            progress: selectedRingID == ring.id ? ring.yesterday.map { ring.goal > 0 ? $0 / ring.goal : 0 } ?? ring.progress : ring.progress,
             color: ring.color,
             label: arrangement == .triangle ? ring.shortLabel : nil,
             image: arrangement == .single ? nil : ring.image,
@@ -249,7 +250,20 @@ struct BrightRingGroupWidgetV5: View {
     private func below(_ ring: Ring, index: Int) -> some View {
         switch arrangement {
         case .single:
-            if let heldText = ring.heldText {
+            if let yesterday = ring.yesterday {
+                steady(isHeld: selectedRingID == ring.id) { isHeld in
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
+                        BrightText(isHeld ? display(yesterday, of: ring) : amountValue(ring, isHeld: false), size: .standout3, color: ring.color)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+
+                        BrightText(isHeld ? " Yesterday" : "/\(display(ring.goal, of: ring))", size: .body1, color: .lightTextColor)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                    }
+                    .lineLimit(1)
+                }
+            } else if let heldText = ring.heldText {
                 steady(isHeld: selectedRingID == ring.id) { isHeld in
                     if isHeld {
                         BrightText(heldText, size: .heading, color: ring.color, weight: .regular)
@@ -400,6 +414,31 @@ struct BrightRingGroupWidgetV5: View {
         }
     }
 
+    // MARK: - Values
+
+    private func distance(from point: CGPoint, to other: CGPoint) -> CGFloat {
+        hypot(point.x - other.x, point.y - other.y)
+    }
+
+    private func share(of ring: Ring) -> String {
+        "\(percent(of: ring))%"
+    }
+
+    // The bare number, for the small square where the rings say what it is.
+    private func percent(of ring: Ring) -> String {
+        "\(Int((ring.progress * 100).rounded()))"
+    }
+
+    private func display(_ value: Double, of ring: Ring) -> String {
+        value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
+    }
+
+    private enum Constants {
+        static let triangleGap: CGFloat = .spacing105x
+    }
+}
+
+extension BrightRingGroupWidgetV5 {
     // MARK: - Holding
 
     // An empty chart laid over the rings, so holding them uses the same gesture as the
@@ -434,29 +473,6 @@ struct BrightRingGroupWidgetV5: View {
         guard id != selectedRingID else { return }
         selectedRingID = id
         BrightHaptic.light.play()
-    }
-
-    // MARK: - Values
-
-    private func distance(from point: CGPoint, to other: CGPoint) -> CGFloat {
-        hypot(point.x - other.x, point.y - other.y)
-    }
-
-    private func share(of ring: Ring) -> String {
-        "\(percent(of: ring))%"
-    }
-
-    // The bare number, for the small square where the rings say what it is.
-    private func percent(of ring: Ring) -> String {
-        "\(Int((ring.progress * 100).rounded()))"
-    }
-
-    private func display(_ value: Double, of ring: Ring) -> String {
-        value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
-    }
-
-    private enum Constants {
-        static let triangleGap: CGFloat = .spacing105x
     }
 }
 

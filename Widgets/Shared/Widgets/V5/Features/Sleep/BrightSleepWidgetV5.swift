@@ -188,6 +188,24 @@ struct BrightSleepWidgetV5: View {
         return minutes < 60 ? "\(minutes) m" : "\(minutes / 60) h \(minutes % 60) m"
     }
 
+    // MARK: - Values
+
+    private func xPosition(of date: Date, width: CGFloat) -> CGFloat {
+        guard let first = segments.first, let last = segments.last else { return 0 }
+        let span = last.end.timeIntervalSince(first.start)
+        guard span > 0 else { return 0 }
+        return width * date.timeIntervalSince(first.start) / span
+    }
+
+    private enum Constants {
+        static let stageCornerRadius: CGFloat = 5
+        static let stripHeight: CGFloat = 44
+        static let stageGap: CGFloat = 1
+        static let minimumStageWidth: CGFloat = 1
+    }
+}
+
+extension BrightSleepWidgetV5 {
     // MARK: - Holding
 
     // An empty chart laid over the strip, so holding it uses the same gesture as the
@@ -220,22 +238,6 @@ struct BrightSleepWidgetV5: View {
                 BrightHaptic.light.play()
             }
         }
-    }
-
-    // MARK: - Values
-
-    private func xPosition(of date: Date, width: CGFloat) -> CGFloat {
-        guard let first = segments.first, let last = segments.last else { return 0 }
-        let span = last.end.timeIntervalSince(first.start)
-        guard span > 0 else { return 0 }
-        return width * date.timeIntervalSince(first.start) / span
-    }
-
-    private enum Constants {
-        static let stageCornerRadius: CGFloat = 5
-        static let stripHeight: CGFloat = 44
-        static let stageGap: CGFloat = 1
-        static let minimumStageWidth: CGFloat = 1
     }
 }
 

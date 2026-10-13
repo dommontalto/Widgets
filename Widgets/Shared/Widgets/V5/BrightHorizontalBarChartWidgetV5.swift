@@ -23,6 +23,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
         var goalReading: String?
         var heldReading: String?
         var heldUnit: String?
+        var yesterday: Double?
 
         var id: String { label }
 
@@ -39,11 +40,21 @@ struct BrightHorizontalBarChartWidgetV5: View {
         }
 
         var formattedGap: String {
-            heldReading ?? abs(goal - value).formatted(.number.precision(.fractionLength(0 ... decimals)))
+            if let yesterday {
+                return yesterday.formatted(.number.precision(.fractionLength(0 ... decimals)))
+            }
+            return heldReading ?? abs(goal - value).formatted(.number.precision(.fractionLength(0 ... decimals)))
         }
 
         var gapUnit: String {
-            heldUnit ?? (value > goal ? "over" : "left")
+            if yesterday != nil {
+                return "Yesterday"
+            }
+            return heldUnit ?? (value > goal ? "over" : "left")
+        }
+
+        var yesterdayProgress: Double? {
+            yesterday.map { goal > 0 ? min(max($0 / goal, 0), 1) : 0 }
         }
 
         var fill: AnyShapeStyle {
@@ -146,22 +157,33 @@ struct BrightHorizontalBarChartWidgetV5: View {
                         }
 
                         HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                            BrightText(isHeld(bar) ? bar.formattedGap : revealed(bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
+                            BrightText(isHeld(bar) && isMedium ? bar.formattedGap : revealed(bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
 
-                            if isMedium || isHeld(bar) {
-                                BrightText(isHeld(bar) ? bar.gapUnit : bar.unit, size: isMedium ? .body3 : .body5, color: .lightTextColor, weight: .regular)
-                                    .contentTransition(.numericText())
-                                    .transition(.opacity)
-                            }
+                            BrightText(isHeld(bar) && isMedium ? bar.gapUnit : (isMedium ? bar.unit : ""), size: .body3, color: .lightTextColor, weight: .regular)
+                                .contentTransition(.numericText())
                         }
                         .lineLimit(1)
                         .minimumScaleFactor(Constants.minimumScale)
-                        .scaleEffect(isHeld(bar) ? Constants.heldScale : 1, anchor: isMedium ? .leading : .center)
+                        .scaleEffect(isHeld(bar) && isMedium ? Constants.heldScale : 1, anchor: .leading)
                     }
                     .frame(maxWidth: isMedium ? nil : .infinity)
-                    .opacity(opacity(of: bar))
+                    .opacity(isMedium ? opacity(of: bar) : (heldID == nil ? .opaque : .zero))
+                }
+            }
+            .overlay {
+                if !isMedium, let bar = bars.first(where: isHeld) {
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+                        BrightText(bar.formattedGap, size: .heading, color: bar.color, weight: .regular)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+
+                        BrightText(bar.gapUnit, size: .body3, color: .lightTextColor, weight: .regular)
+                            .contentTransition(.numericText())
+                    }
+                    .lineLimit(1)
+                    .transition(.opacity)
                 }
             }
             .padding(.leading, isMedium ? Constants.mediumIconSize + .spacing2x : .spacing0x)
@@ -226,7 +248,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             Capsule()
                 .strokeBorder(bar.color.opacity(.veryLowOpacity), lineWidth: Constants.outlineWidth)
 
-            HealthProgressCapsuleShape(progress: isRevealed ? bar.progress : 0)
+            HealthProgressCapsuleShape(progress: isRevealed ? (isHeld(bar) ? bar.yesterdayProgress ?? bar.progress : bar.progress) : 0)
                 .fill(bar.fill)
         }
         .frame(height: Constants.barHeight)
@@ -253,6 +275,18 @@ struct BrightHorizontalBarChartWidgetV5: View {
         isRevealed ? text : text.zeroedDigits
     }
 
+    private enum Constants {
+        static let barHeight: CGFloat = 10
+        static let outlineWidth: CGFloat = 0.5
+        static let iconSize: CGFloat = 18
+        static let mediumIconSize: CGFloat = 20
+        static let minimumScale: CGFloat = 0.6
+        static let heldScale: CGFloat = 1.1
+        static let space = "horizontalBarCard"
+    }
+}
+
+extension BrightHorizontalBarChartWidgetV5 {
     // MARK: - Holding
 
     private func isHeld(_ bar: Bar) -> Bool {
@@ -273,16 +307,6 @@ struct BrightHorizontalBarChartWidgetV5: View {
         guard nearest?.id != heldID else { return }
         heldID = nearest?.id
         BrightHaptic.light.play()
-    }
-
-    private enum Constants {
-        static let barHeight: CGFloat = 10
-        static let outlineWidth: CGFloat = 0.5
-        static let iconSize: CGFloat = 18
-        static let mediumIconSize: CGFloat = 20
-        static let minimumScale: CGFloat = 0.6
-        static let heldScale: CGFloat = 1.1
-        static let space = "horizontalBarCard"
     }
 }
 

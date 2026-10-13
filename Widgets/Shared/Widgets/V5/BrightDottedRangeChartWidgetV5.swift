@@ -219,40 +219,6 @@ struct BrightDottedRangeChartWidgetV5: View {
         }
     }
 
-    // MARK: - Holding
-
-    // An empty chart laid over the bands, so holding them uses the same gesture as the
-    // charts and the page still scrolls. Snaps to the column under the finger.
-    @ViewBuilder
-    private var touchLayer: some View {
-        if allowsSelection {
-            Chart {
-                PointMark(x: .value("Column", 0.5), y: .value("Floor", 0))
-                    .opacity(.zero)
-            }
-            .chartXScale(domain: 0 ... 1)
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartLegend(.hidden)
-            .chartXSelection(value: selection)
-        }
-    }
-
-    private var selection: Binding<Double?> {
-        Binding {
-            selectedIndex.map { (Double($0) + 0.5) / Double(measures.count) }
-        } set: { position in
-            let id = position.map { position in
-                measures[min(max(Int(position * Double(measures.count)), 0), measures.count - 1)].id
-            }
-            guard id != selectedID else { return }
-            selectedID = id
-            if id != nil {
-                BrightHaptic.light.play()
-            }
-        }
-    }
-
     // MARK: - Values
 
     private var selectedMeasure: Measure? {
@@ -321,6 +287,42 @@ struct BrightDottedRangeChartWidgetV5: View {
         static let dotRingWidth: CGFloat = 2
         static let dotGlowRadius: CGFloat = 3
         static let iconHeight: CGFloat = 20
+    }
+}
+
+extension BrightDottedRangeChartWidgetV5 {
+    // MARK: - Holding
+
+    // An empty chart laid over the bands, so holding them uses the same gesture as the
+    // charts and the page still scrolls. Snaps to the column under the finger.
+    @ViewBuilder
+    private var touchLayer: some View {
+        if allowsSelection {
+            Chart {
+                PointMark(x: .value("Column", 0.5), y: .value("Floor", 0))
+                    .opacity(.zero)
+            }
+            .chartXScale(domain: 0 ... 1)
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXSelection(value: selection)
+        }
+    }
+
+    private var selection: Binding<Double?> {
+        Binding {
+            selectedIndex.map { (Double($0) + 0.5) / Double(measures.count) }
+        } set: { position in
+            let id = position.map { position in
+                measures[min(max(Int(position * Double(measures.count)), 0), measures.count - 1)].id
+            }
+            guard id != selectedID else { return }
+            selectedID = id
+            if id != nil {
+                BrightHaptic.light.play()
+            }
+        }
     }
 }
 

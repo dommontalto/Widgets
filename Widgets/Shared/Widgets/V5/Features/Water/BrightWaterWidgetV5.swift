@@ -212,6 +212,32 @@ struct BrightWaterWidgetV5: View {
             .frame(width: Constants.markerSize, height: Constants.markerSize)
     }
 
+    // MARK: - Values
+
+    private var level: Double {
+        isHolding ? yesterday : drinks.reduce(0) { $0 + $1.litres }
+    }
+
+    // "2.13 L", for the total.
+    private func full(_ litres: Double) -> String {
+        [appearance.format(litres), appearance.unit].compactMap(\.self).joined(separator: " ")
+    }
+
+    // "3.4L", for the smaller labels.
+    private func compact(_ litres: Double) -> String {
+        appearance.format(litres) + (appearance.unit ?? "")
+    }
+
+    private enum Constants {
+        static let tickCount = 11
+        static let rulerWidth: CGFloat = 8
+        static let tickHeight: CGFloat = 1
+        static let lineWidth: CGFloat = 1
+        static let markerSize: CGFloat = 14
+    }
+}
+
+extension BrightWaterWidgetV5 {
     // MARK: - Holding
 
     // An empty chart laid over the tank, so holding it uses the same gesture as the charts
@@ -241,30 +267,6 @@ struct BrightWaterWidgetV5: View {
                 BrightHaptic.light.play()
             }
         }
-    }
-
-    // MARK: - Values
-
-    private var level: Double {
-        isHolding ? yesterday : drinks.reduce(0) { $0 + $1.litres }
-    }
-
-    // "2.13 L", for the total.
-    private func full(_ litres: Double) -> String {
-        [appearance.format(litres), appearance.unit].compactMap(\.self).joined(separator: " ")
-    }
-
-    // "3.4L", for the smaller labels.
-    private func compact(_ litres: Double) -> String {
-        appearance.format(litres) + (appearance.unit ?? "")
-    }
-
-    private enum Constants {
-        static let tickCount = 11
-        static let rulerWidth: CGFloat = 8
-        static let tickHeight: CGFloat = 1
-        static let lineWidth: CGFloat = 1
-        static let markerSize: CGFloat = 14
     }
 }
 

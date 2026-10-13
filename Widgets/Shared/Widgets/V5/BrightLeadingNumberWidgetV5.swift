@@ -29,10 +29,6 @@ struct BrightLeadingNumberWidgetV5: View {
     @State private var isRevealed = false
     @State private var touch: UnitPoint?
 
-    private var isHeld: Bool {
-        touch != nil && !details.isEmpty
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
@@ -67,23 +63,6 @@ struct BrightLeadingNumberWidgetV5: View {
         .accessibilityLabel("\(title), \(display) \(unit ?? "")")
     }
 
-    private var detailList: some View {
-        VStack(alignment: .leading, spacing: .spacing05x) {
-            ForEach(details, id: \.self) { detail in
-                HStack(spacing: .spacing1x) {
-                    BrightText(detail.label, size: .body3, color: .lightTextColor)
-
-                    Spacer(minLength: .spacing1x)
-
-                    BrightText(detail.value, size: .body3, weight: .regular)
-                        .monospacedDigit()
-                }
-                .lineLimit(1)
-            }
-        }
-        .padding(.top, .spacing2x)
-    }
-
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
@@ -116,6 +95,31 @@ struct BrightLeadingNumberWidgetV5: View {
 
     private var display: String {
         appearance.format(value)
+    }
+}
+
+extension BrightLeadingNumberWidgetV5 {
+    // MARK: - Holding
+
+    private var isHeld: Bool {
+        touch != nil && !details.isEmpty
+    }
+
+    private var detailList: some View {
+        VStack(alignment: .leading, spacing: .spacing05x) {
+            ForEach(details, id: \.self) { detail in
+                HStack(spacing: .spacing1x) {
+                    BrightText(detail.label, size: .body3, color: .lightTextColor)
+
+                    Spacer(minLength: .spacing1x)
+
+                    BrightText(detail.value, size: .body3, weight: .regular)
+                        .monospacedDigit()
+                }
+                .lineLimit(1)
+            }
+        }
+        .padding(.top, .spacing2x)
     }
 }
 

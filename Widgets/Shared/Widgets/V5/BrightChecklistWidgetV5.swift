@@ -118,20 +118,13 @@ struct BrightChecklistWidgetV5: View {
 
     private var reading: some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            if let heldIndex, days.indices.contains(heldIndex) {
-                BrightText(days[heldIndex].date.formatted(.brightWeekdayShort), size: .huge)
-                    .contentTransition(.numericText())
+            BrightText(heldDay?.date.formatted(.brightWeekdayShort) ?? (isRevealed ? "\(streak)" : "\(streak)".zeroedDigits), size: .huge)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.brightBouncy, value: streak)
 
-                BrightText(status(of: days[heldIndex]), size: .body1, color: days[heldIndex].isDone ? tint : .lightTextColor)
-                    .contentTransition(.numericText())
-            } else {
-                BrightText(isRevealed ? "\(streak)" : "\(streak)".zeroedDigits, size: .huge)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.brightBouncy, value: streak)
-
-                BrightText(unit, size: .body1, color: .lightTextColor)
-            }
+            BrightText(heldDay.map { status(of: $0) } ?? unit, size: .body1, color: .lightTextColor)
+                .contentTransition(.numericText())
         }
         .lineLimit(1)
         .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
@@ -144,18 +137,6 @@ struct BrightChecklistWidgetV5: View {
         return day.date > .now ? "Upcoming" : "Missed"
     }
 
-    private func resolveTouch() {
-        guard let touch else {
-            heldIndex = nil
-            return
-        }
-        let point = CGPoint(x: touch.x * cardSize.width, y: touch.y * cardSize.height)
-        let nearest = dotCentres.min { hypot($0.value.x - point.x, $0.value.y - point.y) < hypot($1.value.x - point.x, $1.value.y - point.y) }?.key
-        guard nearest != heldIndex else { return }
-        heldIndex = nearest
-        BrightHaptic.light.play()
-    }
-
     private enum Constants {
         static let space = "checklistCard"
         static let heldScale: CGFloat = 1.3
@@ -166,6 +147,26 @@ struct BrightChecklistWidgetV5: View {
         static let checkSize: CGFloat = 9
         static let connectorLength: CGFloat = 15
         static let connectorThickness: CGFloat = 1
+    }
+}
+
+extension BrightChecklistWidgetV5 {
+    // MARK: - Holding
+
+    private var heldDay: Day? {
+        heldIndex.flatMap { days.indices.contains($0) ? days[$0] : nil }
+    }
+
+    private func resolveTouch() {
+        guard let touch else {
+            heldIndex = nil
+            return
+        }
+        let point = CGPoint(x: touch.x * cardSize.width, y: touch.y * cardSize.height)
+        let nearest = dotCentres.min { hypot($0.value.x - point.x, $0.value.y - point.y) < hypot($1.value.x - point.x, $1.value.y - point.y) }?.key
+        guard nearest != heldIndex else { return }
+        heldIndex = nearest
+        BrightHaptic.light.play()
     }
 }
 

@@ -238,32 +238,6 @@ struct BrightMenstrualWidgetV5: View {
         .frame(height: Constants.pillHeight + Constants.arrowHeight + .spacing05x)
     }
 
-    // An empty chart over the pills, so holding them uses the same gesture as the charts
-    // and the page still scrolls. Snaps to the pill under the finger.
-    @ViewBuilder
-    private func selectionLayer(firstDay: Int, count: Int) -> some View {
-        if allowsSelection {
-            Chart {
-                PointMark(x: .value("Day", 0.5), y: .value("Floor", 0))
-                    .opacity(.zero)
-            }
-            .chartXScale(domain: 0 ... Double(count))
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartLegend(.hidden)
-            .chartXSelection(value: Binding {
-                selectedDay.map { Double($0 - firstDay) + 0.5 }
-            } set: { position in
-                let day = position.map { firstDay + min(max(Int($0), 0), count - 1) }
-                guard day != selectedDay else { return }
-                selectedDay = day
-                if day != nil {
-                    BrightHaptic.light.play()
-                }
-            })
-        }
-    }
-
     // A held day: where it falls in the cycle and its date.
     private func dayCaption(_ day: Int) -> String {
         let date = Calendar.current.date(byAdding: .day, value: day - today, to: .now) ?? .now
@@ -488,6 +462,36 @@ struct BrightMenstrualWidgetV5: View {
         // How many days of the strip sit before the day it's centred on.
         static let compactLeadingDays = 8
         static let expandedLeadingDays = 4
+    }
+}
+
+extension BrightMenstrualWidgetV5 {
+    // MARK: - Holding
+
+    // An empty chart over the pills, so holding them uses the same gesture as the charts
+    // and the page still scrolls. Snaps to the pill under the finger.
+    @ViewBuilder
+    private func selectionLayer(firstDay: Int, count: Int) -> some View {
+        if allowsSelection {
+            Chart {
+                PointMark(x: .value("Day", 0.5), y: .value("Floor", 0))
+                    .opacity(.zero)
+            }
+            .chartXScale(domain: 0 ... Double(count))
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXSelection(value: Binding {
+                selectedDay.map { Double($0 - firstDay) + 0.5 }
+            } set: { position in
+                let day = position.map { firstDay + min(max(Int($0), 0), count - 1) }
+                guard day != selectedDay else { return }
+                selectedDay = day
+                if day != nil {
+                    BrightHaptic.light.play()
+                }
+            })
+        }
     }
 }
 

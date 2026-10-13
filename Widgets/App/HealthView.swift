@@ -106,6 +106,8 @@ struct HealthView: View {
 
     private var newWidgets: [HealthWidgetItemV5] {
         [
+            HealthWidgetItemV5(kind: .exercise, style: .exerciseSplits, size: .medium),
+            HealthWidgetItemV5(kind: .exercise, style: .exerciseSplits, size: .large),
             HealthWidgetItemV5(kind: .nutrition, style: .nutritionNumber, size: .small),
             HealthWidgetItemV5(kind: .journal, style: .journalChecklist, size: .small),
             HealthWidgetItemV5(kind: .intake, style: .intakeMeter, size: .small),

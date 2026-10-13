@@ -334,20 +334,6 @@ struct BrightDottedLineChartWidgetV5: View {
         markedIndex.map { shownPoints[$0] }
     }
 
-    // Snaps the finger to the nearest reading.
-    private var selection: Binding<Double?> {
-        Binding {
-            selectedIndex.map(Double.init)
-        } set: { position in
-            let index = position.map { min(max(Int($0.rounded()), 0), lastIndex) }
-            guard index != selectedIndex else { return }
-            selectedIndex = index
-            if index != nil {
-                BrightHaptic.light.play()
-            }
-        }
-    }
-
     // Rounded out to tidy numbers either side, so the readings never touch the edge.
     private var domain: ClosedRange<Double> {
         let values = shownPoints.map(\.value)
@@ -381,6 +367,35 @@ struct BrightDottedLineChartWidgetV5: View {
         return width * CGFloat(index) / CGFloat(lastIndex)
     }
 
+    private enum Constants {
+        static let axisLabelWidth: CGFloat = 26
+        static let lineWidth: CGFloat = 1
+        static let hairline: CGFloat = 0.5
+        static let dotDiameter: CGFloat = 7
+        static let dayLabelHeight: CGFloat = 12
+        static let domainStepRatio = 0.5
+        static let checkmarkSize: CGFloat = 18
+        static let checkmarkBaselineLift: CGFloat = 3
+    }
+}
+
+extension BrightDottedLineChartWidgetV5 {
+    // MARK: - Holding
+
+    // Snaps the finger to the nearest reading.
+    private var selection: Binding<Double?> {
+        Binding {
+            selectedIndex.map(Double.init)
+        } set: { position in
+            let index = position.map { min(max(Int($0.rounded()), 0), lastIndex) }
+            guard index != selectedIndex else { return }
+            selectedIndex = index
+            if index != nil {
+                BrightHaptic.light.play()
+            }
+        }
+    }
+
     private struct SelectionModifier: ViewModifier {
         let isEnabled: Bool
         let selection: Binding<Double?>
@@ -392,17 +407,6 @@ struct BrightDottedLineChartWidgetV5: View {
                 content
             }
         }
-    }
-
-    private enum Constants {
-        static let axisLabelWidth: CGFloat = 26
-        static let lineWidth: CGFloat = 1
-        static let hairline: CGFloat = 0.5
-        static let dotDiameter: CGFloat = 7
-        static let dayLabelHeight: CGFloat = 12
-        static let domainStepRatio = 0.5
-        static let checkmarkSize: CGFloat = 18
-        static let checkmarkBaselineLift: CGFloat = 3
     }
 }
 

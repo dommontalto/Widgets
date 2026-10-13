@@ -19,26 +19,29 @@ extension HealthWidgetDemoV5 {
 
     static func scoreRing(_ score: HealthScoreV5) -> BrightRingGroupWidgetV5.Ring {
         var ring = wellbeingRings(size: .medium)[HealthScoreV5.allCases.firstIndex(of: score) ?? 0]
-        ring.heldText = scoreStatus(score)
+        ring.yesterday = scoreYesterday(score)
         return ring
     }
 
     static func scoreBar(_ score: HealthScoreV5) -> BrightHorizontalBarChartWidgetV5.Bar {
         var scoreBar = bar(scoreRing(score), unit: "%", goalReading: "100%")
-        scoreBar.heldReading = scoreStatus(score)
-        scoreBar.heldUnit = ""
+        scoreBar.yesterday = scoreYesterday(score)
         return scoreBar
     }
 
-    static func scoreStatus(_ score: HealthScoreV5) -> String {
-        switch score {
-        case .recovery: "Poor"
-        case .fatigue: "Low"
-        case .readiness: "Sub-optimal"
+    static var scoreBars: [BrightHorizontalBarChartWidgetV5.Bar] {
+        HealthScoreV5.allCases.map { score in
+            var scoreBar = bar(wellbeingRings(size: .medium)[HealthScoreV5.allCases.firstIndex(of: score) ?? 0], unit: "%")
+            scoreBar.yesterday = scoreYesterday(score)
+            return scoreBar
         }
     }
 
-    static var scoreBars: [BrightHorizontalBarChartWidgetV5.Bar] {
-        wellbeingRings(size: .medium).map { bar($0, unit: "%") }
+    static func scoreYesterday(_ score: HealthScoreV5) -> Double {
+        switch score {
+        case .recovery: 21
+        case .fatigue: 34
+        case .readiness: 39
+        }
     }
 }

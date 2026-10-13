@@ -114,6 +114,16 @@ struct HealthWidgetViewV5: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
+        case (.exercise, _):
+            BrightExerciseSplitsWidgetV5(
+                title: widget.kind.title,
+                subtitle: "Past 4 weeks",
+                strengthPercent: HealthWidgetDemoV5.exerciseStrengthPercent,
+                cardioPercent: HealthWidgetDemoV5.exerciseCardioPercent,
+                weeks: HealthWidgetDemoV5.exerciseWeeks,
+                size: widget.size,
+                allowsSelection: allowsSelection
+            )
         case (.journal, _):
             BrightChecklistWidgetV5(
                 title: widget.kind.title,

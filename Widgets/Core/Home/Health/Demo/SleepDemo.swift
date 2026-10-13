@@ -30,13 +30,13 @@ extension HealthWidgetDemoV5 {
         let ring = sleepStageRing(stage)
         var stageBar = bar(ring, systemImage: "bed.double.fill", reading: ring.caption, goalReading: "100%")
         stageBar.heldReading = "\(Int((ring.progress * 100).rounded()))%"
-        stageBar.heldUnit = "of the night"
+        stageBar.heldUnit = ""
         return stageBar
     }
 
     static func sleepStageShare(_ stage: HealthSleepStageV5) -> String {
         let ring = sleepRings[HealthSleepStageV5.allCases.firstIndex(of: stage) ?? 0]
-        return "\(Int((ring.progress * 100).rounded()))% of the night"
+        return "\(Int((ring.progress * 100).rounded()))%"
     }
 
     static let sleepScore = 82
