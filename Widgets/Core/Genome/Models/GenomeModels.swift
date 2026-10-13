@@ -249,7 +249,7 @@ enum GenomeEvidenceLevel: String {
     }
 
     var label: String {
-        rawValue.capitalized
+        self == .moderate ? "Borderline" : rawValue.capitalized
     }
 
     var color: Color {

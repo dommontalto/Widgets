@@ -6,61 +6,45 @@
 import SwiftUI
 
 enum ScoresStatus: String, TabDisplayable {
-    case excellent
-    case good
-    case average
-    case subOptimal
-    case poor
+    case optimal
+    case borderline
     case low
     case high
-    case noData
+
+    init?(label: String?) {
+        guard let label, let status = ScoresStatus(rawValue: label.lowercased()) else { return nil }
+        self = status
+    }
 
     var displayTitle: String {
         switch self {
-        case .excellent:
-            "EXCELLENT"
-        case .good:
-            "GOOD"
-        case .average:
-            "AVERAGE"
-        case .subOptimal:
-            "SUB-OPTIMAL"
-        case .poor:
-            "POOR"
+        case .optimal:
+            "OPTIMAL"
+        case .borderline:
+            "BORDERLINE"
         case .low:
             "LOW"
         case .high:
             "HIGH"
-        case .noData:
-            "NO DATA"
         }
     }
 
     var color: Color {
         switch self {
-        case .excellent, .low:
+        case .optimal:
             Color.defaultBrightGreen
-        case .good:
-            Color.defaultBlue
-        case .average:
-            Color.defaultBrightPink
-        case .subOptimal:
-            Color.defaultOrange
-        case .poor, .high:
+        case .borderline:
+            Color.defaultYellow
+        case .low, .high:
             Color.defaultRed
-        case .noData:
-            Color.textColor
         }
     }
 
-    // Maps a 0-100 heart-score percentage onto the qualitative status buckets.
     static func forHeartPercent(_ percent: Int) -> ScoresStatus {
         switch percent {
-        case 85 ... 100: .excellent
-        case 70 ... 84: .good
-        case 55 ... 69: .average
-        case 40 ... 54: .subOptimal
-        default: .poor
+        case 70 ... 100: .optimal
+        case 40 ... 69: .borderline
+        default: .low
         }
     }
 }

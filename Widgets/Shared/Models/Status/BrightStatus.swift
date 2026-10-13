@@ -8,46 +8,33 @@
 import SwiftUI
 
 struct BrightStatus: View {
-    let status: String
+    let status: String?
     var withStroke = false
 
     private var text: String {
-        let uppercased = status.uppercased()
-        if uppercased == "NODATA" { return "NO DATA" }
-        if uppercased == "SUBOPTIMAL" { return "SUB-OPTIMAL" }
-        return !status.isEmpty ? uppercased : "NO DATA"
-    }
-
-    private var isNoData: Bool {
-        text.uppercased() == "NO DATA"
+        (status ?? "").uppercased()
     }
 
     private var isNumber: Bool {
-        Double(status) != nil || status == "--"
+        Double(text) != nil || text == "--"
     }
 
     var body: some View {
-        ZStack {
+        if !text.isEmpty {
             BrightText(
-                text.uppercased(),
+                text,
                 size: isNumber ? .heading : .body3,
-                color: isNoData ? .lightTextColor : color,
+                color: color,
                 weight: isNumber ? .regular : .light
             )
-            .padding(isNoData ? .zero : .spacing1x)
+            .padding(.spacing1x)
             .padding(.vertical, isNumber ? -.spacing05x : .zero)
+            // The fill is drawn in the shape rather than the view clipped to it:
+            // a clip is an offscreen pass per pill, a shaped fill is not, and
+            // the text never overflows the capsule anyway.
+            .background(isRPE ? Color.clear : color.opacity(.minimalOpacity), in: shape)
+            .overlay(shape.stroke(strokeColor, lineWidth: strokeWidth))
         }
-        // The fill is drawn in the shape rather than the view clipped to it:
-        // a clip is an offscreen pass per pill, a shaped fill is not, and
-        // the text never overflows the capsule anyway.
-        .background(
-            isNoData || isRPE ? Color.clear : color.opacity(.minimalOpacity),
-            in: shape
-        )
-        .overlay(
-            shape
-                .stroke(strokeColor, lineWidth: strokeWidth)
-        )
     }
 
     private var strokeColor: Color {
@@ -56,7 +43,7 @@ struct BrightStatus: View {
 
     private var strokeWidth: CGFloat {
         if isRPE { return 1 }
-        return withStroke && !isNoData ? 0.5 : 0
+        return withStroke ? 0.5 : 0
     }
 
     private var shape: AnyShape {
@@ -66,60 +53,46 @@ struct BrightStatus: View {
     }
 
     private var isRPE: Bool {
-        rpeColor != nil
+        rpe != nil
     }
 
-    private var rpeColor: Color? {
-        guard text.hasPrefix("RPE "), let value = Int(text.dropFirst(4)) else { return nil }
-        let ramp: Color = switch value {
-        case ...3: .defaultBlue
-        case 4...5: .defaultBrightPink
-        case 6...7: .defaultOrange
+    private var rpe: Int? {
+        guard text.hasPrefix("RPE ") else { return nil }
+        return Int(text.dropFirst(4))
+    }
+
+    private var zone: Int? {
+        guard text.hasPrefix("ZONE ") else { return nil }
+        return Int(text.dropFirst(5))
+    }
+
+    private static func rampColor(_ step: Int) -> Color {
+        switch step {
+        case ...1: .defaultBlue
+        case 2: .defaultGreen
+        case 3: .defaultYellow
+        case 4: .defaultOrange
         default: .defaultRed
         }
-        return ramp
     }
 
     var color: Color {
-        if let rpeColor { return rpeColor }
+        if let rpe { return Self.rampColor((rpe + 1) / 2) }
+        if let zone { return Self.rampColor(zone) }
 
-        return switch text.uppercased() {
-        case "EXCELLENT", "OPTIMAL", "AVG ZONE 2", "IN RANGE":
+        return switch text {
+        case "OPTIMAL", "IN PROGRESS":
             Color.defaultBrightGreen
-        case "GOOD":
-            Color.defaultBlue
-        case "AVERAGE", "MODERATE":
-            Color.defaultBrightPink
-        case "SUB-OPTIMAL", "AVG ZONE 4", "BORDERLINE":
-            Color.defaultOrange
-        case "POOR", "LOW", "HIGH", "AVG ZONE 5", "LOWER", "HIGHER", "OUT OF RANGE", "WARNING":
-            Color.defaultRed
-        case "STANDARD":
-            Color.defaultBlue
-        case "IN PROGRESS":
-            Color.defaultSkyBlue
-        case "AVG ZONE 1":
-            Color.defaultBlue
-        case "AVG ZONE 3":
+        case "BORDERLINE":
             Color.defaultYellow
-        case "ZONE 1":
-            Color.defaultBlue
-        case "ZONE 2":
-            Color.defaultGreen
-        case "ZONE 3":
-            Color.defaultPink
-        case "ZONE 4":
-            Color.defaultOrange
-        case "ZONE 5":
+        case "LOW", "HIGH":
             Color.defaultRed
-        case "NO DATA":
-            Color.textColor
         default:
-            Color.defaultBrightGreen
+            Color.lightTextColor
         }
     }
 }
 
 #Preview {
-    BrightStatus(status: "GOOD")
+    BrightStatus(status: "OPTIMAL")
 }
