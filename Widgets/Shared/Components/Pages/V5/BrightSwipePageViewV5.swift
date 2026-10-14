@@ -265,15 +265,15 @@ struct BrightSwipePageViewV5<Content: View>: View {
             .brightSoftScrollEdgesV5()
             .toolbar {
                 if pillsInToolbar {
-                    if showInlineTabs {
-                        ToolbarItem(placement: .principal) {
-                            SwipePagePillRow(
-                                pages: pages,
-                                marksSelectedPill: marksSelectedPill,
-                                activePage: scrollPosition ?? selectedIndex,
-                                onPillTap: handlePillTap
-                            )
-                        }
+                    ToolbarItem(placement: .principal) {
+                        SwipePagePillRow(
+                            pages: pages,
+                            marksSelectedPill: marksSelectedPill,
+                            activePage: scrollPosition ?? selectedIndex,
+                            onPillTap: handlePillTap
+                        )
+                        .opacity(showInlineTabs ? 1 : 0)
+                        .allowsHitTesting(showInlineTabs)
                     }
                 } else if let file {
                     ToolbarItem(placement: .principal) {
