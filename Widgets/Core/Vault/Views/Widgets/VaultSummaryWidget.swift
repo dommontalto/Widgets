@@ -132,7 +132,7 @@ struct VaultSummaryWidget: View {
     }
 
     private var deltaPill: some View {
-        let tone: Color = delta7d > 0 ? .defaultCyan : .defaultRed
+        let tone: Color = delta7d > 0 ? .defaultGreen : .defaultRed
 
         return BrightText(
             "\(delta7d > 0 ? "+" : "−")\(Self.percent(abs(delta7d))) this week".uppercased(),
