@@ -13,6 +13,7 @@ struct HealthView: View {
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
     @State private var revealReplay = 0
+    @State private var showingWhatsNew = false
 
     var body: some View {
         NavigationStack {
@@ -39,6 +40,17 @@ struct HealthView: View {
                         }
                     }
 
+                    if !editor.isEditing {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                showingWhatsNew = true
+                            } label: {
+                                Label("What’s New in V5", systemImage: "sparkles")
+                                    .labelStyle(.iconOnly)
+                            }
+                        }
+                    }
+
                     ToolbarItem(placement: .topBarTrailing) {
                         if editor.isEditing {
                             Button {
@@ -59,6 +71,9 @@ struct HealthView: View {
                             }
                         }
                     }
+                }
+                .sheet(isPresented: $showingWhatsNew) {
+                    BrightWhatsNewSheetV5()
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
                     AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {

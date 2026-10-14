@@ -169,4 +169,21 @@ nonisolated class ImageNames {
     static let atlasTabIconUnselectedV5        = "MainTab/atlas_tab_icon_unselected_v5"
     static let logTabIconSelectedV5            = "MainTab/log_tab_icon_selected_v5"
     static let logTabIconUnselectedV5          = "MainTab/log_tab_icon_unselected_v5"
+
+    // What's New
+    static let whatsNewBannerV5               = "whats_new_banner_v5"
+    static let whatsNewLighthouseChatV5       = "whats_new_lighthouse_chat_v5"
+    static let whatsNewLighthouseModelsV5     = "whats_new_lighthouse_models_v5"
+    static let whatsNewWaypointV5             = "whats_new_waypoint_v5"
+    static let whatsNewVaultGenomeV5          = "whats_new_vault_genome_v5"
+    static let whatsNewVaultShareV5           = "whats_new_vault_share_v5"
+    static let whatsNewGuidedTestingV5        = "whats_new_guided_testing_v5"
+    static let whatsNewGuidedTestingStatsV5   = "whats_new_guided_testing_stats_v5"
+    static let whatsNewExerciseWatchV5        = "whats_new_exercise_watch_v5"
+    static let whatsNewExercisePlannerV5      = "whats_new_exercise_planner_v5"
+    static let whatsNewAtlasV5                = "whats_new_atlas_v5"
+    static let whatsNewAndroidWebIconV5       = "whats_new_android_web_icon_v5"
+    static let whatsNewDnaIconV5              = "whats_new_dna_icon_v5"
+    static let whatsNewWidgetsIconV5          = "whats_new_widgets_icon_v5"
+    static let whatsNewIntegrationsIconV5     = "whats_new_integrations_icon_v5"
 }
