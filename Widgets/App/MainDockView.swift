@@ -109,36 +109,37 @@ struct MainDockView: View {
 
     private var vaultPage: some View {
         NavigationStack {
-            emptyPage
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            showingGenome = true
-                        } label: {
-                            Image(ImageNames.genomeV5)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: Constants.genomeSize, height: Constants.genomeSize)
-                        }
-                    }
-                    if #available(iOS 26, *) {
-                        ToolbarSpacer(.fixed, placement: .topBarLeading)
-                    }
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            showingGuidedTesting = true
-                        } label: {
-                            Label("Guided Testing", systemImage: "testtube.2")
-                                .labelStyle(.iconOnly)
-                        }
+            BrightPageViewV5 {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingGenome = true
+                    } label: {
+                        Image(ImageNames.genomeV5)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: Constants.genomeSize, height: Constants.genomeSize)
                     }
                 }
-                .navigationDestination(isPresented: $showingGenome) {
-                    GenomeView()
+                if #available(iOS 26, *) {
+                    ToolbarSpacer(.fixed, placement: .topBarLeading)
                 }
-                .navigationDestination(isPresented: $showingGuidedTesting) {
-                    VaultGuidedTestingScreen()
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingGuidedTesting = true
+                    } label: {
+                        Label("Guided Testing", systemImage: "testtube.2")
+                            .labelStyle(.iconOnly)
+                    }
                 }
+            } content: {
+                VaultSummaryWidget(ranking: .demo)
+            }
+            .navigationDestination(isPresented: $showingGenome) {
+                GenomeView()
+            }
+            .navigationDestination(isPresented: $showingGuidedTesting) {
+                VaultGuidedTestingScreen()
+            }
         }
     }
 
