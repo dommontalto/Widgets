@@ -18,6 +18,10 @@ struct ExploreView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
+            BrightText("Demo Data - Coming Soon", size: .body3, color: .lightTextColor)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, .spacing3x)
+
             BrightSearchBarV5("What would you like me to find?", text: $searchText) { isSearchFocused = $0 }
                 .padding(.horizontal, .spacing3x)
 
