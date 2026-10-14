@@ -255,12 +255,12 @@ struct VaultSummaryWidget: View {
             .animation(.brightEaseInOut, value: heldBin)
             .animation(.brightBouncy, value: userBin)
 
-            HStack(spacing: .spacing0x) {
+            ZStack {
                 BrightText("Bottom", size: .body5, color: .lightTextColor)
-                Spacer(minLength: .spacing1x)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 BrightText("Median", size: .body5, color: .lightTextColor)
-                Spacer(minLength: .spacing1x)
                 BrightText("Top", size: .body5, color: .lightTextColor)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
     }
@@ -271,7 +271,7 @@ struct VaultSummaryWidget: View {
                 Capsule()
                     .fill(bin.index == userBin ? Self.solidBar : Self.fadingBar)
                     .frame(width: barWidth, height: isRevealed ? barHeight(bin, barWidth: barWidth, plotHeight: plotHeight) : barWidth)
-                    .opacity(heldBin == nil || heldBin == bin.index ? .opaque : .veryLowOpacity)
+                    .opacity(heldBin == nil || heldBin == bin.index ? .opaque : .ultraLowOpacity)
                     .offset(x: slotCentre(bin.index, in: size.width) - barWidth / 2)
                     .animation(.brightReveal.delay(Double(bin.index) * Constants.revealStagger), value: isRevealed)
             }
@@ -366,7 +366,7 @@ struct VaultSummaryWidget: View {
 
     private var cohortRow: some View {
         HStack(spacing: .spacing1x) {
-            BrightText("Compared with", size: .body3, color: .lightTextColor)
+            BrightText("Compared with", size: .body2, color: .lightTextColor)
                 .lineLimit(1)
 
             Spacer(minLength: .spacing1x)
@@ -393,7 +393,7 @@ struct VaultSummaryWidget: View {
                 }
             }
         } label: {
-            BrightText(title(selection.wrappedValue), size: .body3, weight: .regular)
+            BrightText(title(selection.wrappedValue), size: .body1, weight: .regular)
                 .contentTransition(.numericText())
                 .lineLimit(1)
                 .padding(.horizontal, .spacing2x)
