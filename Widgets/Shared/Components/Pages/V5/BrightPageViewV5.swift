@@ -11,13 +11,14 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
     let title: String
     let scrollableTitle: Bool
     let horizontalPadding: CGFloat
-    let backgroundColor: Color
+    let backgroundColor: Color?
     let bottomSafeArea: Bool
     let infoButton: (() -> Void)?
     let file: String?
     let toolbar: Toolbar
     let content: Content
 
+    @Environment(\.brightPageBackground) private var pageBackground
     @State private var inlineTitleOpacity: CGFloat = 0
     @State private var scrollY: CGFloat = 0
 
@@ -33,7 +34,7 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
         title: String = "",
         scrollableTitle: Bool = true,
         horizontalPadding: CGFloat = .spacing3x,
-        backgroundColor: Color = .defaultBackground,
+        backgroundColor: Color? = nil,
         bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
         file: String? = #file,
@@ -76,7 +77,7 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .safeAreaPadding(bottomSafeArea ? .bottom : [])
             .scrollDismissesKeyboard(.interactively)
-            .background(backgroundColor.edgesIgnoringSafeArea(.all))
+            .background((backgroundColor ?? pageBackground).edgesIgnoringSafeArea(.all))
             .onTapGesture {
                 UIApplication.shared.sendAction(
                     #selector(UIResponder.resignFirstResponder),
@@ -119,7 +120,7 @@ extension BrightPageViewV5 where Toolbar == EmptyToolbarContent {
         title: String = "",
         scrollableTitle: Bool = true,
         horizontalPadding: CGFloat = .spacing3x,
-        backgroundColor: Color = .defaultBackground,
+        backgroundColor: Color? = nil,
         bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
         file: String? = #file,

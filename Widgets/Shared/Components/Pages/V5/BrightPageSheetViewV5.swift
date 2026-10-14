@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+extension EnvironmentValues {
+    @Entry var brightPageBackground: Color = .defaultBackground
+}
+
 struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
     let title: String
     let horizontalPadding: CGFloat
@@ -50,11 +54,14 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
     }
 
     var body: some View {
-        if let path {
-            NavigationStack(path: path) { stackContent }
-        } else {
-            NavigationStack { stackContent }
+        Group {
+            if let path {
+                NavigationStack(path: path) { stackContent }
+            } else {
+                NavigationStack { stackContent }
+            }
         }
+        .environment(\.brightPageBackground, backgroundColor)
     }
 
     private var stackContent: some View {
