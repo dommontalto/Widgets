@@ -21,9 +21,12 @@ struct HealthView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         if editor.isEditing {
-                            Button("Add") {
+                            Button {
                                 BrightHaptic.medium.play()
                                 editor.isShowingAddSheet = true
+                            } label: {
+                                Label("Add", systemImage: "plus")
+                                    .labelStyle(.iconOnly)
                             }
                         } else {
                             Button {
@@ -38,11 +41,12 @@ struct HealthView: View {
 
                     ToolbarItem(placement: .topBarTrailing) {
                         if editor.isEditing {
-                            Button("Done") {
+                            Button {
                                 editor.endEditing()
+                            } label: {
+                                Label("Done", systemImage: "checkmark")
+                                    .labelStyle(.iconOnly)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.defaultSkyBlue)
                         } else {
                             Button {
                                 withAnimation(.brightEaseInOut) {

@@ -272,8 +272,10 @@ struct BrightSwipePageViewV5<Content: View>: View {
                             activePage: scrollPosition ?? selectedIndex,
                             onPillTap: handlePillTap
                         )
-                        .opacity(showInlineTabs ? 1 : 0)
-                        .allowsHitTesting(showInlineTabs)
+                        .offset(y: isPillRowUnderToast ? -SwipePageConstants.toastLift : 0)
+                        .opacity(showInlineTabs && !isPillRowUnderToast ? 1 : 0)
+                        .allowsHitTesting(showInlineTabs && !isPillRowUnderToast)
+                        .animation(.brightBouncy, value: isPillRowUnderToast)
                     }
                 } else if let file {
                     ToolbarItem(placement: .principal) {
@@ -297,6 +299,10 @@ struct BrightSwipePageViewV5<Content: View>: View {
                     }
                 }
             }
+    }
+
+    private var isPillRowUnderToast: Bool {
+        BrightToastPresenterV5.shared.isOnScreen
     }
 
     private var shouldShowFloatingPill: Bool {
@@ -711,4 +717,5 @@ enum SwipePageConstants {
     // derives from a scroll have both reached 1: (56 + 10) in
     // `handlePageScroll`. Beyond it a scroll changes nothing the header shows.
     static let titleFadeSettled: CGFloat = 66
+    static let toastLift: CGFloat = .spacing8x
 }

@@ -32,6 +32,7 @@ final class BrightToastPresenterV5 {
     static let shared = BrightToastPresenterV5()
 
     private(set) var message: BrightToastV5Message?
+    fileprivate(set) var isOnScreen = false
     @ObservationIgnored private var dismissTask: Task<Void, Never>?
 
     // Stays up until replaced by `success` or `error`, or dismissed.
@@ -58,6 +59,7 @@ final class BrightToastPresenterV5 {
         // needs less time on screen than one that has to drop out first.
         let followsLoading = self.message?.kind == .loading
         self.message = message
+        isOnScreen = true
 
         let minimumHold: Duration
         switch message.kind {
@@ -327,6 +329,7 @@ private struct BrightToastV5: View {
                 guard presenter.message == nil else { return }
                 shown = nil
                 isLeaving = false
+                presenter.isOnScreen = false
             }
         }
     }
