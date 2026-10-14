@@ -65,6 +65,11 @@ struct BrightPillButton: View {
         size ?? buttonSize.defaultFontSize
     }
 
+    private static func outlineName(of name: String) -> String {
+        let outline = name.replacingOccurrences(of: ".fill", with: "")
+        return UIImage(systemName: outline) == nil ? name : outline
+    }
+
     var body: some View {
         Button(action: onTapCallback) {
             ZStack {
@@ -74,7 +79,8 @@ struct BrightPillButton: View {
                 } else {
                     HStack(spacing: .spacing1x) {
                         if let systemImage {
-                            Image(systemName: systemImage)
+                            Image(systemName: Self.outlineName(of: systemImage))
+                                .symbolVariant(isSelected ? .fill : .none)
                                 .font(.system(size: Constants.imageSize, weight: .medium))
                                 .foregroundStyle(resolvedTextColor)
                         } else if let image {
@@ -90,7 +96,7 @@ struct BrightPillButton: View {
                         // An empty title leaves just the icon, so a pill can fold down to it.
                         if !title.isEmpty {
                             BrightText(title, size: resolvedSize, color: resolvedTextColor)
-                                .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .leading)))
+                                .transition(.opacity)
                         }
                     }
                     .fixedSize()
@@ -99,6 +105,7 @@ struct BrightPillButton: View {
             }
             .padding(.horizontal, isLoading ? .spacing0x : (buttonSize == .large ? .spacing3x : .spacing1x))
             .frame(width: isLoading ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
+            .clipShape(Capsule())
         }
         .disabled(isLoading)
         .animation(.brightBouncy, value: isLoading)

@@ -84,13 +84,14 @@ struct BrightRoundButton: View {
         size: BrightButtonSizes = .medium,
         fontSize: FontSizes? = nil,
         color: Color? = nil,
+        imageColor: Color? = nil,
         onTapCallback: (() -> Void)? = nil
     ) {
         self.imageSource = .text(title)
         self.size = size
         self.fontSize = fontSize
         self.color = color
-        self.imageColor = nil
+        self.imageColor = imageColor
         self.imageRotation = .zero
         self.imageOffset = .zero
         self.haptic = .light
