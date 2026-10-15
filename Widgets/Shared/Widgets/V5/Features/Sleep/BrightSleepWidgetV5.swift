@@ -201,7 +201,7 @@ struct BrightSleepWidgetV5: View {
 
     private enum Constants {
         static let stageCornerRadius: CGFloat = 5
-        static let stripHeight: CGFloat = 44
+        static let stripHeight: CGFloat = 50
         static let stageGap: CGFloat = 1
         static let minimumStageWidth: CGFloat = 1
     }

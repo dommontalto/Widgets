@@ -22,7 +22,6 @@ struct ExploreAgentSheet: View {
 
     var body: some View {
         BrightPageSheetViewV5(
-            title: "Demo Data - Coming Soon",
             horizontalPadding: .spacing0x,
             content: {
                 ZStack {

@@ -43,6 +43,13 @@ struct AddWidgetSheetV5: View {
                             isConfirmingReset = true
                         }
 
+                        if let layoutText {
+                            ShareLink(item: HealthLayoutFileV5(text: layoutText), preview: SharePreview(HealthLayoutFileV5.name)) {
+                                BrightRowV5("Share current layout", icon: .symbol("square.and.arrow.up"), trailing: .none) {}
+                                    .allowsHitTesting(false)
+                            }
+                        }
+
                         #if DEBUG
                         if let onAddAll {
                             BrightRowV5("Add all widgets", icon: .symbol("square.grid.2x2", tint: .defaultGreen), trailing: .none) {
@@ -129,15 +136,6 @@ struct AddWidgetSheetV5: View {
                         }
                     }
                     #endif
-
-                    if let layoutText {
-                        BrightRowGroupV5(color: .defaultSheetModalCards) {
-                            ShareLink(item: HealthLayoutFileV5(text: layoutText), preview: SharePreview(HealthLayoutFileV5.name)) {
-                                BrightRowV5("Share current layout", icon: .symbol("square.and.arrow.up"), trailing: .none) {}
-                                    .allowsHitTesting(false)
-                            }
-                        }
-                    }
                 }
                 .padding(.vertical, .spacing3x)
             }

@@ -18,10 +18,6 @@ struct ExploreView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("Demo Data - Coming Soon", size: .body3, color: .lightTextColor)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, .spacing3x)
-
             BrightSearchBarV5("What would you like me to find?", text: $searchText) { isSearchFocused = $0 }
                 .padding(.horizontal, .spacing3x)
 
@@ -38,6 +34,11 @@ struct ExploreView: View {
         }
         .padding(.top, .spacing2x)
         .padding(.bottom, .spacing12x)
+        .blur(radius: Constants.comingSoonBlur)
+        .allowsHitTesting(false)
+        .overlay {
+            BrightText("Coming Soon", size: .standout2)
+        }
         .contentShape(Rectangle())
         .onTapGesture {
             UIApplication.shared.sendAction(
@@ -107,5 +108,9 @@ struct ExploreView: View {
             SafariView(url: clinic.website) { shownClinic = nil }
                 .ignoresSafeArea()
         }
+    }
+
+    private enum Constants {
+        static let comingSoonBlur: CGFloat = 12
     }
 }
