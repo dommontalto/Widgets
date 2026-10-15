@@ -6,8 +6,7 @@
 import SwiftUI
 
 struct BrightWhatsNewSheetV5: View {
-    @State private var heroRisen = false
-    @State private var heroSettled = false
+    @State private var heroShown = false
     @State private var heroTitleShown = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -48,10 +47,7 @@ struct BrightWhatsNewSheetV5: View {
             Image(ImageNames.whatsNewHeroV5)
                 .resizable()
                 .scaledToFit()
-                .scaleEffect(heroSettled ? 1 : (heroRisen ? Constants.heroOvershootScale : Constants.heroStartScale), anchor: .bottom)
-                .rotationEffect(.degrees(heroSettled ? 0 : (heroRisen ? Constants.heroOvershootAngle : Constants.heroStartAngle)), anchor: .bottomTrailing)
-                .offset(y: heroSettled ? 0 : (heroRisen ? -Constants.heroOvershoot : Constants.heroStartOffset))
-                .clipped()
+                .opacity(heroShown ? 1 : 0)
 
             BrightText("Welcome to V5.", size: .huge, color: .white, weight: .regular)
                 .opacity(heroTitleShown ? 1 : 0)
@@ -68,19 +64,14 @@ struct BrightWhatsNewSheetV5: View {
     }
 
     private func playHero() {
-        guard !heroRisen else { return }
+        guard !heroShown else { return }
         guard !reduceMotion else {
-            heroRisen = true
-            heroSettled = true
+            heroShown = true
             heroTitleShown = true
             return
         }
-        withAnimation(.smooth(duration: Constants.heroRiseDuration)) {
-            heroRisen = true
-        } completion: {
-            withAnimation(.spring(duration: Constants.heroSettleDuration, bounce: Constants.heroSettleBounce)) {
-                heroSettled = true
-            }
+        withAnimation(.smooth(duration: Constants.heroFadeDuration)) {
+            heroShown = true
         }
         withAnimation(.smooth(duration: Constants.revealDuration).delay(Constants.heroTitleDelay)) {
             heroTitleShown = true
@@ -113,23 +104,15 @@ struct BrightWhatsNewSheetV5: View {
     fileprivate enum Constants {
         static let heroTitleTop: CGFloat = .spacing3x
         static let heroOverscroll: CGFloat = 2000
-        static let heroStartOffset: CGFloat = .spacing12x * 6
-        static let heroOvershoot: CGFloat = .spacing2x
-        static let heroStartAngle: Double = 12
-        static let heroOvershootAngle: Double = -2
-        static let heroStartScale: CGFloat = 0.9
-        static let heroOvershootScale: CGFloat = 1.02
-        static let heroRiseDuration: Double = 1.8
-        static let heroSettleDuration: Double = 1.2
-        static let heroSettleBounce: Double = 0.35
-        static let heroTitleDelay: Double = 0.9
+        static let heroFadeDuration: Double = 1.4
+        static let heroTitleDelay: Double = 0.6
         static let carouselCardWidth: CGFloat = 284
         static let imageCornerRadius: CGFloat = 40
         static let moreIconSize: CGFloat = 22
-        static let revealDuration: Double = 1.4
+        static let revealDuration: Double = 1.2
         static let revealThreshold: Double = 0.4
-        static let revealLock: Duration = .seconds(2.5)
-        static let revealStagger: Double = 0.25
+        static let revealLock: Duration = .seconds(2.2)
+        static let revealStagger: Double = 0.2
         static let revealBlur: CGFloat = 8
         static let textRise: CGFloat = .spacing4x
         static let imageRise: CGFloat = .spacing10x
@@ -138,9 +121,9 @@ struct BrightWhatsNewSheetV5: View {
         static let itemSlide: CGFloat = .spacing6x
         static let titlePop: CGFloat = 0.15
         static let glowRadius: CGFloat = .spacing2x
-        static let glowIn: Double = 1.0
-        static let glowHold: Double = 1.6
-        static let glowOut: Double = 2.4
+        static let glowIn: Double = 0.85
+        static let glowHold: Double = 6
+        static let glowOut: Double = 2.1
     }
 }
 
