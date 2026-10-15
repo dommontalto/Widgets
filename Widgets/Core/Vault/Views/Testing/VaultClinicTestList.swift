@@ -49,26 +49,17 @@ struct VaultClinicTestList: View {
     }
 
     private var filters: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(spacing: .spacing2x) {
-                Image(systemName: "line.3.horizontal.decrease")
-                    .font(.standard(size: .heading, weight: .light))
+        ScrollView(.horizontal) {
+            HStack(spacing: .spacing105x) {
+                filterTag("All", systemImage: "square.grid.2x2", id: nil)
 
-                BrightText("Filters", size: .body1, color: .lightTextColor, weight: .regular)
-            }
-
-            ScrollView(.horizontal) {
-                HStack(spacing: .spacing105x) {
-                    filterTag("All", systemImage: "square.grid.2x2", id: nil)
-
-                    ForEach(categories) { category in
-                        filterTag(category.name, systemImage: category.systemImage, id: category.id)
-                    }
+                ForEach(categories) { category in
+                    filterTag(category.name, systemImage: category.systemImage, id: category.id)
                 }
             }
-            .scrollIndicators(.hidden)
-            .scrollClipDisabled()
         }
+        .scrollIndicators(.hidden)
+        .scrollClipDisabled()
     }
 
     private func filterTag(_ title: String, systemImage: String, id: String?) -> some View {

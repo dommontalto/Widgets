@@ -16,6 +16,7 @@ struct BrightAdV5: View {
     let logo: String
     let logoBackground: Color
     var image: UIImage? = nil
+    var tint: Color? = nil
     let blurb: String
     let services: [String]
     var showsBadge = true
@@ -30,7 +31,7 @@ struct BrightAdV5: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background { BrightAdBackdropV5(logo: logo, image: image) }
+        .background { BrightAdBackdropV5(logo: logo, image: image, tint: tint) }
         .overlay(alignment: .topTrailing) {
             if showsBadge {
                 adBadge
@@ -140,14 +141,15 @@ struct BrightAdV5: View {
 struct BrightAdBackdropV5: View {
     let logo: String
     var image: UIImage? = nil
+    var tint: Color? = nil
     // How far the top colour runs up past the edge, for a page pulled down past its top.
     var bleed: CGFloat = 0
 
     var body: some View {
-        let tint = BrightAdTint.color(for: logo, image: image)
-        let top = Color(tint.shaded(brightness: Constants.topBrightness))
+        let wash = tint.map { UIColor($0) } ?? BrightAdTint.color(for: logo, image: image)
+        let top = Color(wash.shaded(brightness: Constants.topBrightness))
         LinearGradient(
-            colors: [top, Color(tint.shaded(brightness: Constants.bottomBrightness))],
+            colors: [top, Color(wash.shaded(brightness: Constants.bottomBrightness))],
             startPoint: .top,
             endPoint: .bottom
         )
