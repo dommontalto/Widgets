@@ -13,7 +13,6 @@ struct HealthView: View {
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
     @State private var revealReplay = 0
-    @State private var showingWhatsNew = false
     @State private var showsEmptyState = false
 
     var body: some View {
@@ -33,34 +32,12 @@ struct HealthView: View {
                         } else {
                             Button {
                                 BrightHaptic.light.play()
+                                showsEmptyState.toggle()
                                 revealReplay += 1
-                            } label: {
-                                Label("Replay widget animations", systemImage: "arrow.counterclockwise")
-                                    .labelStyle(.iconOnly)
-                            }
-                        }
-                    }
-
-                    if !editor.isEditing {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                BrightHaptic.light.play()
-                                withAnimation(.brightEaseInOut) {
-                                    showsEmptyState.toggle()
-                                }
                             } label: {
                                 Label(showsEmptyState ? "Show data" : "Show empty state", systemImage: showsEmptyState ? "circle.dashed.inset.filled" : "circle.dashed")
                                     .labelStyle(.iconOnly)
                                     .contentTransition(.symbolEffect(.replace))
-                            }
-                        }
-
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                showingWhatsNew = true
-                            } label: {
-                                Label("What’s New in V5", systemImage: "sparkles")
-                                    .labelStyle(.iconOnly)
                             }
                         }
                     }
@@ -85,9 +62,6 @@ struct HealthView: View {
                             }
                         }
                     }
-                }
-                .sheet(isPresented: $showingWhatsNew) {
-                    BrightWhatsNewSheetV5()
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
                     AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
