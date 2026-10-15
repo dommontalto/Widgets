@@ -49,8 +49,20 @@ struct BrightWhatsNewSheetV5: View {
     }
 
     private var more: some View {
-        BrightText("and more.", size: .standout1, color: .semiLightTextColor, weight: .regular)
-            .padding(.horizontal, .spacing5x)
+        VStack(alignment: .leading, spacing: .spacing5x) {
+            BrightText("and more.", size: .standout1, color: .semiLightTextColor, weight: .regular)
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: .spacing3x, alignment: .topLeading), count: 2),
+                alignment: .leading,
+                spacing: .spacing5x
+            ) {
+                ForEach(WhatsNewMoreItem.all) { item in
+                    WhatsNewMoreItemView(item: item)
+                }
+            }
+        }
+        .padding(.horizontal, .spacing5x)
     }
 
     fileprivate enum Constants {
@@ -58,6 +70,7 @@ struct BrightWhatsNewSheetV5: View {
         static let heroOverscroll: CGFloat = 2000
         static let carouselCardWidth: CGFloat = 284
         static let imageCornerRadius: CGFloat = 40
+        static let moreIconSize: CGFloat = 22
     }
 }
 
@@ -174,6 +187,166 @@ private struct WhatsNewFeature: Identifiable {
             title: "Atlas",
             detail: "A global health monitor built on real-time Bright data that allows you to understand your health relative to similar users.",
             media: .carousel([ImageNames.whatsNewAtlasGlobeV5, ImageNames.whatsNewAtlasStatsV5])
+        )
+    ]
+}
+
+private struct WhatsNewMoreItemView: View {
+    let item: WhatsNewMoreItem
+
+    private typealias Constants = BrightWhatsNewSheetV5.Constants
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            HStack(spacing: .spacing1x) {
+                ForEach(item.icons, id: \.self) { icon in
+                    switch icon {
+                    case .symbol(let name):
+                        Image(systemName: name)
+                            .font(.system(size: Constants.moreIconSize))
+                            .foregroundStyle(item.color)
+                    case .image(let name):
+                        Image(name)
+                            .resizable()
+                            .scaledToFit()
+                    }
+                }
+            }
+            .frame(height: Constants.moreIconSize)
+            .padding(.bottom, .spacing05x)
+
+            BrightText(item.title, size: .heading, color: .semiLightTextColor, weight: .regular)
+            BrightText(item.detail, size: .body1, color: .lightTextColor, weight: .regular)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct WhatsNewMoreItem: Identifiable {
+    enum Icon: Hashable {
+        case symbol(String)
+        case image(String)
+    }
+
+    let id = UUID()
+    let icons: [Icon]
+    let color: Color
+    let title: String
+    let detail: String
+
+    static let all: [Self] = [
+        .init(
+            icons: [.symbol("hare.fill")],
+            color: .defaultSkyBlue,
+            title: "Rebuilt UX/UI",
+            detail: "A faster, smoother and more stable Bright OS."
+        ),
+        .init(
+            icons: [.image(ImageNames.whatsNewAndroidWebIconV5)],
+            color: .defaultGreen,
+            title: "Android and Web-App",
+            detail: "A faster, smoother and more stable Bright OS."
+        ),
+        .init(
+            icons: [.symbol("figure")],
+            color: .defaultPink,
+            title: "3D Avatar",
+            detail: "Track muscle and cardio progress with a dedicated 3D avatar showing muscle progress."
+        ),
+        .init(
+            icons: [
+                .symbol("figure.rolling"),
+                .symbol("figure.outdoor.cycle"),
+                .symbol("figure.strengthtraining.traditional")
+            ],
+            color: .defaultOrange,
+            title: "Workout Library",
+            detail: "Explore a library of over 800 motion-captured workouts, stretches and yoga poses using our 3D human model."
+        ),
+        .init(
+            icons: [.symbol("person.badge.clock.fill")],
+            color: .defaultSkyBlue,
+            title: "Check-Ins",
+            detail: "Bright continuously orientates you towards your Waypoint by reviewing your data and providing adaptive suggestions."
+        ),
+        .init(
+            icons: [.symbol("map")],
+            color: .defaultGreen,
+            title: "Explore",
+            detail: "Filter the internet with your health-data so you only see health products and services that are suitable for you."
+        ),
+        .init(
+            icons: [.image(ImageNames.whatsNewDnaIconV5)],
+            color: .defaultPurple,
+            title: "Genome",
+            detail: "Upload or order a Whole-Genome Sequence so Bright can sync your lifestyle, wearable, clinical and genome data to create the full picture."
+        ),
+        .init(
+            icons: [.symbol("testtube.2")],
+            color: .defaultYellow,
+            title: "Experiments",
+            detail: "Users can create observational studies on users to test a hypothesis."
+        ),
+        .init(
+            icons: [.symbol("sparkles.2")],
+            color: .defaultCyan,
+            title: "Ask",
+            detail: "Powered by Bright’s aggregated user-dataset, users can find the answer to their health questions based on the raw data alone."
+        ),
+        .init(
+            icons: [.symbol("globe")],
+            color: .defaultSkyBlue,
+            title: "Global Health Ranking",
+            detail: "Using your data against Atlas data, Bright creates a ranking relative to users with a health similar health profile."
+        ),
+        .init(
+            icons: [.symbol("applewatch")],
+            color: .defaultGreen,
+            title: "Watch App",
+            detail: "A stand alone Apple Watch app to support the Workout and Running planner."
+        ),
+        .init(
+            icons: [.symbol("repeat")],
+            color: .defaultPink,
+            title: "Automated Journaling",
+            detail: "Bright will independently record events throughout the day to your Daily Log without requiring manual entry."
+        ),
+        .init(
+            icons: [.symbol("square.and.arrow.up")],
+            color: .defaultOrange,
+            title: "Social Sharing",
+            detail: "Each widget and section includes ways to share unique content from Bright to social media platforms."
+        ),
+        .init(
+            icons: [.image(ImageNames.whatsNewWidgetsIconV5)],
+            color: .defaultSkyBlue,
+            title: "Customisation",
+            detail: "Rearrange and reorder each widget to better fit your preferences."
+        ),
+        .init(
+            icons: [.symbol("repeat")],
+            color: .defaultPink,
+            title: "API/MCP",
+            detail: "All your Bright data is available with read and write privileges via API and MCP access at no extra cost."
+        ),
+        .init(
+            icons: [.image(ImageNames.whatsNewIntegrationsIconV5)],
+            color: .defaultGreen,
+            title: "Integrations",
+            detail: "We have expanded the list of direct integrations for wearables and other apps to over 50 including; Amazfit/Helio, Strava, Hevy and more."
+        ),
+        .init(
+            icons: [.symbol("globe")],
+            color: .defaultCyan,
+            title: "Languages",
+            detail: "The app is now available in over 50 languages."
+        ),
+        .init(
+            icons: [.symbol("lock.shield")],
+            color: .defaultRed,
+            title: "Compliance & Security",
+            detail: "Bright OS is now HIPAA, GDPR, ISO27001 and SOC2 compliant along with being SEC-256 encrypted."
         )
     ]
 }

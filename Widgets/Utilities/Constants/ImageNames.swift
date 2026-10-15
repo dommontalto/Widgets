@@ -185,4 +185,8 @@ nonisolated class ImageNames {
     static let whatsNewExerciseRunV5          = "whats_new_exercise_run_v5"
     static let whatsNewAtlasGlobeV5           = "whats_new_atlas_globe_v5"
     static let whatsNewAtlasStatsV5           = "whats_new_atlas_stats_v5"
+    static let whatsNewAndroidWebIconV5       = "whats_new_android_web_icon_v5"
+    static let whatsNewDnaIconV5              = "whats_new_dna_icon_v5"
+    static let whatsNewWidgetsIconV5          = "whats_new_widgets_icon_v5"
+    static let whatsNewIntegrationsIconV5     = "whats_new_integrations_icon_v5"
 }
