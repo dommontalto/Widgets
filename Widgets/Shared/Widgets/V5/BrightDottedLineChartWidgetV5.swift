@@ -49,6 +49,8 @@ struct BrightDottedLineChartWidgetV5: View {
     // The line draws across the first time the widget shows.
     @State private var isRevealed = false
 
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
             HStack(alignment: .top, spacing: .spacing1x) {
@@ -56,7 +58,7 @@ struct BrightDottedLineChartWidgetV5: View {
 
                 Spacer(minLength: .spacing0x)
 
-                if let trend {
+                if let trend, !isEmpty {
                     HStack(spacing: .spacing025x) {
                         Image(systemName: trend.systemImage)
 
@@ -144,7 +146,7 @@ struct BrightDottedLineChartWidgetV5: View {
                     .alignmentGuide(.firstTextBaseline) { $0[.bottom] - Constants.checkmarkBaselineLift }
             }
 
-            BrightText(revealed(appearance.format(shownPoint?.value ?? 0)), size: size == .large ? .standout1 : .standout3, weight: .regular)
+            BrightText(isEmpty ? .brightEmptyValue : revealed(appearance.format(shownPoint?.value ?? 0)), size: size == .large ? .standout1 : .standout3, weight: .regular)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightEaseInOut, value: shownPoint)
@@ -174,12 +176,14 @@ struct BrightDottedLineChartWidgetV5: View {
                     axisLabel(domain.lowerBound)
                 }
                 .frame(width: Constants.axisLabelWidth, alignment: .leading)
+                .opacity(isEmpty ? .zero : .opaque)
 
                 chart
             }
 
             dayLabels
                 .padding(.leading, Constants.axisLabelWidth + .spacing1x)
+                .opacity(isEmpty ? .zero : .opaque)
         }
     }
 
@@ -192,6 +196,7 @@ struct BrightDottedLineChartWidgetV5: View {
             readings
                 .brightDrawRevealV5(isRevealed, following: path)
         }
+        .opacity(isEmpty ? .zero : .opaque)
         .brightRevealV5($isRevealed)
     }
 
@@ -310,7 +315,7 @@ struct BrightDottedLineChartWidgetV5: View {
                 .padding(.vertical, .spacing025x)
                 .background(Capsule().fill(Color.textColor.opacity(.ultraLowOpacity)))
 
-            BrightText(change.value, size: .standout3, weight: .regular)
+            BrightText(isEmpty ? .brightEmptyValue : change.value, size: .standout3, weight: .regular)
                 .monospacedDigit()
         }
     }

@@ -24,6 +24,7 @@ struct BrightChecklistWidgetV5: View {
     @State private var isRevealed = false
     @State private var heldIndex: Int?
     @State private var touch: UnitPoint?
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
     @State private var cardSize: CGSize = .zero
     @State private var dotCentres: [Int: CGPoint] = [:]
 
@@ -44,7 +45,7 @@ struct BrightChecklistWidgetV5: View {
         .coordinateSpace(.named(Constants.space))
         .onGeometryChange(for: CGSize.self, of: \.size) { cardSize = $0 }
         .overlay {
-            if allowsSelection {
+            if allowsSelection, !isEmpty {
                 BrightWidgetTouchLayerV5(touch: $touch)
             }
         }
@@ -81,11 +82,11 @@ struct BrightChecklistWidgetV5: View {
             ForEach(indices, id: \.self) { index in
                 if index != indices.lowerBound {
                     Capsule()
-                        .fill(tint.opacity(days[index - 1].isDone && days[index].isDone ? .opaque : .veryLowOpacity))
+                        .fill(tint.opacity(!isEmpty && days[index - 1].isDone && days[index].isDone ? .opaque : .veryLowOpacity))
                         .frame(width: Constants.connectorLength, height: Constants.connectorThickness)
                 }
 
-                dot(isDone: days[index].isDone)
+                dot(isDone: !isEmpty && days[index].isDone)
                     .scaleEffect(heldIndex == index ? Constants.heldScale : 1)
                     .opacity(heldIndex == nil || heldIndex == index ? .opaque : .semiLowOpacity)
                     .onGeometryChange(for: CGPoint.self) { proxy in
@@ -118,7 +119,7 @@ struct BrightChecklistWidgetV5: View {
 
     private var reading: some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-            BrightText(heldDay?.date.formatted(.brightWeekdayShort) ?? (isRevealed ? "\(streak)" : "\(streak)".zeroedDigits), size: .huge)
+            BrightText(heldDay?.date.formatted(.brightWeekdayShort) ?? (isEmpty ? .brightEmptyValue : isRevealed ? "\(streak)" : "\(streak)".zeroedDigits), size: .huge)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightBouncy, value: streak)

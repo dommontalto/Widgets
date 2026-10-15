@@ -66,6 +66,7 @@ struct BrightRingGroupWidgetV5: View {
     @State private var belowHeights: [String: CGFloat] = [:]
     // The amounts roll up from zero as the rings fill, the first time the widget shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     init(rings: [Ring], size: BrightWidgetSizeV5, allowsSelection: Bool = true) {
         self.rings = rings
@@ -206,7 +207,7 @@ struct BrightRingGroupWidgetV5: View {
     // A ring with its text hung above and below it, so placing the ring places the lot.
     private func piece(_ ring: Ring, index: Int, in area: CGSize) -> some View {
         BrightRingV5(
-            progress: selectedRingID == ring.id ? ring.yesterday.map { ring.goal > 0 ? $0 / ring.goal : 0 } ?? ring.progress : ring.progress,
+            progress: isEmpty ? 0 : selectedRingID == ring.id ? ring.yesterday.map { ring.goal > 0 ? $0 / ring.goal : 0 } ?? ring.progress : ring.progress,
             color: ring.color,
             label: arrangement == .triangle ? ring.shortLabel : nil,
             image: arrangement == .single ? nil : ring.image,
@@ -359,7 +360,7 @@ struct BrightRingGroupWidgetV5: View {
                 .contentTransition(.numericText())
 
             BrightText(
-                isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal, of: ring))",
+                isEmpty ? "" : isHeld ? (ring.isOver ? " over" : " left") : "/\(display(ring.goal, of: ring))",
                 size: suffixSize,
                 color: .lightTextColor
             )
@@ -369,7 +370,16 @@ struct BrightRingGroupWidgetV5: View {
         .lineLimit(1)
     }
 
+    @ViewBuilder
     private func duration(_ ring: Ring) -> some View {
+        if isEmpty {
+            BrightText(.brightEmptyValue, size: .standout3, color: ring.color)
+        } else {
+            durationText(ring)
+        }
+    }
+
+    private func durationText(_ ring: Ring) -> some View {
         let minutes = Int(ring.value.rounded())
         return HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
             BrightText(revealedDigits("\(minutes / 60)"), size: .standout3, color: ring.color)
@@ -426,11 +436,11 @@ struct BrightRingGroupWidgetV5: View {
 
     // The bare number, for the small square where the rings say what it is.
     private func percent(of ring: Ring) -> String {
-        "\(Int((ring.progress * 100).rounded()))"
+        isEmpty ? .brightEmptyValue : "\(Int((ring.progress * 100).rounded()))"
     }
 
     private func display(_ value: Double, of ring: Ring) -> String {
-        value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
+        isEmpty ? .brightEmptyValue : value.formatted(.number.precision(.fractionLength(0 ... ring.decimals)))
     }
 
     private enum Constants {
@@ -445,7 +455,7 @@ extension BrightRingGroupWidgetV5 {
     // charts and the page still scrolls. It reports where the finger is, from 0 to 1 each way.
     @ViewBuilder
     private var touchLayer: some View {
-        if allowsSelection {
+        if allowsSelection, !isEmpty {
             Chart {
                 PointMark(x: .value("X", 0.5), y: .value("Y", 0.5))
                     .opacity(.zero)

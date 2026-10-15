@@ -14,6 +14,7 @@ struct HealthView: View {
     @State private var editor = HealthWidgetEditorV5()
     @State private var revealReplay = 0
     @State private var showingWhatsNew = false
+    @State private var showsEmptyState = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +42,19 @@ struct HealthView: View {
                     }
 
                     if !editor.isEditing {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                BrightHaptic.light.play()
+                                withAnimation(.brightEaseInOut) {
+                                    showsEmptyState.toggle()
+                                }
+                            } label: {
+                                Label(showsEmptyState ? "Show data" : "Show empty state", systemImage: showsEmptyState ? "circle.dashed.inset.filled" : "circle.dashed")
+                                    .labelStyle(.iconOnly)
+                                    .contentTransition(.symbolEffect(.replace))
+                            }
+                        }
+
                         ToolbarItem(placement: .topBarLeading) {
                             Button {
                                 showingWhatsNew = true
@@ -173,6 +187,7 @@ struct HealthView: View {
     private var healthPage: some View {
         VStack(spacing: .spacing0x) {
             HealthWidgetGridV5(editor: editor)
+                .brightWidgetEmptyV5(showsEmptyState)
 
             // Room below the last widget to drag into while editing.
             Spacer(minLength: editor.isEditing ? Constants.editingBottomRoom : .spacing0x)

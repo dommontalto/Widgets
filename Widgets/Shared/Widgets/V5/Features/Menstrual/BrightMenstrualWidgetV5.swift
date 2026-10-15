@@ -89,6 +89,7 @@ struct BrightMenstrualWidgetV5: View {
     @State private var detailsWidth: CGFloat = 0
     // The pills rise in across the strip the first time the widget shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         layout
@@ -114,10 +115,12 @@ struct BrightMenstrualWidgetV5: View {
     private var layout: some View {
         let isSmall = size == .small
         let phase: Phase = isSmall ? .ovulation : cycle.phase(of: selectedDay ?? today)
-        let subtitle: String = isSmall ? "Period: in \(daysUntilPeriod) Days" : expandedSubtitle
+        let subtitle: String = isSmall ? "Period: in \(isEmpty ? .brightEmptyValue : "\(daysUntilPeriod)") Days" : expandedSubtitle
         let firstDay: Int = isSmall ? cycle.ovulationDay - Constants.compactLeadingDays : today - Constants.expandedLeadingDays
         let arrowDay: Int = isSmall ? cycle.ovulationDay : today
-        let colour: (Int) -> PillStyle = { day in isSmall ? compactFill(day) : cycleFill(day) }
+        let colour: (Int) -> PillStyle = { day in
+            isEmpty ? PillStyle(fill: .textColor.opacity(.ultraLowOpacity), arrow: .clear) : isSmall ? compactFill(day) : cycleFill(day)
+        }
 
         return VStack(alignment: .leading, spacing: .spacing1x) {
             HStack(alignment: .top, spacing: .spacing1x) {
@@ -141,6 +144,7 @@ struct BrightMenstrualWidgetV5: View {
                     .frame(maxWidth: .infinity)
             } else {
                 phaseMarkers
+                    .opacity(isEmpty ? .zero : .opaque)
             }
 
             Spacer(minLength: .spacing0x)
@@ -156,7 +160,7 @@ struct BrightMenstrualWidgetV5: View {
     }
 
     private var expandedSubtitle: String {
-        selectedDay.map { dayCaption($0) } ?? "Cycle day: \(today)/\(cycle.length)"
+        selectedDay.map { dayCaption($0) } ?? (isEmpty ? "Cycle day: \(String.brightEmptyValue)" : "Cycle day: \(today)/\(cycle.length)")
     }
 
     // MARK: - Header
@@ -164,9 +168,9 @@ struct BrightMenstrualWidgetV5: View {
     private func header(phase: Phase, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
-                BrightWidgetIconV5(systemImage: phase.systemImage, style: phase.color)
+                BrightWidgetIconV5(systemImage: isEmpty ? Constants.emptySystemImage : phase.systemImage, style: isEmpty ? Color.defaultPink : phase.color)
 
-                BrightText(phase.title, size: .body1, weight: .regular)
+                BrightText(isEmpty ? Constants.emptyTitle : phase.title, size: .body1, weight: .regular)
                     .contentTransition(.numericText())
             }
             .lineLimit(1)
@@ -184,14 +188,14 @@ struct BrightMenstrualWidgetV5: View {
             BrightText("Period:", size: .body5, color: .lightTextColor)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(nextPeriod.formatted(.brightDate), size: .body1, weight: .regular)
+                BrightText(isEmpty ? .brightEmptyValue : nextPeriod.formatted(.brightDate), size: .body1, weight: .regular)
 
                 Circle()
                     .fill(Color.lightTextColor)
                     .frame(width: .spacing05x, height: .spacing05x)
                     .alignmentGuide(.firstTextBaseline) { $0[.bottom] + .spacing05x }
 
-                BrightText("\(daysUntilPeriod)D", size: .body1, color: .lightTextColor, weight: .regular)
+                BrightText(isEmpty ? .brightEmptyValue : "\(daysUntilPeriod)D", size: .body1, color: .lightTextColor, weight: .regular)
                     .monospacedDigit()
             }
         }
@@ -231,7 +235,11 @@ struct BrightMenstrualWidgetV5: View {
                     }
                 }
                 .overlay { edgeFades }
-                .overlay { selectionLayer(firstDay: firstDay, count: count) }
+                .overlay {
+                    if !isEmpty {
+                        selectionLayer(firstDay: firstDay, count: count)
+                    }
+                }
             }
             .frame(width: geometry.size.width, alignment: .leading)
         }
@@ -448,6 +456,8 @@ struct BrightMenstrualWidgetV5: View {
     }
 
     private enum Constants {
+        static let emptyTitle = "Menstrual"
+        static let emptySystemImage = "moonphase.waxing.crescent"
         static let revealStagger = 0.015
         static let pillWidth: CGFloat = 8
         static let pillHeight: CGFloat = 32

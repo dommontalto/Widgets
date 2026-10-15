@@ -70,6 +70,7 @@ struct BrightVerticalBarChartWidgetV5: View {
     // The bars rise from the floor the first time the widget shows.
     @State private var isRevealed = false
     @Namespace private var namespace
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
@@ -168,7 +169,7 @@ struct BrightVerticalBarChartWidgetV5: View {
 
     @ViewBuilder
     private func reading(valueSize: FontSizes) -> some View {
-        if headline == .split {
+        if headline == .split, !isEmpty {
             splitReading
         } else {
             numberReading(valueSize: valueSize)
@@ -228,6 +229,7 @@ struct BrightVerticalBarChartWidgetV5: View {
                 if showsGuides {
                     guideLabelColumn
                         .frame(width: Constants.axisLabelWidth)
+                        .opacity(isEmpty ? .zero : .opaque)
                         .brightDebugBackgroundV5(.purple)
                 }
 
@@ -258,12 +260,12 @@ struct BrightVerticalBarChartWidgetV5: View {
             let barWidth = barWidth(in: width)
 
             ZStack(alignment: .topLeading) {
-                if showsGuides, showsAverage {
+                if showsGuides, showsAverage, !isEmpty {
                     averageLine(y: yPosition(of: average, height: height))
                 }
 
                 ForEach(bars) { bar in
-                    if let value = bar.value, value > 0 {
+                    if let value = bar.value, value > 0, !isEmpty {
                         barShape(bar, value: isRevealed ? value : 0, target: bar.target ?? target, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .ultraLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
@@ -273,7 +275,7 @@ struct BrightVerticalBarChartWidgetV5: View {
                     }
                 }
 
-                if showsExtremes, selectedIndex == nil, isRevealed {
+                if showsExtremes, selectedIndex == nil, isRevealed, !isEmpty {
                     ForEach(extremes, id: \.bar.index) { extreme in
                         extremeLabel(extreme.systemImage, value: extreme.value)
                             .position(
@@ -645,7 +647,7 @@ struct BrightVerticalBarChartWidgetV5: View {
     }
 
     private func display(_ value: Double) -> String {
-        appearance.format(value)
+        isEmpty ? .brightEmptyValue : appearance.format(value)
     }
 
     private enum Constants {

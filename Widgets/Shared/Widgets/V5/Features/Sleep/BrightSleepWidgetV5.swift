@@ -61,6 +61,7 @@ struct BrightSleepWidgetV5: View {
     @State private var selectedSegment: Segment?
     // The night draws across the first time the widget shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -70,6 +71,7 @@ struct BrightSleepWidgetV5: View {
 
             strip
                 .brightDrawRevealV5(isRevealed)
+                .opacity(isEmpty ? .zero : .opaque)
                 .overlay { touchLayer }
                 .frame(height: Constants.stripHeight)
 
@@ -143,7 +145,7 @@ struct BrightSleepWidgetV5: View {
                 .foregroundStyle(Color.defaultRed)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                BrightText("\(value)", size: .body2, color: .defaultRed, weight: .regular)
+                BrightText(isEmpty || value == 0 ? .brightEmptyValue : "\(value)", size: .body2, color: .defaultRed, weight: .regular)
                     .monospacedDigit()
 
                 BrightText(unit, size: .body2, color: .lightTextColor)
@@ -212,7 +214,7 @@ extension BrightSleepWidgetV5 {
     // charts and the page still scrolls. Snaps to the stage under the finger.
     @ViewBuilder
     private var touchLayer: some View {
-        if allowsSelection, let first = segments.first, let last = segments.last {
+        if allowsSelection, !isEmpty, let first = segments.first, let last = segments.last {
             Chart {
                 PointMark(x: .value("Time", first.start), y: .value("Floor", 0))
                     .opacity(.zero)

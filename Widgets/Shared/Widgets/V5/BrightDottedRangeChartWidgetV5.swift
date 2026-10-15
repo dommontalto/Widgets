@@ -58,6 +58,7 @@ struct BrightDottedRangeChartWidgetV5: View {
     @State private var selectedID: String?
     // The dots rise from the floor to their readings the first time the widget shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -66,14 +67,14 @@ struct BrightDottedRangeChartWidgetV5: View {
 
                 Spacer(minLength: .spacing0x)
 
-                if size != .small, abnormalCount > 0 {
+                if size != .small, abnormalCount > 0, !isEmpty {
                     abnormalBadge
                 }
             }
 
             VStack(spacing: .spacing05x) {
                 bands
-                    .overlay { dots }
+                    .overlay { dots.opacity(isEmpty ? .zero : .opaque) }
                     .overlay { touchLayer }
                     .frame(maxHeight: .infinity)
 
@@ -297,7 +298,7 @@ extension BrightDottedRangeChartWidgetV5 {
     // charts and the page still scrolls. Snaps to the column under the finger.
     @ViewBuilder
     private var touchLayer: some View {
-        if allowsSelection {
+        if allowsSelection, !isEmpty {
             Chart {
                 PointMark(x: .value("Column", 0.5), y: .value("Floor", 0))
                     .opacity(.zero)

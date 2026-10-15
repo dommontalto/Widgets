@@ -18,6 +18,7 @@ struct BrightSleepSummaryV5: View {
 
     // The totals and score roll up from zero the first time it shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         HStack(spacing: .spacing0x) {
@@ -32,7 +33,7 @@ struct BrightSleepSummaryV5: View {
             Spacer(minLength: .spacing0x)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                BrightText(revealed("\(score)"), size: .heading, color: .defaultGreen, weight: .regular)
+                BrightText(isEmpty || score == 0 ? .brightEmptyValue : revealed("\(score)"), size: .heading, color: .defaultGreen, weight: .regular)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
@@ -62,14 +63,18 @@ struct BrightSleepSummaryV5: View {
                     .foregroundStyle(color)
             }
 
-            BrightText(revealed("\(minutes / 60)"), size: .heading)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-            BrightText("hr", size: .body4, color: .lightTextColor)
-            BrightText(revealed("\(minutes % 60)"), size: .heading)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-            BrightText("m", size: .body4, color: .lightTextColor)
+            if isEmpty {
+                BrightText(.brightEmptyValue, size: .heading)
+            } else {
+                BrightText(revealed("\(minutes / 60)"), size: .heading)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                BrightText("hr", size: .body4, color: .lightTextColor)
+                BrightText(revealed("\(minutes % 60)"), size: .heading)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                BrightText("m", size: .body4, color: .lightTextColor)
+            }
         }
     }
 }

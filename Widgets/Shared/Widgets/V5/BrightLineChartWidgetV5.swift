@@ -45,6 +45,7 @@ struct BrightLineChartWidgetV5: View {
     private let low: Double
     private let average: Double
 
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
     @State private var selectedDate: Date?
     @State private var heldLabelWidth: CGFloat = 0
     // The line draws across the first time the widget shows.
@@ -154,7 +155,7 @@ struct BrightLineChartWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText("Latest: \(latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+            BrightText("Latest: \(isEmpty ? .brightEmptyValue : latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
                 .contentTransition(.numericText())
         }
     }
@@ -206,6 +207,7 @@ struct BrightLineChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 if !isSmall {
                     guideLabelColumn
+                        .opacity(isEmpty ? .zero : .opaque)
                         .frame(width: Constants.axisLabelWidth)
                         .brightDebugBackgroundV5(.purple)
                 }
@@ -250,6 +252,7 @@ struct BrightLineChartWidgetV5: View {
 
             readings(domain: domain)
                 .brightDrawRevealV5(isRevealed, following: path(domain: domain))
+                .opacity(isEmpty ? .zero : .opaque)
         }
         .brightRevealV5($isRevealed)
     }
@@ -269,7 +272,7 @@ struct BrightLineChartWidgetV5: View {
 
     private func guides(domain: ClosedRange<Double>) -> some View {
         Chart {
-            if size == .large {
+            if size == .large, !isEmpty {
                 ForEach(visibleEvents) { event in
                     RectangleMark(
                         xStart: .value("Start", event.start),
@@ -287,10 +290,12 @@ struct BrightLineChartWidgetV5: View {
                 }
             }
 
-            RuleMark(y: .value("Average", average))
-                .brightDashedLineV5()
+            if !isEmpty {
+                RuleMark(y: .value("Average", average))
+                    .brightDashedLineV5()
+            }
 
-            if size != .small {
+            if size != .small, !isEmpty {
                 RuleMark(y: .value("High", high))
                     .brightDashedLineV5(tint.opacity(.lowOpacity))
 
@@ -363,7 +368,7 @@ struct BrightLineChartWidgetV5: View {
 
     @ViewBuilder
     private var eventIcons: some View {
-        if size == .large {
+        if size == .large, !isEmpty {
             GeometryReader { geometry in
                 ForEach(visibleEvents) { event in
                     Image(systemName: event.systemImage)
@@ -514,7 +519,7 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private func display(_ value: Double) -> String {
-        "\(Int(value.rounded()))"
+        isEmpty ? .brightEmptyValue : "\(Int(value.rounded()))"
     }
 
     private enum Constants {

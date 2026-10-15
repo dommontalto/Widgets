@@ -78,6 +78,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
     @State private var cardHeight: CGFloat = 0
     @State private var barMids: [String: CGFloat] = [:]
     @Namespace private var namespace
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         content
@@ -86,7 +87,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .coordinateSpace(.named(Constants.space))
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { cardHeight = $0 }
             .overlay {
-                if allowsSelection {
+                if allowsSelection, !isEmpty {
                     BrightWidgetTouchLayerV5(touch: $touch)
                 }
             }
@@ -119,7 +120,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .lineLimit(1)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(isHeld(bar) ? bar.formattedGap : revealed(bar.formattedValue), size: .huge2, weight: .regular)
+                BrightText(isHeld(bar) ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: .huge2, weight: .regular)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
@@ -133,7 +134,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .minimumScaleFactor(Constants.minimumScale)
             .padding(.top, .spacing2x)
 
-            if let subtitle {
+            if let subtitle, !isEmpty {
                 BrightText(subtitle, size: .body5, color: subtitleColor.opacity(.mediumOpacity), weight: .regular)
                     .lineLimit(1)
             }
@@ -157,7 +158,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
                         }
 
                         HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                            BrightText(isHeld(bar) && isMedium ? bar.formattedGap : revealed(bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
+                            BrightText(isHeld(bar) && isMedium ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
 
@@ -248,7 +249,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             Capsule()
                 .strokeBorder(bar.color.opacity(.veryLowOpacity), lineWidth: Constants.outlineWidth)
 
-            HealthProgressCapsuleShape(progress: isRevealed ? (isHeld(bar) ? bar.yesterdayProgress ?? bar.progress : bar.progress) : 0)
+            HealthProgressCapsuleShape(progress: isRevealed && !isEmpty ? (isHeld(bar) ? bar.yesterdayProgress ?? bar.progress : bar.progress) : 0)
                 .fill(bar.fill)
         }
         .frame(height: Constants.barHeight)

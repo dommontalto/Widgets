@@ -28,6 +28,7 @@ struct BrightExerciseSplitsWidgetV5: View {
     @State private var heldWeek: String?
     @State private var isHoldingThisWeek = false
     @State private var touch: UnitPoint?
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
     @State private var cardHeight: CGFloat = 0
     @State private var rowMids: [String: CGFloat] = [:]
     @State private var isRevealed = false
@@ -83,7 +84,7 @@ struct BrightExerciseSplitsWidgetV5: View {
         .coordinateSpace(.named(Constants.space))
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { cardHeight = $0 }
         .overlay {
-            if allowsSelection {
+            if allowsSelection, !isEmpty {
                 BrightWidgetTouchLayerV5(touch: $touch)
             }
         }
@@ -133,6 +134,8 @@ private struct SplitsPlot: View {
     let rowHeight: CGFloat
     let isRevealed: Bool
 
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
+
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
@@ -171,7 +174,7 @@ private struct SplitsPlot: View {
                     Spacer(minLength: .spacing1x)
 
                     HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                        BrightText(isRevealed ? "\(percent)" : "\(percent)".zeroedDigits, size: .standout3, color: color)
+                        BrightText(isEmpty ? .brightEmptyValue : isRevealed ? "\(percent)" : "\(percent)".zeroedDigits, size: .standout3, color: color)
                             .contentTransition(.numericText())
                         BrightText("%", size: .body1, color: color)
                     }
@@ -231,6 +234,8 @@ private struct SplitsRow: View {
     let split: BrightExerciseSplitsWidgetV5.Week
     let isRevealed: Bool
 
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
+
     var body: some View {
         HStack(spacing: .spacing2x) {
             BrightText(split.name, size: .body3, color: .lightTextColor)
@@ -240,16 +245,16 @@ private struct SplitsRow: View {
                 HStack(spacing: .spacing05x) {
                     Capsule()
                         .fill(Color.defaultPink.opacity(.veryMinimalOpacity))
-                        .frame(width: isRevealed ? width(of: split.strengthFraction, in: track) : 0)
+                        .frame(width: isRevealed && !isEmpty ? width(of: split.strengthFraction, in: track) : 0)
                     Capsule()
                         .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
-                        .frame(width: isRevealed ? width(of: split.cardioFraction, in: track) : 0)
+                        .frame(width: isRevealed && !isEmpty ? width(of: split.cardioFraction, in: track) : 0)
                 }
                 .animation(.brightBouncy, value: isRevealed)
             }
             .frame(height: Constants.rowBarHeight)
 
-            BrightText(split.ratio, size: .body3, color: .lightTextColor)
+            BrightText(isEmpty ? .brightEmptyValue : split.ratio, size: .body3, color: .lightTextColor)
         }
     }
 

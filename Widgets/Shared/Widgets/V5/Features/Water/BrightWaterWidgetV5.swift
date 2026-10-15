@@ -33,6 +33,7 @@ struct BrightWaterWidgetV5: View {
     @State private var isHolding = false
     // The tank fills from empty the first time the widget shows.
     @State private var isRevealed = false
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
@@ -120,6 +121,9 @@ struct BrightWaterWidgetV5: View {
         if isHolding {
             return "Yesterday"
         }
+        if isEmpty {
+            return "Latest: \(String.brightEmptyValue)"
+        }
         return drinks.last.map { "+\(compact($0.litres)), \($0.date.formatted(.brightTimestamp))" }
     }
 
@@ -147,6 +151,7 @@ struct BrightWaterWidgetV5: View {
                         scaleLabel("0")
                     }
                     .padding(.leading, .spacing05x)
+                    .opacity(isEmpty ? .zero : .opaque)
 
                     Spacer(minLength: .spacing0x)
 
@@ -155,6 +160,7 @@ struct BrightWaterWidgetV5: View {
 
                 levelMarker
                     .offset(y: levelY - Constants.markerSize / 2)
+                    .opacity(isEmpty ? .zero : .opaque)
 
                 BrightText(isRevealed ? full(level) : full(level).zeroedDigits, size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
                     .monospacedDigit()
@@ -215,17 +221,20 @@ struct BrightWaterWidgetV5: View {
     // MARK: - Values
 
     private var level: Double {
-        isHolding ? yesterday : drinks.reduce(0) { $0 + $1.litres }
+        if isEmpty {
+            return 0
+        }
+        return isHolding ? yesterday : drinks.reduce(0) { $0 + $1.litres }
     }
 
     // "2.13 L", for the total.
     private func full(_ litres: Double) -> String {
-        [appearance.format(litres), appearance.unit].compactMap(\.self).joined(separator: " ")
+        isEmpty ? .brightEmptyValue : [appearance.format(litres), appearance.unit].compactMap(\.self).joined(separator: " ")
     }
 
     // "3.4L", for the smaller labels.
     private func compact(_ litres: Double) -> String {
-        appearance.format(litres) + (appearance.unit ?? "")
+        isEmpty ? .brightEmptyValue : appearance.format(litres) + (appearance.unit ?? "")
     }
 
     private enum Constants {
@@ -244,7 +253,7 @@ extension BrightWaterWidgetV5 {
     // and the page still scrolls.
     @ViewBuilder
     private var touchLayer: some View {
-        if allowsSelection, let first = drinks.first {
+        if allowsSelection, !isEmpty, let first = drinks.first {
             Chart {
                 PointMark(x: .value("Time", first.date), y: .value("Floor", 0))
                     .opacity(.zero)

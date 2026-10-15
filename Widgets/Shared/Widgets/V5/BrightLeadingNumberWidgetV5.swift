@@ -28,6 +28,7 @@ struct BrightLeadingNumberWidgetV5: View {
     // The number rolls up from zero the first time the widget shows.
     @State private var isRevealed = false
     @State private var touch: UnitPoint?
+    @Environment(\.brightWidgetIsEmpty) private var isEmpty
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
@@ -51,7 +52,7 @@ struct BrightLeadingNumberWidgetV5: View {
         .padding(.spacing205x)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .overlay {
-            if allowsSelection && !details.isEmpty {
+            if allowsSelection && !details.isEmpty && !isEmpty {
                 BrightWidgetTouchLayerV5(touch: $touch)
             }
         }
@@ -72,7 +73,7 @@ struct BrightLeadingNumberWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText("Latest: \(latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+            BrightText("Latest: \(isEmpty ? .brightEmptyValue : latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
         }
     }
 
@@ -94,7 +95,7 @@ struct BrightLeadingNumberWidgetV5: View {
     }
 
     private var display: String {
-        appearance.format(value)
+        isEmpty ? .brightEmptyValue : appearance.format(value)
     }
 }
 
