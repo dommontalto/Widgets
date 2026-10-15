@@ -6,6 +6,11 @@
 import SwiftUI
 
 struct BrightWhatsNewSheetV5: View {
+    @State private var heroRisen = false
+    @State private var heroSettled = false
+    @State private var heroTitleShown = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         BrightPageSheetViewV5(horizontalPadding: .spacing0x) {
             ScrollView {
@@ -13,6 +18,12 @@ struct BrightWhatsNewSheetV5: View {
                     hero
 
                     BrightText("What’s new.", size: .standout1, color: .semiLightTextColor, weight: .regular)
+                        .whatsNewReveal { content, hidden in
+                            content
+                                .opacity(1 - hidden)
+                                .scaleEffect(1 - hidden * Constants.titlePop, anchor: .leading)
+                                .blur(radius: hidden * Constants.revealBlur)
+                        }
                         .padding(.top, .spacing6x)
                         .padding(.horizontal, .spacing5x)
 
@@ -37,8 +48,15 @@ struct BrightWhatsNewSheetV5: View {
             Image(ImageNames.whatsNewHeroV5)
                 .resizable()
                 .scaledToFit()
+                .scaleEffect(heroSettled ? 1 : (heroRisen ? Constants.heroOvershootScale : Constants.heroStartScale), anchor: .bottom)
+                .rotationEffect(.degrees(heroSettled ? 0 : (heroRisen ? Constants.heroOvershootAngle : Constants.heroStartAngle)), anchor: .bottomTrailing)
+                .offset(y: heroSettled ? 0 : (heroRisen ? -Constants.heroOvershoot : Constants.heroStartOffset))
+                .clipped()
 
             BrightText("Welcome to V5.", size: .huge, color: .white, weight: .regular)
+                .opacity(heroTitleShown ? 1 : 0)
+                .blur(radius: heroTitleShown ? 0 : Constants.revealBlur)
+                .offset(y: heroTitleShown ? 0 : Constants.textRise)
                 .padding(.top, Constants.heroTitleTop)
         }
         .frame(maxWidth: .infinity)
@@ -46,19 +64,46 @@ struct BrightWhatsNewSheetV5: View {
             Color.defaultBlack
                 .padding(.top, -Constants.heroOverscroll)
         }
+        .onAppear(perform: playHero)
+    }
+
+    private func playHero() {
+        guard !heroRisen else { return }
+        guard !reduceMotion else {
+            heroRisen = true
+            heroSettled = true
+            heroTitleShown = true
+            return
+        }
+        withAnimation(.smooth(duration: Constants.heroRiseDuration)) {
+            heroRisen = true
+        } completion: {
+            withAnimation(.spring(duration: Constants.heroSettleDuration, bounce: Constants.heroSettleBounce)) {
+                heroSettled = true
+            }
+        }
+        withAnimation(.smooth(duration: Constants.revealDuration).delay(Constants.heroTitleDelay)) {
+            heroTitleShown = true
+        }
     }
 
     private var more: some View {
         VStack(alignment: .leading, spacing: .spacing5x) {
             BrightText("and more.", size: .standout1, color: .semiLightTextColor, weight: .regular)
+                .whatsNewReveal { content, hidden in
+                    content
+                        .opacity(1 - hidden)
+                        .scaleEffect(1 - hidden * Constants.titlePop, anchor: .leading)
+                        .blur(radius: hidden * Constants.revealBlur)
+                }
 
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: .spacing3x, alignment: .topLeading), count: 2),
-                alignment: .leading,
-                spacing: .spacing5x
-            ) {
-                ForEach(WhatsNewMoreItem.all) { item in
-                    WhatsNewMoreItemView(item: item)
+            Grid(alignment: .topLeading, horizontalSpacing: .spacing3x, verticalSpacing: .spacing5x) {
+                ForEach(Array(stride(from: 0, to: WhatsNewMoreItem.all.count, by: 2)), id: \.self) { start in
+                    GridRow {
+                        ForEach(WhatsNewMoreItem.all[start ..< min(start + 2, WhatsNewMoreItem.all.count)]) { item in
+                            WhatsNewMoreItemView(item: item, isLeading: item.id == WhatsNewMoreItem.all[start].id)
+                        }
+                    }
                 }
             }
         }
@@ -68,21 +113,60 @@ struct BrightWhatsNewSheetV5: View {
     fileprivate enum Constants {
         static let heroTitleTop: CGFloat = .spacing3x
         static let heroOverscroll: CGFloat = 2000
+        static let heroStartOffset: CGFloat = .spacing12x * 6
+        static let heroOvershoot: CGFloat = .spacing2x
+        static let heroStartAngle: Double = 12
+        static let heroOvershootAngle: Double = -2
+        static let heroStartScale: CGFloat = 0.9
+        static let heroOvershootScale: CGFloat = 1.02
+        static let heroRiseDuration: Double = 1.8
+        static let heroSettleDuration: Double = 1.2
+        static let heroSettleBounce: Double = 0.35
+        static let heroTitleDelay: Double = 0.9
         static let carouselCardWidth: CGFloat = 284
         static let imageCornerRadius: CGFloat = 40
         static let moreIconSize: CGFloat = 22
+        static let revealDuration: Double = 1.4
+        static let revealThreshold: Double = 0.4
+        static let revealLock: Duration = .seconds(2.5)
+        static let revealStagger: Double = 0.25
+        static let revealBlur: CGFloat = 8
+        static let textRise: CGFloat = .spacing4x
+        static let imageRise: CGFloat = .spacing10x
+        static let imageShrink: CGFloat = 0.12
+        static let carouselSlide: CGFloat = .spacing12x
+        static let itemSlide: CGFloat = .spacing6x
+        static let titlePop: CGFloat = 0.15
+        static let glowRadius: CGFloat = .spacing2x
+        static let glowIn: Double = 1.0
+        static let glowHold: Double = 1.6
+        static let glowOut: Double = 2.4
     }
 }
 
 private struct WhatsNewFeatureSection: View {
     let feature: WhatsNewFeature
 
+    private typealias Constants = BrightWhatsNewSheetV5.Constants
+
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             VStack(alignment: .leading, spacing: .spacing2x) {
                 BrightText(feature.title, size: .heading, color: .semiLightTextColor, weight: .regular)
+                    .whatsNewReveal { content, hidden in
+                        content
+                            .opacity(1 - hidden)
+                            .offset(x: -hidden * Constants.itemSlide)
+                            .blur(radius: hidden * Constants.revealBlur)
+                    }
                 BrightText(feature.detail, size: .body1, color: .lightTextColor, weight: .regular)
                     .fixedSize(horizontal: false, vertical: true)
+                    .whatsNewReveal(delay: Constants.revealStagger) { content, hidden in
+                        content
+                            .opacity(1 - hidden)
+                            .offset(y: hidden * Constants.textRise)
+                            .blur(radius: hidden * Constants.revealBlur)
+                    }
             }
             .padding(.horizontal, .spacing5x)
 
@@ -98,11 +182,22 @@ private struct WhatsNewFeatureSection: View {
             VStack(spacing: .spacing3x) {
                 ForEach(images, id: \.self) { image in
                     WhatsNewImage(name: image)
+                        .whatsNewReveal { content, hidden in
+                            content
+                                .opacity(1 - hidden)
+                                .scaleEffect(1 - hidden * Constants.imageShrink)
+                                .offset(y: hidden * Constants.imageRise)
+                        }
                 }
             }
             .padding(.horizontal, .spacing5x)
         case .carousel(let images):
             WhatsNewCarousel(images: images)
+                .whatsNewReveal { content, hidden in
+                    content
+                        .opacity(1 - hidden)
+                        .offset(x: hidden * Constants.carouselSlide)
+                }
         }
     }
 }
@@ -193,6 +288,9 @@ private struct WhatsNewFeature: Identifiable {
 
 private struct WhatsNewMoreItemView: View {
     let item: WhatsNewMoreItem
+    let isLeading: Bool
+
+    @State private var glow = 0
 
     private typealias Constants = BrightWhatsNewSheetV5.Constants
 
@@ -213,6 +311,13 @@ private struct WhatsNewMoreItemView: View {
                 }
             }
             .frame(height: Constants.moreIconSize)
+            .keyframeAnimator(initialValue: 0.0, trigger: glow) { content, value in
+                content.shadow(color: item.color.opacity(value), radius: value * Constants.glowRadius)
+            } keyframes: { _ in
+                CubicKeyframe(1, duration: Constants.glowIn)
+                LinearKeyframe(1, duration: Constants.glowHold)
+                CubicKeyframe(0, duration: Constants.glowOut)
+            }
             .padding(.bottom, .spacing05x)
 
             BrightText(item.title, size: .heading, color: .semiLightTextColor, weight: .regular)
@@ -220,6 +325,19 @@ private struct WhatsNewMoreItemView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .whatsNewReveal(delay: isLeading ? 0 : Constants.revealStagger) { [isLeading] content, hidden in
+            content
+                .opacity(1 - hidden)
+                .offset(x: hidden * (isLeading ? -1 : 1) * Constants.itemSlide)
+                .blur(radius: hidden * Constants.revealBlur)
+        }
+        .onScrollVisibilityChange(threshold: Constants.revealThreshold) { isVisible in
+            guard isVisible, glow == 0 else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(Constants.revealDuration))
+                glow += 1
+            }
+        }
     }
 }
 
@@ -349,4 +467,42 @@ private struct WhatsNewMoreItem: Identifiable {
             detail: "Bright OS is now HIPAA, GDPR, ISO27001 and SOC2 compliant along with being SEC-256 encrypted."
         )
     ]
+}
+
+private struct WhatsNewReveal<Effect: VisualEffect>: ViewModifier {
+    let delay: Double
+    let effect: @Sendable (EmptyVisualEffect, Double) -> Effect
+
+    @State private var isRevealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private typealias Constants = BrightWhatsNewSheetV5.Constants
+
+    func body(content: Content) -> some View {
+        let isRevealed = self.isRevealed || reduceMotion
+        let effect = self.effect
+        content
+            .scrollTransition(
+                .animated(.smooth(duration: Constants.revealDuration).delay(delay))
+                    .threshold(.visible(Constants.revealThreshold))
+            ) { view, phase in
+                effect(view, isRevealed ? 0 : max(phase.value, 0))
+            }
+            .onScrollVisibilityChange(threshold: Constants.revealThreshold) { isVisible in
+                guard isVisible, !self.isRevealed else { return }
+                Task {
+                    try? await Task.sleep(for: Constants.revealLock)
+                    self.isRevealed = true
+                }
+            }
+    }
+}
+
+private extension View {
+    func whatsNewReveal<Effect: VisualEffect>(
+        delay: Double = 0,
+        effect: @escaping @Sendable (EmptyVisualEffect, Double) -> Effect
+    ) -> some View {
+        modifier(WhatsNewReveal(delay: delay, effect: effect))
+    }
 }
