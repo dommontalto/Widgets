@@ -119,7 +119,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var styles: [HealthWidgetStyleV5] {
         switch self {
-        case .activity: [.totalEnergyBars, .activeEnergyBars, .stepBars]
+        case .activity: [.totalEnergyBars, .activeEnergyBars]
         case .exercise: [.exerciseSplits]
         case .heartRate: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
         case .intake: [.intakeBars, .intakeRing, .intakeMeter]
@@ -222,7 +222,6 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // MARK: Activity
     case totalEnergyBars
     case activeEnergyBars
-    case stepBars
 
     // MARK: Exercise
     case exerciseSplits
@@ -321,7 +320,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
     var family: Family {
         switch self {
-        case .totalEnergyBars, .activeEnergyBars, .stepBars: .bar
+        case .totalEnergyBars, .activeEnergyBars: .bar
         case .exerciseSplits: .exercise
         case .heartLine: .line
         case .heartNumber: .number
@@ -388,7 +387,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // The ranges it can be set to, the first being where it starts; always at least one.
     var ranges: [BrightWidgetRangeV5] {
         switch self {
-        case .totalEnergyBars, .activeEnergyBars, .stepBars: [.today, .rolling12h, .week]
+        case .totalEnergyBars, .activeEnergyBars: [.today, .rolling12h, .week]
         case .exerciseSplits: [.latest]
         case .heartLine: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
         case .heartNumber: [.latest]
@@ -744,7 +743,16 @@ final class HealthWidgetLayoutV5 {
 
     private static func loadSaved() -> [HealthWidgetItemV5]? {
         guard let data = UserDefaults.standard.data(forKey: Constants.storageKey) else { return nil }
-        return try? JSONDecoder().decode([HealthWidgetItemV5].self, from: data)
+        guard let items = try? JSONDecoder().decode([LossyItem].self, from: data) else { return nil }
+        return items.compactMap(\.item)
+    }
+
+    private struct LossyItem: Decodable {
+        let item: HealthWidgetItemV5?
+
+        init(from decoder: Decoder) throws {
+            item = try? HealthWidgetItemV5(from: decoder)
+        }
     }
 
     private struct Occupancy {

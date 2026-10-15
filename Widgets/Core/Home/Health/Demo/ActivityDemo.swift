@@ -29,11 +29,4 @@ extension HealthWidgetDemoV5 {
         hourly: [0, 0, 0, 0, 0, 0, 25, 80, 35, 50, 30, 20, 60, 35, 25, 28, 100, 150, 70, 30, 20, 15, 10, 5],
         daily: [480, 390, 605, 403, 343, 435]
     )
-
-    static let steps = BarMetric(
-        appearance: BrightWidgetAppearanceV5(title: "Steps", systemImage: "shoeprints.fill", tint: .defaultYellow),
-        fill: .solid(.defaultYellow),
-        hourly: [30, 0, 0, 0, 0, 60, 320, 1_450, 820, 640, 600, 780, 900, 520, 480, 650, 1_600, 2_100, 800, 560, 300, 180, 90, 40],
-        daily: [7_200, 4_100, 2_394, 5_345, 12_340, 2_388]
-    )
 }
