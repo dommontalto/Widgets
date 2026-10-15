@@ -27,7 +27,7 @@ extension HealthWidgetDemoV5 {
     static let latestMeal = minutesAgo(47)
 
     static var intakeBar: BrightHorizontalBarChartWidgetV5.Bar {
-        bar(intakeRing, unit: "Cal", systemImage: "arrow.right", gradient: [.defaultYellow, .defaultGreen, .defaultCyan])
+        bar(intakeRing, unit: "Cal", systemImage: "arrow.right", gradient: .brightIntake)
     }
 
     static var intakeBehind: String {

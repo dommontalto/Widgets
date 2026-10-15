@@ -111,7 +111,7 @@ enum HealthWidgetDemoV5 {
         _ ring: BrightRingGroupWidgetV5.Ring,
         unit: String = "",
         systemImage: String? = nil,
-        gradient: [Color]? = nil,
+        gradient: Gradient? = nil,
         reading: String? = nil,
         goalReading: String? = nil
     ) -> BrightHorizontalBarChartWidgetV5.Bar {

@@ -13,7 +13,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
         let value: Double
         let goal: Double
         let color: Color
-        var gradient: [Color]?
+        var gradient: Gradient?
         var systemImage: String?
         var image: String?
         var shortLabel = ""
@@ -59,7 +59,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
 
         var fill: AnyShapeStyle {
             if let gradient {
-                AnyShapeStyle(LinearGradient(colors: gradient, startPoint: .leading, endPoint: .trailing))
+                AnyShapeStyle(LinearGradient(gradient: gradient, startPoint: .leading, endPoint: .trailing))
             } else {
                 AnyShapeStyle(color)
             }
@@ -330,7 +330,7 @@ private struct HealthProgressCapsuleShape: Shape {
     VStack(spacing: .spacing205x) {
         HStack(spacing: .spacing205x) {
             BrightHorizontalBarChartWidgetV5(
-                bars: [.init(label: "Intake", value: 1_823, goal: 2_300, color: .defaultGreen, gradient: [.defaultYellow, .defaultGreen, .defaultCyan], systemImage: "arrow.right", unit: "Cal")],
+                bars: [.init(label: "Intake", value: 1_823, goal: 2_300, color: .defaultGreen, gradient: .brightIntake, systemImage: "arrow.right", unit: "Cal")],
                 subtitle: "477 behind",
                 size: .small
             )

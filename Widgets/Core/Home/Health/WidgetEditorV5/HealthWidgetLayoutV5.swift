@@ -551,15 +551,12 @@ final class HealthWidgetLayoutV5 {
     private(set) var positions: [UUID: HealthGridPositionV5] = [:]
 
     static let defaultWidgets: [HealthWidgetItemV5] = [
-        HealthWidgetItemV5(kind: .activity, style: .stepBars, size: .small, range: .today),
-        HealthWidgetItemV5(kind: .activity, style: .totalEnergyBars, size: .small, range: .week),
+        HealthWidgetItemV5(kind: .intake, style: .intakeMeter, size: .small),
+        HealthWidgetItemV5(kind: .activity, style: .activeEnergyBars, size: .small, range: .today),
+        HealthWidgetItemV5(kind: .sleep, style: .sleepRings, size: .medium),
         HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium, range: .rolling1h),
-        HealthWidgetItemV5(kind: .sleep, style: .sleepStages, size: .medium),
-        HealthWidgetItemV5(kind: .sleep, style: .sleepVitals, size: .medium),
-        HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingRings, size: .small),
+        HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeters, size: .small),
         HealthWidgetItemV5(kind: .water, style: .waterTank, size: .small),
-        HealthWidgetItemV5(kind: .menstrual, style: .menstrualCycle, size: .medium),
-        HealthWidgetItemV5(kind: .weight, style: .weightLine, size: .large),
     ]
 
     var layoutText: String {

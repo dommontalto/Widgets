@@ -228,3 +228,11 @@ nonisolated extension Color {
         return Color(red: r, green: g, blue: b, opacity: a)
     }
 }
+
+extension Gradient {
+    static let brightIntake = Gradient(stops: [
+        .init(color: .defaultCyan, location: 0),
+        .init(color: .defaultGreen, location: 0.76),
+        .init(color: .defaultYellow, location: 1),
+    ])
+}
