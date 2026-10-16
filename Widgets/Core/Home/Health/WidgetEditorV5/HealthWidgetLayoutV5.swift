@@ -16,6 +16,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case journal
     case macros
     case menstrual
+    case micros
     case mind
     case nutrition
     case sleep
@@ -34,6 +35,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: "Journal"
         case .macros: "Weekly Macros"
         case .menstrual: "Menstrual"
+        case .micros: "Micros"
         case .mind: "Mind"
         case .nutrition: "Nutrition"
         case .sleep: "Sleep"
@@ -53,6 +55,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: "Journal"
         case .macros: "Macros"
         case .menstrual: "Menstrual"
+        case .micros: "Micros"
         case .mind: "Mind"
         case .nutrition: "Nutrition"
         case .sleep: "Sleep"
@@ -71,6 +74,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: "pencil.line"
         case .macros: "chart.pie.fill"
         case .menstrual: "moonphase.waxing.crescent"
+        case .micros: "leaf.fill"
         case .mind: "brain.head.profile"
         case .nutrition: "fork.knife"
         case .sleep: "bed.double.fill"
@@ -90,6 +94,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: .template(ImageNames.pencilBlueV5)
         case .macros: .template(ImageNames.macronutrientGraphV5)
         case .menstrual: .template(ImageNames.cycleTrackingMainV5)
+        case .micros: .symbol(systemImage)
         case .mind: .symbol(systemImage)
         case .nutrition: .symbol(systemImage)
         case .sleep: .template(ImageNames.sleepInfoV4)
@@ -108,6 +113,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: .defaultCyan
         case .macros: .defaultGreen
         case .menstrual: .defaultPink
+        case .micros: .defaultCyan
         case .mind: .defaultBrightPink
         case .nutrition: .defaultGreen
         case .sleep: .defaultBlue
@@ -126,6 +132,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .journal: [.journalChecklist]
         case .macros: [.macroBars, .macroRings, .macroRing, .macroMeter, .macroMeters]
         case .menstrual: [.menstrualCycle]
+        case .micros: [.microRings]
         case .mind: [.mindNumber]
         case .nutrition: [.nutritionNumber]
         case .sleep: [.sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter]
@@ -166,6 +173,85 @@ enum HealthSleepStageV5: String, CaseIterable, Codable, Identifiable {
         case .rem: "REM"
         case .core: "Core"
         case .deep: "Deep"
+        }
+    }
+}
+
+enum HealthNutrientV5: String, CaseIterable, Codable, Identifiable {
+    case sodium
+    case sugar
+    case saturatedFat
+    case cholesterol
+    case caffeine
+    case alcohol
+    case fibre
+    case calcium
+    case iron
+    case magnesium
+    case potassium
+    case zinc
+    case vitaminB12
+    case vitaminC
+    case vitaminD
+
+    static let maxPinned = 4
+    static let defaultPins: [Self] = [.sodium, .sugar, .saturatedFat, .fibre]
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .sodium: "Sodium"
+        case .sugar: "Sugar"
+        case .saturatedFat: "Saturated Fat"
+        case .cholesterol: "Cholesterol"
+        case .caffeine: "Caffeine"
+        case .alcohol: "Alcohol"
+        case .fibre: "Fibre"
+        case .calcium: "Calcium"
+        case .iron: "Iron"
+        case .magnesium: "Magnesium"
+        case .potassium: "Potassium"
+        case .zinc: "Zinc"
+        case .vitaminB12: "Vitamin B12"
+        case .vitaminC: "Vitamin C"
+        case .vitaminD: "Vitamin D"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .sodium: "Na"
+        case .sugar: "Su"
+        case .saturatedFat: "SF"
+        case .cholesterol: "Ch"
+        case .caffeine: "Cf"
+        case .alcohol: "Al"
+        case .fibre: "Fi"
+        case .calcium: "Ca"
+        case .iron: "Fe"
+        case .magnesium: "Mg"
+        case .potassium: "K"
+        case .zinc: "Zn"
+        case .vitaminB12: "B12"
+        case .vitaminC: "C"
+        case .vitaminD: "D"
+        }
+    }
+
+    var unit: String {
+        switch self {
+        case .sugar, .saturatedFat, .fibre: "g"
+        case .alcohol: "std"
+        case .vitaminB12, .vitaminD: "µg"
+        default: "mg"
+        }
+    }
+
+    var isLimit: Bool {
+        switch self {
+        case .sodium, .sugar, .saturatedFat, .cholesterol, .caffeine, .alcohol: true
+        default: false
         }
     }
 }
@@ -249,6 +335,9 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
     // MARK: Menstrual
     case menstrualCycle
+
+    // MARK: Micros
+    case microRings
 
     // MARK: Mind
     case mindNumber
@@ -334,6 +423,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroRings, .macroRing: .ring
         case .macroMeter, .macroMeters: .horizontalBar
         case .menstrualCycle: .menstrual
+        case .microRings: .ring
         case .mindNumber: .number
         case .nutritionNumber: .number
         case .sleepRings: .ring
@@ -366,6 +456,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroRings: [.small, .medium]
         case .macroRing, .macroMeter: [.small]
         case .macroMeters: [.small, .medium]
+        case .microRings: [.small, .medium]
         case .mindNumber: [.small]
         case .nutritionNumber: [.small]
         case .sleepRings: [.small, .medium]
@@ -399,6 +490,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroBars: [.week]
         case .macroRings, .macroRing, .macroMeter, .macroMeters: [.today]
         case .menstrualCycle: [.today]
+        case .microRings: [.today]
         case .mindNumber: [.latest]
         case .nutritionNumber: [.latest]
         case .sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter: [.lastNight]
@@ -415,6 +507,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case macro
         case stage
         case score
+        case nutrients
     }
 
     var pick: Pick? {
@@ -422,6 +515,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroRing, .macroMeter: .macro
         case .sleepStageRing, .sleepStageMeter: .stage
         case .wellbeingRing, .wellbeingMeter: .score
+        case .microRings: .nutrients
         default: nil
         }
     }
@@ -431,6 +525,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macro: HealthMacroV5.allCases.count
         case .stage: HealthSleepStageV5.allCases.count
         case .score: HealthScoreV5.allCases.count
+        case .nutrients: HealthNutrientV5.allCases.count
         case nil: 1
         }
     }
@@ -445,6 +540,8 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
     var macro = HealthMacroV5.carbs
     var stage = HealthSleepStageV5.awake
     var score = HealthScoreV5.recovery
+    var nutrients = HealthNutrientV5.defaultPins
+    var nutrientPinOrder = HealthNutrientV5.defaultPins
 
     init(
         kind: HealthWidgetKindV5,
@@ -470,6 +567,8 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
         macro = try container.decodeIfPresent(HealthMacroV5.self, forKey: .macro) ?? .carbs
         stage = try container.decodeIfPresent(HealthSleepStageV5.self, forKey: .stage) ?? .awake
         score = try container.decodeIfPresent(HealthScoreV5.self, forKey: .score) ?? .recovery
+        nutrients = try container.decodeIfPresent([HealthNutrientV5].self, forKey: .nutrients) ?? HealthNutrientV5.defaultPins
+        nutrientPinOrder = try container.decodeIfPresent([HealthNutrientV5].self, forKey: .nutrientPinOrder) ?? nutrients
     }
 
     var picks: [HealthWidgetItemV5] {
@@ -477,7 +576,7 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
         case .macro: HealthMacroV5.allCases.map { macro in copy { $0.macro = macro } }
         case .stage: HealthSleepStageV5.allCases.map { stage in copy { $0.stage = stage } }
         case .score: HealthScoreV5.allCases.map { score in copy { $0.score = score } }
-        case nil: [self]
+        case .nutrients, nil: [self]
         }
     }
 
@@ -486,6 +585,21 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
         widget.id = UUID()
         change(&widget)
         return widget
+    }
+
+    // Pinning past the limit swaps out the longest-pinned one, in its slot, so the other rings stay put.
+    mutating func toggle(_ nutrient: HealthNutrientV5) {
+        if let index = nutrients.firstIndex(of: nutrient) {
+            nutrients.remove(at: index)
+            nutrientPinOrder.removeAll { $0 == nutrient }
+        } else if nutrients.count < HealthNutrientV5.maxPinned {
+            nutrients.append(nutrient)
+            nutrientPinOrder.append(nutrient)
+        } else if let oldest = nutrientPinOrder.first, let slot = nutrients.firstIndex(of: oldest) {
+            nutrients[slot] = nutrient
+            nutrientPinOrder.removeFirst()
+            nutrientPinOrder.append(nutrient)
+        }
     }
 
     // Switches style, falling back to its first size and first range where the current
@@ -556,6 +670,7 @@ final class HealthWidgetLayoutV5 {
         HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium, range: .rolling1h),
         HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeters, size: .small),
         HealthWidgetItemV5(kind: .water, style: .waterTank, size: .small),
+        HealthWidgetItemV5(kind: .exercise, style: .exerciseSplits, size: .medium),
     ]
 
     var layoutText: String {
@@ -568,6 +683,7 @@ final class HealthWidgetLayoutV5 {
             case .macro: line += ", macro: .\(widget.macro.rawValue)"
             case .stage: line += ", stage: .\(widget.stage.rawValue)"
             case .score: line += ", score: .\(widget.score.rawValue)"
+            case .nutrients: line += ", nutrients: [\(widget.nutrients.map { ".\($0.rawValue)" }.joined(separator: ", "))]"
             case nil: break
             }
             return line + "),"

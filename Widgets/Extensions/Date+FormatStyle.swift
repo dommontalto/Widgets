@@ -9,6 +9,32 @@ import Foundation
 
 extension Locale {
     static let bright = Locale(identifier: "en_NZ")
+    private static let brightMonthFirst = Locale(identifier: "en_US")
+
+    static var brightDates: Locale {
+        BrightDateOrder.current == .monthDayYear ? brightMonthFirst : bright
+    }
+}
+
+enum BrightDateOrder: String, CaseIterable, Codable {
+    case dayMonthYear
+    case monthDayYear
+
+    static let storageKey = "dateOrder"
+
+    static var current: BrightDateOrder {
+        guard let data = UserDefaults.standard.data(forKey: storageKey),
+              let order = try? JSONDecoder().decode(BrightDateOrder.self, from: data)
+        else { return .dayMonthYear }
+        return order
+    }
+
+    var title: String {
+        switch self {
+        case .dayMonthYear: "DD/MM/YYYY"
+        case .monthDayYear: "MM/DD/YYYY"
+        }
+    }
 }
 
 extension FormatStyle where Self == Date.FormatStyle {
@@ -18,7 +44,6 @@ extension FormatStyle where Self == Date.FormatStyle {
     static var brightWeekday: Self { bright.weekday(.wide) }
     static var brightWeekdayShort: Self { bright.weekday(.abbreviated) }
     static var brightWeekdayInitial: Self { bright.weekday(.narrow) }
-    static var brightSlashDate: Self { bright.day(.twoDigits).month(.twoDigits).year() }
 
     private static var bright: Self { Date.FormatStyle(locale: .bright) }
 }
@@ -55,6 +80,18 @@ extension Date {
     }
 }
 
+struct BrightSlashDateStyle: FormatStyle {
+    func format(_ value: Date) -> String {
+        let style: Date.FormatString = switch BrightDateOrder.current {
+        case .dayMonthYear: "\(day: .twoDigits)/\(month: .twoDigits)/\(year: .defaultDigits)"
+        case .monthDayYear: "\(month: .twoDigits)/\(day: .twoDigits)/\(year: .defaultDigits)"
+        }
+        return value.formatted(
+            Date.VerbatimFormatStyle(format: style, timeZone: .current, calendar: Calendar(identifier: .gregorian))
+        )
+    }
+}
+
 struct BrightDateStyle: FormatStyle {
     func format(_ value: Date) -> String {
         let calendar = Calendar.autoupdatingCurrent
@@ -62,7 +99,7 @@ struct BrightDateStyle: FormatStyle {
         if calendar.isDateInYesterday(value) { return "Yesterday" }
         if calendar.isDateInTomorrow(value) { return "Tomorrow" }
 
-        let base = Date.FormatStyle(locale: .bright).day().month(.abbreviated)
+        let base = Date.FormatStyle(locale: .brightDates).day().month(.abbreviated)
         if calendar.isDate(value, equalTo: .now, toGranularity: .year) {
             return value.formatted(base)
         }
@@ -73,7 +110,7 @@ struct BrightDateStyle: FormatStyle {
 struct BrightCalendarDateStyle: FormatStyle {
     func format(_ value: Date) -> String {
         let calendar = Calendar.autoupdatingCurrent
-        let day = value.formatted(Date.FormatStyle(locale: .bright).day().month(.abbreviated))
+        let day = value.formatted(Date.FormatStyle(locale: .brightDates).day().month(.abbreviated))
         if calendar.isDateInToday(value) { return "Today, \(day)" }
         if calendar.isDateInYesterday(value) { return "Yesterday, \(day)" }
         if calendar.isDateInTomorrow(value) { return "Tomorrow, \(day)" }
@@ -98,6 +135,10 @@ struct BrightTimestampStyle: FormatStyle {
         }
         return "\(value.formatted(.brightDate)), \(value.formatted(.brightTime))"
     }
+}
+
+extension FormatStyle where Self == BrightSlashDateStyle {
+    static var brightSlashDate: Self { .init() }
 }
 
 extension FormatStyle where Self == BrightDateStyle {

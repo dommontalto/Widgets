@@ -47,15 +47,16 @@ struct LighthouseSettingsSheet: View {
                                 isOn: $sharesCycleData
                             )
                         }
+
+                        BrightPillButton(Constants.deleteChatsTitle, color: .defaultRed, buttonSize: .large) {}
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, .spacing3x)
                     }
                     .padding(.top, .spacing2x)
                     .padding(.bottom, .spacing4x)
                 }
             }
         )
-        .brightBottomButtonV5 {
-            BrightPillButton(Constants.deleteChatsTitle, color: .defaultRed, buttonSize: .large) {}
-        }
     }
 
     private var header: some View {

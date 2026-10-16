@@ -157,10 +157,14 @@ struct BrightCalendarDayV5: View {
     }
 
     private func clusterView(_ cluster: EventCluster) -> some View {
-        HStack(alignment: .top, spacing: .spacing05x) {
-            ForEach(cluster.columns.indices, id: \.self) { index in
+        let isCapped = cluster.columns.count > Constants.maxColumns
+        let shown = isCapped ? Array(cluster.columns.prefix(Constants.maxColumns - 1)) : cluster.columns
+        let hidden = isCapped ? cluster.columns.dropFirst(shown.count).flatMap { $0 } : []
+
+        return HStack(alignment: .top, spacing: .spacing05x) {
+            ForEach(shown.indices, id: \.self) { index in
                 ZStack(alignment: .top) {
-                    ForEach(cluster.columns[index]) { event in
+                    ForEach(shown[index]) { event in
                         eventView(event)
                             .frame(height: eventHeight(event))
                             .offset(y: relativeY(of: event, in: cluster))
@@ -168,7 +172,33 @@ struct BrightCalendarDayV5: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .top)
             }
+
+            if let first = hidden.min(by: { $0.startMinutes < $1.startMinutes }) {
+                overflowView(hidden)
+                    .frame(height: eventHeight(first))
+                    .offset(y: relativeY(of: first, in: cluster))
+                    .frame(maxWidth: .infinity, alignment: .top)
+            }
         }
+    }
+
+    private func overflowView(_ events: [BrightCalendarDayEvent]) -> some View {
+        Menu {
+            ForEach(events) { event in
+                Button(event.detail.isEmpty ? event.name : "\(event.name) · \(event.detail)") {
+                    onEventTap?(event)
+                }
+            }
+        } label: {
+            BrightText("+\(events.count)", size: .body2, color: .semiLightTextColor, weight: .regular)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    Color.textColor.opacity(.ultraLowOpacity),
+                    in: RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous))
+        }
+        .allowsHitTesting(onEventTap != nil)
     }
 
     @ViewBuilder private func eventView(_ event: BrightCalendarDayEvent) -> some View {
@@ -336,6 +366,7 @@ struct BrightCalendarDayV5: View {
     }
 
     enum Constants {
+        static let maxColumns = 2
         static let startHour = 0
         static let endHour = 23
         static let hourHeight: CGFloat = 65

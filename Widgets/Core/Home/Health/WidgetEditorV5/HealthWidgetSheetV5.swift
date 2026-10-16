@@ -244,6 +244,7 @@ private struct WidgetOptions: View {
 
     @State private var stylePosition = ScrollPosition(idType: HealthWidgetStyleV5.self)
     @State private var edgeProgress: CGFloat = 0
+    @State private var nutrientNudge = 0
 
     var body: some View {
         GeometryReader { geometry in
@@ -272,6 +273,7 @@ private struct WidgetOptions: View {
         .animation(.brightBouncy, value: widget.macro)
         .animation(.brightBouncy, value: widget.stage)
         .animation(.brightBouncy, value: widget.score)
+        .animation(.brightBouncy, value: widget.nutrients)
         .onAppear {
             stylePosition.scrollTo(id: widget.style)
         }
@@ -377,6 +379,8 @@ private struct WidgetOptions: View {
                         }
                     }
                 }
+            case .nutrients:
+                nutrientPicker
             case nil:
                 EmptyView()
             }
@@ -391,6 +395,45 @@ private struct WidgetOptions: View {
             }
         }
         .animation(.brightEaseInOut, value: widget.style)
+    }
+
+    private var nutrientPicker: some View {
+        VStack(alignment: .leading, spacing: .spacing4x) {
+            BrightText(
+                "\(widget.nutrients.count) of \(HealthNutrientV5.maxPinned) pinned",
+                size: .body3,
+                color: .lightTextColor
+            )
+            .padding(.horizontal, .spacing2x)
+            .brightWiggleV5(trigger: nutrientNudge)
+
+            nutrientGroup("Limits", nutrients: HealthNutrientV5.allCases.filter(\.isLimit))
+            nutrientGroup("Goals", nutrients: HealthNutrientV5.allCases.filter { !$0.isLimit })
+        }
+    }
+
+    private func nutrientGroup(_ header: String, nutrients: [HealthNutrientV5]) -> some View {
+        BrightRowGroupV5(header: header) {
+            ForEach(nutrients) { nutrient in
+                let target = HealthWidgetDemoV5.microReading(nutrient).target
+                BrightRowV5(
+                    nutrient.title,
+                    subtitle: "\(target.formatted()) \(nutrient.unit)",
+                    trailing: .tick(widget.nutrients.contains(nutrient))
+                ) {
+                    toggle(nutrient)
+                }
+            }
+        }
+    }
+
+    private func toggle(_ nutrient: HealthNutrientV5) {
+        guard widget.nutrients != [nutrient] else {
+            nutrientNudge += 1
+            return
+        }
+        BrightHaptic.light.play()
+        widget.toggle(nutrient)
     }
 
     private func rangeGroup(_ header: String, ranges: [BrightWidgetRangeV5]) -> some View {

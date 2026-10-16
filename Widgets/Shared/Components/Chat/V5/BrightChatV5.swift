@@ -345,6 +345,15 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                     id: message.id,
                     in: sendNamespace
                 )
+                .contextMenu {
+                    if !message.text.isEmpty {
+                        Button {
+                            UIPasteboard.general.string = message.text
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                    }
+                }
         }
     }
 
