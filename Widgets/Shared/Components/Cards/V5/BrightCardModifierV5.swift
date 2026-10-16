@@ -7,23 +7,30 @@
 
 import SwiftUI
 
+extension EnvironmentValues {
+    @Entry var brightCardColor: Color = .defaultCards
+}
+
 struct BrightCardModifierV5: ViewModifier {
-    let color: Color
+    let explicitColor: Color?
     let cornerRadius: CGFloat
     let clipContent: Bool
     let isGlass: Bool
     let isCapsule: Bool
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.brightCardColor) private var environmentColor
+
+    private var color: Color { explicitColor ?? environmentColor }
 
     init(
-        color: Color = .defaultCards,
+        color: Color? = nil,
         cornerRadius: CGFloat = .cardCornerRadius,
         clipContent: Bool = true,
         isGlass: Bool = false,
         isCapsule: Bool = false
     ) {
-        self.color = color
+        self.explicitColor = color
         self.cornerRadius = cornerRadius
         self.clipContent = clipContent
         self.isGlass = isGlass
