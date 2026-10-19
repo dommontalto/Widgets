@@ -8,7 +8,7 @@ iOS 26.5+, SwiftUI only. All design tokens come from `Shared/DesignSystem/`. Alw
 
 **Never build (xcodebuild or otherwise) unless explicitly asked.**
 
-This repo (`/Users/dommontalto/mac_documents/projects/Widgets`) is the current prototype app: designs are built and iterated here first. The Bright iOS app — the main front end they sync to and from — lives at `/Users/dommontalto/bright/ios`. Shared components (`BrightPillButton`, `BrightCarousel`, etc.) are kept identical between the two repos, but **never edit the iOS app unless explicitly asked to** — by default changes land in this repo only.
+This repo (`/Users/dommontalto/mac_documents/projects/Widgets`) is the current prototype app: designs are built and iterated here first. The Bright iOS app — the main front end they sync to and from — lives at `/Users/dommontalto/bright/apps/ios`. Shared components (`BrightPillButton`, `BrightCarousel`, etc.) are kept identical between the two repos, but **never edit the iOS app unless explicitly asked to** — by default changes land in this repo only.
 
 ---
 
@@ -313,7 +313,7 @@ The iOS app tints its whole TabView, which outranks the red that `role: .destruc
 
 Every screen and sheet in this repo shows its source file name when the top of it (the nav bar's principal slot) is tapped, via `ExerciseInlineTitle(title:file:)`. `BrightPageView`, `BrightPageSheetView` and `BrightSwipePageView` do this automatically: their `file` parameter defaults to `#file`, so it names the call site. Any new screen with its own toolbar must add `ToolbarItem(placement: .principal) { ExerciseInlineTitle(title: ..., file: #file) }`. If a sheet supplies its own principal item, or wraps a page that already shows one, pass `file: nil` to `BrightPageSheetView` so the two principal items don't collide.
 
-This is a prototyping aid for this repo only. **Never add it to the iOS app**: strip `ExerciseInlineTitle` and the `file` parameters when syncing a view or container to `/Users/dommontalto/bright/ios`.
+This is a prototyping aid for this repo only. **Never add it to the iOS app**: strip `ExerciseInlineTitle` and the `file` parameters when syncing a view or container to `/Users/dommontalto/bright/apps/ios`.
 
 ---
 
