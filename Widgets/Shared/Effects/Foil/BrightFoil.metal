@@ -49,6 +49,7 @@ static half3 brightFoil_samplePalette(float angle, device const half4 *palette, 
     float2 tilt,
     float time,
     float intensity,
+    float sparkleAmount,
     device const half4 *palette,
     int paletteCount
 ) {
@@ -77,7 +78,7 @@ static half3 brightFoil_samplePalette(float angle, device const half4 *palette, 
 
     // Sparkle effect
     float sparkleAngle = (uv.x * 50.0 + uv.y * 50.0 + time * 10.0);
-    float sparkle = pow(max(0.0, sin(sparkleAngle)), 20.0) * 0.5;
+    float sparkle = pow(max(0.0, sin(sparkleAngle)), 20.0) * 0.5 * sparkleAmount;
 
     // Fresnel-like effect
     float2 center = float2(0.5, 0.5);

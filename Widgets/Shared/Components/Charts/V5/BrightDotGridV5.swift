@@ -35,7 +35,7 @@ struct BrightDotGridV5: View {
     let legend: [BrightDotGridV5Key]
     var selection: Binding<String?>? = nil
     var spacing: CGFloat = .spacing05x
-    var ringColor: Color = .defaultPurple
+    var ringColor: Color = .textColor
 
     @State private var width: CGFloat = 0
     @State private var isHolding = false

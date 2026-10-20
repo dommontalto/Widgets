@@ -164,6 +164,50 @@ BrightText(session.duration, size: .body1, color: .lightTextColor)
 Pair it with `.contentTransition(.numericText())` when the value animates.
 Numbers baked into static copy don't need it.
 
+**Font sizes are `FontSizes` cases, never `CGFloat`.** `Font.standard(size:weight:)` and
+`Font.standardSFPro(size:weight:)` take a `FontSizes` (`.body1`, `.standout1`, …), so a
+`CGFloat` constant passed as `size:` won't compile. When a helper takes a size for a
+glyph, type the parameter and its constants as `FontSizes`, and use `size.rawValue`
+where a `CGFloat` is needed (e.g. a matching `.frame(height:)`).
+
+---
+
+## Glass
+
+The deployment target is iOS 18.4, so `.glassEffect(...)` — iOS 26 only — won't compile
+when called directly. Always go through `BrightGlassEffectV5`
+(`Utilities/Helpers/Glass/V5/Glass.swift`), which gates on `#available(iOS 26.0, *)` and
+falls back to `.ultraThinMaterial`:
+
+```swift
+.modifier(BrightGlassEffectV5())                                         // capsule
+.modifier(BrightGlassEffectV5(shape: .roundedRect))                      // .cardCornerRadius
+.modifier(BrightGlassEffectV5(shape: .circle, interactive: false))       // decoration, no touch
+```
+
+Never write `.glassEffect` outside that file, and wrap any other iOS 26 API in
+`if #available(iOS 26.0, *)` with a fallback.
+
+---
+
+## Constants in generic views
+
+Swift doesn't allow static stored properties in generic types, and that includes a
+`Constants` enum nested inside one (`struct Foo<Content: View>`). Declare the enum at
+file scope and alias it inside the view:
+
+```swift
+struct WhatsNewDeviceV5<Content: View>: View {
+    var width: CGFloat = Constants.width
+    // …
+    private typealias Constants = WhatsNewDeviceConstants
+}
+
+private enum WhatsNewDeviceConstants {
+    static let width: CGFloat = 300
+}
+```
+
 ---
 
 ## Spacing

@@ -170,4 +170,10 @@ nonisolated class ImageNames {
     static let atlasTabIconUnselectedV5        = "MainTab/atlas_tab_icon_unselected_v5"
     static let logTabIconSelectedV5            = "MainTab/log_tab_icon_selected_v5"
     static let logTabIconUnselectedV5          = "MainTab/log_tab_icon_unselected_v5"
+
+    // What's New
+    static let whatsNewAndroidWebIconV5       = "whats_new_android_web_icon_v5"
+    static let whatsNewDnaIconV5              = "whats_new_dna_icon_v5"
+    static let whatsNewWidgetsIconV5          = "whats_new_widgets_icon_v5"
+    static let whatsNewIntegrationsIconV5     = "whats_new_integrations_icon_v5"
 }

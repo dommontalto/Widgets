@@ -52,6 +52,8 @@ struct BrightFoilV5<Content: View>: View {
     // Colours the foil cycles through; empty keeps the rainbow.
     var palette: [Color] = []
 
+    var sparkle: Float = 1.0
+
     // When `true`, attaches a gear `ToolbarItem` that opens a live-tuning sheet.
     var showsControls: Bool = false
 
@@ -62,6 +64,7 @@ struct BrightFoilV5<Content: View>: View {
         intensity: Float = 1.0,
         speed: Float = 1.0,
         palette: [Color] = [],
+        sparkle: Float = 1.0,
         showsControls: Bool = false,
         @ViewBuilder content: () -> Content
     ) {
@@ -69,6 +72,7 @@ struct BrightFoilV5<Content: View>: View {
         self.intensity = intensity
         self.speed = speed
         self.palette = palette
+        self.sparkle = sparkle
         self.showsControls = showsControls
         self.content = content()
     }
@@ -99,6 +103,7 @@ private struct BrightFoilRenderer<Content: View>: View {
                     .float2(Float(initial.tilt.width), Float(initial.tilt.height)),
                     .float(elapsed),
                     .float(initial.intensity),
+                    .float(initial.sparkle),
                     .colorArray(initial.palette)
                 ),
                 maxSampleOffset: .zero
@@ -118,6 +123,7 @@ private struct BrightFoilControlled<Content: View>: View {
     @State private var showSheet = false
 
     private let palette: [Color]
+    private let sparkle: Float
     private let content: Content
 
     init(initial: BrightFoilV5<Content>, content: Content) {
@@ -126,6 +132,7 @@ private struct BrightFoilControlled<Content: View>: View {
         _intensity = State(initialValue: initial.intensity)
         _speed     = State(initialValue: initial.speed)
         palette = initial.palette
+        sparkle = initial.sparkle
         self.content = content
     }
 
@@ -135,7 +142,8 @@ private struct BrightFoilControlled<Content: View>: View {
                 tilt: CGSize(width: CGFloat(tiltX), height: CGFloat(tiltY)),
                 intensity: intensity,
                 speed: speed,
-                palette: palette
+                palette: palette,
+                sparkle: sparkle
             ) { content },
             content: content
         )

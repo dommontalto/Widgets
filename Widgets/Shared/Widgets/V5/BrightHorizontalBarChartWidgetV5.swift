@@ -61,7 +61,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             if let gradient {
                 AnyShapeStyle(LinearGradient(gradient: gradient, startPoint: .leading, endPoint: .trailing))
             } else {
-                AnyShapeStyle(color)
+                AnyShapeStyle(LinearGradient(colors: [color.opacity(.lowOpacity), color], startPoint: .leading, endPoint: .trailing))
             }
         }
     }

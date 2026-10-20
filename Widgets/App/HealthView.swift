@@ -14,6 +14,7 @@ struct HealthView: View {
     @State private var editor = HealthWidgetEditorV5()
     @State private var revealReplay = 0
     @State private var showsEmptyState = false
+    @State private var showingWhatsNew = false
 
     var body: some View {
         NavigationStack {
@@ -31,14 +32,14 @@ struct HealthView: View {
                             }
                         } else {
                             Button {
-                                BrightHaptic.light.play()
-                                showsEmptyState.toggle()
-                                revealReplay += 1
+                                showingWhatsNew = true
                             } label: {
-                                Label(showsEmptyState ? "Show data" : "Show empty state", systemImage: showsEmptyState ? "circle.dashed.inset.filled" : "circle.dashed")
-                                    .labelStyle(.iconOnly)
-                                    .contentTransition(.symbolEffect(.replace))
+                                Image(ImageNames.brightLogoSearchingV4)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: Constants.logoSize, height: Constants.logoSize)
                             }
+                            .accessibilityLabel("What’s New in V5")
                         }
                     }
 
@@ -51,17 +52,16 @@ struct HealthView: View {
                                     .labelStyle(.iconOnly)
                             }
                         } else {
-                            Button {
-                                withAnimation(.brightEaseInOut) {
-                                    selectedPage = HomePage.health.rawValue
-                                }
-                                editor.beginEditing()
-                            } label: {
-                                Label("Edit", systemImage: "paintbrush")
+                            // Placeholder until search is built.
+                            Button {} label: {
+                                Label("Search", systemImage: "magnifyingglass")
                                     .labelStyle(.iconOnly)
                             }
                         }
                     }
+                }
+                .sheet(isPresented: $showingWhatsNew) {
+                    BrightWhatsNewSheet2V5()
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
                     AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
@@ -172,6 +172,7 @@ struct HealthView: View {
 
     private enum Constants {
         static let editingBottomRoom: CGFloat = 300
+        static let logoSize: CGFloat = 22
     }
 }
 

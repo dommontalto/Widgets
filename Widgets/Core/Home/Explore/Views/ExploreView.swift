@@ -117,17 +117,31 @@ struct ExploreView: View {
 
 private struct ExploreComingSoonCover: View {
     var body: some View {
-        VStack(spacing: .spacing2x) {
-            Image(systemName: "map")
-                .font(.standardSFPro(size: .huge3, weight: .regular))
-                .foregroundStyle(Self.iconFill)
-                .symbolEffect(.breathe, options: .repeating)
-                .padding(.bottom, .spacing1x)
+        VStack(spacing: .spacing0x) {
+            VStack(spacing: .spacing2x) {
+                Image(systemName: "map")
+                    .font(.standardSFPro(size: .giant, weight: .regular))
+                    .foregroundStyle(Self.iconFill)
+                    .symbolEffect(.breathe, options: .repeating)
+                    .padding(.bottom, .spacing1x)
 
-            BrightText("Coming Soon", size: .standout2, weight: .medium)
+                BrightText("Explore", size: .huge205, weight: .medium)
 
-            BrightText("Agents, clinics and offers picked for your health are on their way", size: .body1, color: .lightTextColor)
-                .multilineTextAlignment(.center)
+                BrightText("Agents, clinics and offers picked for your health are on their way", size: .body1, color: .lightTextColor)
+                    .multilineTextAlignment(.center)
+            }
+
+            Spacer()
+
+            HStack(spacing: .spacing1x) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: FontSizes.standout2.rawValue, weight: .medium))
+                    .foregroundStyle(Color.lightTextColor)
+                BrightText("Coming Soon", size: .standout2, color: .lightTextColor, weight: .medium)
+            }
+            .padding(.bottom, .spacing12x)
+
+            Spacer()
         }
         .padding(.horizontal, .spacing6x)
         .padding(.top, Constants.topPadding)
@@ -139,7 +153,7 @@ private struct ExploreComingSoonCover: View {
     }
 
     private static let iconFill = LinearGradient(
-        colors: [.defaultSkyBlue, .defaultBrightViolet],
+        colors: [.defaultBrightPink, .defaultBrightViolet],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
