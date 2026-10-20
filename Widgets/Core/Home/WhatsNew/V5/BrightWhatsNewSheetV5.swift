@@ -577,7 +577,7 @@ private struct WhatsNewSection: Identifiable {
     static let all: [Self] = [
         .init(
             title: "Lighthouse",
-            detail: "An AI layer that reads all of Bright. Use a leading model or bring your own API key.",
+            detail: "An AI layer that can read every part of Bright. Pick from the leading frontier models, or bring your own API key.",
             layout: .stack,
             cards: [
                 .init(media: .phone(.init(name: "whats_new_lighthouse_v5", range: 3.6...18.1)), phoneInset: Constants.raisedPhoneInset),
