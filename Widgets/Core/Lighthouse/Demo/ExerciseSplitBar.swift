@@ -14,9 +14,9 @@ struct ExerciseSplitBar: View {
     var body: some View {
         VStack(spacing: .spacing105x) {
             HStack(spacing: .spacing0x) {
-                percentLabel(strengthPercent, color: .defaultPink)
+                percentLabel(strengthPercent, color: .strengthColor)
                     .frame(maxWidth: .infinity)
-                percentLabel(cardioPercent, color: .defaultSkyBlue)
+                percentLabel(cardioPercent, color: .cardioColor)
                     .frame(maxWidth: .infinity)
             }
 
@@ -36,13 +36,13 @@ struct ExerciseSplitBar: View {
             let inset: CGFloat = .spacing05x
             let trackWidth = max(0, proxy.size.width - inset * 2 - Constants.notchWidth - inset * 2)
             HStack(spacing: inset) {
-                segment("Strength", color: .defaultPink, width: width(of: strengthPercent, in: trackWidth))
+                segment("Strength", color: .strengthColor, width: width(of: strengthPercent, in: trackWidth))
 
                 RoundedRectangle(cornerRadius: Constants.notchCornerRadius, style: .continuous)
                     .fill(Color.textColor)
                     .frame(width: Constants.notchWidth, height: Constants.notchHeight)
 
-                segment("Cardio", color: .defaultSkyBlue, width: width(of: cardioPercent, in: trackWidth))
+                segment("Cardio", color: .cardioColor, width: width(of: cardioPercent, in: trackWidth))
             }
             .padding(inset)
         }
@@ -86,12 +86,12 @@ struct ExerciseSplitPlot: View {
             let boundary = boundary(in: width)
 
             VStack(spacing: .spacing0x) {
-                pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
+                pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .strengthColor)
                     .padding(.leading, .spacing1x)
                     .padding(.trailing, max(0, width - boundary))
                     .frame(height: Constants.rowHeight)
 
-                pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
+                pill("figure.run", percent: cardioPercent, color: .cardioColor)
                     .padding(.leading, boundary)
                     .padding(.trailing, .spacing1x)
                     .frame(height: Constants.rowHeight)
@@ -183,10 +183,10 @@ struct ExerciseSplitRow: View {
                 let track = max(0, proxy.size.width - .spacing05x)
                 HStack(spacing: .spacing05x) {
                     Capsule()
-                        .fill(Color.defaultPink.opacity(.veryMinimalOpacity))
+                        .fill(Color.strengthColor.opacity(.veryMinimalOpacity))
                         .frame(width: width(of: split.strengthFraction, in: track))
                     Capsule()
-                        .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
+                        .fill(Color.cardioColor.opacity(.veryMinimalOpacity))
                         .frame(width: width(of: split.cardioFraction, in: track))
                 }
             }

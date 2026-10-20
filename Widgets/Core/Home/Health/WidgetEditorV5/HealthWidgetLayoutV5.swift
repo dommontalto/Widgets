@@ -107,7 +107,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     var tint: Color {
         switch self {
         case .activity: .defaultOrange
-        case .exercise: .defaultSkyBlue
+        case .exercise: .cardioColor
         case .heartRate: .defaultRed
         case .intake: .defaultGreen
         case .journal: .defaultCyan

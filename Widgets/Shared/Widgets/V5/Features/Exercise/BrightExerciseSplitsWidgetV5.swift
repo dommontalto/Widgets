@@ -142,12 +142,12 @@ private struct SplitsPlot: View {
             let boundary = boundary(in: width)
 
             VStack(spacing: .spacing0x) {
-                pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .defaultPink)
+                pill("figure.strengthtraining.traditional", percent: strengthPercent, color: .strengthColor)
                     .padding(.leading, .spacing1x)
                     .padding(.trailing, isRevealed ? max(0, width - boundary) : max(0, width - .spacing1x))
                     .frame(height: rowHeight)
 
-                pill("figure.run", percent: cardioPercent, color: .defaultSkyBlue)
+                pill("figure.run", percent: cardioPercent, color: .cardioColor)
                     .padding(.leading, isRevealed ? boundary : max(0, width - .spacing1x))
                     .padding(.trailing, .spacing1x)
                     .frame(height: rowHeight)
@@ -244,10 +244,10 @@ private struct SplitsRow: View {
                 let track = max(0, proxy.size.width - .spacing05x)
                 HStack(spacing: .spacing05x) {
                     Capsule()
-                        .fill(Color.defaultPink.opacity(.veryMinimalOpacity))
+                        .fill(Color.strengthColor.opacity(.veryMinimalOpacity))
                         .frame(width: isRevealed && !isEmpty ? width(of: split.strengthFraction, in: track) : 0)
                     Capsule()
-                        .fill(Color.defaultSkyBlue.opacity(.veryMinimalOpacity))
+                        .fill(Color.cardioColor.opacity(.veryMinimalOpacity))
                         .frame(width: isRevealed && !isEmpty ? width(of: split.cardioFraction, in: track) : 0)
                 }
                 .animation(.brightBouncy, value: isRevealed)

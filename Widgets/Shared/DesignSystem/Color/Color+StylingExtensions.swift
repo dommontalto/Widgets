@@ -41,6 +41,8 @@ nonisolated extension Color {
     static let defaultCyan = Color(light: .cyanLight, dark: .cyanDark)
     // Sky blue that turns cyan in the dark — the exercise accent.
     static let defaultSkyBlueCyan = Color(light: .defaultSkyBlue, dark: .defaultCyan)
+    static let strengthColor: Color = .defaultPink
+    static let cardioColor: Color = .defaultSkyBlueCyan
     static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
     
     static let defaultGrey = Color(hex: "#F2F2F7")
