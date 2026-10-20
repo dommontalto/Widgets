@@ -61,7 +61,7 @@ struct HealthView: View {
                     }
                 }
                 .sheet(isPresented: $showingWhatsNew) {
-                    BrightWhatsNewSheet2V5()
+                    BrightWhatsNewSheetV5()
                 }
                 .sheet(isPresented: $editor.isShowingAddSheet) {
                     AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
