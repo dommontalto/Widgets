@@ -47,7 +47,6 @@ struct BrightWhatsNewSheetV5: View {
         static let visibleShare: Double = 0.4
         static let heroPhoneWidth: CGFloat = 240
         static let cardHeight: CGFloat = 356
-        static let wideCardHeight: CGFloat = 242
         // Carousel cards leave the next one peeking in from the trailing edge.
         static let carouselShare: CGFloat = 0.83
         static let phoneShare: CGFloat = 0.6
@@ -582,11 +581,6 @@ private struct WhatsNewSection: Identifiable {
             layout: .stack,
             cards: [
                 .init(media: .phone(.init(name: "whats_new_lighthouse_v5", range: 3.6...18.1)), phoneInset: Constants.raisedPhoneInset),
-                .init(
-                    media: .screen(.init(name: "whats_new_lighthouse_v5", range: 18.1...34.5), zoom: 1.1, focus: .init(x: 0.5, y: 0.45)),
-                    background: .defaultBlack,
-                    height: Constants.wideCardHeight
-                ),
             ]
         ),
         .init(
