@@ -272,13 +272,13 @@ struct BrightCalendarDayV5: View {
             let minutes = calendar.component(.hour, from: context.date) * 60
                 + calendar.component(.minute, from: context.date)
             HStack(spacing: .spacing0x) {
-                BrightText(context.date.formatted(.brightTime24), size: .body2, color: .defaultBlack, weight: .regular)
+                BrightText(context.date.formatted(.brightTime24), size: .body2, color: .defaultBlackWhite, weight: .regular)
                     .monospacedDigit()
                     .frame(width: Constants.nowPillWidth, height: Constants.nowPillHeight)
-                    .background(Color.defaultYellow, in: Capsule())
+                    .background(Color.textColor, in: Capsule())
 
                 Rectangle()
-                    .fill(Color.defaultYellow)
+                    .fill(Color.textColor)
                     .frame(height: Constants.nowLineHeight)
             }
             .offset(y: timelineY(atMinutes: minutes) - Constants.nowPillHeight / 2)

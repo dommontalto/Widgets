@@ -9,7 +9,7 @@ import SwiftUI
 
 extension HealthWidgetDemoV5 {
     static let intake = BarMetric(
-        appearance: BrightWidgetAppearanceV5(title: "Intake", systemImage: "arrow.right", tint: .defaultGreen, unit: "Cal"),
+        appearance: BrightWidgetAppearanceV5(title: "Intake", systemImage: "fork.knife", tint: .defaultGreen, unit: "Cal"),
         fill: .solid(.defaultGreen),
         weekFill: .rising,
         hourly: [0, 0, 0, 0, 0, 0, 40, 180, 320, 60, 90, 60, 420, 140, 80, 60, 90, 90, 480, 160, 60, 80, 40, 0],

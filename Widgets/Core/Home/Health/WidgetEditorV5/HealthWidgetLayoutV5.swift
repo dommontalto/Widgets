@@ -70,7 +70,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .activity: "flame.fill"
         case .exercise: "figure.run"
         case .heartRate: "heart.fill"
-        case .intake: "arrow.right"
+        case .intake: "fork.knife"
         case .journal: "pencil.line"
         case .macros: "chart.pie.fill"
         case .menstrual: "moonphase.waxing.crescent"
