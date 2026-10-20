@@ -18,8 +18,8 @@ struct BrightWhatsNewSheet2V5: View {
                         .whatsNew2Page()
                         .onScrollVisibilityChange(threshold: Constants.visibleShare) { heroVisible = $0 }
 
-                    ForEach(Array(WhatsNew2Section.all.enumerated()), id: \.element.id) { index, section in
-                        WhatsNew2SectionView(section: section, heading: index == 0 ? "What’s new." : nil)
+                    ForEach(WhatsNew2Section.all) { section in
+                        WhatsNew2SectionView(section: section)
                             .whatsNew2Page()
                     }
 
@@ -52,6 +52,7 @@ struct BrightWhatsNewSheet2V5: View {
         static let carouselShare: CGFloat = 0.83
         static let phoneShare: CGFloat = 0.6
         static let phoneInset: CGFloat = 0.15
+        static let raisedPhoneInset: CGFloat = 0.06
     }
 }
 
@@ -61,6 +62,7 @@ private struct WhatsNew2Hero: View {
     let isPlaying: Bool
 
     @State private var isRevealed = false
+    @State private var hasRisen = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -77,7 +79,7 @@ private struct WhatsNew2Hero: View {
                         .blur(radius: hidden * Reveal.revealBlur)
                 }
 
-            WhatsNew2Phone(clip: .init(name: "whats_new_home_v5"), isPlaying: isPlaying && !reduceMotion, width: Constants.heroPhoneWidth)
+            WhatsNew2Phone(clip: .init(name: "whats_new_home_v5"), isPlaying: isPlaying && hasRisen && !reduceMotion, width: Constants.heroPhoneWidth)
                 .rotation3DEffect(.degrees(Hero.yaw), axis: (x: Hero.pitch, y: -1, z: 0), perspective: Hero.perspective)
                 .rotationEffect(.degrees(Hero.roll))
                 .whatsNewReveal(isRevealed, delay: Reveal.revealStagger) { content, hidden in
@@ -93,6 +95,12 @@ private struct WhatsNew2Hero: View {
         .background(Color.defaultBlack)
         .clipped()
         .onAppear { isRevealed = true }
+        // Holds the clip on its first frame until the phone has mostly risen in,
+        // so the widgets loading in isn't missed behind the fade.
+        .task {
+            try? await Task.sleep(for: .seconds(Reveal.revealStagger + Reveal.revealDuration * 0.6))
+            hasRisen = true
+        }
     }
 
     private enum Hero {
@@ -107,7 +115,6 @@ private struct WhatsNew2Hero: View {
 
 private struct WhatsNew2SectionView: View {
     let section: WhatsNew2Section
-    let heading: String?
 
     @State private var isVisible = false
     @State private var isRevealed = false
@@ -120,17 +127,6 @@ private struct WhatsNew2SectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             VStack(alignment: .leading, spacing: .spacing2x) {
-                if let heading {
-                    BrightText(heading, size: .standout1)
-                        .padding(.bottom, .spacing4x)
-                        .whatsNewReveal(isRevealed) { content, hidden in
-                            content
-                                .opacity(1 - hidden)
-                                .offset(y: hidden * Reveal.textRise)
-                                .blur(radius: hidden * Reveal.revealBlur)
-                        }
-                }
-
                 BrightText(section.title, size: .heading, weight: .regular)
                     .whatsNewReveal(isRevealed) { content, hidden in
                         content
@@ -226,8 +222,12 @@ private struct WhatsNew2CardView: View {
             WhatsNew2Phone(clip: clip, isPlaying: isActive, width: size.width * Constants.phoneShare)
                 .rotation3DEffect(.degrees(isTilted ? Tilt.yaw : 0), axis: (x: Tilt.pitch, y: 1, z: 0), perspective: Tilt.perspective)
                 .rotationEffect(.degrees(isTilted ? Tilt.roll : 0))
-                .padding(.top, size.width * Constants.phoneInset)
+                .padding(.top, size.width * card.phoneInset)
                 .frame(width: size.width, height: size.height, alignment: .top)
+        case .fullPhone(let clip):
+            let height = size.height - .spacing3x * 2
+            WhatsNew2Phone(clip: clip, isPlaying: isActive, width: height * WhatsNew2Phone.Constants.device.width / WhatsNew2Phone.Constants.device.height)
+                .frame(width: size.width, height: size.height)
         case .screen(let clip, let zoom, let focus):
             WhatsNew2Screen(clip: clip, isPlaying: isActive, zoom: zoom, focus: focus, size: size)
         case .stats:
@@ -438,6 +438,8 @@ private struct WhatsNew2Clip {
 private struct WhatsNew2Card {
     enum Media {
         case phone(WhatsNew2Clip, isTilted: Bool = false)
+        // The whole phone, fitted to the card's height instead of cut off by it.
+        case fullPhone(WhatsNew2Clip)
         case screen(WhatsNew2Clip, zoom: CGFloat, focus: UnitPoint)
         case stats
     }
@@ -445,6 +447,8 @@ private struct WhatsNew2Card {
     let media: Media
     var background: Color = .defaultSheetBackground
     var height: CGFloat = BrightWhatsNewSheet2V5.Constants.cardHeight
+    // How far a cut-off phone sits below the card's top, as a share of its width.
+    var phoneInset: CGFloat = BrightWhatsNewSheet2V5.Constants.phoneInset
 }
 
 private struct WhatsNew2Section: Identifiable {
@@ -466,10 +470,10 @@ private struct WhatsNew2Section: Identifiable {
     static let all: [Self] = [
         .init(
             title: "Lighthouse",
-            detail: "An AI layer that can read every part of Bright. Pick from the leading frontier models, or bring your own API key.",
+            detail: "An AI layer that reads all of Bright. Use a leading model or bring your own API key.",
             layout: .stack,
             cards: [
-                .init(media: .phone(.init(name: "whats_new_lighthouse_v5", range: 0...18.1))),
+                .init(media: .phone(.init(name: "whats_new_lighthouse_v5", range: 3.6...18.1)), phoneInset: Constants.raisedPhoneInset),
                 .init(
                     media: .screen(.init(name: "whats_new_lighthouse_v5", range: 18.1...34.5), zoom: 1.1, focus: .init(x: 0.5, y: 0.45)),
                     background: .defaultBlack,
@@ -479,51 +483,48 @@ private struct WhatsNew2Section: Identifiable {
         ),
         .init(
             title: "Waypoint",
-            detail: "Set short and long term health goals, and Bright retunes every widget to keep you on course.",
+            detail: "Set short and long term health goals, and Bright retunes every widget, from sleep to nutrition, to keep you on course.",
             layout: .carousel,
             cards: [
                 .init(media: .phone(.init(name: "whats_new_waypoint_v5"))),
                 .init(
-                    media: .screen(.init(name: "whats_new_waypoint_v5", range: 0...16), zoom: 1.5, focus: .init(x: 0.5, y: 0.33)),
+                    media: .screen(.init(name: "whats_new_waypoint_v5", range: 0...16), zoom: 1.35, focus: .init(x: 0.5, y: 0.33)),
                     background: .defaultBlack
                 ),
             ]
         ),
         .init(
             title: "Vault",
-            detail: "Your genetic, lifestyle, wearable and clinical data in one place, ready to review or share with anyone.",
+            detail: "Your genetic, lifestyle, wearable and clinical data in one place, ready to review or share with anyone via a link.",
             layout: .carousel,
             cards: [
-                .init(
-                    media: .screen(.init(name: "whats_new_vault_v5", range: 19.5...26.1), zoom: 1.15, focus: .init(x: 0.5, y: 0.4)),
-                    background: .defaultBlack
-                ),
-                .init(media: .phone(.init(name: "whats_new_vault_v5", range: 0...19.5))),
+                .init(media: .phone(.init(name: "whats_new_vault_v5", range: 0...13.2))),
+                .init(media: .phone(.init(name: "whats_new_vault_v5", range: 13.2...19.5))),
             ]
         ),
         .init(
             title: "Guided Testing",
-            detail: "Order lab tests and medical scans from labs around the world, no subscription needed.",
+            detail: "Order lab tests and medical scans from labs around the world, no subscription needed, with results sent to your Vault.",
             layout: .carousel,
             cards: [
-                .init(media: .phone(.init(name: "whats_new_guided_testing_v5"), isTilted: true)),
+                .init(media: .phone(.init(name: "whats_new_guided_testing_v5", range: 1.5...14.6), isTilted: true)),
                 .init(media: .stats),
             ]
         ),
         .init(
             title: "Exercise Planner",
-            detail: "Import or generate workouts and runs, learn form from 3D guides, and plan routes before you head out.",
+            detail: "Import or generate workouts and runs, learn form from 3D guides, plan routes before you head out, and track every set.",
             layout: .carousel,
             cards: [
                 .init(media: .phone(.init(name: "whats_new_exercise_v5", range: 0...7))),
-                .init(media: .phone(.init(name: "whats_new_exercise_v5", range: 7...21))),
-                .init(media: .phone(.init(name: "whats_new_exercise_v5", range: 21...33.5))),
-                .init(media: .phone(.init(name: "whats_new_exercise_v5", range: 33.5...45.6))),
+                .init(media: .fullPhone(.init(name: "whats_new_exercise_v5", range: 7...21))),
+                .init(media: .fullPhone(.init(name: "whats_new_exercise_v5", range: 21...33.5))),
+                .init(media: .fullPhone(.init(name: "whats_new_exercise_v5", range: 33.5...45.6))),
             ]
         ),
         .init(
             title: "Atlas",
-            detail: "A global health monitor built on real-time Bright data, so you can see how you compare with people like you.",
+            detail: "A global health monitor built on real-time Bright data, so you can see how your health compares with people like you.",
             layout: .carousel,
             cards: [
                 .init(media: .phone(.init(name: "whats_new_atlas_v5", range: 0...11.2)), background: .defaultBlack),

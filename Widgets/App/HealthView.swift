@@ -143,7 +143,8 @@ struct HealthView: View {
             case .waypoint:
                 WaypointView(onCheckIn: { onOpenLighthouse(.checkIn) })
             case .explore:
-                ExploreView()
+                Color.clear
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(Color.defaultBackground.ignoresSafeArea())
