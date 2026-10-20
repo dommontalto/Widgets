@@ -13,6 +13,7 @@ struct BrightSearchBarV5: View {
     let height: CGFloat?
     let autoFocuses: Bool
     let onFocusChange: ((Bool) -> Void)?
+    let onClear: (() -> Void)?
     @Binding var text: String
 
     @FocusState private var isFocused: Bool
@@ -22,13 +23,15 @@ struct BrightSearchBarV5: View {
         text: Binding<String>,
         height: CGFloat? = nil,
         autoFocuses: Bool = false,
-        onFocusChange: ((Bool) -> Void)? = nil
+        onFocusChange: ((Bool) -> Void)? = nil,
+        onClear: (() -> Void)? = nil
     ) {
         self.placeholder = placeholder
         _text = text
         self.height = height
         self.autoFocuses = autoFocuses
         self.onFocusChange = onFocusChange
+        self.onClear = onClear
     }
 
     var body: some View {
@@ -62,6 +65,7 @@ struct BrightSearchBarV5: View {
                 BrightRoundButton(systemImage: "xmark", size: .small) {
                     text = ""
                     isFocused = false
+                    onClear?()
                 }
                 .padding(.trailing, .spacing105x)
                 .transition(.scale.combined(with: .opacity))
