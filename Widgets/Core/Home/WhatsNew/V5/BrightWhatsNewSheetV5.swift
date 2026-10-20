@@ -147,7 +147,7 @@ private struct WhatsNewSectionView: View {
             .padding(.horizontal, .spacing5x)
 
             cards
-                .padding(.top, .spacing10x)
+                .padding(.top, .spacing12x + .spacing8x)
                 .whatsNewReveal(isRevealed, delay: Reveal.revealStagger * 2) { content, hidden in
                     content
                         .opacity(1 - hidden)
