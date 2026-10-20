@@ -134,7 +134,7 @@ private struct ExploreComingSoonCover: View {
             Spacer()
 
             HStack(spacing: .spacing1x) {
-                Image(systemName: "lock.fill")
+                Image(systemName: "lock")
                     .font(.system(size: FontSizes.standout2.rawValue, weight: .medium))
                     .foregroundStyle(Color.lightTextColor)
                 BrightText("Coming Soon", size: .standout2, color: .lightTextColor, weight: .medium)
