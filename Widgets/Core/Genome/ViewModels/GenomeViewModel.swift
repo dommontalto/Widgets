@@ -46,6 +46,7 @@ final class GenomeViewModel {
     var orderInfo: GenomeOrderInfo? { summary?.order }
     var leadingContributors: [GenomeContributor] { summary?.leadingContributors ?? [] }
     var riskPercentile: GenomeRiskPercentile? { summary?.riskPercentile }
+    var displayedCategories: [GenomeCategory] { categories.isEmpty ? GenomeCategory.placeholders : categories }
 
     // Optional rather than defaulting to `.current`: default arguments are evaluated
     // off the main actor, where the main-actor `current` can't be read.

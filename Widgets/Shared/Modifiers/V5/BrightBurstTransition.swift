@@ -10,10 +10,12 @@ import SwiftUI
 // The leaving view blows outward and dissolves into blur, so what replaces
 // it reads as condensing out of the burst.
 struct BrightBurstOutTransition: Transition {
+    var anchor: UnitPoint = .leading
+
     func body(content: Content, phase: TransitionPhase) -> some View {
         let leaving = phase == .didDisappear
         return content
-            .scaleEffect(leaving ? Constants.burstScale : 1, anchor: .leading)
+            .scaleEffect(leaving ? Constants.burstScale : 1, anchor: anchor)
             .blur(radius: leaving ? Constants.burstBlur : 0)
             .opacity(leaving ? 0 : 1)
     }
@@ -26,4 +28,5 @@ struct BrightBurstOutTransition: Transition {
 
 extension AnyTransition {
     static let brightBurstOutV5 = AnyTransition(BrightBurstOutTransition().animation(.brightEaseInOut))
+    static let brightCentreBurstOutV5 = AnyTransition(BrightBurstOutTransition(anchor: .center).animation(.brightEaseInOut))
 }

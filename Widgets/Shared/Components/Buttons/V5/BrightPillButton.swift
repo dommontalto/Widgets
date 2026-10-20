@@ -108,10 +108,10 @@ struct BrightPillButton: View {
             .clipShape(Capsule())
         }
         .disabled(isLoading)
-        .animation(.brightBouncy, value: isLoading)
         .background((color ?? flatFill).opacity(.veryHighOpacity), in: Capsule())
         .modifier(OptionalGlass(isOn: isGlass, isClear: isClear))
         .opacity(isSelected ? .opaque : .semiLowOpacity)
+        .animation(Constants.morph, value: isLoading)
     }
 
     // Under glass the capsule is clear and the glass is the fill; without
@@ -123,6 +123,7 @@ struct BrightPillButton: View {
     private enum Constants {
         static let imageSize: CGFloat = 16
         static let orbScale: CGFloat = 0.6
+        static let morph: Animation = .smooth(duration: 0.5)
     }
 }
 

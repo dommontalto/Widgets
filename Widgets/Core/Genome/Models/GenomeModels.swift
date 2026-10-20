@@ -90,6 +90,24 @@ struct GenomeCategory: Codable, Identifiable {
     }
 }
 
+extension GenomeCategory {
+    static let placeholders: [GenomeCategory] = [
+        ("nutrition", "Nutrition", "genome_nutrition_metabolism_v5"),
+        ("sleep_circadian", "Sleep & Circadian", "genome_sleep_circadian_v5"),
+        ("recovery_exercise", "Recovery & Exercise", "genome_recovery_exercise_v5"),
+        ("cardiovascular", "Cardiovascular", "genome_cardiovascular_v5"),
+        ("cognitive_mental", "Cognitive & Mental", "genome_cognitive_mental_v5"),
+        ("inflammation", "Inflammation", "genome_inflammation_immunity_v5"),
+        ("longevity", "Longevity", "genome_longevity_v5"),
+        ("medication", "Medication", "genome_medication_response_v5"),
+        ("hormones", "Hormones", "genome_hormones_v5"),
+        ("skin_ageing", "Skin & Ageing", "genome_skin_ageing_v5"),
+        ("body_traits", "Body Traits", "genome_dna_v5"),
+        ("methylation", "Methylation", "genome_hourglass_v5"),
+        ("injury_risk", "Injury Risk", "genome_injury_risk_v5"),
+    ].map { GenomeCategory(id: $0, title: $1, iconKey: $2, markerCount: 0, state: GenomeCategoryState.unavailable.rawValue) }
+}
+
 // MARK: - Category Detail
 
 struct GenomeCategoryDetail: Codable, Identifiable {
@@ -249,7 +267,7 @@ enum GenomeEvidenceLevel: String {
     }
 
     var label: String {
-        self == .moderate ? "Borderline" : rawValue.capitalized
+        self == .moderate ? "Sub-Optimal" : rawValue.capitalized
     }
 
     var color: Color {

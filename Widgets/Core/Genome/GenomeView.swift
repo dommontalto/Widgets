@@ -81,9 +81,7 @@ struct GenomeView: View {
 
         var body: some View {
             VStack(spacing: .spacing3x) {
-                if let riskPercentile = viewModel.riskPercentile {
-                    GenomePercentileGraphWidget(data: riskPercentile)
-                }
+                GenomePercentileGraphWidget(data: viewModel.riskPercentile)
 
                 if !viewModel.hasResults {
                     if viewModel.canOrder {
@@ -119,18 +117,10 @@ struct GenomeView: View {
 
         var body: some View {
             Group {
-                if viewModel.categories.isEmpty {
-                    BrightPlaceholderViewV5(
-                        image: ImageNames.genomeV5,
-                        title: "Categories coming soon",
-                        subtitle: "Your impact categories will appear here once your genome results are ready."
-                    )
-                } else {
-                    GenomeImpactCategoryWidget(
-                        categories: viewModel.categories,
-                        onSelect: viewModel.handleCategorySelected
-                    )
-                }
+                GenomeImpactCategoryWidget(
+                    categories: viewModel.displayedCategories,
+                    onSelect: viewModel.handleCategorySelected
+                )
             }
             .padding(.spacing3x)
         }

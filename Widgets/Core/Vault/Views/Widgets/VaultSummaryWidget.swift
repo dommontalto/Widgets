@@ -20,8 +20,7 @@ struct VaultSummaryWidget: View {
     @State private var isRevealed = false
 
     private static let genderOptions = ["men", "women"]
-    private static let ageOptions = ["18-24", "25-30", "31-35", "36-40",
-                                     "41-45", "46-50", "51-55", "56-60", "60+"]
+    private static let ageOptions = ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
 
     private var hasData: Bool {
         topPct != nil || ranking?.topPct != nil || fallbackTopPercent != nil
@@ -33,6 +32,10 @@ struct VaultSummaryWidget: View {
 
     private var userFraction: Double {
         min(max(1 - topPercent / 100, 0), 1)
+    }
+
+    private var isPlaced: Bool {
+        hasData && isRevealed
     }
 
     var body: some View {
@@ -172,14 +175,14 @@ struct VaultSummaryWidget: View {
     private var chart: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let userX = xPosition(userFraction, width: width)
-            let lineX = xPosition(heldFraction ?? userFraction, width: width)
+            let userX = isPlaced ? xPosition(userFraction, width: width) : 0
+            let lineX = isPlaced ? xPosition(heldFraction ?? userFraction, width: width) : 0
 
             VStack(spacing: .spacing0x) {
                 youMarker
                     .position(x: min(max(userX, Constants.markerInset), width - Constants.markerInset), y: Constants.markerRoom / 2)
                     .frame(height: Constants.markerRoom)
-                    .opacity(hasData && heldFraction == nil && isRevealed ? .opaque : .zero)
+                    .opacity(hasData ? .opaque : .zero)
 
                 plotBox(width: width, lineX: lineX)
                     .frame(height: Constants.plotHeight)
@@ -206,6 +209,7 @@ struct VaultSummaryWidget: View {
             }
             .animation(.brightEaseInOut, value: heldFraction)
             .animation(.brightBouncy, value: userFraction)
+            .animation(.brightBouncy, value: isPlaced)
         }
         .frame(height: Constants.markerRoom + Constants.plotHeight + .spacing2x + Constants.tickRow + .spacing1x + Constants.labelRow)
     }
@@ -249,7 +253,6 @@ struct VaultSummaryWidget: View {
                     .fill(Color.textColor.opacity(.lowOpacity))
                     .frame(width: Constants.lineWidth)
                     .offset(x: lineX - Constants.lineWidth / 2)
-                    .opacity(isRevealed ? .opaque : .zero)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
@@ -390,7 +393,7 @@ private struct BellCurve: Shape {
 
     private enum Constants {
         static let steps = 120
-        static let peak = 0.45
+        static let peak = 0.5
         static let spread = 4.5
         static let peakHeight = 0.78
     }

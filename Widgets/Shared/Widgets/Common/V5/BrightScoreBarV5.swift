@@ -82,6 +82,7 @@ struct BrightScoreBarV5<Bar: View, StatusTile: View>: View {
 
 struct BrightScoreGradientBarV5: View {
     let percent: Int
+    var tint: Color?
     @State private var animatedScore: Double = 0
     @State private var progressBarWidth: CGFloat = 0
 
@@ -96,15 +97,8 @@ struct BrightScoreGradientBarV5: View {
                         .stroke(Color.defaultMainGrey, lineWidth: 0.5)
                 )
 
-            LinearGradient(
-                stops: [
-                    .init(color: .defaultRed, location: 0),
-                    .init(color: .defaultSkyBlue, location: 0.53),
-                    .init(color: .defaultBrightGreen, location: 1),
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            Rectangle()
+            .fill(barFill)
             .frame(width: progressBarWidth)
             .mask(
                 RoundedRectangle(cornerRadius: .squareCornerRadius.concentric(inset: .spacing05x))
@@ -129,5 +123,24 @@ struct BrightScoreGradientBarV5: View {
         .modifier(SizeReader { size in
             progressBarWidth = size.width - .spacing1x
         })
+    }
+
+    private var barFill: AnyShapeStyle {
+        if let tint {
+            return AnyShapeStyle(LinearGradient(
+                colors: [tint.opacity(.lowOpacity), tint],
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
+        }
+        return AnyShapeStyle(LinearGradient(
+            stops: [
+                .init(color: .defaultRed, location: 0),
+                .init(color: .defaultSkyBlue, location: 0.53),
+                .init(color: .defaultBrightGreen, location: 1),
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        ))
     }
 }

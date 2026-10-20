@@ -29,6 +29,15 @@ static half3 brightFoil_generateRainbow(float angle, float intensity) {
     return color * half(intensity);
 }
 
+// Same ramp as the rainbow, but cycling through the caller's colours instead.
+static half3 brightFoil_samplePalette(float angle, device const half4 *palette, int count) {
+    float t = fract(angle / 6.2831853) * float(count);
+    int index = int(floor(t)) % count;
+    half3 from = palette[index].rgb;
+    half3 to = palette[(index + 1) % count].rgb;
+    return mix(from, to, half(smoothstep(0.0, 1.0, fract(t))));
+}
+
 // =============================================================================
 // MARK: - brightFoil
 // =============================================================================
@@ -39,7 +48,9 @@ static half3 brightFoil_generateRainbow(float angle, float intensity) {
     float4 boundingRect,
     float2 tilt,
     float time,
-    float intensity
+    float intensity,
+    device const half4 *palette,
+    int paletteCount
 ) {
     float2 size = boundingRect.zw;
     half4 originalColor = layer.sample(position);
@@ -60,7 +71,9 @@ static half3 brightFoil_generateRainbow(float angle, float intensity) {
 
     float pattern = (wave1 + wave2 + wave3) / 3.0;
 
-    half3 rainbow = brightFoil_generateRainbow(angle + pattern * 2.0, 1.0);
+    half3 rainbow = paletteCount > 0
+        ? brightFoil_samplePalette(angle + pattern * 2.0, palette, paletteCount)
+        : brightFoil_generateRainbow(angle + pattern * 2.0, 1.0);
 
     // Sparkle effect
     float sparkleAngle = (uv.x * 50.0 + uv.y * 50.0 + time * 10.0);

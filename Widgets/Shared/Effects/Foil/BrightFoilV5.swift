@@ -46,8 +46,11 @@ struct BrightFoilV5<Content: View>: View {
     // Blend of the foil over the source in 0...1.
     var intensity: Float = 1.0
 
-    // Multiplier on the internal animation time.
+    // Multiplier on the internal animation time. 0 holds the pattern still, so only `tilt` moves it.
     var speed: Float = 1.0
+
+    // Colours the foil cycles through; empty keeps the rainbow.
+    var palette: [Color] = []
 
     // When `true`, attaches a gear `ToolbarItem` that opens a live-tuning sheet.
     var showsControls: Bool = false
@@ -58,12 +61,14 @@ struct BrightFoilV5<Content: View>: View {
         tilt: CGSize = .zero,
         intensity: Float = 1.0,
         speed: Float = 1.0,
+        palette: [Color] = [],
         showsControls: Bool = false,
         @ViewBuilder content: () -> Content
     ) {
         self.tilt = tilt
         self.intensity = intensity
         self.speed = speed
+        self.palette = palette
         self.showsControls = showsControls
         self.content = content()
     }
@@ -93,7 +98,8 @@ private struct BrightFoilRenderer<Content: View>: View {
                     .boundingRect,
                     .float2(Float(initial.tilt.width), Float(initial.tilt.height)),
                     .float(elapsed),
-                    .float(initial.intensity)
+                    .float(initial.intensity),
+                    .colorArray(initial.palette)
                 ),
                 maxSampleOffset: .zero
             )
@@ -111,6 +117,7 @@ private struct BrightFoilControlled<Content: View>: View {
 
     @State private var showSheet = false
 
+    private let palette: [Color]
     private let content: Content
 
     init(initial: BrightFoilV5<Content>, content: Content) {
@@ -118,6 +125,7 @@ private struct BrightFoilControlled<Content: View>: View {
         _tiltY     = State(initialValue: Float(initial.tilt.height))
         _intensity = State(initialValue: initial.intensity)
         _speed     = State(initialValue: initial.speed)
+        palette = initial.palette
         self.content = content
     }
 
@@ -126,7 +134,8 @@ private struct BrightFoilControlled<Content: View>: View {
             initial: BrightFoilV5(
                 tilt: CGSize(width: CGFloat(tiltX), height: CGFloat(tiltY)),
                 intensity: intensity,
-                speed: speed
+                speed: speed,
+                palette: palette
             ) { content },
             content: content
         )

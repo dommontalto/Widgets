@@ -7,7 +7,7 @@ import SwiftUI
 
 enum ScoresStatus: String, TabDisplayable {
     case optimal
-    case borderline
+    case subOptimal = "sub-optimal"
     case low
     case high
 
@@ -20,8 +20,8 @@ enum ScoresStatus: String, TabDisplayable {
         switch self {
         case .optimal:
             "OPTIMAL"
-        case .borderline:
-            "BORDERLINE"
+        case .subOptimal:
+            "SUB-OPTIMAL"
         case .low:
             "LOW"
         case .high:
@@ -33,8 +33,8 @@ enum ScoresStatus: String, TabDisplayable {
         switch self {
         case .optimal:
             Color.defaultBrightGreen
-        case .borderline:
-            Color.defaultYellow
+        case .subOptimal:
+            Color.defaultOrange
         case .low, .high:
             Color.defaultRed
         }
@@ -43,7 +43,7 @@ enum ScoresStatus: String, TabDisplayable {
     static func forHeartPercent(_ percent: Int) -> ScoresStatus {
         switch percent {
         case 70 ... 100: .optimal
-        case 40 ... 69: .borderline
+        case 40 ... 69: .subOptimal
         default: .low
         }
     }

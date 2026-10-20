@@ -7,7 +7,7 @@ import SwiftUI
 import Charts
 
 struct GenomePercentileGraphWidget: View {
-    let data: GenomeRiskPercentile
+    let data: GenomeRiskPercentile?
 
     private struct PlotPoint: Identifiable {
         let age: Double
@@ -18,7 +18,7 @@ struct GenomePercentileGraphWidget: View {
     }
 
     private var points: [PlotPoint] {
-        data.curve.map {
+        (data?.curve ?? []).map {
             PlotPoint(
                 age: Double($0.age),
                 reference: $0.reference * 100,
@@ -28,8 +28,18 @@ struct GenomePercentileGraphWidget: View {
         }
     }
 
+    private var valueText: String {
+        data.map { "\($0.value)" } ?? "–"
+    }
+
     private var ordinalSuffix: String {
-        String(data.value.ordinalSuffix().dropFirst(String(data.value).count))
+        guard let data else { return "" }
+        return String(data.value.ordinalSuffix().dropFirst(String(data.value).count))
+    }
+
+    private var cohortText: String {
+        guard let data else { return "Your percentile appears once your results are ready." }
+        return "Higher than \(data.value)% of your matched reference cohort."
     }
 
     var body: some View {
@@ -49,13 +59,13 @@ struct GenomePercentileGraphWidget: View {
 
             VStack(alignment: .leading, spacing: .spacing1x) {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                    BrightText("\(data.value)", size: .huge2)
+                    BrightText(valueText, size: .huge2)
                     BrightText("\(ordinalSuffix) percentile", size: .body2, color: Color.textColor, weight: .regular)
                 }
 
-                BrightText("Higher than \(data.value)% of your matched reference cohort.", size: .body4, color: Color.lightTextColor, weight: .regular)
+                BrightText(cohortText, size: .body4, color: Color.lightTextColor, weight: .regular)
 
-                if let description = data.displayDescription {
+                if let description = data?.displayDescription {
                     BrightText(description, size: .body4, color: Color.lightTextColor, weight: .regular)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(.lineSpacingMedium)
@@ -193,7 +203,7 @@ struct GenomePercentileGraphWidget: View {
 
     private var xDomain: ClosedRange<Double> {
         let ages = points.map(\.age)
-        guard let min = ages.min(), let max = ages.max(), min < max else { return 0...80 }
+        guard let min = ages.min(), let max = ages.max(), min < max else { return 20...70 }
         return min...max
     }
 }

@@ -37,7 +37,7 @@ struct ExploreView: View {
         .blur(radius: Constants.comingSoonBlur)
         .allowsHitTesting(false)
         .overlay {
-            BrightText("Coming Soon", size: .standout2)
+            ExploreComingSoonCover()
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -112,5 +112,40 @@ struct ExploreView: View {
 
     private enum Constants {
         static let comingSoonBlur: CGFloat = 12
+    }
+}
+
+private struct ExploreComingSoonCover: View {
+    var body: some View {
+        VStack(spacing: .spacing2x) {
+            Image(systemName: "map")
+                .font(.standardSFPro(size: .huge3, weight: .regular))
+                .foregroundStyle(Self.iconFill)
+                .symbolEffect(.breathe, options: .repeating)
+                .padding(.bottom, .spacing1x)
+
+            BrightText("Coming Soon", size: .standout2, weight: .medium)
+
+            BrightText("Agents, clinics and offers picked for your health are on their way", size: .body1, color: .lightTextColor)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, .spacing6x)
+        .padding(.top, Constants.topPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Constants.alignment)
+        .background {
+            LinearGradient(colors: [.clear, .defaultBackground], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        }
+    }
+
+    private static let iconFill = LinearGradient(
+        colors: [.defaultSkyBlue, .defaultBrightViolet],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    private enum Constants {
+        static let alignment: Alignment = .center
+        static let topPadding: CGFloat = .spacing0x
     }
 }
