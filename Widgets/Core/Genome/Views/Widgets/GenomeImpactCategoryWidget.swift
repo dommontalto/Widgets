@@ -22,7 +22,7 @@ private struct GenomeCategoryCard: View {
             }
         }
         .buttonStyle(.plain)
-        .disabled(!category.isInteractive)
+        .allowsHitTesting(category.isInteractive && category.markerCount > 0)
     }
 
     private var builtCard: some View {
