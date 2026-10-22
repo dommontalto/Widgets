@@ -15,12 +15,13 @@ extension ContainerValues {
     @Entry var brightRowHasIcon = false
 }
 
-struct BrightRowGroupV5<Content: View>: View {
+struct BrightRowGroupV5<Content: View, HeaderAccessory: View>: View {
     let header: String?
     let headerIcon: String?
     let footer: String?
     let color: Color
     let content: Content
+    let headerAccessory: HeaderAccessory
 
     @Environment(\.displayScale) private var displayScale
 
@@ -29,13 +30,15 @@ struct BrightRowGroupV5<Content: View>: View {
         headerIcon: String? = nil,
         footer: String? = nil,
         color: Color = .defaultCards,
-        @ViewBuilder content: () -> Content
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder headerAccessory: () -> HeaderAccessory
     ) {
         self.header = header
         self.headerIcon = headerIcon
         self.footer = footer
         self.color = color
         self.content = content()
+        self.headerAccessory = headerAccessory()
     }
 
     var body: some View {
@@ -45,7 +48,9 @@ struct BrightRowGroupV5<Content: View>: View {
                     if let headerIcon {
                         Image(headerIcon)
                     }
-                    BrightText(header, size: .body1, color: .semiLightTextColor)
+                    BrightText(header, size: .body1, color: .semiLightTextColor, weight: .medium)
+                    Spacer(minLength: .spacing2x)
+                    headerAccessory
                 }
                 .padding(.leading, .spacing2x)
             }
@@ -78,6 +83,20 @@ struct BrightRowGroupV5<Content: View>: View {
 
     private enum Constants {
         static var rowIconSize: CGFloat { 24 }
+    }
+}
+
+extension BrightRowGroupV5 where HeaderAccessory == EmptyView {
+    init(
+        header: String? = nil,
+        headerIcon: String? = nil,
+        footer: String? = nil,
+        color: Color = .defaultCards,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.init(header: header, headerIcon: headerIcon, footer: footer, color: color, content: content) {
+            EmptyView()
+        }
     }
 }
 

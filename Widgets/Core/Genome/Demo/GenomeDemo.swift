@@ -147,25 +147,35 @@ enum GenomeDemo {
 
     static var sampleCategoryMarkers: [GenomeCategoryMarker] {
         [
-            .init(canonicalName: "gc.rs4988235", gene: "MCM6 rs4988235", subtitle: "Lactose tolerance", rawValue: "GA", unit: "genotype", evidenceLevel: "high", iconKey: "genome_hourglass_v5", reportId: "r1", panelId: "nutrition_diet_response", score: 0.12, isFeatured: true),
+            .init(canonicalName: "gc.rs4988235", gene: "MCM6 rs4988235", subtitle: "Lactose tolerance", rawValue: "GA", unit: "genotype", evidenceLevel: "moderate", iconKey: "genome_hourglass_v5", reportId: "r1", panelId: "nutrition_diet_response", score: 0.12, isFeatured: true),
             .init(canonicalName: "gc.rs762551", gene: "CYP1A2 rs762551", subtitle: "Caffeine metabolism", rawValue: "AC", unit: "genotype", evidenceLevel: "moderate", iconKey: "genome_sunrise_v5", reportId: "r1", panelId: "nutrition_diet_response", score: -0.08, isFeatured: true),
             .init(canonicalName: "gc.rs2282679", gene: "GC rs2282679", subtitle: "Fat-Soluble Vitamins", rawValue: "TG", unit: "genotype", evidenceLevel: "moderate", iconKey: "genome_nutrition_metabolism_v5", reportId: "r2", panelId: "micronutrients_and_vitamins", score: nil, isFeatured: false),
-            .init(canonicalName: "gc.pgs.bitter_taste_sensitivity", gene: "Bitter taste sensitivity", subtitle: "Taste", rawValue: "", unit: "score", evidenceLevel: "high", iconKey: "genome_nutrition_metabolism_v5", reportId: "r3", panelId: "taste_and_smell", score: nil, isFeatured: false),
+            .init(canonicalName: "gc.pgs.bitter_taste_sensitivity", gene: "Bitter taste sensitivity", subtitle: "Taste", rawValue: "", unit: "score", evidenceLevel: "moderate", iconKey: "genome_nutrition_metabolism_v5", reportId: "r3", panelId: "taste_and_smell", score: nil, isFeatured: false),
         ]
     }
 
     static var sampleDataMarkers: [GenomeDataMarker] {
         let specs: [(String, String, String, String, String, String, Double?)] = [
-            ("gc.rs4680", "COMT rs4680", "methylation", "genome_hourglass_v5", "GA", "exploratory", 0.11),
-            ("gc.rs6265", "BDNF rs6265", "cognitive_mental", "genome_brain_v5", "CT", "exploratory", 0.12),
-            ("gc.pgx.cyp2c19", "CYP2C19", "medication", "genome_medication_response_v5", "*1/*17", "high", 0.34),
+            ("gc.rs4680", "COMT rs4680", "methylation", "genome_hourglass_v5", "GA", "low", 0.11),
+            ("gc.rs6265", "BDNF rs6265", "cognitive_mental", "genome_brain_v5", "CT", "low", 0.12),
+            ("gc.pgx.cyp2c19", "CYP2C19", "medication", "genome_medication_response_v5", "*1/*17", "moderate", 0.34),
             ("gc.rs2282679", "GC rs2282679", "nutrition", "genome_nutrition_metabolism_v5", "TG", "moderate", nil),
-            ("gc.rs1800795", "IL6 rs1800795", "recovery_exercise", "genome_inflammation_immunity_v5", "GC", "exploratory", -0.11),
+            ("gc.rs1800795", "IL6 rs1800795", "recovery_exercise", "genome_inflammation_immunity_v5", "GC", "low", -0.11),
             ("gc.rs6259", "SHBG rs6259", "hormones", "genome_hormones_v5", "GA", "moderate", 0.12),
             ("gc.rs1800012", "COL1A1 rs1800012", "skin_ageing", "genome_skin_ageing_v5", "GT", "low", 0.09),
             ("gc.rs2802292", "FOXO3 rs2802292", "longevity", "genome_longevity_v5", "GT", "moderate", 0.31),
-            ("gc.rs6184", "GHR rs6184", "inflammation", "genome_inflammation_immunity_v5", "AC", "exploratory", nil),
-            ("gc.rs17822931", "ABCC11 rs17822931", "body_traits", "genome_dna_v5", "GA", "high", 0.05),
+            ("gc.rs6184", "GHR rs6184", "inflammation", "genome_inflammation_immunity_v5", "AC", "low", nil),
+            ("gc.rs17822931", "ABCC11 rs17822931", "body_traits", "genome_dna_v5", "GA", "moderate", 0.05),
+            ("gc.rs4988235", "MCM6 rs4988235", "nutrition", "genome_nutrition_metabolism_v5", "GA", "moderate", 0.12),
+            ("gc.rs762551", "CYP1A2 rs762551", "nutrition", "genome_sunrise_v5", "AC", "moderate", -0.08),
+            ("gc.rs1801133", "MTHFR rs1801133", "methylation", "genome_hourglass_v5", "CT", "moderate", -0.14),
+            ("gc.rs1815739", "ACTN3 rs1815739", "recovery_exercise", "genome_recovery_exercise_v5", "CT", "moderate", 0.18),
+            ("gc.rs1801260", "CLOCK rs1801260", "sleep_circadian", "genome_sleep_circadian_v5", "AG", "low", 0.07),
+            ("gc.rs429358", "APOE rs429358", "cardiovascular", "genome_cardiovascular_v5", "TT", "moderate", 0.22),
+            ("gc.rs1799752", "ACE rs1799752", "cardiovascular", "genome_cardiovascular_v5", "ID", "moderate", nil),
+            ("gc.rs12722", "COL5A1 rs12722", "injury_risk", "genome_injury_risk_v5", "CT", "low", -0.09),
+            ("gc.rs53576", "OXTR rs53576", "cognitive_mental", "genome_cognitive_mental_v5", "GG", "low", nil),
+            ("gc.rs1695", "GSTP1 rs1695", "longevity", "genome_longevity_v5", "AG", "low", 0.06),
         ]
         return specs.map { name, gene, category, icon, raw, level, score in
             GenomeDataMarker(

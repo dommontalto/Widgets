@@ -84,10 +84,10 @@ struct BrightRowV5<Custom: View>: View {
             }
 
             VStack(alignment: .leading, spacing: .spacing0x) {
-                BrightText(title, size: .body1)
+                BrightText(title, size: .body1, weight: .medium)
                     .lineLimit(1)
                 if let subtitle {
-                    BrightText(subtitle, size: .body1, color: .lightTextColor)
+                    BrightText(subtitle, size: .body2, color: .lightTextColor, weight: .regular)
                         .lineLimit(1)
                 }
             }

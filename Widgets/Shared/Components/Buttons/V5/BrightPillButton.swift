@@ -55,6 +55,14 @@ struct BrightPillButton: View {
         self.onTapCallback = onTapCallback
     }
 
+    private var horizontalPadding: CGFloat {
+        switch buttonSize {
+        case .large: .spacing3x
+        case .medium: .spacing2x
+        default: .spacing1x
+        }
+    }
+
     private var resolvedTextColor: Color {
         if let textColor { return textColor }
         if color != nil { return .black }
@@ -103,7 +111,7 @@ struct BrightPillButton: View {
                     .transition(.opacity)
                 }
             }
-            .padding(.horizontal, isLoading ? .spacing0x : (buttonSize == .large ? .spacing3x : .spacing1x))
+            .padding(.horizontal, isLoading ? .spacing0x : horizontalPadding)
             .frame(width: isLoading ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
             .clipShape(Capsule())
         }
