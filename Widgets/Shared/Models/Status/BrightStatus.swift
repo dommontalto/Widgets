@@ -82,7 +82,7 @@ struct BrightStatus: View {
 
         return switch text {
         case "OPTIMAL", "IN PROGRESS":
-            Color.defaultBrightGreen
+            Color.defaultGreen
         case "SUB-OPTIMAL":
             Color.defaultOrange
         case "LOW", "HIGH", "LOWER", "HIGHER":

@@ -17,6 +17,8 @@ nonisolated extension Color {
     static let lightTextColor = Color(light: .black, dark: .white).opacity(.lowOpacity)
     
     static let defaultBackground = Color(light: .defaultGrey, dark: .black)
+    // The launch intro's glass tile.
+    static let introLogoTile = Color(light: Color(hex: "#E6ECF4"), dark: Color(hex: "#000714"))
     static let defaultSheetBackground = Color(light: .defaultGrey, dark: .sheetGrey)
     
     static let defaultBlack = Color(light: .black, dark: .black)
@@ -48,7 +50,6 @@ nonisolated extension Color {
     static let defaultGrey = Color(hex: "#F2F2F7")
     
     static let defaultDarkGreen = Color(hex: "#1A3D45")
-    static let defaultBrightGreen = Color(hex: "#2FB360")
     
     static let defaultElectricBlue = Color(hex: "#506CFF")
     static let defaultSkyBlue = Color(hex: "#3DAEFF")

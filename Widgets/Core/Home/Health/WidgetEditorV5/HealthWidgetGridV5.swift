@@ -423,7 +423,7 @@ struct HealthWidgetGridV5: View {
         static let liftedShadowRadius: CGFloat = 10
         static let dragMinimumDistance: CGFloat = 5
         static let openMaxPressDuration: Double = 0.3
-        static let jiggleInterval: Duration = .milliseconds(100)
+        static let jiggleInterval: Duration = .milliseconds(130)
     }
 }
 

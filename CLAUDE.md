@@ -91,7 +91,7 @@ Color.defaultCyan          // adaptive cyan
 Color.defaultBrightViolet  // #B872FF — icon accent
 Color.defaultWarningRed    // #FF3939 — high-risk / warning
 Color.defaultOrange        // #FF512D
-Color.defaultBrightGreen   // #2FB360
+Color.defaultGreen         // #00FF5F dark, #00D54F light — the app's one green
 ```
 
 **Never branch on `@Environment(\.colorScheme)` to pick a colour in a view.** A colour that differs between light and dark mode is an adaptive token: define it once in `Color+StylingExtensions.swift` with `Color(light:dark:)` (e.g. `exerciseRowTint`) and use that.

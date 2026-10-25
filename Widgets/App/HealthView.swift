@@ -52,8 +52,10 @@ struct HealthView: View {
                                     .labelStyle(.iconOnly)
                             }
                         } else {
-                            // Placeholder until search is built.
-                            Button {} label: {
+                            // Until search is built, it opens the widget editor.
+                            Button {
+                                editor.beginEditing()
+                            } label: {
                                 Label("Search", systemImage: "magnifyingglass")
                                     .labelStyle(.iconOnly)
                             }
@@ -143,8 +145,7 @@ struct HealthView: View {
             case .waypoint:
                 WaypointView(onCheckIn: { onOpenLighthouse(.checkIn) })
             case .explore:
-                Color.clear
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ExploreComingSoonView()
             }
         }
         .background(Color.defaultBackground.ignoresSafeArea())

@@ -12,6 +12,7 @@ struct BrightSearchBarV5: View {
     let placeholder: String
     let height: CGFloat?
     let autoFocuses: Bool
+    let alwaysShowsClear: Bool
     let onFocusChange: ((Bool) -> Void)?
     let onClear: (() -> Void)?
     @Binding var text: String
@@ -23,6 +24,7 @@ struct BrightSearchBarV5: View {
         text: Binding<String>,
         height: CGFloat? = nil,
         autoFocuses: Bool = false,
+        alwaysShowsClear: Bool = false,
         onFocusChange: ((Bool) -> Void)? = nil,
         onClear: (() -> Void)? = nil
     ) {
@@ -30,6 +32,7 @@ struct BrightSearchBarV5: View {
         _text = text
         self.height = height
         self.autoFocuses = autoFocuses
+        self.alwaysShowsClear = alwaysShowsClear
         self.onFocusChange = onFocusChange
         self.onClear = onClear
     }
@@ -81,7 +84,7 @@ struct BrightSearchBarV5: View {
     }
 
     private var showsClear: Bool {
-        isFocused || !text.isEmpty
+        alwaysShowsClear || isFocused || !text.isEmpty
     }
 
     private enum Constants {

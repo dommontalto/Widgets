@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension Animation {
-    static let brightJigglePhase: Animation = .easeInOut(duration: 0.15)
+    static let brightJigglePhase: Animation = .easeInOut(duration: 0.2)
     static let brightSnappy: Animation = .snappy(duration: 0.2)
     static let brightEaseInOut: Animation = .easeInOut(duration: 0.3)
     static let brightBouncy: Animation = .bouncy(duration: 0.3)

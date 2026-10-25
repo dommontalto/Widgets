@@ -24,6 +24,8 @@ struct BrightPillButton: View {
     // colour a chip takes on a sheet — for a rail of many tags, where each
     // glass capsule is a backdrop pass of its own every frame.
     let isGlass: Bool
+    // While selected: the label and icon in this colour over a 30% wash of it.
+    let selectedTint: Color?
     let isLoading: Bool
     let onTapCallback: () -> Void
 
@@ -38,6 +40,7 @@ struct BrightPillButton: View {
         isClear: Bool = false,
         isSelected: Bool = true,
         isGlass: Bool = true,
+        selectedTint: Color? = nil,
         isLoading: Bool = false,
         onTapCallback: @escaping (() -> Void)
     ) {
@@ -51,6 +54,7 @@ struct BrightPillButton: View {
         self.isClear = isClear
         self.isSelected = isSelected
         self.isGlass = isGlass
+        self.selectedTint = selectedTint
         self.isLoading = isLoading
         self.onTapCallback = onTapCallback
     }
@@ -65,6 +69,7 @@ struct BrightPillButton: View {
 
     private var resolvedTextColor: Color {
         if let textColor { return textColor }
+        if isSelected, let selectedTint { return selectedTint }
         if color != nil { return .black }
         return isSelected ? .textColor : .lightTextColor
     }
@@ -88,7 +93,6 @@ struct BrightPillButton: View {
                     HStack(spacing: .spacing1x) {
                         if let systemImage {
                             Image(systemName: Self.outlineName(of: systemImage))
-                                .symbolVariant(isSelected ? .fill : .none)
                                 .font(.system(size: Constants.imageSize, weight: .medium))
                                 .foregroundStyle(resolvedTextColor)
                         } else if let image {
@@ -116,10 +120,15 @@ struct BrightPillButton: View {
             .clipShape(Capsule())
         }
         .disabled(isLoading)
-        .background((color ?? flatFill).opacity(.veryHighOpacity), in: Capsule())
+        .background(backgroundFill, in: Capsule())
         .modifier(OptionalGlass(isOn: isGlass, isClear: isClear))
         .opacity(isSelected ? .opaque : .semiLowOpacity)
         .animation(Constants.morph, value: isLoading)
+    }
+
+    private var backgroundFill: Color {
+        if isSelected, let selectedTint { return selectedTint.opacity(.veryLowOpacity) }
+        return (color ?? flatFill).opacity(.veryHighOpacity)
     }
 
     // Under glass the capsule is clear and the glass is the fill; without

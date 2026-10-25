@@ -11,11 +11,21 @@ import UIKit
 struct BrightDotGridV5Dot: Identifiable {
     let id: String
     let fill: AnyShapeStyle
+    // Faded in over `fill` only while the dot is selected or under the held glass.
+    let revealFill: AnyShapeStyle?
     let isSelectable: Bool
 
     init(id: String, fill: some ShapeStyle, isSelectable: Bool = true) {
         self.id = id
         self.fill = AnyShapeStyle(fill)
+        self.revealFill = nil
+        self.isSelectable = isSelectable
+    }
+
+    init(id: String, fill: some ShapeStyle, revealFill: some ShapeStyle, isSelectable: Bool = true) {
+        self.id = id
+        self.fill = AnyShapeStyle(fill)
+        self.revealFill = AnyShapeStyle(revealFill)
         self.isSelectable = isSelectable
     }
 }
@@ -54,10 +64,11 @@ struct BrightDotGridV5: View {
     }
 
     private var grid: some View {
-        DotGridLayout(columns: columns.count, rows: rowCount, spacing: spacing) {
+        let centre = selection?.wrappedValue.flatMap(position(of:))
+        return DotGridLayout(columns: columns.count, rows: rowCount, spacing: spacing) {
             ForEach(columns.indices, id: \.self) { column in
                 ForEach(0 ..< rowCount, id: \.self) { row in
-                    dotView(dot(column: column, row: row))
+                    dotView(dot(column: column, row: row), isRevealed: isRevealed(column: column, row: row, centre: centre))
                 }
             }
         }
@@ -68,7 +79,8 @@ struct BrightDotGridV5: View {
         .gesture(
             DotGridHoldGesture { location in
                 isHolding = true
-                select(at: location, clamped: true)
+                // The glass rides above the thumb, so it picks what it's over, not what's under the finger.
+                select(at: CGPoint(x: location.x, y: location.y - Constants.thumbLift), clamped: true)
             } onEnd: {
                 isHolding = false
             }
@@ -92,9 +104,28 @@ struct BrightDotGridV5: View {
         }
     }
 
-    private func dotView(_ dot: BrightDotGridV5Dot?) -> some View {
+    private func dotView(_ dot: BrightDotGridV5Dot?, isRevealed: Bool) -> some View {
         Circle()
             .fill(dot?.fill ?? AnyShapeStyle(Color.clear))
+            .overlay {
+                if let reveal = dot?.revealFill {
+                    Circle()
+                        .fill(reveal)
+                        .opacity(isRevealed ? .opaque : .zero)
+                        .animation(.brightEaseInOut, value: isRevealed)
+                }
+            }
+    }
+
+    // The selected dot, and while holding, every dot the glass is over.
+    private func isRevealed(column: Int, row: Int, centre: (column: Int, row: Int)?) -> Bool {
+        guard let centre else { return false }
+        if column == centre.column, row == centre.row { return true }
+        guard isHolding else { return false }
+        let pitch = cellSize + spacing
+        guard pitch > 0 else { return false }
+        let distance = hypot(CGFloat(column - centre.column), CGFloat(row - centre.row)) * pitch
+        return distance <= Constants.fingerSize / 2
     }
 
     @ViewBuilder
@@ -171,7 +202,8 @@ private struct DotGridHoldGesture: UIGestureRecognizerRepresentable {
 }
 
 private enum Constants {
-    static let fingerSize: CGFloat = 60
+    static let fingerSize: CGFloat = 70
+    static let thumbLift: CGFloat = fingerSize / 2 + .spacing6x
     static let glowRadius: CGFloat = 14
     static let glowOpacity: Double = 0.9
     static let ringOutset: CGFloat = 4

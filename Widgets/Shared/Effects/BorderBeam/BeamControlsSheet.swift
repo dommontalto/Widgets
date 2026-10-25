@@ -90,7 +90,7 @@ struct BeamControlsView: View {
                     Toggle(isOn: $config.isActive) {
                         BrightText("Active", size: .body3)
                     }
-                    .tint(.defaultBrightGreen)
+                    .tint(.defaultGreen)
                 }
 
                 card {

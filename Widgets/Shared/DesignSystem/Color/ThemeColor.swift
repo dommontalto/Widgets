@@ -21,12 +21,12 @@ enum ThemeColor {
     // Limits
     static let others: Color = .defaultBrightPink
     static let vitamins: Color = .defaultBrightViolet
-    static let minerals: Color = .defaultBrightGreen
+    static let minerals: Color = .defaultGreen
     static let othersFont: Color = .defaultCherry
     static let vitaminsFont: Color = .defaultBlackCurrent
     static let mineralsFont: Color = .defaultDarkGreen
 
-    static let intake: Color = .defaultBrightGreen
+    static let intake: Color = .defaultGreen
 
     // Sleep
     static let awake: Color = .defaultOrange

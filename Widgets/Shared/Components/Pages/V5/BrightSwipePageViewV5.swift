@@ -659,6 +659,7 @@ private struct SwipePagePillRow: View {
                     image: pages[i].image,
                     systemImage: pages[i].systemImage,
                     isSelected: isSelected,
+                    selectedTint: .defaultGreen,
                     action: { onPillTap(i) }
                 )
                 .accessibilityLabel(pages[i].title)

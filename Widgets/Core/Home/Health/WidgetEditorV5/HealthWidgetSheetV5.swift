@@ -185,21 +185,28 @@ struct EditWidgetSheetV5: View {
     @Environment(\.dismiss) private var dismiss
     @State private var widget: HealthWidgetItemV5
 
+    private let initialWidget: HealthWidgetItemV5
+
     init(widget: HealthWidgetItemV5, onSave: @escaping (HealthWidgetItemV5) -> Void) {
         self.onSave = onSave
+        initialWidget = widget
         _widget = State(initialValue: widget)
     }
 
     var body: some View {
         BrightPageSheetViewV5(title: "Edit Widget", horizontalPadding: .spacing0x) {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") {
-                    BrightHaptic.medium.play()
-                    onSave(widget)
-                    dismiss()
+                if widget != initialWidget {
+                    Button("Save") {
+                        guard widget != initialWidget else { return }
+                        BrightHaptic.medium.play()
+                        onSave(widget)
+                        dismiss()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.defaultSkyBlue)
+                    .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.defaultSkyBlue)
             }
         } content: {
             WidgetOptions(widget: $widget)
@@ -231,6 +238,7 @@ struct ChooseWidgetSizePageV5: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultSkyBlue)
+                .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
             }
         } content: {
             WidgetOptions(widget: $widget)

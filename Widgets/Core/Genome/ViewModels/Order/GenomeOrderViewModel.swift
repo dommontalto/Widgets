@@ -15,6 +15,8 @@ final class GenomeOrderViewModel {
     }
 
     var showingOrderSheet = false
+    // The order tray was put away; it comes back the next time Summary opens.
+    var isOrderTrayDismissed = false
     var showingCheckout = false
     var showingConfirmation = false
     private(set) var isStartingCheckout = false

@@ -8,6 +8,90 @@ import SwiftUI
 struct GenomeOrderSheet: View {
     @Bindable var viewModel: GenomeOrderViewModel
 
+    var body: some View {
+        BrightPageSheetViewV5(horizontalPadding: .spacing0x, backgroundColor: .black) {
+            ScrollView {
+                VStack(spacing: .spacing0x) {
+                    BrightPlaceholderViewV5(
+                        image: ImageNames.genomeOrderDnaHeroV5,
+                        title: "Order your genome test",
+                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
+                        fillsViewport: false
+                    )
+                    .environment(\.colorScheme, .dark)
+                    .padding(.bottom, .spacing6x)
+
+                    GenomeOrderIncludedList()
+                }
+            }
+            .scrollIndicators(.hidden)
+            .background(alignment: .top) {
+                GenomeOrderWaves()
+                    .ignoresSafeArea()
+            }
+            .brightBottomButtonV5 {
+                GenomeOrderPurchaseButton(viewModel: viewModel)
+            }
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationDestination(isPresented: $viewModel.showingCheckout) {
+                BrightCheckoutViewV5(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
+                    .navigationDestination(isPresented: $viewModel.showingConfirmation) {
+                        GenomeOrderConfirmationView(viewModel: viewModel)
+                    }
+            }
+        }
+    }
+}
+
+// The order sheet and tray's backdrop: the lighter blue waves drifting slowly on uneven
+// periods so they never visibly loop, sinking into black towards the bottom.
+struct GenomeOrderWaves: View {
+    // Covers its whole frame in blue rather than fading into black below the image.
+    var fills = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate * Constants.speed
+            Image(ImageNames.genomeOrderBackgroundV5)
+                .resizable()
+                .aspectRatio(contentMode: fills ? .fill : .fit)
+                .scaleEffect(Constants.scale + Constants.scaleSwing * sin(t / 5))
+                .rotationEffect(.degrees(Constants.rotation * sin(t / 11)))
+                .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
+                .overlay {
+                    LinearGradient(colors: [.defaultCyan, .defaultSkyBlue, .defaultDeepBlue], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        .blendMode(.color)
+                }
+                .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: .top)
+                .clipped()
+                .blur(radius: 20, opaque: true)
+        }
+        .overlay {
+            LinearGradient(
+                stops: [
+                    .init(color: .black.opacity(.minimalOpacity), location: 0),
+                    .init(color: .black.opacity(.veryLowOpacity), location: 0.7),
+                    .init(color: .black.opacity(fills ? .semiLowOpacity : 1), location: 1.0),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+
+    private enum Constants {
+        static let speed: Double = 2
+        static let scale: CGFloat = 1.15
+        static let scaleSwing: CGFloat = 0.06
+        static let rotation: Double = 3
+        static let drift: CGFloat = .spacing4x
+    }
+}
+
+struct GenomeOrderIncludedList: View {
     private struct Panel: Identifiable {
         let id = UUID()
         let icon: String
@@ -40,56 +124,6 @@ struct GenomeOrderSheet: View {
     ]
 
     var body: some View {
-        BrightPageSheetViewV5(horizontalPadding: .spacing0x, backgroundColor: .black) {
-            ScrollView {
-                VStack(spacing: .spacing0x) {
-                    BrightPlaceholderViewV5(
-                        image: ImageNames.genomeOrderDnaHeroV5,
-                        title: "Order your genome test",
-                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
-                        fillsViewport: false
-                    )
-                    .environment(\.colorScheme, .dark)
-                    .padding(.bottom, .spacing6x)
-                    
-                    includedList
-                }
-            }
-            .scrollIndicators(.hidden)
-            .background(alignment: .top) {
-                Image(ImageNames.genomeOrderBackgroundV5)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .blur(radius: 20, opaque: true)
-                    .overlay {
-                        LinearGradient(
-                            stops: [
-                                .init(color: .black.opacity(.minimalOpacity), location: 0),
-                                .init(color: .black.opacity(.veryLowOpacity), location: 0.7),
-                                .init(color: .black, location: 1.0),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    .ignoresSafeArea()
-            }
-            .brightBottomButtonV5 {
-                purchaseButton
-            }
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(isPresented: $viewModel.showingCheckout) {
-                BrightCheckoutViewV5(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
-                    .navigationDestination(isPresented: $viewModel.showingConfirmation) {
-                        GenomeOrderConfirmationView(viewModel: viewModel)
-                    }
-            }
-        }
-    }
-
-    private var includedList: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             ForEach(Array(panels.enumerated()), id: \.element.id) { index, panel in
                 VStack(alignment: .leading, spacing: .spacing105x) {
@@ -117,7 +151,12 @@ struct GenomeOrderSheet: View {
         .padding(.horizontal, .spacing3x)
     }
 
-    private var purchaseButton: some View {
+}
+
+struct GenomeOrderPurchaseButton: View {
+    @Bindable var viewModel: GenomeOrderViewModel
+
+    var body: some View {
         BrightPillButton("Purchase", buttonSize: .large, isLoading: viewModel.isStartingCheckout) {
             viewModel.handlePurchase()
         }
