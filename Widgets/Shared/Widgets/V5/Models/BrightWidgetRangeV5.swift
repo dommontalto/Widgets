@@ -15,7 +15,9 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
     case fixed6h
     case fixed12h
     case today
+    case yesterday
     case week
+    case pastWeek
     case lastNight
     // Just the most recent reading, for widgets that show a single value.
     case latest
@@ -37,7 +39,7 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .rolling1h, .rolling6h, .rolling12h: .rolling
         case .fixed6h, .fixed12h: .fixed
-        case .today, .week, .lastNight: .calendar
+        case .today, .yesterday, .week, .pastWeek, .lastNight: .calendar
         case .latest, .lastReadings: .current
         }
     }
@@ -46,7 +48,9 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
     var rowTitle: String {
         switch self {
         case .today: "Today"
+        case .yesterday: "Yesterday"
         case .week: "This week"
+        case .pastWeek: "Past 7 days"
         case .lastNight: "Last night"
         case .latest: "Latest reading"
         case .lastReadings: "Past \(Self.readingCount) readings"
@@ -102,9 +106,13 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         case .calendar:
             var mondayFirst = calendar
             mondayFirst.firstWeekday = 2
-            let start = isWeek
-                ? mondayFirst.dateInterval(of: .weekOfYear, for: latest)?.start ?? latest
-                : calendar.startOfDay(for: latest)
+            let midnight = calendar.startOfDay(for: latest)
+            let start = switch self {
+            case .week: mondayFirst.dateInterval(of: .weekOfYear, for: latest)?.start ?? latest
+            case .yesterday: calendar.date(byAdding: .day, value: -1, to: midnight) ?? midnight
+            case .pastWeek: calendar.date(byAdding: .day, value: -6, to: midnight) ?? midnight
+            default: midnight
+            }
             return DateInterval(start: start, duration: duration)
         }
     }
@@ -124,8 +132,8 @@ enum BrightWidgetRangeV5: String, CaseIterable, Codable, Identifiable {
         case .rolling6h, .fixed6h: 6
         case .rolling12h, .fixed12h: 12
         case .latest, .lastReadings: 1
-        case .today, .lastNight: 24
-        case .week: 7 * 24
+        case .today, .yesterday, .lastNight: 24
+        case .week, .pastWeek: 7 * 24
         }
     }
 }

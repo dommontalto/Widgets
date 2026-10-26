@@ -11,7 +11,7 @@ import SwiftUI
 enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case activity
     case exercise
-    case heartRate
+    case heart
     case intake
     case journal
     case macros
@@ -29,7 +29,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: "Total Energy"
         case .exercise: "Exercise"
-        case .heartRate: "Heart Rate"
+        case .heart: "Heart Rate"
         case .intake: "Intake"
         case .journal: "Journal"
         case .macros: "Weekly Macros"
@@ -48,7 +48,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: "Activity"
         case .exercise: "Exercise"
-        case .heartRate: "Heart"
+        case .heart: "Heart"
         case .intake: "Intake"
         case .journal: "Journal"
         case .macros: "Macros"
@@ -66,7 +66,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: "flame.fill"
         case .exercise: "figure.run"
-        case .heartRate: "heart.fill"
+        case .heart: "heart.fill"
         case .intake: "fork.knife"
         case .journal: "pencil.line"
         case .macros: "chart.pie.fill"
@@ -85,7 +85,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: .template(ImageNames.activityAlertsIconV5)
         case .exercise: .symbol(systemImage)
-        case .heartRate: .template(ImageNames.heartDashIconV4)
+        case .heart: .template(ImageNames.heartDashIconV4)
         case .intake: .template(ImageNames.logFoodIconV1)
         case .journal: .template(ImageNames.pencilBlueV5)
         case .macros: .template(ImageNames.macronutrientGraphV5)
@@ -103,7 +103,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: .defaultOrange
         case .exercise: .cardioColor
-        case .heartRate: .defaultRed
+        case .heart: .defaultRed
         case .intake: .defaultGreen
         case .journal: .defaultCyan
         case .macros: .defaultGreen
@@ -121,7 +121,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self {
         case .activity: [.totalEnergyBars, .activeEnergyBars]
         case .exercise: [.exerciseSplits]
-        case .heartRate: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
+        case .heart: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
         case .intake: [.intakeBars, .intakeRing, .intakeMeter]
         case .journal: [.journalChecklist]
         case .macros: [.macroBars, .macroRings, .macroRing, .macroMeter, .macroMeters]
@@ -547,8 +547,12 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
-        kind = try container.decode(HealthWidgetKindV5.self, forKey: .kind)
-        style = try container.decode(HealthWidgetStyleV5.self, forKey: .style)
+        let style = try container.decode(HealthWidgetStyleV5.self, forKey: .style)
+        self.style = style
+        guard let kind = HealthWidgetKindV5.allCases.first(where: { $0.styles.contains(style) }) else {
+            throw DecodingError.dataCorruptedError(forKey: .style, in: container, debugDescription: "No kind draws \(style.rawValue)")
+        }
+        self.kind = kind
         size = try container.decode(BrightWidgetSizeV5.self, forKey: .size)
         range = try container.decode(BrightWidgetRangeV5.self, forKey: .range)
         macro = try container.decodeIfPresent(HealthMacroV5.self, forKey: .macro) ?? .carbs
@@ -556,6 +560,9 @@ struct HealthWidgetItemV5: Identifiable, Codable, Equatable {
         score = try container.decodeIfPresent(HealthScoreV5.self, forKey: .score) ?? .recovery
         nutrients = try container.decodeIfPresent([HealthNutrientV5].self, forKey: .nutrients) ?? HealthNutrientV5.defaultPins
         nutrientPinOrder = try container.decodeIfPresent([HealthNutrientV5].self, forKey: .nutrientPinOrder) ?? nutrients
+        if !style.ranges.contains(range), let first = style.ranges.first {
+            range = first
+        }
     }
 
     var picks: [HealthWidgetItemV5] {
@@ -654,7 +661,7 @@ final class HealthWidgetLayoutV5 {
         HealthWidgetItemV5(kind: .intake, style: .intakeMeter, size: .small),
         HealthWidgetItemV5(kind: .activity, style: .activeEnergyBars, size: .small, range: .today),
         HealthWidgetItemV5(kind: .sleep, style: .sleepRings, size: .medium),
-        HealthWidgetItemV5(kind: .heartRate, style: .heartLine, size: .medium, range: .rolling1h),
+        HealthWidgetItemV5(kind: .heart, style: .heartLine, size: .medium, range: .rolling1h),
         HealthWidgetItemV5(kind: .wellbeing, style: .wellbeingMeters, size: .small),
         HealthWidgetItemV5(kind: .water, style: .waterTank, size: .small),
         HealthWidgetItemV5(kind: .exercise, style: .exerciseSplits, size: .medium),

@@ -37,7 +37,7 @@ struct HealthWidgetViewV5: View {
             BrightRingGroupWidgetV5(rings: [ring], size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(ring.label, systemImage: widget.kind.systemImage, color: ring.color)
             }
-        case (.heartRate, .heartLine):
+        case (.heart, .heartLine):
             BrightLineChartWidgetV5(
                 appearance: heartRateAppearance,
                 samples: HealthWidgetDemoV5.heartRate,
@@ -79,7 +79,7 @@ struct HealthWidgetViewV5: View {
                 value: HealthWidgetDemoV5.weightPoints.last?.value ?? 0,
                 latest: HealthWidgetDemoV5.weightPoints.last?.date ?? .now
             )
-        case (.heartRate, .vo2Number):
+        case (.heart, .vo2Number):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.vo2MaxAppearance,
                 value: HealthWidgetDemoV5.vo2MaxPoints.last?.value ?? 0,
@@ -96,7 +96,7 @@ struct HealthWidgetViewV5: View {
                 size: widget.size,
                 allowsSelection: allowsSelection
             )
-        case (.heartRate, .vo2Line):
+        case (.heart, .vo2Line):
             BrightDottedLineChartWidgetV5(
                 appearance: HealthWidgetDemoV5.vo2MaxAppearance,
                 subtitle: "Latest: \(HealthWidgetDemoV5.anchor.formatted(.brightTimestamp))",
@@ -146,7 +146,7 @@ struct HealthWidgetViewV5: View {
                 details: HealthWidgetDemoV5.mealDetails,
                 allowsSelection: allowsSelection
             )
-        case (.heartRate, _):
+        case (.heart, _):
             BrightLeadingNumberWidgetV5(
                 appearance: heartRateAppearance,
                 value: HealthWidgetDemoV5.heartRate.last?.value ?? 0,
