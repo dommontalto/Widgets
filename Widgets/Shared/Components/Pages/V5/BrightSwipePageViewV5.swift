@@ -134,6 +134,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
     // Full-bleed page background. Defaults to `nil` (no background) so sheet
     // call sites keep their own; standalone screens pass `.defaultBackground`.
     let backgroundColor: Color?
+    let refreshPageIndex: Int?
     let onRefresh: (() async -> Void)?
     // A tap on a pill, selected or not, before the selection moves. The
     // selection change itself carries the haptic, so a tap on the pill that
@@ -177,6 +178,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
         verticalScrollDisabledPageIndex: Int? = nil,
         bottomSafeArea: Bool = true,
         backgroundColor: Color? = nil,
+        refreshPageIndex: Int? = nil,
         onRefresh: (() async -> Void)? = nil,
         onPillTap: ((Int) -> Void)? = nil,
         file: String? = #file,
@@ -207,6 +209,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
         self.verticalScrollDisabledPageIndex = verticalScrollDisabledPageIndex
         self.bottomSafeArea = bottomSafeArea
         self.backgroundColor = backgroundColor
+        self.refreshPageIndex = refreshPageIndex
         self.onRefresh = onRefresh
         self.onPillTap = onPillTap
         self.file = file
@@ -417,7 +420,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
                 }
                 .scrollDismissesKeyboard(scrollDismissesKeyboardMode)
                 .scrollDisabled(i == verticalScrollDisabledPageIndex)
-                .modifier(OptionalRefresh(action: onRefresh))
+                .modifier(OptionalRefresh(action: refreshPageIndex.map { $0 == i } ?? true ? onRefresh : nil))
                 .modifier(OptionalScrollPosition(
                     position: i == scrollControlledPageIndex ? verticalScrollPosition : nil
                 ))
