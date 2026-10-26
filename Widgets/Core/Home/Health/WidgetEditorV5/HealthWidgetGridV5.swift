@@ -138,14 +138,6 @@ struct HealthWidgetViewV5: View {
             BrightRingGroupWidgetV5(rings: HealthWidgetDemoV5.microRings(widget.nutrients), size: widget.size, allowsSelection: allowsSelection) {
                 ringHeader(widget.kind.title, systemImage: widget.kind.systemImage, color: widget.kind.tint)
             }
-        case (.mind, _):
-            BrightLeadingNumberWidgetV5(
-                appearance: HealthWidgetDemoV5.mindAppearance,
-                value: HealthWidgetDemoV5.mindMinutesToday,
-                latest: HealthWidgetDemoV5.mindLatest,
-                details: HealthWidgetDemoV5.mindDetails,
-                allowsSelection: allowsSelection
-            )
         case (.nutrition, _):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.nutritionAppearance,

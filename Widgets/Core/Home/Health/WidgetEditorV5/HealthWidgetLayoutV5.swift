@@ -17,7 +17,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
     case macros
     case menstrual
     case micros
-    case mind
     case nutrition
     case sleep
     case water
@@ -36,7 +35,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "Weekly Macros"
         case .menstrual: "Menstrual"
         case .micros: "Micros"
-        case .mind: "Mind"
         case .nutrition: "Nutrition"
         case .sleep: "Sleep"
         case .water: "Water"
@@ -56,7 +54,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "Macros"
         case .menstrual: "Menstrual"
         case .micros: "Micros"
-        case .mind: "Mind"
         case .nutrition: "Nutrition"
         case .sleep: "Sleep"
         case .water: "Water"
@@ -75,7 +72,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: "chart.pie.fill"
         case .menstrual: "moonphase.waxing.crescent"
         case .micros: "leaf.fill"
-        case .mind: "brain.head.profile"
         case .nutrition: "fork.knife"
         case .sleep: "bed.double.fill"
         case .water: "drop.fill"
@@ -95,7 +91,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: .template(ImageNames.macronutrientGraphV5)
         case .menstrual: .template(ImageNames.cycleTrackingMainV5)
         case .micros: .symbol(systemImage)
-        case .mind: .symbol(systemImage)
         case .nutrition: .symbol(systemImage)
         case .sleep: .template(ImageNames.sleepInfoV4)
         case .water: .template(ImageNames.waterIconV5)
@@ -114,7 +109,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: .defaultGreen
         case .menstrual: .defaultPink
         case .micros: .defaultCyan
-        case .mind: .defaultBrightPink
         case .nutrition: .defaultGreen
         case .sleep: .defaultBlue
         case .water: .defaultCyan
@@ -133,7 +127,6 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         case .macros: [.macroBars, .macroRings, .macroRing, .macroMeter, .macroMeters]
         case .menstrual: [.menstrualCycle]
         case .micros: [.microRings]
-        case .mind: [.mindNumber]
         case .nutrition: [.nutritionNumber]
         case .sleep: [.sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter]
         case .water: [.waterBars, .waterNumber, .waterRing, .waterTank, .waterMeter]
@@ -339,9 +332,6 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // MARK: Micros
     case microRings
 
-    // MARK: Mind
-    case mindNumber
-
     // MARK: Nutrition
     case nutritionNumber
 
@@ -424,7 +414,6 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroMeter, .macroMeters: .horizontalBar
         case .menstrualCycle: .menstrual
         case .microRings: .ring
-        case .mindNumber: .number
         case .nutritionNumber: .number
         case .sleepRings: .ring
         case .sleepVitals: .dottedRange
@@ -457,7 +446,6 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroRing, .macroMeter: [.small]
         case .macroMeters: [.small, .medium]
         case .microRings: [.small, .medium]
-        case .mindNumber: [.small]
         case .nutritionNumber: [.small]
         case .sleepRings: [.small, .medium]
         case .sleepVitals: [.small, .medium]
@@ -491,7 +479,6 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
         case .macroRings, .macroRing, .macroMeter, .macroMeters: [.today]
         case .menstrualCycle: [.today]
         case .microRings: [.today]
-        case .mindNumber: [.latest]
         case .nutritionNumber: [.latest]
         case .sleepRings, .sleepVitals, .sleepStages, .sleepStageRing, .sleepStageMeter: [.lastNight]
         case .waterBars: [.today, .rolling12h, .week]
