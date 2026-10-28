@@ -79,6 +79,31 @@ struct BrightLineChartWidgetV5: View {
         average = values.isEmpty ? 0 : values.reduce(0, +) / Double(values.count)
     }
 
+    // A server's chart (Lighthouse): samples already bucketed, its own range, and its stats over the raw readings.
+    init(
+        appearance: BrightWidgetAppearanceV5,
+        bucketed samples: [Sample],
+        interval: DateInterval,
+        low: Double,
+        high: Double,
+        average: Double,
+        range: BrightWidgetRangeV5 = .today,
+        size: BrightWidgetSizeV5,
+        allowsSelection: Bool = true
+    ) {
+        self.appearance = appearance
+        self.range = range
+        self.size = size
+        self.allowsSelection = allowsSelection
+        latest = samples.last?.date ?? interval.start
+        self.interval = interval
+        visibleSamples = samples
+        visibleEvents = []
+        self.high = high
+        self.low = low
+        self.average = average
+    }
+
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
     private var tint: Color { appearance.tint }
@@ -487,7 +512,7 @@ struct BrightLineChartWidgetV5: View {
 
     private var nowTickIndex: Int {
         let lastIndex = range.tickCount - 1
-        let progress = latest.timeIntervalSince(start) / range.duration
+        let progress = latest.timeIntervalSince(start) / interval.duration
         return min(max(Int((progress * Double(lastIndex)).rounded()), 0), lastIndex)
     }
 
@@ -515,7 +540,7 @@ struct BrightLineChartWidgetV5: View {
     }
 
     private func xPosition(of date: Date, width: CGFloat) -> CGFloat {
-        width * date.timeIntervalSince(start) / range.duration
+        width * date.timeIntervalSince(start) / interval.duration
     }
 
     private func display(_ value: Double) -> String {

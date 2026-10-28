@@ -44,6 +44,8 @@ struct BrightDottedLineChartWidgetV5: View {
     var note: String?
     let size: BrightWidgetSizeV5
     var allowsSelection = true
+    // A server's chart (Lighthouse) draws every reading in its range, not just the latest few.
+    var showsEveryPoint = false
 
     @State private var selectedIndex: Int?
     // The line draws across the first time the widget shows.
@@ -323,7 +325,7 @@ struct BrightDottedLineChartWidgetV5: View {
     // MARK: - Values
 
     private var shownPoints: [Point] {
-        Array(points.suffix(BrightWidgetRangeV5.readingCount))
+        showsEveryPoint ? points : Array(points.suffix(BrightWidgetRangeV5.readingCount))
     }
 
     private var lastIndex: Int {

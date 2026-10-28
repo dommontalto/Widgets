@@ -192,36 +192,81 @@ struct LighthouseChatResponse: View {
 // Submit that hands it back.
 struct LighthouseChoiceBox: View {
     let options: [String]
+    var prompt: String?
+    var allowsMultiple = false
+    var submitTitle: String?
+    // Already answered, so it opens dimmed and locked.
+    var isAnswered = false
     let onSubmit: (String) -> Void
 
     @State private var selected: String?
+    @State private var picked: [String] = []
     @State private var isSubmitted = false
+
+    private var hasSelection: Bool {
+        allowsMultiple ? !picked.isEmpty : selected != nil
+    }
+
+    private var isLocked: Bool {
+        isSubmitted || isAnswered
+    }
 
     var body: some View {
         VStack(spacing: .spacing0x) {
+            if let prompt {
+                BrightText(prompt, size: .body1)
+                    .lineSpacing(.lineSpacingMedium)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, .spacing1x)
+            }
+
             ForEach(Array(options.enumerated()), id: \.element) { index, option in
                 row(option, isLast: index == options.count - 1)
             }
 
             // Faded until there's something to send.
-            BrightPillButton(Constants.submitTitle, isSelected: selected != nil && !isSubmitted) {
-                guard let selected else { return }
-                isSubmitted = true
-                onSubmit(selected)
+            BrightPillButton(submitTitle ?? Constants.submitTitle, isSelected: hasSelection && !isLocked) {
+                if allowsMultiple {
+                    guard !picked.isEmpty else { return }
+                    isSubmitted = true
+                    onSubmit(picked.joined(separator: ", "))
+                } else {
+                    guard let selected else { return }
+                    isSubmitted = true
+                    onSubmit(selected)
+                }
             }
-            .disabled(selected == nil || isSubmitted)
+            .disabled(!hasSelection || isLocked)
             .padding(.top, .spacing2x)
         }
-        .opacity(isSubmitted ? .lowOpacity : 1)
-        .disabled(isSubmitted)
+        .opacity(isLocked ? .lowOpacity : 1)
+        .disabled(isLocked)
         .animation(.brightSnappy, value: selected)
+        .animation(.brightSnappy, value: picked)
         .animation(.brightSnappy, value: isSubmitted)
+    }
+
+    private func isPicked(_ option: String) -> Bool {
+        allowsMultiple ? picked.contains(option) : selected == option
+    }
+
+    private func toggle(_ option: String) {
+        guard allowsMultiple else {
+            // Tapping the picked one again clears it.
+            selected = selected == option ? nil : option
+            return
+        }
+        if let index = picked.firstIndex(of: option) {
+            picked.remove(at: index)
+        } else {
+            picked.append(option)
+        }
     }
 
     private func row(_ option: String, isLast: Bool) -> some View {
         Button {
-            // Tapping the picked one again clears it.
-            selected = selected == option ? nil : option
+            toggle(option)
         } label: {
             VStack(spacing: .spacing0x) {
                 HStack(alignment: .center, spacing: .spacing2x) {
@@ -231,7 +276,7 @@ struct LighthouseChoiceBox: View {
 
                     Spacer(minLength: .spacing2x)
 
-                    BrightTickV5(isTicked: selected == option, tickTint: isSubmitted ? .lightTextColor : .defaultGreen)
+                    BrightTickV5(isTicked: isPicked(option), tickTint: isLocked ? .lightTextColor : .defaultGreen)
                 }
                 .padding(.vertical, .spacing2x)
 

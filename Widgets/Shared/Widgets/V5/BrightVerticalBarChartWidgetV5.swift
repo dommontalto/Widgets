@@ -37,6 +37,25 @@ struct BrightVerticalBarChartWidgetV5: View {
         case rising
     }
 
+    // How values print: as numbers in the appearance's style, or minutes as a duration, "7h 25m".
+    enum ValueFormat {
+        case number
+        case minutes
+
+        func text(_ value: Double, appearance: BrightWidgetAppearanceV5) -> String {
+            switch self {
+            case .number:
+                return appearance.format(value)
+            case .minutes:
+                let total = Int(value.rounded())
+                if total < 60 {
+                    return "\(total)m"
+                }
+                return total % 60 == 0 ? "\(total / 60)h" : "\(total / 60)h \(total % 60)m"
+            }
+        }
+    }
+
     enum Headline {
         case total
         case average
@@ -63,6 +82,13 @@ struct BrightVerticalBarChartWidgetV5: View {
     var summary: Summary?
     let size: BrightWidgetSizeV5
     var allowsSelection = true
+    // A server's chart (Lighthouse): each slot's own start, its whole range, and the figures it
+    // prints, used as they are rather than worked out here.
+    var slotStarts: [Date]?
+    var slotRange: DateInterval?
+    var headlineFigure: Double?
+    var splitFigures: [Segment]?
+    var valueFormat = ValueFormat.number
 
     @State private var plotWidth: CGFloat = 0
     @State private var selectedIndex: Int?
@@ -75,7 +101,8 @@ struct BrightVerticalBarChartWidgetV5: View {
     private var title: String { appearance.title }
     private var systemImage: String { appearance.systemImage }
     private var tint: Color { appearance.tint }
-    private var unit: String? { appearance.unit }
+    // Minutes print as a duration, which carries its own units.
+    private var unit: String? { valueFormat == .minutes ? nil : appearance.unit }
 
     var body: some View {
         layout
@@ -433,7 +460,7 @@ struct BrightVerticalBarChartWidgetV5: View {
     // Placed within whatever width it's given, so it never sets the widget's width.
     private var slotDots: some View {
         GeometryReader { geometry in
-            ForEach(0 ..< range.slotCount, id: \.self) { index in
+            ForEach(0 ..< slotCount, id: \.self) { index in
                 Capsule()
                     .fill(index == (selectedIndex ?? currentIndex) ? Color.textColor : Color.lightTextColor)
                     .frame(width: .spacing05x, height: isLabelledSlot(index) ? Constants.labelTickHeight : .spacing05x)
@@ -453,7 +480,7 @@ struct BrightVerticalBarChartWidgetV5: View {
                 .frame(maxWidth: .infinity)
                 .overlay {
                     GeometryReader { geometry in
-                        ForEach(0 ..< range.slotCount, id: \.self) { index in
+                        ForEach(0 ..< slotCount, id: \.self) { index in
                             weekdayLabel(index, in: geometry.size)
                         }
                     }
@@ -463,7 +490,7 @@ struct BrightVerticalBarChartWidgetV5: View {
             // Rolling ranges put "Now" at the trailing edge; fixed ones put the halfway hour
             // at its bar's leading edge. One pair of labels serves both, so switching
             // between them rolls "12h ago" into "12 AM" rather than swapping the row.
-            let labels = range.labels(for: interval)
+            let labels = axisLabels
 
             ZStack(alignment: .leading) {
                 BrightText(labels.leading, size: .body5, color: .semiLightTextColor)
@@ -472,7 +499,7 @@ struct BrightVerticalBarChartWidgetV5: View {
                 BrightText(labels.trailing, size: .body5, color: .semiLightTextColor)
                     .contentTransition(.numericText())
                     .frame(maxWidth: .infinity, alignment: range.isRolling ? .trailing : .leading)
-                    .offset(x: range.isRolling ? .zero : slotCentre(range.slotCount / 2, in: plotWidth) - barWidth(in: plotWidth) / 2)
+                    .offset(x: range.isRolling ? .zero : slotCentre(slotCount / 2, in: plotWidth) - barWidth(in: plotWidth) / 2)
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -487,7 +514,7 @@ struct BrightVerticalBarChartWidgetV5: View {
         let halfWidth = heldLabelWidth / 2
 
         return BrightText(
-            isHeld ? slotTitle(index) : Constants.weekdayInitials[index],
+            isHeld ? slotTitle(index) : weekdayInitial(index),
             size: .body2,
             color: isHeld || index == currentIndex ? .textColor : .lightTextColor
         )
@@ -540,6 +567,9 @@ struct BrightVerticalBarChartWidgetV5: View {
         if let selectedIndex, let value = bars.first(where: { $0.index == selectedIndex })?.value {
             return value
         }
+        if let headlineFigure {
+            return headlineFigure
+        }
         return switch headline {
         case .total: values.reduce(0, +)
         case .average: average
@@ -553,6 +583,9 @@ struct BrightVerticalBarChartWidgetV5: View {
         if let selectedIndex, let bar = bars.first(where: { $0.index == selectedIndex }), !bar.segments.isEmpty {
             return bar.segments
         }
+        if let splitFigures {
+            return splitFigures
+        }
         let days = bars.filter { !$0.segments.isEmpty }
         guard let first = days.first else { return [] }
         return first.segments.indices.map { index in
@@ -565,6 +598,11 @@ struct BrightVerticalBarChartWidgetV5: View {
     private var unitLabel: String {
         let suffix = headline == .average && selectedIndex == nil && size != .small ? "AVG" : nil
         return [unit, suffix].compactMap(\.self).joined(separator: " ")
+    }
+
+    // A server's week can start on any day (the past 7 days), so its slots name their own days.
+    private func weekdayInitial(_ index: Int) -> String {
+        slotStarts == nil ? Constants.weekdayInitials[index] : slotStart(index).formatted(.brightWeekdayInitial)
     }
 
     // The latest slot with a reading, which is now.
@@ -601,15 +639,15 @@ struct BrightVerticalBarChartWidgetV5: View {
     }
 
     private func barWidth(in width: CGFloat) -> CGFloat {
-        max(width / CGFloat(range.slotCount) * barFraction, Constants.minimumBarWidth)
+        max(width / CGFloat(slotCount) * barFraction, Constants.minimumBarWidth)
     }
 
     // The bars run edge to edge like the line chart's plot: the first starts at the
     // leading edge and the last ends at the trailing one.
     private func slotCentre(_ index: Int, in width: CGFloat) -> CGFloat {
         let bar = barWidth(in: width)
-        guard range.slotCount > 1 else { return width / 2 }
-        return bar / 2 + CGFloat(index) * (width - bar) / CGFloat(range.slotCount - 1)
+        guard slotCount > 1 else { return width / 2 }
+        return bar / 2 + CGFloat(index) * (width - bar) / CGFloat(slotCount - 1)
     }
 
     private func distance(_ index: Int, from position: Double) -> Double {
@@ -639,11 +677,20 @@ struct BrightVerticalBarChartWidgetV5: View {
     // The first hour, plus the halfway hour where it's labelled too.
     private func isLabelledSlot(_ index: Int) -> Bool {
         guard !range.isWeek else { return false }
-        return index == 0 || (!range.isRolling && index == range.slotCount / 2)
+        return index == 0 || (!range.isRolling && index == slotCount / 2)
     }
 
     private var interval: DateInterval {
-        range.interval(endingAt: .now)
+        slotRange ?? range.interval(endingAt: .now)
+    }
+
+    private var slotCount: Int {
+        slotStarts?.count ?? range.slotCount
+    }
+
+    private var axisLabels: (leading: String, trailing: String) {
+        guard let slotStarts, let first = slotStarts.first, !range.isRolling else { return range.labels(for: interval) }
+        return (first.formatted(.brightHour), slotStarts[slotStarts.count / 2].formatted(.brightHour))
     }
 
     private func display(_ value: Double) -> String {

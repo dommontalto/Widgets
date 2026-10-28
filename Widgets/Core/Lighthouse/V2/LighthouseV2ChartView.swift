@@ -447,3 +447,30 @@ struct LighthouseV2ChartInputs {
         return .init(span: "Total", value: "\(sign)\(value)")
     }
 }
+
+extension BrightWidgetRangeV5 {
+    // The server names a range by its series token.
+    init?(seriesToken: String) {
+        guard let range = Self.allCases.first(where: {
+            ($0.isRolling || $0.section == .fixed) && $0.seriesToken == seriesToken
+        }) else { return nil }
+        self = range
+    }
+
+    private var seriesToken: String {
+        switch self {
+        case .rolling1h: "rolling_1h"
+        case .rolling6h: "rolling_6h"
+        case .rolling12h: "rolling_12h"
+        case .fixed6h: "fixed_6h"
+        case .fixed12h: "fixed_12h"
+        case .today: "today"
+        case .yesterday: "yesterday"
+        case .week: "this_week"
+        case .pastWeek: "past_7_days"
+        case .lastNight: "last_night"
+        case .latest: "latest"
+        case .lastReadings: "past_90_days"
+        }
+    }
+}
