@@ -60,7 +60,7 @@ nonisolated struct LighthouseConfiguration: Identifiable {
 // One step of a reply's reasoning. `depth` nests it under the step before,
 // and the waypoint is the goal the chain arrives at.
 nonisolated struct LighthouseThoughtStep: Identifiable {
-    let id = UUID()
+    var id = UUID()
     let symbol: String
     let title: String
     // What the model was doing at this step, in its own words.
@@ -70,6 +70,8 @@ nonisolated struct LighthouseThoughtStep: Identifiable {
     var isWaypoint = false
     var isExpandable = false
     var references: [LighthouseThoughtReference] = []
+    // How long a real step took, shown after its title.
+    var timing: String?
 }
 
 nonisolated struct LighthouseThoughtReference: Identifiable {

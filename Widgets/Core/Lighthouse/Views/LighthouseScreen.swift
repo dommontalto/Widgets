@@ -58,7 +58,8 @@ struct LighthouseScreen: View {
         .presentationBackground(.clear)
         .environment(\.brightPromptIsPill, true)
         .animation(.brightEaseInOut, value: showOnboarding)
-        .task { await runOpeningBurst() }
+        // Intro parked: the opening burst.
+        // .task { await runOpeningBurst() }
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
         }
@@ -132,17 +133,18 @@ struct LighthouseScreen: View {
 
     private var layers: some View {
         ZStack(alignment: .top) {
-            if showOnboarding {
-                onboarding
-                    .overlay(alignment: .topTrailing) {
-                        closeButton
-                            .padding(.horizontal, .spacing3x)
-                    }
-                    .transition(.opacity)
-            } else {
-                pages
-                    .transition(.opacity)
-            }
+            // Intro parked: the onboarding.
+            // if showOnboarding {
+            //     onboarding
+            //         .overlay(alignment: .topTrailing) {
+            //             closeButton
+            //                 .padding(.horizontal, .spacing3x)
+            //         }
+            //         .transition(.opacity)
+            // } else {
+            pages
+                .transition(.opacity)
+            // }
 
             // Speaking to it lights the orb up: it listens to the mic and swells
             // with your voice.

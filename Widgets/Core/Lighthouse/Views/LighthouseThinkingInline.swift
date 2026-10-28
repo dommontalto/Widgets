@@ -7,18 +7,16 @@
 
 import SwiftUI
 
-// The thought process in the thread: the orb and "Thinking…" with each step
-// hanging off it as it arrives, then, once the answer lands, condensed into
-// "Thought for…" that opens back out to the steps.
 struct LighthouseThinkingInline: View {
     let steps: [LighthouseThoughtStep]
-    // Nil while the reply is still being worked out.
     var thoughtSeconds: Int?
+    // Steps arrive as they happen, so each shows at once instead of on the demo's beat.
+    var isLive = false
 
     @State private var revealedCount = 0
     @State private var isExpanded = true
     @State private var toggleCount = 0
-    @State private var openStepIDs: Set<LighthouseThoughtStep.ID> = []
+    @State private var openStepID: LighthouseThoughtStep.ID?
     @State private var stepToggleCount = 0
 
     @Environment(\.openURL) private var openURL
@@ -44,6 +42,10 @@ struct LighthouseThinkingInline: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task { await reveal() }
+        .onChange(of: steps.count) { _, count in
+            guard isLive else { return }
+            withAnimation(.brightSpring) { revealedCount = count }
+        }
         .onChange(of: isFinished) { _, isFinished in
             guard isFinished else { return }
             revealedCount = steps.count
@@ -51,28 +53,55 @@ struct LighthouseThinkingInline: View {
         }
     }
 
+    // Steps run left to right like a queue: each new one joins at the trailing
+    // end and the strip slides along, so the current step is always in view.
     private var stepList: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            ForEach(Array(steps.prefix(revealedCount).enumerated()), id: \.element.id) { index, step in
-                let startX = index == 0 ? headerIconCenter : iconCenter(for: steps[index - 1])
-                let endX = iconCenter(for: step)
-                let height = startX == endX ? Constants.connectorHeight : Constants.bentConnectorHeight
-                if index == 0, !isFinished {
-                    Color.clear.frame(height: height)
-                } else {
-                    ThoughtConnector(
-                        startX: startX,
-                        endX: endX,
-                        height: height,
-                        cornerRadius: Constants.connectorCornerRadius,
-                        drawsIn: !isFinished
-                    )
-                }
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: .spacing0x) {
+                        ForEach(Array(steps.prefix(revealedCount).enumerated()), id: \.element.id) { index, step in
+                            HStack(spacing: .spacing0x) {
+                                if index > 0 {
+                                    QueueConnector(drawsIn: !isFinished)
+                                }
 
-                row(step)
-                    .transition(.offset(y: -.spacing1x).combined(with: .opacity).combined(with: .softBlur))
+                                chip(step, isCurrent: !isFinished && index == revealedCount - 1)
+                            }
+                            .id(step.id)
+                            .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : Constants.offscreenOpacity)
+                                    .blur(radius: phase.isIdentity ? .spacing0x : .spacing05x)
+                            }
+                            .transition(.offset(x: .spacing2x).combined(with: .opacity).combined(with: .softBlur))
+                        }
+                    }
+                    .padding(.leading, Constants.iconInset)
+                    .padding(.trailing, .spacing3x)
+                    .padding(.vertical, .spacing1x)
+                }
+                .scrollClipDisabled()
+                .onChange(of: revealedCount) { _, _ in
+                    guard !isFinished, let last = steps.prefix(revealedCount).last else { return }
+                    withAnimation(.brightSpring) { proxy.scrollTo(last.id, anchor: .trailing) }
+                }
             }
+
+            VStack(alignment: .leading, spacing: .spacing0x) {
+                if let openStep {
+                    detail(openStep)
+                        .id(openStep.id)
+                        .transition(.softDrop)
+                }
+            }
+            .mask { detailMask }
+            .padding(.leading, Constants.iconInset)
         }
+    }
+
+    private var openStep: LighthouseThoughtStep? {
+        steps.prefix(revealedCount).first { $0.id == openStepID }
     }
 
     private var header: some View {
@@ -126,59 +155,46 @@ struct LighthouseThinkingInline: View {
             .brightShimmerV5()
     }
 
-    private func row(_ step: LighthouseThoughtStep) -> some View {
-        let isOpen = openStepIDs.contains(step.id)
+    private func chip(_ step: LighthouseThoughtStep, isCurrent: Bool) -> some View {
+        let isOpen = openStepID == step.id
 
-        return VStack(alignment: .leading, spacing: .spacing0x) {
-            Button {
-                guard step.isExpandable else { return }
-                stepToggleCount += 1
-                withAnimation(.brightSpring) {
-                    if isOpen {
-                        openStepIDs.remove(step.id)
-                    } else {
-                        openStepIDs.insert(step.id)
-                    }
-                }
-            } label: {
-                HStack(spacing: .spacing2x) {
-                    Image(systemName: step.symbol)
-                        .font(.standard(size: .body1, weight: .light))
-                        .foregroundStyle(Color.semiLightTextColor)
-                        .frame(width: Constants.column, height: Constants.column)
-                        .drawOnTransition()
+        return Button {
+            guard step.isExpandable else { return }
+            stepToggleCount += 1
+            withAnimation(.brightSpring) { openStepID = isOpen ? nil : step.id }
+        } label: {
+            HStack(spacing: .spacing105x) {
+                Image(systemName: step.symbol)
+                    .font(.standard(size: .body1, weight: .light))
+                    .foregroundStyle(isCurrent || isOpen ? Color.textColor : Color.semiLightTextColor)
+                    .frame(width: Constants.column, height: Constants.column)
+                    .drawOnTransition()
 
-                    BrightText(step.title, size: .body1, color: .semiLightTextColor)
+                WidthCap(Constants.titleMaxWidth) {
+                    BrightText(step.title, size: .body1, color: isCurrent || isOpen ? .textColor : .semiLightTextColor)
                         .lineLimit(1)
                         .brightTextRevealV5(isActive: !isFinished)
-
-                    if step.isExpandable {
-                        Image(systemName: "chevron.forward")
-                            .font(.standard(size: .body1, weight: .light))
-                            .foregroundStyle(Color.lightTextColor)
-                            .rotationEffect(.degrees(isOpen ? Constants.openChevronDegrees : 0))
-                    }
-
-                    Spacer(minLength: .spacing0x)
                 }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .allowsHitTesting(step.isExpandable)
 
-            VStack(alignment: .leading, spacing: .spacing0x) {
-                if isOpen {
-                    detail(step)
-                        .transition(.softDrop)
+                if let timing = step.timing {
+                    BrightText(timing, size: .body1, color: .lightTextColor)
+                        .monospacedDigit()
+                        .fixedSize()
+                }
+
+                if step.isExpandable {
+                    Image(systemName: "chevron.down")
+                        .font(.standard(size: .body3, weight: .light))
+                        .foregroundStyle(Color.lightTextColor)
+                        .rotationEffect(.degrees(isOpen ? Constants.flippedChevronDegrees : 0))
                 }
             }
-            .mask { detailMask }
+            .contentShape(Rectangle())
         }
-        .padding(.leading, Constants.iconInset + indent(for: step.depth))
+        .buttonStyle(.plain)
+        .allowsHitTesting(step.isExpandable)
     }
 
-    // The tree line keeps running down the icon column beside the detail, so
-    // the next step still hangs off this one.
     private func detail(_ step: LighthouseThoughtStep) -> some View {
         HStack(alignment: .top, spacing: .spacing2x) {
             Rectangle()
@@ -247,19 +263,12 @@ struct LighthouseThinkingInline: View {
         .buttonStyle(.plain)
     }
 
-    private var headerIconCenter: CGFloat {
-        (isFinished ? Constants.brainSize : Constants.orbSize) / 2
-    }
-
-    private func indent(for depth: Int) -> CGFloat {
-        CGFloat(depth) * Constants.indent
-    }
-
-    private func iconCenter(for step: LighthouseThoughtStep) -> CGFloat {
-        Constants.iconInset + indent(for: step.depth) + Constants.column / 2
-    }
-
     private func reveal() async {
+        if isLive {
+            revealedCount = steps.count
+            if isFinished { isExpanded = false }
+            return
+        }
         guard !isFinished else {
             revealedCount = steps.count
             isExpanded = false
@@ -281,13 +290,11 @@ struct LighthouseThinkingInline: View {
         static let orbSize: CGFloat = .spacing7x
         static let column: CGFloat = .spacing4x
         static let brainSize: CGFloat = column
-        // Centres the step icons under the orb.
         static let iconInset: CGFloat = (orbSize - column) / 2
-        static let indent: CGFloat = .spacing2x
-        static let connectorHeight: CGFloat = .spacing2x
-        static let bentConnectorHeight: CGFloat = .spacing3x
-        static let connectorCornerRadius: CGFloat = .spacing1x
+        static let titleMaxWidth: CGFloat = .spacing7x * 4
+        static let offscreenOpacity: Double = 0.25
         static let openChevronDegrees: Double = 90
+        static let flippedChevronDegrees: Double = 180
         static let revealEvery: TimeInterval = 1.1
         static let featherHeight: CGFloat = .spacing105x
         static let landingOverscan: CGFloat = .spacing6x
@@ -307,46 +314,62 @@ private extension AnyTransition {
     static let softDrop = AnyTransition.move(edge: .top).combined(with: .opacity).combined(with: .softBlur)
 }
 
-// Drawn along its own length as it lands: down from the step above, and when
-// the next one nests, round and across, then down again into its icon.
-private struct ThoughtConnector: View {
-    let startX: CGFloat
-    let endX: CGFloat
-    let height: CGFloat
-    let cornerRadius: CGFloat
+// The short line that links one queued step to the next.
+private struct QueueConnector: View {
     var drawsIn = true
 
     @State private var isDrawn = false
 
     var body: some View {
         Path { path in
-            path.move(to: CGPoint(x: startX, y: 0))
-            if startX == endX {
-                path.addLine(to: CGPoint(x: endX, y: height))
-            } else {
-                let middle = height / 2
-                path.addLine(to: CGPoint(x: startX, y: middle - cornerRadius))
-                path.addQuadCurve(
-                    to: CGPoint(x: startX + cornerRadius, y: middle),
-                    control: CGPoint(x: startX, y: middle)
-                )
-                path.addLine(to: CGPoint(x: endX - cornerRadius, y: middle))
-                path.addQuadCurve(
-                    to: CGPoint(x: endX, y: middle + cornerRadius),
-                    control: CGPoint(x: endX, y: middle)
-                )
-                path.addLine(to: CGPoint(x: endX, y: height))
-            }
+            path.move(to: CGPoint(x: 0, y: Self.width / 2))
+            path.addLine(to: CGPoint(x: Self.width, y: Self.width / 2))
         }
         .trim(from: 0, to: isDrawn ? 1 : 0)
         .stroke(Color.semiLightTextColor.opacity(.semiLowOpacity), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-        .frame(height: height)
+        .frame(width: Self.width, height: Self.width)
+        .padding(.horizontal, .spacing105x)
         .onAppear {
             guard drawsIn else {
                 isDrawn = true
                 return
             }
             withAnimation(.brightSpring) { isDrawn = true }
+        }
+    }
+
+    private static let width: CGFloat = .spacing3x
+}
+
+// A scroll view offers its content unlimited width, so a long step title
+// would run on forever. This hands the title at most `maxWidth` to truncate in.
+private struct WidthCap: Layout {
+    let maxWidth: CGFloat
+
+    init(_ maxWidth: CGFloat) {
+        self.maxWidth = maxWidth
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        subviews.first?.sizeThatFits(capped(proposal)) ?? .zero
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: capped(proposal))
+    }
+
+    private func capped(_ proposal: ProposedViewSize) -> ProposedViewSize {
+        ProposedViewSize(width: min(proposal.width ?? maxWidth, maxWidth), height: proposal.height)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func drawOnTransition() -> some View {
+        if #available(iOS 26, *) {
+            transition(.symbolEffect(.drawOn))
+        } else {
+            transition(.opacity)
         }
     }
 }
@@ -362,15 +385,4 @@ private struct ThoughtConnector: View {
             try? await Task.sleep(for: .seconds(10))
             withAnimation(.brightSnappy) { thoughtSeconds = 10 }
         }
-}
-
-private extension View {
-    @ViewBuilder
-    func drawOnTransition() -> some View {
-        if #available(iOS 26, *) {
-            transition(.symbolEffect(.drawOn))
-        } else {
-            transition(.opacity)
-        }
-    }
 }

@@ -180,6 +180,13 @@ extension Date {
         return nil
     }
 
+    // Lighthouse v2 also sends minute precision (`isoformat(timespec="minutes")`), with or without an offset.
+    init?(lighthouseISO text: String) {
+        let seconds = text.replacing(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?=$|Z|[+-])/) { "\($0.1):00" }
+        guard let date = Date(brightISOZoned: seconds) ?? (try? Date.isoStyle.parse(seconds)) else { return nil }
+        self = date
+    }
+
     private static var dayKeyStyle: Date.ISO8601FormatStyle {
         Date.ISO8601FormatStyle(timeZone: .current).year().month().day().dateSeparator(.dash)
     }
