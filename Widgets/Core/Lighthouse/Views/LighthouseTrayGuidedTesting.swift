@@ -3,7 +3,9 @@
 //  Widgets
 //
 
+import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 // Lighthouse as a tray that lives at the bottom of a page. At rest it's a floating bar: the model on the left, the
 // ask field in the middle and dictation on the right. Pulled up, the chat fills in above the bar, and at full height
@@ -29,6 +31,8 @@ struct LighthouseTrayGuidedTesting: View {
     @State private var showingHistory = false
     @State private var chatResetCount = 0
     @State private var attachments = [BrightChatAttachment]()
+    @State private var attachmentSource: BrightChatAttachmentSource?
+    @State private var pickedPhotos = [PhotosPickerItem]()
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
     @FocusState private var isChatTyping: Bool
@@ -50,6 +54,10 @@ struct LighthouseTrayGuidedTesting: View {
         !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var canSend: Bool {
+        hasDraft || !attachments.isEmpty
+    }
+
     var body: some View {
         VStack(spacing: .spacing0x) {
             if !isResting {
@@ -60,12 +68,19 @@ struct LighthouseTrayGuidedTesting: View {
             if !isResting {
                 chat
                     .environment(\.brightChatShowsInput, false)
+                    .environment(\.brightChatShowsBottomEdge, true)
+                    .transition(.opacity)
+            }
+
+            if !attachments.isEmpty, !isResting {
+                attachmentStrip
                     .transition(.opacity)
             }
 
             askRow
         }
         .frame(maxHeight: .infinity, alignment: .bottom)
+        .animation(.brightSnappy, value: attachments.count)
         .presentationDetents(allowedDetents, selection: $detent)
         .animation(.brightEaseInOut, value: isResting)
 
@@ -91,6 +106,30 @@ struct LighthouseTrayGuidedTesting: View {
         }
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
+        }
+        .photosPicker(
+            isPresented: attaching(.photos),
+            selection: $pickedPhotos,
+            maxSelectionCount: Constants.maxAttachments,
+            matching: .images
+        )
+        .onChange(of: pickedPhotos) { _, items in
+            guard !items.isEmpty else { return }
+            pickedPhotos = []
+            Task { await attach(items) }
+        }
+        .fullScreenCover(isPresented: attaching(.camera)) {
+            BrightCameraPicker { image in
+                attachments.append(BrightChatAttachment(image: image))
+            }
+            .ignoresSafeArea()
+        }
+        .fileImporter(
+            isPresented: attaching(.files),
+            allowedContentTypes: [.image],
+            allowsMultipleSelection: true
+        ) { result in
+            attach(try? result.get())
         }
         .sheet(isPresented: $showingHistory) {
             LighthouseHistoryGuidedTesting { _ in startNewChat() }
@@ -127,7 +166,10 @@ struct LighthouseTrayGuidedTesting: View {
                 fieldAction
             }
         }
-        .padding(.spacing2x)
+        .padding(.horizontal, .spacing2x)
+        .padding(.bottom, .spacing2x)
+        // Pulled up, the field's own 44pt height is room enough under the messages' edge.
+        .padding(.top, isResting ? .spacing2x : .spacing0x)
         .animation(.brightSnappy, value: hasDraft)
         .animation(.brightSnappy, value: dictation.isListening)
     }
@@ -174,8 +216,19 @@ struct LighthouseTrayGuidedTesting: View {
     // Dictation until there's something to send, then the send arrow; while it listens, a red wave that ripples.
     @ViewBuilder
     private var fieldAction: some View {
-        if hasDraft, !dictation.isListening {
-            BrightRoundButton(systemImage: "arrow.up", size: .large, color: .defaultSkyBlue, tinted: true, onTapCallback: send)
+        if canSend, !dictation.isListening {
+            // The sent bubble's own tinted glass, so the two read as the same blue.
+            Button(action: send) {
+                Image(systemName: "arrow.up")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.white)
+                    .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+                    .contentShape(Circle())
+                    .modifier(BrightGlassEffectV5(shape: .circle, tint: .defaultSkyBlue, interactive: false))
+            }
+            .buttonStyle(.plain)
+            .brightHapticV5(.light, trigger: sentPrompt)
+            .accessibilityLabel("Send")
                 .transition(.scale.combined(with: .opacity))
         } else {
             BrightRoundButton(
@@ -195,7 +248,7 @@ struct LighthouseTrayGuidedTesting: View {
     private var attachMenu: some View {
         Menu {
             ForEach(BrightChatAttachmentSource.allCases.filter(\.isAvailable).reversed()) { source in
-                Button(source.title, systemImage: source.symbol) {}
+                Button(source.title, systemImage: source.symbol) { attachmentSource = source }
             }
         } label: {
             // A bare glyph, as in the chat's own input, rather than a glass circle.
@@ -260,7 +313,7 @@ struct LighthouseTrayGuidedTesting: View {
     // MARK: - Actions
 
     private func send() {
-        guard hasDraft else { return }
+        guard canSend else { return }
         dictation.stop()
         sentPrompt = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         draft = ""
@@ -284,6 +337,71 @@ struct LighthouseTrayGuidedTesting: View {
         }
     }
 
+    // MARK: - Attachments
+
+    // Waiting to go with the next message, above the bar.
+    private var attachmentStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: .spacing2x) {
+                ForEach(attachments) { attachment in
+                    thumbnail(attachment)
+                }
+            }
+            .padding(.horizontal, .spacing2x)
+            .padding(.top, .spacing1x)
+        }
+        .scrollClipDisabled()
+    }
+
+    private func thumbnail(_ attachment: BrightChatAttachment) -> some View {
+        Image(uiImage: attachment.image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: Constants.thumbnailSize, height: Constants.thumbnailSize)
+            .clipShape(RoundedRectangle(cornerRadius: .squareCornerRadius, style: .continuous))
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    attachments.removeAll { $0.id == attachment.id }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.standard(size: .body5, weight: .medium))
+                        .foregroundStyle(Color.white)
+                        .frame(width: Constants.removeSize, height: Constants.removeSize)
+                        .background(Color.black.opacity(.lowOpacity), in: .circle)
+                        .contentShape(Circle())
+                }
+                .padding(.spacing05x)
+            }
+    }
+
+    // One optional drives all three pickers, so only the source picked from the plus is presented.
+    private func attaching(_ source: BrightChatAttachmentSource) -> Binding<Bool> {
+        Binding(
+            get: { attachmentSource == source },
+            set: { if !$0, attachmentSource == source { attachmentSource = nil } }
+        )
+    }
+
+    private func attach(_ items: [PhotosPickerItem]) async {
+        for item in items {
+            guard let data = try? await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else { continue }
+            attachments.append(BrightChatAttachment(image: image))
+        }
+    }
+
+    private func attach(_ urls: [URL]?) {
+        for url in urls ?? [] {
+            // Files from outside the sandbox are security scoped; the read has to sit inside the access window.
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessed { url.stopAccessingSecurityScopedResource() }
+            }
+            guard let data = try? Data(contentsOf: url), let image = UIImage(data: data) else { continue }
+            attachments.append(BrightChatAttachment(image: image))
+        }
+    }
+
     private func startNewChat() {
         isThinking = false
         attachments = []
@@ -294,6 +412,9 @@ struct LighthouseTrayGuidedTesting: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let plusSize: CGFloat = 28
+        static let maxAttachments = 4
+        static let thumbnailSize: CGFloat = .spacing10x
+        static let removeSize: CGFloat = .spacing3x
         // Roughly how long the sheet takes to land at a new height.
         static let welcomeSettleDelay: TimeInterval = 0.4
         static let modelKey = "lighthouseSelectedModel"

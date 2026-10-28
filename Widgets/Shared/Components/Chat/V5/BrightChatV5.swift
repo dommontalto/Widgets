@@ -138,6 +138,9 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
     // True once the thread is scrolled up past the latest message, so the
     // arrow that jumps back down has a reason to show.
     @State private var isAwayFromBottom = false
+    // How much of the thread runs on below the visible part, as the bottom edge's strength.
+    @State private var bottomEdgeProgress: CGFloat = 0
+    @Environment(\.brightChatShowsBottomEdge) private var showsBottomEdge
 
     // The message currently flying out of the input field: the newest one, held
     // back by the thread until the copy over the field hands it over.
@@ -161,7 +164,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                         .onTapGesture { isTyping.wrappedValue = false }
                 }
             }
-            .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
+            .safeAreaInset(edge: .bottom, spacing: showsInput ? .spacing1x : .spacing0x) {
                 if showsInput {
                     inputCard
                 }
@@ -216,6 +219,15 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
             } action: { _, isAway in
                 isAwayFromBottom = isAway
             }
+            // Measured from the visible part's bottom, so the thread's own bottom insets don't count as more to see.
+            .onScrollGeometryChange(for: CGFloat.self) { geo in
+                geo.contentSize.height - geo.visibleRect.maxY
+            } action: { _, remaining in
+                let progress = showsBottomEdge ? BrightEdgeV5.progress(forOffset: remaining) : 0
+                guard progress != bottomEdgeProgress else { return }
+                bottomEdgeProgress = progress
+            }
+            .brightEdgeV5(progress: bottomEdgeProgress)
             // Sits just above the input card, riding the keyboard with it.
             .overlay(alignment: .bottom) {
                 if isAwayFromBottom {
@@ -746,4 +758,9 @@ extension BrightChatV5 where ModelPicker == EmptyView {
 extension EnvironmentValues {
     // Off where the container brings an input of its own.
     @Entry var brightChatShowsInput = true
+}
+
+extension EnvironmentValues {
+    // A hairline under the thread that strengthens as messages run on below it, for a container with its own input.
+    @Entry var brightChatShowsBottomEdge = false
 }
