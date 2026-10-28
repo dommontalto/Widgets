@@ -84,10 +84,10 @@ struct LighthouseTrayGuidedTesting: View {
         .presentationDetents(allowedDetents, selection: $detent)
         .animation(.brightEaseInOut, value: isResting)
 
-        // Typing from rest goes straight to the keyboard-sized height, so the tray never sits at plain half
-        // while the keyboard comes up under it.
+        // Typing from rest or half goes straight to the keyboard-sized height, so the tray never sits at plain
+        // half while the keyboard comes up under it.
         .onChange(of: isFieldFocused) { _, focused in
-            guard focused, isResting else { return }
+            guard focused, detent != .large, detent != Self.typingDetent else { return }
             withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
         .onChange(of: detent) { _, detent in
