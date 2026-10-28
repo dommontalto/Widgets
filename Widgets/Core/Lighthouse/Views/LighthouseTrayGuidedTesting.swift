@@ -90,8 +90,14 @@ struct LighthouseTrayGuidedTesting: View {
             guard focused, detent != .large, detent != Self.typingDetent else { return }
             withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
-        .onChange(of: detent) { _, detent in
-            if detent == Self.restDetent { isFieldFocused = false }
+        .onChange(of: detent) { old, new in
+            if new == Self.restDetent { isFieldFocused = false }
+            // Dragged up from the keyboard height while still typing: the keyboard goes and the tray carries on to
+            // full, since full can't be on offer while it's up without iOS lifting the tray there itself.
+            if old == Self.typingDetent, new == .medium, isFieldFocused {
+                isFieldFocused = false
+                withAnimation(.brightEaseInOut) { detent = .large }
+            }
             settleWelcome(for: detent)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
