@@ -235,7 +235,9 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                         withAnimation(.brightSnappy) { proxy.scrollTo(Constants.bottomID, anchor: .bottom) }
                     }
                     .accessibilityLabel("Scroll to latest")
-                    .offset(y: Constants.scrollButtonDrop)
+                    // A small glyph, so the target reaches well past it.
+                    .contentShape(Circle().inset(by: -.spacing2x))
+                    .offset(y: Constants.scrollButtonOffset)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -705,7 +707,7 @@ private enum Constants {
     static let awayFromBottomThreshold: CGFloat = .spacing12x * 4
     static let bottomID = "bottom"
     static let orbSize: CGFloat = 64
-    static let scrollButtonDrop: CGFloat = .spacing3x
+    static let scrollButtonOffset: CGFloat = -.spacing2x
     // The speed dialled in on orbs.jakubantalik.com — multiplies the orb's
     // preset rate.
     static let orbSpeed: Double = 1.2
