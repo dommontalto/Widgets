@@ -19,7 +19,6 @@ struct VaultGuidedTestingScreen: View {
             // A trial of Lighthouse as a tray that stays at the bottom, the way Maps keeps its search.
             .sheet(isPresented: $showingLighthouse) {
                 LighthouseTrayGuidedTesting(detent: $lighthouseDetent)
-                    .presentationDetents([LighthouseTrayGuidedTesting.restDetent, .medium, .large], selection: $lighthouseDetent)
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                     .presentationDragIndicator(.visible)
                     .interactiveDismissDisabled()

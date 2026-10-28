@@ -12,7 +12,10 @@ struct LighthouseTrayGuidedTesting: View {
     @Binding var detent: PresentationDetent
 
     // Just the ask bar: 12pt round its 44pt buttons.
-    static let restDetent = PresentationDetent.height(CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
+    static let restHeight = CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x
+    static let restDetent = PresentationDetent.height(restHeight)
+    // Half height less the keyboard: iOS sets the tray on top of the keyboard, so its top stays where half was.
+    static let typingDetent = PresentationDetent.custom(TrayTypingDetent.self)
 
     @AppStorage(Constants.modelKey) private var model = LighthouseModel.chatGPT
     @AppStorage(Constants.apiKeyKey) private var apiKey = ""
@@ -37,6 +40,13 @@ struct LighthouseTrayGuidedTesting: View {
         detent == Self.restDetent
     }
 
+    // While typing below full height, full is off the list: iOS would otherwise lift the tray there for the keyboard.
+    private var allowedDetents: Set<PresentationDetent> {
+        isFieldFocused && detent != .large
+            ? [Self.restDetent, .medium, Self.typingDetent]
+            : [Self.restDetent, .medium, .large]
+    }
+
     private var hasDraft: Bool {
         !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -57,6 +67,7 @@ struct LighthouseTrayGuidedTesting: View {
             askRow
         }
         .frame(maxHeight: .infinity, alignment: .bottom)
+        .presentationDetents(allowedDetents, selection: $detent)
         .animation(.brightEaseInOut, value: isResting)
 
         // Typing from rest pulls the tray up to half.
@@ -75,6 +86,17 @@ struct LighthouseTrayGuidedTesting: View {
         }
         .onChange(of: detent) { _, detent in
             if detent == Self.restDetent { isFieldFocused = false }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
+            guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            TrayTypingDetent.keyboardHeight = frame.height
+            guard isFieldFocused, detent != .large else { return }
+            withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            TrayTypingDetent.keyboardHeight = .zero
+            guard detent == Self.typingDetent else { return }
+            withAnimation(.brightEaseInOut) { detent = .medium }
         }
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
@@ -113,11 +135,15 @@ struct LighthouseTrayGuidedTesting: View {
                     askField
                 } else {
                     Spacer(minLength: .spacing0x)
-                    attachMenu
-                        .transition(.scale.combined(with: .opacity))
                 }
 
-                fieldAction
+                HStack(spacing: .spacing1x) {
+                    if !isResting {
+                        attachMenu
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                    fieldAction
+                }
             }
         }
         .padding(.spacing2x)
@@ -196,7 +222,7 @@ struct LighthouseTrayGuidedTesting: View {
             Image(systemName: "plus")
                 .font(.standard(size: .subheading1, weight: .regular))
                 .foregroundStyle(Color.textColor)
-                .frame(width: BrightButtonSizes.medium.rawValue, height: BrightButtonSizes.large.rawValue)
+                .frame(width: Constants.plusSize, height: Constants.plusSize)
                 .contentShape(Rectangle())
         }
         .accessibilityLabel("Attach")
@@ -274,7 +300,17 @@ struct LighthouseTrayGuidedTesting: View {
         static let askTitle = "Ask Lighthouse anything"
         static let fieldID = "askField"
         static let refocusDelay: TimeInterval = 0.05
+        static let plusSize: CGFloat = 28
         static let modelKey = "lighthouseSelectedModel"
         static let apiKeyKey = "lighthouseApiKey"
+    }
+}
+
+// Half the screen less the keyboard, never shorter than the resting bar.
+private struct TrayTypingDetent: CustomPresentationDetent {
+    nonisolated(unsafe) static var keyboardHeight: CGFloat = .zero
+
+    static func height(in context: Context) -> CGFloat? {
+        max(context.maxDetentValue / 2 - keyboardHeight, .spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
     }
 }
