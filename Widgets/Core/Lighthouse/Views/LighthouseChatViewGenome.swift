@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
-
 // A demo of Lighthouse as a chat: the shared thread over a frosted wash, the
 // suggestion chips above the input, and canned replies after a beat.
 struct LighthouseChatViewGenome: View {

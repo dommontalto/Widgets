@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
-
 // A demo of Lighthouse as a chat: the shared thread over a frosted wash, the
 // suggestion chips above the input, and canned replies after a beat.
 struct LighthouseChatViewGuidedTesting: View {
@@ -77,14 +75,13 @@ struct LighthouseChatViewGuidedTesting: View {
                 .padding(.leading, .spacing1x)
             }
         )
-        // Welcome parked: the beacon and "Welcome to Lighthouse" over an empty chat.
-        // .overlay {
-        //     if messages.isEmpty {
-        //         welcome
-        //             .allowsHitTesting(false)
-        //             .transition(.opacity)
-        //     }
-        // }
+        // Shown as is: no fade or rise, so it's simply there when the tray is pulled up.
+        .overlay {
+            if messages.isEmpty {
+                welcome
+                    .allowsHitTesting(false)
+            }
+        }
         .animation(.brightEaseInOut, value: messages.isEmpty)
         .onChange(of: selectedModel) { _, _ in pickedTier = nil }
         .onChange(of: showingModelSelector) { _, _ in pickedTier = nil }
@@ -120,10 +117,8 @@ struct LighthouseChatViewGuidedTesting: View {
 
             VStack(spacing: .spacing1x) {
                 BrightText(Constants.welcomeTitle, size: .standout3)
-                    .brightTextRevealV5()
 
                 BrightText(Constants.welcomePrompt, size: .subheading, color: .semiLightTextColor)
-                    .brightTextRevealV5(delay: Constants.welcomePromptDelay)
             }
             .multilineTextAlignment(.center)
 
@@ -380,7 +375,6 @@ struct LighthouseChatViewGuidedTesting: View {
         ]
         static let welcomeTitle = "Welcome to Lighthouse."
         static let welcomePrompt = "What would you like to do?"
-        static let welcomePromptDelay: TimeInterval = 0.5
         static let thinkingSeconds: TimeInterval = 10
         static let thinkingDelay: TimeInterval = 0.4
     }

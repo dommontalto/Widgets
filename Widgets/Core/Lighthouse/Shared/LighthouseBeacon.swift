@@ -21,7 +21,7 @@ struct LighthouseBeacon: View {
     var body: some View {
         ZStack {
             Circle()
-                .strokeBorder(Color.white.opacity(.ultraLowOpacity), lineWidth: band)
+                .strokeBorder(Color.textColor.opacity(.ultraLowOpacity), lineWidth: band)
                 .frame(width: ringDiameter, height: ringDiameter)
 
             lamp
@@ -54,7 +54,7 @@ struct LighthouseBeacon: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [.white.opacity(.zero), .white.opacity(.lowOpacity)],
+                        colors: [Color.textColor.opacity(.zero), Color.textColor.opacity(.lowOpacity)],
                         center: .center,
                         startRadius: glowDiameter / 2 * Constants.glowInnerFraction,
                         endRadius: glowDiameter / 2
@@ -71,7 +71,7 @@ struct LighthouseBeacon: View {
 
             Circle()
                 .trim(from: lampFrom, to: lampTo)
-                .stroke(Color.white, style: StrokeStyle(lineWidth: band, lineCap: .round))
+                .stroke(Color.textColor, style: StrokeStyle(lineWidth: band, lineCap: .round))
                 .frame(width: ringDiameter - band, height: ringDiameter - band)
         }
     }
