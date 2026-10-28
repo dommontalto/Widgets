@@ -102,12 +102,6 @@ struct LighthouseScreen: View {
 
     private var topButtons: some View {
         HStack(spacing: .spacing2x) {
-            if let onCollapse {
-                BrightRoundButton(systemImage: "chevron.down", size: .large, onTapCallback: onCollapse)
-                    .accessibilityLabel("Shrink")
-                    .transition(.opacity)
-            }
-
             BrightRoundButton(systemImage: "line.3.horizontal", size: .large) {
                 withAnimation(.brightSnappy) {
                     isMenuOpen.toggle()
@@ -119,6 +113,12 @@ struct LighthouseScreen: View {
                 .accessibilityLabel("Temporary chat")
 
             Spacer(minLength: .spacing0x)
+
+            if let onCollapse {
+                BrightRoundButton(systemImage: "chevron.down", size: .large, onTapCallback: onCollapse)
+                    .accessibilityLabel("Shrink")
+                    .transition(.opacity)
+            }
 
             closeButton
         }

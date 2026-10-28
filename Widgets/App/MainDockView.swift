@@ -116,7 +116,7 @@ struct MainDockView: View {
         .overlay(alignment: .bottom) {
             if let revealed = revealedLighthouse {
                 splitPanel(revealed)
-                    .transition(.move(edge: .bottom))
+                    .transition(.offset(y: splitPanelHeight))
             }
         }
         .animation(.brightBouncy, value: isOnSubPage)
