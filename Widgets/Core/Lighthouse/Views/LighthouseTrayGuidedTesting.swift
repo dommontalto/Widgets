@@ -31,9 +31,6 @@ struct LighthouseTrayGuidedTesting: View {
     @State private var attachments = [BrightChatAttachment]()
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
-    @Namespace private var barNamespace
-    // The field moves rows as the tray leaves rest, which drops focus, so it's taken again once it lands.
-    @State private var refocusAfterMove = false
     @FocusState private var isChatTyping: Bool
 
     private var isResting: Bool {
@@ -70,19 +67,11 @@ struct LighthouseTrayGuidedTesting: View {
         .presentationDetents(allowedDetents, selection: $detent)
         .animation(.brightEaseInOut, value: isResting)
 
-        // Typing from rest pulls the tray up to half.
+        // Typing from rest goes straight to the keyboard-sized height, so the tray never sits at plain half
+        // while the keyboard comes up under it.
         .onChange(of: isFieldFocused) { _, focused in
             guard focused, isResting else { return }
-            refocusAfterMove = true
-            withAnimation(.brightEaseInOut) { detent = .medium }
-        }
-        .onChange(of: isResting) { _, resting in
-            guard !resting, refocusAfterMove else { return }
-            refocusAfterMove = false
-            Task {
-                try? await Task.sleep(for: .seconds(Constants.refocusDelay))
-                isFieldFocused = true
-            }
+            withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
         .onChange(of: detent) { _, detent in
             if detent == Self.restDetent { isFieldFocused = false }
@@ -94,7 +83,6 @@ struct LighthouseTrayGuidedTesting: View {
             withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            TrayTypingDetent.keyboardHeight = .zero
             guard detent == Self.typingDetent else { return }
             withAnimation(.brightEaseInOut) { detent = .medium }
         }
@@ -121,29 +109,19 @@ struct LighthouseTrayGuidedTesting: View {
     // MARK: - Ask
 
     // At rest one row with the field between the buttons; pulled up, the field rises onto its own line above them,
-    // starting where the model button does.
+    // starting where the model button does. One layout moves the same field, so it keeps focus as it goes.
     private var askRow: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            if !isResting {
-                askField
-            }
+        TrayAskBarLayout(isStacked: !isResting) {
+            modelButton
 
-            HStack(spacing: .spacing2x) {
-                modelButton
+            askField
 
-                if isResting {
-                    askField
-                } else {
-                    Spacer(minLength: .spacing0x)
+            HStack(spacing: .spacing1x) {
+                if !isResting {
+                    attachMenu
+                        .transition(.scale.combined(with: .opacity))
                 }
-
-                HStack(spacing: .spacing1x) {
-                    if !isResting {
-                        attachMenu
-                            .transition(.scale.combined(with: .opacity))
-                    }
-                    fieldAction
-                }
+                fieldAction
             }
         }
         .padding(.spacing2x)
@@ -168,7 +146,6 @@ struct LighthouseTrayGuidedTesting: View {
             .contentShape(.rect)
             .onTapGesture { isFieldFocused = true }
             .animation(.brightEaseInOut, value: isPlaceholderCentred)
-            .matchedGeometryEffect(id: Constants.fieldID, in: barNamespace)
     }
 
     private var isPlaceholderCentred: Bool {
@@ -298,19 +275,68 @@ struct LighthouseTrayGuidedTesting: View {
 
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
-        static let fieldID = "askField"
-        static let refocusDelay: TimeInterval = 0.05
         static let plusSize: CGFloat = 28
         static let modelKey = "lighthouseSelectedModel"
         static let apiKeyKey = "lighthouseApiKey"
     }
 }
 
-// Half the screen less the keyboard, never shorter than the resting bar.
+// Half the screen less the keyboard, never shorter than the resting bar. The last keyboard's height is kept, and
+// before the first one it's a typical keyboard's share of the screen.
 private struct TrayTypingDetent: CustomPresentationDetent {
-    nonisolated(unsafe) static var keyboardHeight: CGFloat = .zero
+    nonisolated(unsafe) static var keyboardHeight: CGFloat?
 
     static func height(in context: Context) -> CGFloat? {
-        max(context.maxDetentValue / 2 - keyboardHeight, .spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
+        let keyboard = keyboardHeight ?? context.maxDetentValue * Constants.keyboardShare
+        return max(context.maxDetentValue / 2 - keyboard, .spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
+    }
+
+    private enum Constants {
+        static let keyboardShare: CGFloat = 0.4
+    }
+}
+
+// The ask bar's two arrangements in one layout, so its field is never rebuilt between them.
+// Subviews: the model button, the field, then the trailing buttons.
+private struct TrayAskBarLayout: Layout {
+    var isStacked: Bool
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .zero
+        guard subviews.count == 3 else { return CGSize(width: width, height: .zero) }
+        let row = rowHeight(subviews)
+        guard isStacked else { return CGSize(width: width, height: row) }
+        let field = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: nil)).height
+        return CGSize(width: width, height: field + .spacing1x + row)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 3 else { return }
+        let model = subviews[0].sizeThatFits(.unspecified)
+        let trailing = subviews[2].sizeThatFits(.unspecified)
+        let row = rowHeight(subviews)
+        let rowTop = isStacked ? bounds.maxY - row : bounds.minY
+
+        subviews[0].place(at: CGPoint(x: bounds.minX, y: rowTop + (row - model.height) / 2), proposal: ProposedViewSize(model))
+        subviews[2].place(
+            at: CGPoint(x: bounds.maxX - trailing.width, y: rowTop + (row - trailing.height) / 2),
+            proposal: ProposedViewSize(trailing)
+        )
+
+        if isStacked {
+            let field = ProposedViewSize(width: bounds.width, height: nil)
+            subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY), proposal: field)
+        } else {
+            let width = max(.zero, bounds.width - model.width - trailing.width - .spacing2x * 2)
+            let field = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: row))
+            subviews[1].place(
+                at: CGPoint(x: bounds.minX + model.width + .spacing2x, y: rowTop + (row - field.height) / 2),
+                proposal: ProposedViewSize(width: width, height: row)
+            )
+        }
+    }
+
+    private func rowHeight(_ subviews: Subviews) -> CGFloat {
+        max(subviews[0].sizeThatFits(.unspecified).height, subviews[2].sizeThatFits(.unspecified).height)
     }
 }
