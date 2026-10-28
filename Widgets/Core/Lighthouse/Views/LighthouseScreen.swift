@@ -20,9 +20,6 @@ struct LighthouseScreen: View {
     // back on.
     @Binding var showOnboarding: Bool
     var action: LighthouseAction?
-    // Set when it sits in the split under a page rather than being presented.
-    var onClose: (() -> Void)?
-    var onCollapse: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -114,12 +111,6 @@ struct LighthouseScreen: View {
                 .accessibilityLabel("Temporary chat")
 
             Spacer(minLength: .spacing0x)
-
-            if let onCollapse {
-                BrightRoundButton(systemImage: "chevron.down", size: .large, onTapCallback: onCollapse)
-                    .accessibilityLabel("Shrink")
-                    .transition(.opacity)
-            }
 
             closeButton
         }
@@ -254,7 +245,7 @@ struct LighthouseScreen: View {
     }
 
     private func runOpeningBurst() async {
-        guard !showOnboarding, onClose == nil else { return }
+        guard !showOnboarding else { return }
         openingBurst = .now
         try? await Task.sleep(for: .seconds(LighthouseIntroBurst.duration))
         openingBurst = nil
@@ -262,11 +253,7 @@ struct LighthouseScreen: View {
 
     private func close() {
         openingBurst = nil
-        if let onClose {
-            onClose()
-        } else {
-            dismiss()
-        }
+        dismiss()
     }
 
     private func startNewChat() {

@@ -9,9 +9,7 @@ import SwiftUI
 
 struct LighthouseChatBackground: View {
     var body: some View {
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .overlay(Color(light: .clear, dark: .black.opacity(.mediumOpacity)))
+        Color.defaultSheetBackground
             .ignoresSafeArea()
     }
 }

@@ -52,8 +52,9 @@ struct MainDockView: View {
         isOnSubPage ? .hidden : .visible
     }
 
+    // Guided Testing trials Lighthouse as its own tray instead.
     private var isLighthouseBarShown: Bool {
-        isOnSubPage && revealedLighthouse == nil
+        isOnSubPage && revealedLighthouse == nil && !(selectedTab == .vault && showingGuidedTesting)
     }
 
     private var fullHeight: CGFloat {
@@ -149,13 +150,14 @@ struct MainDockView: View {
     private func splitLighthouseScreen(_ revealed: LighthousePresentation) -> some View {
         let collapse: (() -> Void)? = isSplitFull ? { collapseSplit() } : nil
         let topInset: CGFloat = isSplitFull ? safeInsets.top : .zero
-        return LighthouseScreen(
+        return LighthouseScreenGenome(
             showOnboarding: $showingLighthouseOnboarding,
             action: revealed.action,
             onClose: closeRevealedLighthouse,
             onCollapse: collapse
         )
         .environment(\.brightPromptMatch, promptNamespace)
+        .environment(\.lighthouseGenomeShowsTopBar, isSplitFull)
         .padding(.top, topInset)
     }
 

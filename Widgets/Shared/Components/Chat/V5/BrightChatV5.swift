@@ -117,6 +117,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var draft = ""
+    @Environment(\.brightChatShowsInput) private var showsInput
     @State private var flight = BrightSendFlight()
     @Namespace private var sendNamespace
     @State private var promptIndex = 0
@@ -161,7 +162,9 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: .spacing1x) {
-                inputCard
+                if showsInput {
+                    inputCard
+                }
             }
             // The input bar hugs the true bottom edge — its own padding is the
             // gap — rather than stacking the sheet's bottom insets under it.
@@ -738,4 +741,9 @@ extension BrightChatV5 where ModelPicker == EmptyView {
             EmptyView()
         }
     }
+}
+
+extension EnvironmentValues {
+    // Off where the container brings an input of its own.
+    @Entry var brightChatShowsInput = true
 }

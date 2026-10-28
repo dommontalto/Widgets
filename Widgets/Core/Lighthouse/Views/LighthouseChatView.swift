@@ -87,13 +87,14 @@ struct LighthouseChatView: View {
                 .padding(.leading, .spacing1x)
             }
         )
-        .overlay {
-            if messages.isEmpty {
-                welcome
-                    .allowsHitTesting(false)
-                    .transition(.opacity)
-            }
-        }
+        // Welcome parked: the beacon and "Welcome to Lighthouse" over an empty chat.
+        // .overlay {
+        //     if messages.isEmpty {
+        //         welcome
+        //             .allowsHitTesting(false)
+        //             .transition(.opacity)
+        //     }
+        // }
         .animation(.brightEaseInOut, value: messages.isEmpty)
         .onChange(of: selectedModel) { _, _ in pickedTier = nil }
         .onChange(of: showingModelSelector) { _, _ in pickedTier = nil }
