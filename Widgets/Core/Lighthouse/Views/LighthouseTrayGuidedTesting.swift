@@ -176,6 +176,11 @@ struct LighthouseTrayGuidedTesting: View {
         .padding(.bottom, .spacing2x)
         // Pulled up, the field's own 44pt height is room enough under the messages' edge.
         .padding(.top, isResting ? .spacing2x : .spacing0x)
+        // At rest the whole bar is the field to tap; the buttons in it still take their own taps.
+        .contentShape(.rect)
+        .onTapGesture {
+            if isResting { isFieldFocused = true }
+        }
         .animation(.brightSnappy, value: hasDraft)
         .animation(.brightSnappy, value: dictation.isListening)
     }
