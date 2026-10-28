@@ -16,6 +16,10 @@ enum GenomeAsset {
         palette.first(where: { $0.iconKeys.contains(iconKey) })?.color ?? .defaultCyan
     }
 
+    static func rainbowRank(for iconKey: String) -> Int {
+        palette.firstIndex(where: { $0.iconKeys.contains(iconKey) }) ?? palette.count
+    }
+
     private static let palette: [(color: Color, iconKeys: [String])] = [
         (.defaultRed, ["genome_inflammation_immunity_v5"]),
         (.defaultOrange, ["genome_hourglass_v5", "genome_nutrition_metabolism_v5", "genome_skin_ageing_v5"]),
@@ -36,6 +40,9 @@ struct GenomeSummaryData: Codable {
     let order: GenomeOrderInfo?
     let riskPercentile: GenomeRiskPercentile?
     let leadingContributors: [GenomeContributor]
+    // GEN-DEMO: sample results from the demo genome, shown with demoLabel
+    var demo: Bool? = nil
+    var demoLabel: String? = nil
 }
 
 struct GenomeRiskPercentile: Codable {
@@ -59,6 +66,15 @@ struct GenomeRiskCurvePoint: Codable, Identifiable {
 }
 
 // MARK: - Categories (Impact grid)
+
+struct GenomeCategoriesData: Codable {
+    let genomeStatus: String
+    let interpretationVersion: String?
+    let categories: [GenomeCategory]
+    // GEN-DEMO: sample results from the demo genome, shown with demoLabel
+    var demo: Bool? = nil
+    var demoLabel: String? = nil
+}
 
 enum GenomeCategoryState: String {
     case built
@@ -117,6 +133,9 @@ struct GenomeCategoryDetail: Codable, Identifiable {
     let state: String
     let percentileBar: GenomePercentileBar?
     let markers: [GenomeCategoryMarker]
+    // GEN-DEMO: sample results from the demo genome, shown with demoLabel
+    var demo: Bool? = nil
+    var demoLabel: String? = nil
 
     var imageName: String {
         GenomeAsset.imageName(for: iconKey)
@@ -171,7 +190,7 @@ struct GenomeContributor: Codable, Identifiable, Hashable {
     let canonicalName: String
     let gene: String
     let subtitle: String
-    let score: Double
+    let score: Double?
     let iconKey: String
     let reportId: String
     let categoryId: String?
@@ -186,18 +205,30 @@ struct GenomeContributor: Codable, Identifiable, Hashable {
         GenomeAsset.color(for: iconKey)
     }
 
-    var scoreText: String {
-        score >= 0 ? "+\(String(format: "%.2f", score))" : String(format: "%.2f", score)
+    /// Nil when the server leaves the placeholder score out (GEN-AUDIT P0-1).
+    var scoreText: String? {
+        guard let score else { return nil }
+        return score >= 0 ? "+\(String(format: "%.2f", score))" : String(format: "%.2f", score)
     }
 
     var scoreColor: Color {
+        guard let score else { return .lightTextColor }
         if score >= 0 { return Color.defaultSkyBlue }
         if score > -0.5 { return Color.defaultGreen }
         return Color.defaultBrightViolet
     }
 }
 
-// MARK: - Data
+// MARK: - Data (Strand)
+
+struct GenomeData: Codable {
+    let genomeStatus: String
+    let interpretationVersion: String?
+    let markers: [GenomeDataMarker]
+    // GEN-DEMO: sample results from the demo genome, shown with demoLabel
+    var demo: Bool? = nil
+    var demoLabel: String? = nil
+}
 
 struct GenomeDataMarker: Codable, Identifiable, Equatable {
     let canonicalName: String
@@ -266,8 +297,9 @@ enum GenomeEvidenceLevel: String {
         self = GenomeEvidenceLevel(rawValue: raw ?? "") ?? .exploratory
     }
 
+    // The evidence behind a result, never a verdict on it ("Sub-Optimal" read as one)
     var label: String {
-        self == .moderate ? "Sub-Optimal" : rawValue.capitalized
+        self == .exploratory ? "Exploratory" : "\(rawValue.capitalized) evidence"
     }
 
     var color: Color {

@@ -29,6 +29,7 @@ struct GenomeView: View {
         BrightSwipePageViewV5(
             pages: GenomeViewTab.allCases.map { SwipePage(title: $0.displayTitle, systemImage: $0.systemImage) },
             fakeLargeTitle: "Genome",
+            verticalScrollDisabledPageIndex: GenomeViewTab.data.rawValue,
             bottomSafeArea: false,
             backgroundColor: .defaultBackground,
             selectedIndex: Bindable(viewModel).selectedTabIndex
@@ -38,6 +39,17 @@ struct GenomeView: View {
                 GenomeSummaryTab(viewModel: viewModel, orderViewModel: orderViewModel)
             case .categories:
                 GenomeCategoriesTab(viewModel: viewModel, orderViewModel: orderViewModel)
+            case .data:
+                ZStack(alignment: .top) {
+                    GenomeDataView(markers: viewModel.orderedMarkers, isActive: viewModel.selectedTabIndex == GenomeViewTab.data.rawValue)
+                        .containerRelativeFrame([.horizontal, .vertical])
+                        .ignoresSafeArea()
+
+                    if viewModel.isDemo {
+                        GenomeDemoBanner(text: viewModel.demoLabel)
+                            .padding(.horizontal, .spacing3x)
+                    }
+                }
             }
         }
         .overlay(alignment: .topTrailing) { scenarioPicker }
@@ -85,11 +97,19 @@ struct GenomeView: View {
 
         var body: some View {
             VStack(spacing: .spacing3x) {
+                if viewModel.isDemo {
+                    GenomeDemoBanner(text: viewModel.demoLabel)
+                }
+
                 BrightWaveWidgetV5(
                     title: "Genetic Risk Percentile",
                     fraction: viewModel.riskPercentile.map { Double($0.value) / 100 },
                     emptySubtitle: "Your percentile appears once your results are in",
-                    subtitle: { "Your genetic risk is higher than \(Self.percent($0)) of people" },
+                    subtitle: { fraction in
+                        viewModel.isDemo
+                            ? "The demo genome's genetic risk is higher than \(Self.percent(fraction)) of people"
+                            : "Your genetic risk is higher than \(Self.percent(fraction)) of people"
+                    },
                     heldSubtitle: { "Scoring here is higher than \(Self.percent($0)) of people" },
                     curveColors: [.defaultCyan, .defaultSkyBlue],
                     borderColors: [.defaultCyan, .defaultSkyBlue]
@@ -122,7 +142,11 @@ struct GenomeView: View {
         @Bindable var orderViewModel: GenomeOrderViewModel
 
         var body: some View {
-            Group {
+            VStack(spacing: .spacing3x) {
+                if viewModel.isDemo {
+                    GenomeDemoBanner(text: viewModel.demoLabel)
+                }
+
                 GenomeImpactCategoryWidget(
                     categories: viewModel.displayedCategories,
                     onSelect: viewModel.handleCategorySelected
@@ -174,7 +198,7 @@ private struct GenomePresentations: ViewModifier {
             }
             .brightMiniSheetV5(isPresented: markerShown) {
                 if let marker = viewModel.selectedMarker {
-                    GenomeGeneMiniSheet(marker: marker) { viewModel.selectedMarker = nil }
+                    GenomeGeneMiniSheet(marker: marker, isDemo: viewModel.isDemo) { viewModel.selectedMarker = nil }
                 }
             }
     }

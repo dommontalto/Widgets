@@ -2,6 +2,7 @@
 //  GenomeContributorWidget.swift
 //  Widgets
 //
+//
 
 import SwiftUI
 
@@ -42,8 +43,10 @@ private struct GenomeContributorRow: View {
 
             Spacer()
 
-            BrightText(contributor.scoreText, size: .heading, color: contributor.scoreColor)
-                .monospacedDigit()
+            if let scoreText = contributor.scoreText {
+                BrightText(scoreText, size: .heading, color: contributor.scoreColor)
+                    .monospacedDigit()
+            }
         }
         .padding(.spacing3x)
         .modifier(BrightCardModifierV5(color: cardColor))

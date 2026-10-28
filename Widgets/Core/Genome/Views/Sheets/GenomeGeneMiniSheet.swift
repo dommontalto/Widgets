@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GenomeGeneMiniSheet: View {
     let marker: GenomeDataMarker
+    var isDemo = false
     let onClose: () -> Void
 
     var body: some View {
@@ -17,14 +18,19 @@ struct GenomeGeneMiniSheet: View {
                 BrightText(marker.gene, size: .heading, color: marker.color)
                     .padding(.trailing, 52)
 
-                if let level = marker.evidenceLevel {
-                    BrightStatus(status: GenomeEvidenceLevel(level).label)
+                HStack(spacing: .spacing1x) {
+                    if isDemo {
+                        GenomeDemoChip()
+                    }
+                    if let level = marker.evidenceLevel {
+                        GenomeEvidenceChip(level: GenomeEvidenceLevel(level))
+                    }
                 }
             }
 
             if let result = marker.resultLabel ?? nonEmpty(marker.rawValue) {
                 section(icon: "questionmark.circle", iconColor: marker.color,
-                        title: "Your result", body: result)
+                        title: isDemo ? "Demo genome's result" : "Your result", body: result)
             }
 
             if let meaning = marker.meaning {

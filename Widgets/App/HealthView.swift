@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct HealthView: View {
+    var rootResetID = 0
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
+    var onRootCovered: (Bool) -> Void = { _ in }
 
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
@@ -20,6 +22,8 @@ struct HealthView: View {
         NavigationStack {
             content
                 .background(Color.defaultBackground)
+                .onAppear { onRootCovered(false) }
+                .onDisappear { onRootCovered(true) }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         if editor.isEditing {
@@ -97,6 +101,7 @@ struct HealthView: View {
                     .presentationContentInteraction(.scrolls)
                 }
         }
+        .id(rootResetID)
     }
 
     private var newWidgets: [HealthWidgetItemV5] {

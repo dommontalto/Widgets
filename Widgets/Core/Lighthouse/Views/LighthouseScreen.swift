@@ -20,6 +20,9 @@ struct LighthouseScreen: View {
     // back on.
     @Binding var showOnboarding: Bool
     var action: LighthouseAction?
+    // Set when it sits in the split under a page rather than being presented.
+    var onClose: (() -> Void)?
+    var onCollapse: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -53,6 +56,7 @@ struct LighthouseScreen: View {
                 .toolbar(.hidden, for: .navigationBar)
         }
         .presentationBackground(.clear)
+        .environment(\.brightPromptIsPill, true)
         .animation(.brightEaseInOut, value: showOnboarding)
         .task { await runOpeningBurst() }
         .sheet(isPresented: $showingCheckIns) {
@@ -98,6 +102,12 @@ struct LighthouseScreen: View {
 
     private var topButtons: some View {
         HStack(spacing: .spacing2x) {
+            if let onCollapse {
+                BrightRoundButton(systemImage: "chevron.down", size: .large, onTapCallback: onCollapse)
+                    .accessibilityLabel("Shrink")
+                    .transition(.opacity)
+            }
+
             BrightRoundButton(systemImage: "line.3.horizontal", size: .large) {
                 withAnimation(.brightSnappy) {
                     isMenuOpen.toggle()
@@ -250,7 +260,11 @@ struct LighthouseScreen: View {
 
     private func close() {
         openingBurst = nil
-        dismiss()
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
     }
 
     private func startNewChat() {

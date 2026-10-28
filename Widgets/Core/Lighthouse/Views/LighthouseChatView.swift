@@ -11,10 +11,12 @@ typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
 
 enum LighthouseAction {
     case checkIn
+    case prompt(String)
 
     var prompt: String {
         switch self {
         case .checkIn: "Check In"
+        case let .prompt(text): text
         }
     }
 }

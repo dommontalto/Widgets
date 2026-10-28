@@ -5,14 +5,16 @@
 
 import SwiftUI
 
-enum GenomeViewTab: Int, CaseIterable {
+enum GenomeViewTab: Int, CaseIterable, TabDisplayable {
     case summary
     case categories
+    case data
 
     var displayTitle: String {
         switch self {
         case .summary: "Summary"
         case .categories: "Categories"
+        case .data: "Data"
         }
     }
 
@@ -20,6 +22,7 @@ enum GenomeViewTab: Int, CaseIterable {
         switch self {
         case .summary: "ellipsis.calendar"
         case .categories: "folder.fill"
+        case .data: "chart.xyaxis.line"
         }
     }
 }
@@ -47,6 +50,17 @@ final class GenomeViewModel {
     var leadingContributors: [GenomeContributor] { summary?.leadingContributors ?? [] }
     var riskPercentile: GenomeRiskPercentile? { summary?.riskPercentile }
     var displayedCategories: [GenomeCategory] { categories.isEmpty ? GenomeCategory.placeholders : categories }
+    var isDemo: Bool { true }
+    var demoLabel: String? { nil }
+
+    // Before results the strand still shows, on the demo markers.
+    var orderedMarkers: [GenomeDataMarker] {
+        (dataMarkers.isEmpty ? GenomeDemo.sampleDataMarkers : dataMarkers).sorted {
+            let l = GenomeAsset.rainbowRank(for: $0.iconKey)
+            let r = GenomeAsset.rainbowRank(for: $1.iconKey)
+            return l != r ? l < r : $0.canonicalName < $1.canonicalName
+        }
+    }
 
     // Optional rather than defaulting to `.current`: default arguments are evaluated
     // off the main actor, where the main-actor `current` can't be read.
