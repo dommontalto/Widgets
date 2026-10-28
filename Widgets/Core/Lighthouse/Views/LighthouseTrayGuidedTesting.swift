@@ -61,14 +61,13 @@ struct LighthouseTrayGuidedTesting: View {
     var body: some View {
         VStack(spacing: .spacing0x) {
             if !isResting {
-                menuRow
-                    .transition(.opacity)
-            }
-
-            if !isResting {
+                // The menu floats over the chat, so messages scroll on up under it rather than being cut at its edge.
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
+                    .safeAreaPadding(.top, Constants.menuRowHeight)
+                    .brightSoftScrollEdgesV5()
+                    .overlay(alignment: .top) { menuRow }
                     .transition(.opacity)
             }
 
@@ -423,6 +422,7 @@ struct LighthouseTrayGuidedTesting: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let plusSize: CGFloat = 28
+        static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
         static let removeSize: CGFloat = .spacing3x
