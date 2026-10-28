@@ -26,6 +26,8 @@ struct LighthouseChatViewGuidedTesting: View {
     var onBeaconCentre: (CGPoint) -> Void = { _ in }
     // A prompt typed somewhere other than the chat's own input; it's sent, then cleared.
     var externalPrompt: Binding<String?> = .constant(nil)
+    // Held back by the tray until it has settled at its new height.
+    var showsWelcome = true
 
     @State private var messages = [LighthouseChatMessage]()
     @State private var speed = LighthouseSpeed.adaptive
@@ -77,9 +79,10 @@ struct LighthouseChatViewGuidedTesting: View {
         )
         // Shown as is: no fade or rise, so it's simply there when the tray is pulled up.
         .overlay {
-            if messages.isEmpty {
+            if messages.isEmpty, showsWelcome {
                 welcome
                     .allowsHitTesting(false)
+                    .transition(.opacity)
             }
         }
         .animation(.brightEaseInOut, value: messages.isEmpty)

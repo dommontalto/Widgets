@@ -32,6 +32,8 @@ struct LighthouseTrayGuidedTesting: View {
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
     @FocusState private var isChatTyping: Bool
+    // The welcome fades in only once the tray has finished moving to half or full.
+    @State private var showsWelcome = false
 
     private var isResting: Bool {
         detent == Self.restDetent
@@ -75,6 +77,7 @@ struct LighthouseTrayGuidedTesting: View {
         }
         .onChange(of: detent) { _, detent in
             if detent == Self.restDetent { isFieldFocused = false }
+            settleWelcome(for: detent)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
             guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
@@ -231,7 +234,8 @@ struct LighthouseTrayGuidedTesting: View {
             action: nil,
             onDismiss: { detent = Self.restDetent },
             onAttach: { _ in },
-            externalPrompt: $sentPrompt
+            externalPrompt: $sentPrompt,
+            showsWelcome: showsWelcome
         )
     }
 
@@ -266,6 +270,20 @@ struct LighthouseTrayGuidedTesting: View {
         }
     }
 
+    // Hidden at rest; between half, full and the typing height it stays put once it's in.
+    private func settleWelcome(for detent: PresentationDetent) {
+        guard detent != Self.restDetent else {
+            showsWelcome = false
+            return
+        }
+        guard !showsWelcome else { return }
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.welcomeSettleDelay))
+            guard self.detent == detent else { return }
+            withAnimation(.brightEaseInOut) { showsWelcome = true }
+        }
+    }
+
     private func startNewChat() {
         isThinking = false
         attachments = []
@@ -276,6 +294,8 @@ struct LighthouseTrayGuidedTesting: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let plusSize: CGFloat = 28
+        // Roughly how long the sheet takes to land at a new height.
+        static let welcomeSettleDelay: TimeInterval = 0.4
         static let modelKey = "lighthouseSelectedModel"
         static let apiKeyKey = "lighthouseApiKey"
     }
