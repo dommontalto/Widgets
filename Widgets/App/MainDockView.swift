@@ -67,7 +67,7 @@ struct MainDockView: View {
     // Past half, the panel slides over the page instead of squashing it further.
     private var pageBottomInset: CGFloat {
         guard revealedLighthouse != nil else { return .zero }
-        return max(.zero, min(splitPanelHeight - safeInsets.bottom, screenHeight * Constants.splitHalf) - .cardCornerRadius)
+        return max(.zero, min(splitPanelHeight - safeInsets.bottom, screenHeight * Constants.splitHalf))
     }
 
     private var isSplitFull: Bool {
@@ -88,13 +88,12 @@ struct MainDockView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             tabView
-                .safeAreaPadding(.bottom, isLighthouseBarShown ? lighthouseBarHeight : .zero)
+                .safeAreaPadding(.bottom, isLighthouseBarShown ? lighthouseBarHeight : pageBottomInset)
 
             addTabOverlayButton
                 .offset(y: isOnSubPage ? Constants.hiddenOffset : .zero)
                 .allowsHitTesting(!isOnSubPage)
         }
-        .padding(.bottom, pageBottomInset)
         .background {
             Color.defaultBackground
                 .ignoresSafeArea()
@@ -192,7 +191,7 @@ struct MainDockView: View {
     }
 
     private func closeRevealedLighthouse() {
-        withAnimation(.brightBouncy) {
+        withAnimation(.brightEaseInOut) {
             revealedLighthouse = nil
         }
     }

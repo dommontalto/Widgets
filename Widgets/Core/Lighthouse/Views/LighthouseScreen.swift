@@ -252,7 +252,7 @@ struct LighthouseScreen: View {
     }
 
     private func runOpeningBurst() async {
-        guard !showOnboarding else { return }
+        guard !showOnboarding, onClose == nil else { return }
         openingBurst = .now
         try? await Task.sleep(for: .seconds(LighthouseIntroBurst.duration))
         openingBurst = nil
