@@ -41,6 +41,7 @@ final class GenomeState {
 struct GenomeDataView: View {
     var markers: [GenomeDataMarker] = []
     var isActive = true
+    var focus: Binding<String?> = .constant(nil)
 
     @State private var state = GenomeState()
     @State private var selectedSection = 0
@@ -98,6 +99,14 @@ struct GenomeDataView: View {
         }
         .onAppear { state.markers = markers }
         .onChange(of: markers) { _, new in state.markers = new }
+        .onChange(of: focus.wrappedValue, initial: true) { _, name in
+            guard let name, let index = markers.firstIndex(where: { $0.canonicalName == name }) else { return }
+            state.markers = markers
+            state.panVelocity = 0
+            state.spinVelocity = 0
+            state.selectedRung = index
+            focus.wrappedValue = nil
+        }
         .onChange(of: state.selectedRung) { _, rung in
             guard let rung, !state.markers.isEmpty else { return }
             let count = state.markers.count

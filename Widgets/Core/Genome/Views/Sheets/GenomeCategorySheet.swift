@@ -7,10 +7,9 @@ import SwiftUI
 
 struct GenomeCategorySheet: View {
     let category: GenomeCategory
-    var dataMarkers: [GenomeDataMarker] = []
+    var onSelectMarker: (String) -> Void = { _ in }
 
     @State private var detail: GenomeCategoryDetail?
-    @State private var selectedMarker: GenomeDataMarker?
 
     private var markers: [GenomeCategoryMarker] {
         detail?.markers ?? []
@@ -32,7 +31,19 @@ struct GenomeCategorySheet: View {
                     header
 
                     if let percentileBar = detail?.percentileBar {
-                        GenomePercentileBarWidget(data: percentileBar)
+                        BrightWaveWidgetV5(
+                            title: "Genetic Risk Percentile",
+                            fraction: Double(percentileBar.value) / 100,
+                            emptySubtitle: "",
+                            style: .genome
+                        )
+
+                        if let description = percentileBar.displayDescription {
+                            BrightText(description, size: .body4, color: .lightTextColor, weight: .regular)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .lineSpacing(.lineSpacingMedium)
+                                .padding(.horizontal, .spacing1x)
+                        }
                     }
 
                     if !featured.isEmpty {
@@ -48,21 +59,9 @@ struct GenomeCategorySheet: View {
             }
             .scrollIndicators(.hidden)
         }
-        .brightMiniSheetV5(isPresented: markerShown) {
-            if let marker = selectedMarker {
-                GenomeGeneMiniSheet(marker: marker) { selectedMarker = nil }
-            }
-        }
         .onAppear {
             detail = GenomeDemo.categoryDetail(id: category.id)
         }
-    }
-
-    private var markerShown: Binding<Bool> {
-        Binding(
-            get: { selectedMarker != nil },
-            set: { if !$0 { selectedMarker = nil } }
-        )
     }
 
     private var header: some View {
@@ -81,7 +80,7 @@ struct GenomeCategorySheet: View {
                 .padding(.leading, .spacing2x)
             ForEach(markers) { marker in
                 Button {
-                    selectedMarker = dataMarkers.first { $0.canonicalName == marker.canonicalName }
+                    onSelectMarker(marker.canonicalName)
                 } label: {
                     GenomeCategoryMarkerRow(marker: marker)
                 }

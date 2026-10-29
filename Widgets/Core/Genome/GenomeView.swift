@@ -41,7 +41,11 @@ struct GenomeView: View {
             case .categories:
                 GenomeCategoriesTab(viewModel: viewModel, orderViewModel: orderViewModel)
             case .data:
-                GenomeDataView(markers: viewModel.orderedMarkers, isActive: viewModel.selectedTabIndex == GenomeViewTab.data.rawValue)
+                GenomeDataView(
+                    markers: viewModel.orderedMarkers,
+                    isActive: viewModel.selectedTabIndex == GenomeViewTab.data.rawValue,
+                    focus: Bindable(viewModel).strandFocus
+                )
                     .containerRelativeFrame([.horizontal, .vertical])
                     .ignoresSafeArea()
             }
@@ -85,24 +89,13 @@ struct GenomeView: View {
         @Bindable var viewModel: GenomeViewModel
         @Bindable var orderViewModel: GenomeOrderViewModel
 
-        private static func percent(_ fraction: Double) -> String {
-            BrightWaveWidgetV5<EmptyView>.percent(fraction * 100)
-        }
-
         var body: some View {
             VStack(spacing: .spacing3x) {
                 BrightWaveWidgetV5(
                     title: "Genetic Risk Percentile",
                     fraction: viewModel.riskPercentile.map { Double($0.value) / 100 },
                     emptySubtitle: "Your percentile appears once your results are in",
-                    subtitle: { fraction in
-                        viewModel.isDemo
-                            ? "The demo genome's genetic risk is higher than \(Self.percent(fraction)) of people"
-                            : "Your genetic risk is higher than \(Self.percent(fraction)) of people"
-                    },
-                    heldSubtitle: { "Scoring here is higher than \(Self.percent($0)) of people" },
-                    curveColors: [.defaultCyan, .defaultSkyBlue],
-                    borderColors: [.defaultCyan, .defaultSkyBlue]
+                    style: .genome
                 )
 
                 // With no order yet, ordering lives in the tray over this tab (see GenomePresentations).
@@ -119,7 +112,7 @@ struct GenomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     GenomeContributorWidget(contributors: viewModel.leadingContributors) { contributor in
-                        viewModel.showMarker(canonicalName: contributor.canonicalName)
+                        viewModel.showOnStrand(canonicalName: contributor.canonicalName)
                     }
                 }
             }
@@ -180,12 +173,7 @@ private struct GenomePresentations: ViewModifier {
             }
             .onAppear { orderViewModel.isOrderTrayDismissed = false }
             .sheet(item: $viewModel.selectedCategory) { category in
-                GenomeCategorySheet(category: category, dataMarkers: viewModel.dataMarkers)
-            }
-            .brightMiniSheetV5(isPresented: markerShown) {
-                if let marker = viewModel.selectedMarker {
-                    GenomeGeneMiniSheet(marker: marker, isDemo: viewModel.isDemo) { viewModel.selectedMarker = nil }
-                }
+                GenomeCategorySheet(category: category) { viewModel.showOnStrand(canonicalName: $0) }
             }
     }
 
@@ -214,13 +202,6 @@ private struct GenomePresentations: ViewModifier {
         Binding(
             get: { orderViewModel.showingOrderSheet ? .large : Self.trayRestDetent },
             set: { orderViewModel.showingOrderSheet = $0 == .large }
-        )
-    }
-
-    private var markerShown: Binding<Bool> {
-        Binding(
-            get: { viewModel.selectedMarker != nil },
-            set: { if !$0 { viewModel.selectedMarker = nil } }
         )
     }
 }

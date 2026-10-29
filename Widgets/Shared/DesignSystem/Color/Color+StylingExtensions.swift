@@ -69,6 +69,11 @@ nonisolated extension Color {
     static let defaultYellow = Color(hex: "#FFBD13")
     // The warm middle of the total energy flame, between orange and cyan.
     static let defaultSand = Color(hex: "#DAB186")
+
+    static let defaultWaveBlue = Color(hex: "#159AFF")
+    static let defaultWaveMagenta = Color(hex: "#E22AFE")
+    static let defaultWavePink = Color(hex: "#F08CFF")
+    static let defaultWaveSky = Color(hex: "#7AB8FF")
     
     // MARK: -- File private
     
@@ -137,14 +142,6 @@ nonisolated extension Color {
     // Vault
     
     static let vaultTestingSplashGlyph = Color(hex: "#F6FF00")
-    
-    // Genome
-    
-    static let genomePRSCyan = Color(hex: "00EEFF")
-    static let genomePRSGreen = Color(hex: "00FF5F")
-    static let genomePRSYellow = Color(hex: "FFCA1D")
-    static let genomePRSPink = Color(hex: "FF39C4")
-    static let genomePRSRed = Color(hex: "FF3239")
     
     // Lighthouse
     

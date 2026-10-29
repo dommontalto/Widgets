@@ -11,10 +11,8 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
     let fraction: Double?
     var delta: Double = 0
     let emptySubtitle: String
-    let subtitle: (Double) -> String
-    let heldSubtitle: (Double) -> String
-    var curveColors: [Color] = [.defaultGreen, .defaultCyan]
-    var borderColors: [Color] = [.defaultGreen, .defaultSkyBlue]
+    var unit = "percentile"
+    var style = BrightWaveStyle.health
     @ViewBuilder var accessory: () -> Accessory
 
     @State private var heldFraction: Double?
@@ -37,7 +35,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
 
             accessory()
                 .padding(.horizontal, .spacing1x)
-                .padding(.top, .spacing3x)
+                .padding(.top, .spacing2x)
 
             chart
                 .padding(.top, .spacing2x)
@@ -61,29 +59,35 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            BrightText(title, size: .standout3, weight: .medium)
+            BrightText(title, size: .heading, weight: .medium)
                 .lineLimit(1)
 
-            BrightText(revealed(currentSubtitle), size: .body1, color: .lightTextColor, weight: .regular)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .animation(.brightEaseInOut, value: currentSubtitle)
-                .animation(.brightEaseInOut, value: isRevealed)
+            if hasData {
+                HStack(spacing: .spacing1x) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(Color.defaultBlack, Color.defaultGreen)
+                        .font(.standardSFPro(size: .standout3, weight: .regular))
+
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+                        BrightText(shownValue.ordinalSuffix(), size: .standout2, weight: .regular)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+
+                        BrightText(unit, size: .body2, color: .lightTextColor, weight: .regular)
+                    }
+                }
+                .animation(.brightEaseInOut, value: shownValue)
+            } else {
+                BrightText(emptySubtitle, size: .body1, color: .lightTextColor, weight: .regular)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
     }
 
-    private var currentSubtitle: String {
-        guard hasData else { return emptySubtitle }
-        if let heldFraction {
-            return heldSubtitle(heldFraction)
-        }
-        return subtitle(userFraction)
-    }
-
-    private func revealed(_ text: String) -> String {
-        isRevealed ? text : text.zeroedDigits
+    private var shownValue: Int {
+        isRevealed ? Int(((heldFraction ?? userFraction) * 100).rounded()) : 0
     }
 
     // MARK: - Chart
@@ -142,7 +146,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
     }
 
     private func plotBox(width: CGFloat, lineX: CGFloat) -> some View {
-        let fill = LinearGradient(colors: curveColors, startPoint: .top, endPoint: .bottom)
+        let fill = LinearGradient(gradient: style.curve, startPoint: .top, endPoint: .bottom)
         return ZStack(alignment: .leading) {
             Color.textColor.opacity(.finalBossUltraLowOpacity)
 
@@ -177,7 +181,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
         .overlay {
             RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous)
                 .strokeBorder(
-                    LinearGradient(colors: borderColors.map { $0.opacity(.lowOpacity) }, startPoint: .leading, endPoint: .trailing),
+                    LinearGradient(colors: style.border.map { $0.opacity(.lowOpacity) }, startPoint: .leading, endPoint: .trailing),
                     lineWidth: WaveConstants.borderWidth
                 )
         }
@@ -259,27 +263,27 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
 }
 
 extension BrightWaveWidgetV5 where Accessory == EmptyView {
-    init(
-        title: String,
-        fraction: Double?,
-        delta: Double = 0,
-        emptySubtitle: String,
-        subtitle: @escaping (Double) -> String,
-        heldSubtitle: @escaping (Double) -> String,
-        curveColors: [Color] = [.defaultGreen, .defaultCyan],
-        borderColors: [Color] = [.defaultGreen, .defaultSkyBlue]
-    ) {
-        self.init(
-            title: title,
-            fraction: fraction,
-            delta: delta,
-            emptySubtitle: emptySubtitle,
-            subtitle: subtitle,
-            heldSubtitle: heldSubtitle,
-            curveColors: curveColors,
-            borderColors: borderColors,
-            accessory: { EmptyView() }
-        )
+    init(title: String, fraction: Double?, delta: Double = 0, emptySubtitle: String, unit: String = "percentile", style: BrightWaveStyle = .health) {
+        self.init(title: title, fraction: fraction, delta: delta, emptySubtitle: emptySubtitle, unit: unit, style: style) { EmptyView() }
+    }
+}
+
+enum BrightWaveStyle {
+    case health
+    case genome
+
+    var curve: Gradient {
+        switch self {
+        case .health: Gradient(colors: [.defaultGreen, .defaultCyan])
+        case .genome: Gradient(stops: [.init(color: .defaultWaveBlue, location: 0.33), .init(color: .defaultWaveMagenta, location: 1)])
+        }
+    }
+
+    var border: [Color] {
+        switch self {
+        case .health: [.defaultGreen, .defaultSkyBlue]
+        case .genome: [.defaultWavePink, .defaultCards, .defaultWaveSky]
+        }
     }
 }
 
@@ -334,19 +338,14 @@ private struct BellCurve: Shape {
             title: "Global Health Ranking",
             fraction: 0.68,
             delta: 2,
-            emptySubtitle: "Your ranking appears once your data syncs",
-            subtitle: { "Your health is better than \(BrightWaveWidgetV5<EmptyView>.percent($0 * 100)) of users" },
-            heldSubtitle: { "Scoring here beats \(BrightWaveWidgetV5<EmptyView>.percent($0 * 100)) of users" }
+            emptySubtitle: "Your ranking appears once your data syncs"
         )
 
         BrightWaveWidgetV5(
             title: "Genetic Risk Percentile",
             fraction: nil,
             emptySubtitle: "Your percentile appears once your results are in",
-            subtitle: { _ in "" },
-            heldSubtitle: { _ in "" },
-            curveColors: [.defaultCyan, .defaultSkyBlue],
-            borderColors: [.defaultCyan, .defaultSkyBlue]
+            style: .genome
         )
     }
     .padding(.spacing3x)

@@ -36,7 +36,7 @@ final class GenomeViewModel {
     var selectedTabIndex = 0
     var showingGenomeInfo = false
     var selectedCategory: GenomeCategory?
-    var selectedMarker: GenomeDataMarker?
+    var strandFocus: String?
 
     private(set) var orderStatus: GenomeOrderStatus = .none
     private(set) var summary: GenomeSummaryData?
@@ -79,8 +79,11 @@ final class GenomeViewModel {
         selectedCategory = category
     }
 
-    func showMarker(canonicalName: String) {
-        selectedMarker = dataMarkers.first { $0.canonicalName == canonicalName }
+    func showOnStrand(canonicalName: String) {
+        guard orderedMarkers.contains(where: { $0.canonicalName == canonicalName }) else { return }
+        selectedCategory = nil
+        selectedTabIndex = GenomeViewTab.data.rawValue
+        strandFocus = canonicalName
     }
 
     // MARK: - Demo data
