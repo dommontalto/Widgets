@@ -343,7 +343,8 @@ struct LighthouseTrayGuidedTesting: View {
         dictation.stop()
         sentPrompt = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         draft = ""
-        isFieldFocused = false
+        // The keyboard stays up, as in Messages: closing it would move the tray off the keyboard height mid-send,
+        // and iOS can jump it to full on the way.
         if isResting {
             withAnimation(.brightEaseInOut) { detent = .medium }
         }
