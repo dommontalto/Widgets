@@ -9,15 +9,10 @@ import SwiftUI
 
 @main
 struct WidgetsApp: App {
-    @State private var showingLogoTest = true
-
     var body: some Scene {
         WindowGroup {
             MainDockView()
                 .brightToastHostV5()
-                .sheet(isPresented: $showingLogoTest) {
-                    LogoTestSheet()
-                }
         }
     }
 }

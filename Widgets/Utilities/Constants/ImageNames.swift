@@ -9,10 +9,6 @@ import Foundation
 
 nonisolated class ImageNames {
 
-    // MARK: - Logos
-
-    static let brightMarkWhiteV5 = "Logos/bright_mark_white_v5"
-
     // MARK: - Add widget
 
     static let heartDashIconV4 = "heart_dash_icon_v4"
