@@ -17,12 +17,11 @@ enum MainDockTab: Int {
 
 struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
-    @State private var showingGenome = false
-    @State private var showingGuidedTesting = false
     @State private var coveredTabs: Set<MainDockTab> = []
     @State private var showingLighthouse = false
     @State private var lighthouseDetent = PresentationDetent.medium
     @State private var lighthousePrompt: String?
+    @State private var isMenuExpanded = false
 
     private var tabSelection: Binding<MainDockTab> {
         Binding {
@@ -35,7 +34,6 @@ struct MainDockView: View {
     }
 
     private var isOnSubPage: Bool {
-        if selectedTab == .vault, showingGenome || showingGuidedTesting { return true }
         return coveredTabs.contains(selectedTab)
     }
 
@@ -43,15 +41,19 @@ struct MainDockView: View {
         isOnSubPage ? .hidden : .visible
     }
 
+    private var isDockHidden: Bool {
+        isOnSubPage || (selectedTab == .home && isMenuExpanded)
+    }
+
     var body: some View {
         tabView
             .overlay(alignment: .bottomTrailing) {
-                if !isOnSubPage {
+                if !isDockHidden {
                     lighthouseButton
                         .transition(.opacity)
                 }
             }
-            .animation(.brightBouncy, value: isOnSubPage)
+            .animation(.brightBouncy, value: isDockHidden)
             .sheet(isPresented: $showingLighthouse) {
                 LighthouseTray(
                     detent: $lighthouseDetent,
@@ -88,10 +90,12 @@ struct MainDockView: View {
     private var tabView: some View {
         TabView(selection: tabSelection) {
             Tab(value: MainDockTab.home) {
-                HealthView(onOpenLighthouse: openLighthouse) { covered in
-                    setCovered(.home, covered)
-                }
-                .toolbarVisibility(dockVisibility, for: .tabBar)
+                HealthView(
+                    onOpenLighthouse: openLighthouse,
+                    onRootCovered: { setCovered(.home, $0) },
+                    isMenuExpanded: $isMenuExpanded
+                )
+                .toolbarVisibility(isMenuExpanded ? .hidden : dockVisibility, for: .tabBar)
             } label: {
                 tabLabel("Home", selected: ImageNames.homeTabIconSelectedV5, unselected: ImageNames.homeTabIconUnselectedV5, tab: .home)
             }
@@ -135,38 +139,10 @@ struct MainDockView: View {
     private var vaultPage: some View {
         NavigationStack {
             BrightPageViewV5 {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showingGenome = true
-                    } label: {
-                        Image(ImageNames.genomeV5)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: Constants.genomeSize, height: Constants.genomeSize)
-                    }
-                }
-                if #available(iOS 26, *) {
-                    ToolbarSpacer(.fixed, placement: .topBarLeading)
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showingGuidedTesting = true
-                    } label: {
-                        Label("Guided Testing", systemImage: "testtube.2")
-                            .labelStyle(.iconOnly)
-                    }
-                }
-            } content: {
                 VaultSummaryWidget(ranking: .demo)
             }
             .onAppear { setCovered(.vault, false) }
             .onDisappear { setCovered(.vault, true) }
-            .navigationDestination(isPresented: $showingGenome) {
-                GenomeView()
-            }
-            .navigationDestination(isPresented: $showingGuidedTesting) {
-                VaultGuidedTestingScreen()
-            }
         }
     }
 
@@ -200,7 +176,6 @@ struct MainDockView: View {
     }
 
     private enum Constants {
-        static let genomeSize: CGFloat = 30
         // The size of the dock's own plus, centred over it.
         static let lighthouseSize: CGFloat = BrightButtonSizes.finalBossLarge.rawValue
         static let beaconSize: CGFloat = .spacing6x

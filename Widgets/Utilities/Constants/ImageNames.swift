@@ -9,6 +9,10 @@ import Foundation
 
 nonisolated class ImageNames {
 
+    // MARK: - Logos
+
+    static let brightMarkWhiteV5 = "Logos/bright_mark_white_v5"
+
     // MARK: - Add widget
 
     static let heartDashIconV4 = "heart_dash_icon_v4"
@@ -157,8 +161,10 @@ nonisolated class ImageNames {
     static let warningTriangleOrangeV5         = "warning_triangle_orange_v5"
     static let warningDiamondV4                = "warning_diamond_v4"
     static let warningIconV4                   = "warning_icon_v4"
-    static let myOrdersV5                      = "Account/my_orders_v5"
     static let notificationsV5                 = "Account/notifications_v5"
+    static let sideMenuLabsV5                  = "Account/side_menu_labs_v5"
+    static let sideMenuDNAV5                   = "Account/side_menu_dna_v5"
+    static let sideMenuEditHomeV5              = "Account/side_menu_edit_home_v5"
 
     // MARK: - Main Tab
 

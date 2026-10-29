@@ -1,0 +1,15 @@
+{
+  "images" : [
+    {
+      "filename" : "side_menu_edit_home_v5.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "preserves-vector-representation" : true
+  }
+}

@@ -11,95 +11,127 @@ struct HealthView: View {
     var rootResetID = 0
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
     var onRootCovered: (Bool) -> Void = { _ in }
+    var isMenuExpanded: Binding<Bool> = .constant(false)
 
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
     @State private var revealReplay = 0
     @State private var showsEmptyState = false
-    @State private var showingWhatsNew = false
+    @State private var showingGenome = false
+    @State private var showingGuidedTesting = false
 
     var body: some View {
         NavigationStack {
-            content
-                .background(Color.defaultBackground)
-                .onAppear { onRootCovered(false) }
-                .onDisappear { onRootCovered(true) }
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        if editor.isEditing {
-                            Button {
-                                BrightHaptic.medium.play()
-                                editor.isShowingAddSheet = true
-                            } label: {
-                                Label("Add", systemImage: "plus")
-                                    .labelStyle(.iconOnly)
-                            }
-                        } else {
-                            Button {
-                                showingWhatsNew = true
-                            } label: {
-                                Image(ImageNames.brightLogoSearchingV4)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: Constants.logoSize, height: Constants.logoSize)
-                            }
-                            .accessibilityLabel("What’s New in V5")
-                        }
+            BrightSideMenuV5(
+                isEnabled: !editor.isEditing,
+                canOpenBySwipe: selectedPage == HomePage.health.rawValue,
+                isExpanded: isMenuExpanded
+            ) {
+                SideMenuView(
+                    isExpanded: isMenuExpanded,
+                    onLabs: {
+                        isMenuExpanded.wrappedValue = false
+                        showingGuidedTesting = true
+                    },
+                    onDNA: {
+                        isMenuExpanded.wrappedValue = false
+                        showingGenome = true
                     }
+                ) {
+                    BrightHaptic.medium.play()
+                    withAnimation(.brightEaseInOut) {
+                        isMenuExpanded.wrappedValue = false
+                        selectedPage = HomePage.health.rawValue
+                        editor.isEditing = true
+                    }
+                }
+            } content: {
+                content
+            }
+            .background(Color.defaultBackground)
+            .onAppear { onRootCovered(false) }
+            .onDisappear { onRootCovered(true) }
+            .navigationDestination(isPresented: $showingGenome) {
+                GenomeView()
+            }
+            .navigationDestination(isPresented: $showingGuidedTesting) {
+                VaultGuidedTestingScreen()
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if editor.isEditing {
+                        Button {
+                            BrightHaptic.medium.play()
+                            editor.isShowingAddSheet = true
+                        } label: {
+                            Label("Add", systemImage: "plus")
+                                .labelStyle(.iconOnly)
+                        }
+                    } else {
+                        Button {
+                            withAnimation(.interactiveSpring(duration: Constants.menuToggleDuration, extraBounce: Constants.menuToggleBounce)) {
+                                isMenuExpanded.wrappedValue.toggle()
+                            }
+                        } label: {
+                            Image(ImageNames.brightLogoSearchingV4)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: Constants.logoSize, height: Constants.logoSize)
+                        }
+                        .accessibilityLabel("Menu")
+                    }
+                }
 
-                    ToolbarItem(placement: .topBarTrailing) {
-                        if editor.isEditing {
-                            Button {
-                                editor.endEditing()
-                            } label: {
-                                Label("Done", systemImage: "checkmark")
-                                    .labelStyle(.iconOnly)
-                            }
-                        } else {
-                            // Until search is built, it opens the widget editor.
-                            Button {
-                                editor.beginEditing()
-                            } label: {
-                                Label("Search", systemImage: "magnifyingglass")
-                                    .labelStyle(.iconOnly)
-                            }
+                ToolbarItem(placement: .topBarTrailing) {
+                    if editor.isEditing {
+                        Button {
+                            editor.endEditing()
+                        } label: {
+                            Label("Done", systemImage: "checkmark")
+                                .labelStyle(.iconOnly)
+                        }
+                    } else {
+                        // Until search is built, it opens the widget editor.
+                        Button {
+                            editor.beginEditing()
+                        } label: {
+                            Label("Search", systemImage: "magnifyingglass")
+                                .labelStyle(.iconOnly)
                         }
                     }
                 }
-                .sheet(isPresented: $showingWhatsNew) {
-                    BrightWhatsNewSheetV5()
+            }
+            .sheet(isPresented: $editor.isShowingAddSheet) {
+                AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
+                    editor.add($0)
+                } onReset: {
+                    editor.layout.reset()
+                } onAddAll: {
+                    editor.layout.addAll()
+                } onRemoveAll: {
+                    editor.layout.removeAll()
+                } onShowAll: { size in
+                    editor.layout.showAll(size)
+                } onShowFamily: { family in
+                    editor.layout.showAll(family)
+                } onShowRandom: { count in
+                    editor.layout.showRandom(count)
+                } onShowNew: {
+                    editor.layout.removeAll()
+                    newWidgets.forEach(editor.layout.add)
                 }
-                .sheet(isPresented: $editor.isShowingAddSheet) {
-                    AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
-                        editor.add($0)
-                    } onReset: {
-                        editor.layout.reset()
-                    } onAddAll: {
-                        editor.layout.addAll()
-                    } onRemoveAll: {
-                        editor.layout.removeAll()
-                    } onShowAll: { size in
-                        editor.layout.showAll(size)
-                    } onShowFamily: { family in
-                        editor.layout.showAll(family)
-                    } onShowRandom: { count in
-                        editor.layout.showRandom(count)
-                    } onShowNew: {
-                        editor.layout.removeAll()
-                        newWidgets.forEach(editor.layout.add)
+                .presentationDragIndicator(.hidden)
+                .presentationContentInteraction(.scrolls)
+            }
+            .sheet(item: $editor.editingWidget) { widget in
+                EditWidgetSheetV5(widget: widget) { edited in
+                    withAnimation(.brightSpring) {
+                        editor.layout.update(edited)
                     }
-                    .presentationDragIndicator(.hidden)
-                    .presentationContentInteraction(.scrolls)
                 }
-                .sheet(item: $editor.editingWidget) { widget in
-                    EditWidgetSheetV5(widget: widget) { edited in
-                        withAnimation(.brightSpring) {
-                            editor.layout.update(edited)
-                        }
-                    }
-                    .presentationDragIndicator(.hidden)
-                    .presentationContentInteraction(.scrolls)
-                }
+                .presentationDragIndicator(.hidden)
+                .presentationContentInteraction(.scrolls)
+            }
         }
         .id(rootResetID)
     }
@@ -128,7 +160,7 @@ struct HealthView: View {
         BrightSwipePageViewV5(
             pages: HomePage.allCases.map { SwipePage(title: $0.title, systemImage: $0.systemImage) },
             fakeLargeTitle: "",
-            showInlineTabs: !editor.isEditing,
+            showInlineTabs: !editor.isEditing && !isMenuExpanded.wrappedValue,
             pillsInToolbar: true,
             disableHorizontalScroll: editor.isEditing,
             collapsesTitleToToolbar: false,
@@ -180,6 +212,8 @@ struct HealthView: View {
     private enum Constants {
         static let editingBottomRoom: CGFloat = 300
         static let logoSize: CGFloat = 22
+        static let menuToggleDuration: TimeInterval = 0.25
+        static let menuToggleBounce: Double = 0.02
     }
 }
 
