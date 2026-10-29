@@ -108,6 +108,9 @@ struct LighthouseThinkingInline: View {
                             .transition(.opacity)
                     } else {
                         BrightSolvingGalaxyV5(state: .thinking, size: Constants.orbSize, ambientMotion: .off)
+                            // Flattened into its own layer first, so a half-height glass sheet tints the finished
+                            // image rather than blending into the shader's dark body and washing it out to white.
+                            .drawingGroup()
                             .transition(.brightBurstOutV5)
                     }
                 }
