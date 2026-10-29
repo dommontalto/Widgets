@@ -348,12 +348,14 @@ struct LighthouseTray: View {
                             .scaleEffect(phase.scale)
                             .opacity(isContextAware ? phase.opacity : .zero)
                     } keyframes: { _ in
+                        // Each ring waits its turn. The first's wait is a sliver rather than none: a keyframe of no
+                        // length can't be eased and hands the layer a NaN.
                         KeyframeTrack(\.scale) {
-                            LinearKeyframe(1, duration: Constants.rippleStagger * Double(ring))
+                            LinearKeyframe(1, duration: rippleDelay(ring))
                             SpringKeyframe(Constants.rippleReach, duration: Constants.rippleDuration, spring: .smooth)
                         }
                         KeyframeTrack(\.opacity) {
-                            LinearKeyframe(.zero, duration: Constants.rippleStagger * Double(ring))
+                            LinearKeyframe(.zero, duration: rippleDelay(ring))
                             LinearKeyframe(1, duration: Constants.rippleFlash)
                             LinearKeyframe(.zero, duration: Constants.rippleDuration - Constants.rippleFlash)
                         }
@@ -362,6 +364,10 @@ struct LighthouseTray: View {
         }
         .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
         .allowsHitTesting(false)
+    }
+
+    private func rippleDelay(_ ring: Int) -> TimeInterval {
+        max(Constants.rippleStagger * Double(ring), Constants.minimumKeyframe)
     }
 
     private var contextLabel: some View {
@@ -387,6 +393,7 @@ struct LighthouseTray: View {
             return
         }
         showsContextLabel = true
+        LighthouseContextScan.shared.scan()
         labelTask = Task {
             try? await Task.sleep(for: .seconds(Constants.labelDuration))
             guard !Task.isCancelled else { return }
@@ -544,6 +551,7 @@ struct LighthouseTray: View {
         static let rippleDuration: TimeInterval = 0.7
         static let rippleFlash: TimeInterval = 0.08
         static let rippleStagger: TimeInterval = 0.12
+        static let minimumKeyframe: TimeInterval = 0.01
         static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
