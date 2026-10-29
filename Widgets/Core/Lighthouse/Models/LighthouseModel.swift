@@ -103,8 +103,8 @@ enum LighthouseModel: String, CaseIterable, Identifiable {
     }
 }
 
-// How hard the model works on a reply, picked from the pill beside the model
-// glyph in the input bar.
+// How hard the model works on a reply, picked under the card in the model
+// selector.
 enum LighthouseSpeed: String, CaseIterable, Identifiable {
     case fast
     case thinking

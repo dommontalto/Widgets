@@ -29,6 +29,7 @@ struct GenomeView: View {
         BrightSwipePageViewV5(
             pages: GenomeViewTab.allCases.map { SwipePage(title: $0.displayTitle, systemImage: $0.systemImage) },
             fakeLargeTitle: "Genome",
+            pillAccessory: viewModel.isDemo ? AnyView(GenomeSampleTag()) : nil,
             verticalScrollDisabledPageIndex: GenomeViewTab.data.rawValue,
             bottomSafeArea: false,
             backgroundColor: .defaultBackground,
@@ -40,16 +41,9 @@ struct GenomeView: View {
             case .categories:
                 GenomeCategoriesTab(viewModel: viewModel, orderViewModel: orderViewModel)
             case .data:
-                ZStack(alignment: .top) {
-                    GenomeDataView(markers: viewModel.orderedMarkers, isActive: viewModel.selectedTabIndex == GenomeViewTab.data.rawValue)
-                        .containerRelativeFrame([.horizontal, .vertical])
-                        .ignoresSafeArea()
-
-                    if viewModel.isDemo {
-                        GenomeDemoBanner(text: viewModel.demoLabel)
-                            .padding(.horizontal, .spacing3x)
-                    }
-                }
+                GenomeDataView(markers: viewModel.orderedMarkers, isActive: viewModel.selectedTabIndex == GenomeViewTab.data.rawValue)
+                    .containerRelativeFrame([.horizontal, .vertical])
+                    .ignoresSafeArea()
             }
         }
         .overlay(alignment: .topTrailing) { scenarioPicker }
@@ -97,10 +91,6 @@ struct GenomeView: View {
 
         var body: some View {
             VStack(spacing: .spacing3x) {
-                if viewModel.isDemo {
-                    GenomeDemoBanner(text: viewModel.demoLabel)
-                }
-
                 BrightWaveWidgetV5(
                     title: "Genetic Risk Percentile",
                     fraction: viewModel.riskPercentile.map { Double($0.value) / 100 },
@@ -143,10 +133,6 @@ struct GenomeView: View {
 
         var body: some View {
             VStack(spacing: .spacing3x) {
-                if viewModel.isDemo {
-                    GenomeDemoBanner(text: viewModel.demoLabel)
-                }
-
                 GenomeImpactCategoryWidget(
                     categories: viewModel.displayedCategories,
                     onSelect: viewModel.handleCategorySelected

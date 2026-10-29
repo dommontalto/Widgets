@@ -15,6 +15,8 @@ struct LighthouseModelSelectorView: View {
     let onModelSelected: (LighthouseModel) -> Void
     let onApiKeySaved: (String) -> Void
 
+    @AppStorage(Constants.speedKey) private var speed = LighthouseSpeed.adaptive
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var activeIndex: Int?
@@ -37,6 +39,9 @@ struct LighthouseModelSelectorView: View {
         NavigationStack {
             VStack(spacing: .spacing0x) {
                 LighthouseModelPicker(activeIndex: $activeIndex, selectedTiers: $selectedTiers)
+
+                speedMenu
+                    .padding(.bottom, .spacing4x)
 
                 BrightPillButton(Constants.chooseTitle, buttonSize: .large, onTapCallback: choose)
                     .padding(.bottom, .spacing8x)
@@ -67,6 +72,36 @@ struct LighthouseModelSelectorView: View {
         .onDisappear { LighthouseModelPicker.save(selectedTiers) }
     }
 
+    private var speedMenu: some View {
+        Menu {
+            Picker(Constants.speedTitle, selection: $speed) {
+                ForEach(LighthouseSpeed.allCases) { speed in
+                    Label {
+                        Text(speed.title)
+                        Text(speed.subtitle)
+                    } icon: {
+                        Image(systemName: speed.symbol)
+                    }
+                    .tag(speed)
+                }
+            }
+        } label: {
+            HStack(spacing: .spacing1x) {
+                Text(speed.title)
+                    .font(.standard(size: .subheading2, weight: .light))
+                    .foregroundStyle(Color.textColor)
+                    .lineLimit(1)
+                    .contentTransition(.numericText())
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.semiLightTextColor)
+            }
+            .animation(.brightBouncy, value: speed)
+            .contentShape(Rectangle())
+        }
+        .brightHapticV5(.light, trigger: speed)
+    }
+
     private func choose() {
         guard let model = LighthouseModelPicker.choice(at: activeIndex).model else {
             isEnteringKey = true
@@ -78,6 +113,8 @@ struct LighthouseModelSelectorView: View {
 
     private enum Constants {
         static let chooseTitle = "Choose"
+        static let speedTitle = "Speed"
+        static let speedKey = "lighthouseSpeed"
     }
 }
 

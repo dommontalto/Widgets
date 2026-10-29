@@ -42,7 +42,6 @@ struct LighthouseChatView: View {
     var showsWelcome = true
 
     @State private var messages = [LighthouseChatMessage]()
-    @State private var speed = LighthouseSpeed.adaptive
     // The tier picked from the pill; nil falls back to the stored choice, and
     // it clears whenever the model or the selector sheet changes so the pill
     // rereads what was saved there.
@@ -84,7 +83,6 @@ struct LighthouseChatView: View {
                 HStack(spacing: .spacing1x) {
                     modelPickerButton
                     tierMenu
-                    speedMenu
                 }
                 .padding(.leading, .spacing1x)
             }
@@ -178,8 +176,7 @@ struct LighthouseChatView: View {
         )
     }
 
-    // The current model's tiers, ticked on the one in use, in a pill cut like
-    // the speed one beside it.
+    // The current model's tiers, ticked on the one in use, in a pill.
     private var tierMenu: some View {
         Menu {
             Picker("Tier", selection: tierBinding) {
@@ -214,51 +211,6 @@ struct LighthouseChatView: View {
             .monospacedDigit()
             .fixedSize()
             .animation(.brightSnappy, value: tier)
-    }
-
-    // A Picker inside the Menu draws each speed with its glyph leading and
-    // the tick trailing on the one in use.
-    private var speedMenu: some View {
-        Menu {
-            Picker("Speed", selection: $speed) {
-                ForEach(LighthouseSpeed.allCases) { speed in
-                    Label {
-                        Text(speed.title)
-                        Text(speed.subtitle)
-                    } icon: {
-                        Image(systemName: speed.symbol)
-                    }
-                    .tag(speed)
-                }
-            }
-        } label: {
-            speedPill
-        }
-        .buttonStyle(.plain)
-        .modifier(BrightGlassEffectV5(shape: .capsule))
-        .brightHapticV5(.light, trigger: speed)
-    }
-
-    private var speedPill: some View {
-        speedLabel(speed)
-            .padding(.horizontal, .spacing105x)
-            .frame(height: BrightButtonSizes.small.rawValue)
-            .compositingGroup()
-    }
-
-    private func speedLabel(_ speed: LighthouseSpeed) -> some View {
-        HStack(spacing: .spacing1x) {
-            Image(systemName: speed.symbol)
-                .font(.standard(size: BrightButtonSizes.small.defaultFontSize, weight: .light))
-                .foregroundStyle(Color.textColor)
-                .contentTransition(.symbolEffect(.replace))
-
-            BrightText(speed.title, size: BrightButtonSizes.small.defaultFontSize)
-        }
-        // The menu hands its label a stale width for a beat after a pick, and
-        // a squeezed label truncates; sizing to the text keeps every glyph.
-        .fixedSize()
-        .animation(.brightSnappy, value: speed)
     }
 
     // Also run on appear: the prompt can be set before the chat is on screen.

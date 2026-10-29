@@ -20,7 +20,7 @@ struct GenomeGeneMiniSheet: View {
 
                 HStack(spacing: .spacing1x) {
                     if isDemo {
-                        GenomeDemoChip()
+                        GenomeSampleTag()
                     }
                     if let level = marker.evidenceLevel {
                         GenomeEvidenceChip(level: GenomeEvidenceLevel(level))

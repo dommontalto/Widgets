@@ -8,8 +8,8 @@
 import SwiftUI
 
 // The Lighthouse mark: a dim lens ring with the lamp banked on one side and
-// the glow it throws across the inside. Lit, the lamp opens out left to
-// right like a book, its beam widening with it.
+// the glow it throws across the inside. Lit, the lamp opens out from its
+// centre both ways like a book, its beam widening with it.
 struct LighthouseBeacon: View {
     var size: CGFloat = Constants.size
     var isLit = false
@@ -41,12 +41,16 @@ struct LighthouseBeacon: View {
         }
     }
 
+    private var lampMid: CGFloat {
+        (Constants.lampStart + Constants.lampEnd) / 2
+    }
+
     private var lampFrom: CGFloat {
-        Constants.lampStart
+        lampMid - (lampMid - Constants.lampStart) * openness
     }
 
     private var lampTo: CGFloat {
-        Constants.lampStart + (Constants.lampEnd - Constants.lampStart) * openness
+        lampMid + (Constants.lampEnd - lampMid) * openness
     }
 
     private var lamp: some View {
