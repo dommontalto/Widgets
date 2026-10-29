@@ -53,40 +53,29 @@ struct LighthouseThinkingInline: View {
         }
     }
 
-    // Steps run left to right like a queue: each new one joins at the trailing
-    // end and the strip slides along, so the current step is always in view.
+    // While it thinks, one step at a time in the same spot, each new one replacing the last. Finished and opened,
+    // every step it took, one under the other.
     private var stepList: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: .spacing0x) {
-                        ForEach(Array(steps.prefix(revealedCount).enumerated()), id: \.element.id) { index, step in
-                            HStack(spacing: .spacing0x) {
-                                if index > 0 {
-                                    QueueConnector(drawsIn: !isFinished)
-                                }
-
-                                chip(step, isCurrent: !isFinished && index == revealedCount - 1)
-                            }
-                            .id(step.id)
-                            .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                                content
-                                    .opacity(phase.isIdentity ? 1 : Constants.offscreenOpacity)
-                                    .blur(radius: phase.isIdentity ? .spacing0x : .spacing05x)
-                            }
-                            .transition(.offset(x: .spacing2x).combined(with: .opacity).combined(with: .softBlur))
+            Group {
+                if isFinished {
+                    VStack(alignment: .leading, spacing: .spacing1x) {
+                        ForEach(steps.prefix(revealedCount)) { step in
+                            chip(step, isCurrent: false)
                         }
                     }
-                    .padding(.leading, Constants.iconInset)
-                    .padding(.trailing, .spacing3x)
-                    .padding(.vertical, .spacing1x)
-                }
-                .scrollClipDisabled()
-                .onChange(of: revealedCount) { _, _ in
-                    guard !isFinished, let last = steps.prefix(revealedCount).last else { return }
-                    withAnimation(.brightSpring) { proxy.scrollTo(last.id, anchor: .trailing) }
+                } else if let current = steps.prefix(revealedCount).last {
+                    ZStack(alignment: .leading) {
+                        chip(current, isCurrent: true)
+                            .id(current.id)
+                            .transition(.opacity.combined(with: .softBlur))
+                    }
+                    .animation(.brightSpring, value: current.id)
                 }
             }
+            .padding(.leading, Constants.iconInset)
+            .padding(.trailing, .spacing3x)
+            .padding(.vertical, .spacing1x)
 
             VStack(alignment: .leading, spacing: .spacing0x) {
                 if let openStep {

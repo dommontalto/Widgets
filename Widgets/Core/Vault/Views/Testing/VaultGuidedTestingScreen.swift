@@ -12,6 +12,7 @@ import SwiftUI
 struct VaultGuidedTestingScreen: View {
     @State private var receipt: VaultTestOrder?
     @State private var showingLighthouse = false
+    @Environment(\.isPresented) private var isPresented
     @State private var lighthouseDetent = LighthouseTrayGuidedTesting.restDetent
 
     var body: some View {
@@ -25,6 +26,11 @@ struct VaultGuidedTestingScreen: View {
             }
             .onAppear { showingLighthouse = true }
             .onDisappear { showingLighthouse = false }
+            // Going back turns this off as the pop starts, while the page is still here, so the tray slides down with
+            // it instead of vanishing once the page has gone.
+            .onChange(of: isPresented) { _, presented in
+                if !presented { showingLighthouse = false }
+            }
             .sheet(item: $receipt, onDismiss: { showingLighthouse = true }) { order in
                 BrightReceiptSheetV5(order: order)
             }
