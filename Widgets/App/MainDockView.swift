@@ -53,7 +53,7 @@ struct MainDockView: View {
             }
             .animation(.brightBouncy, value: isOnSubPage)
             .sheet(isPresented: $showingLighthouse) {
-                LighthouseTrayGuidedTesting(
+                LighthouseTray(
                     detent: $lighthouseDetent,
                     hasRest: false,
                     initialPrompt: lighthousePrompt

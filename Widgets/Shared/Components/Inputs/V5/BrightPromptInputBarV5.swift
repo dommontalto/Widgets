@@ -70,8 +70,6 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
 
     @State private var nudge = 0
     @State private var ownDictation = BrightDictation()
-    @Environment(\.brightPromptIsPill) private var isPill
-    @Environment(\.brightPromptMatch) private var matchNamespace
 
     private var dictation: BrightDictation {
         sharedDictation ?? ownDictation
@@ -104,37 +102,6 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
     }
 
     var body: some View {
-        Group {
-            if isPill {
-                pill
-            } else {
-                card
-            }
-        }
-        .modifier(BrightPromptMatchV5(namespace: matchNamespace))
-    }
-
-    // One line in a capsule: no attachments or model picker, just the field and the round button.
-    private var pill: some View {
-        HStack(spacing: .spacing1x) {
-            field
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            actionButton
-        }
-        .animation(.brightBouncy, value: isBusy)
-        .animation(.brightSnappy, value: action)
-        .onDisappear { dictation.stop() }
-        .padding(.leading, .spacing105x)
-        .padding(.trailing, .spacing05x)
-        .frame(maxWidth: .infinity)
-        .frame(height: BrightButtonSizes.large.rawValue)
-        .contentShape(.capsule)
-        .onTapGesture { isFocused.wrappedValue = true }
-        .modifier(BrightGlassEffectV5(shape: .capsule))
-    }
-
-    private var card: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             if !attachments.isEmpty {
                 attachmentStrip
@@ -190,11 +157,11 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
             TextField("", text: $text, axis: .vertical)
                 .font(.standard(size: .subheading2, weight: .light))
                 .foregroundStyle(Color.textColor)
-                .lineLimit(1 ... (isPill ? 1 : Constants.maxLines))
+                .lineLimit(1 ... Constants.maxLines)
                 .focused(isFocused)
                 .submitLabel(.return)
         }
-        .padding(.top, isPill ? .spacing0x : .spacing105x)
+        .padding(.top, .spacing105x)
         .padding(.horizontal, .spacing1x)
         .onGeometryChange(for: CGRect.self) {
             $0.frame(in: .named(BrightChatSpace.input))
@@ -394,20 +361,3 @@ extension BrightPromptInputBarV5 where ModelPicker == EmptyView {
     .background(Color.defaultBackground.ignoresSafeArea())
 }
 
-extension EnvironmentValues {
-    @Entry var brightPromptIsPill = false
-    // Shared by two prompt bars that stand for the same input, so one morphs into the other.
-    @Entry var brightPromptMatch: Namespace.ID?
-}
-
-private struct BrightPromptMatchV5: ViewModifier {
-    let namespace: Namespace.ID?
-
-    func body(content: Content) -> some View {
-        if let namespace {
-            content.matchedGeometryEffect(id: "brightPromptInput", in: namespace)
-        } else {
-            content
-        }
-    }
-}

@@ -10,9 +10,3 @@ extension String {
         Date(brightISOZoned: self) ?? Date(brightDayKey: self) ?? Date()
     }
 }
-
-extension String {
-    func capitalizedFirstLetter() -> String {
-        prefix(1).capitalized + dropFirst()
-    }
-}

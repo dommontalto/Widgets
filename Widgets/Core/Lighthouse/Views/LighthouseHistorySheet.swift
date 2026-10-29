@@ -1,12 +1,12 @@
 //
-//  LighthouseHistoryGuidedTesting.swift
+//  LighthouseHistorySheet.swift
 //  Widgets
 //
 
 import SwiftUI
 
 // Past chats, searchable, with a filter for pinned ones and a sort; pinned chats lead.
-struct LighthouseHistoryGuidedTesting: View {
+struct LighthouseHistorySheet: View {
     var onOpen: (LighthouseHistoryEntry) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss

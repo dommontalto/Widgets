@@ -281,7 +281,6 @@ struct LighthouseThinkingInline: View {
         static let brainSize: CGFloat = column
         static let iconInset: CGFloat = (orbSize - column) / 2
         static let titleMaxWidth: CGFloat = .spacing7x * 4
-        static let offscreenOpacity: Double = 0.25
         static let openChevronDegrees: Double = 90
         static let flippedChevronDegrees: Double = 180
         static let revealEvery: TimeInterval = 1.1
@@ -301,33 +300,6 @@ private struct SoftBlur: ViewModifier {
 private extension AnyTransition {
     static let softBlur = AnyTransition.modifier(active: SoftBlur(radius: .spacing05x), identity: SoftBlur(radius: .spacing0x))
     static let softDrop = AnyTransition.move(edge: .top).combined(with: .opacity).combined(with: .softBlur)
-}
-
-// The short line that links one queued step to the next.
-private struct QueueConnector: View {
-    var drawsIn = true
-
-    @State private var isDrawn = false
-
-    var body: some View {
-        Path { path in
-            path.move(to: CGPoint(x: 0, y: Self.width / 2))
-            path.addLine(to: CGPoint(x: Self.width, y: Self.width / 2))
-        }
-        .trim(from: 0, to: isDrawn ? 1 : 0)
-        .stroke(Color.semiLightTextColor.opacity(.semiLowOpacity), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-        .frame(width: Self.width, height: Self.width)
-        .padding(.horizontal, .spacing105x)
-        .onAppear {
-            guard drawsIn else {
-                isDrawn = true
-                return
-            }
-            withAnimation(.brightSpring) { isDrawn = true }
-        }
-    }
-
-    private static let width: CGFloat = .spacing3x
 }
 
 // A scroll view offers its content unlimited width, so a long step title

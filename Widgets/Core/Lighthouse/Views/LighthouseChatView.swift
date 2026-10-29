@@ -11,12 +11,10 @@ typealias LighthouseChatMessage = BrightChatMessage<LighthouseResponsePayload>
 
 enum LighthouseAction {
     case checkIn
-    case prompt(String)
 
     var prompt: String {
         switch self {
         case .checkIn: "Check In"
-        case let .prompt(text): text
         }
     }
 }
@@ -38,6 +36,10 @@ struct LighthouseChatView: View {
     let onAttach: (BrightChatAttachmentSource) -> Void
     // The welcome beacon's centre in global coordinates, for the opening burst.
     var onBeaconCentre: (CGPoint) -> Void = { _ in }
+    // A prompt typed somewhere other than the chat's own input; it's sent, then cleared.
+    var externalPrompt: Binding<String?> = .constant(nil)
+    // Held back by the tray until it has settled at its new height.
+    var showsWelcome = true
 
     @State private var messages = [LighthouseChatMessage]()
     @State private var speed = LighthouseSpeed.adaptive
@@ -87,14 +89,14 @@ struct LighthouseChatView: View {
                 .padding(.leading, .spacing1x)
             }
         )
-        // Welcome parked: the beacon and "Welcome to Lighthouse" over an empty chat.
-        // .overlay {
-        //     if messages.isEmpty {
-        //         welcome
-        //             .allowsHitTesting(false)
-        //             .transition(.opacity)
-        //     }
-        // }
+        // Shown as is: no fade or rise, so it's simply there when the tray is pulled up.
+        .overlay {
+            if messages.isEmpty, showsWelcome {
+                welcome
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
         .animation(.brightEaseInOut, value: messages.isEmpty)
         .onChange(of: selectedModel) { _, _ in pickedTier = nil }
         .onChange(of: showingModelSelector) { _, _ in pickedTier = nil }
@@ -102,7 +104,11 @@ struct LighthouseChatView: View {
             Color.clear.frame(height: .spacing2x)
         }
         .onDisappear { replyTask?.cancel() }
-        .task { run(action) }
+        .task {
+            run(action)
+            sendExternalPrompt()
+        }
+        .onChange(of: externalPrompt.wrappedValue) { _, _ in sendExternalPrompt() }
         .onChange(of: resetCount) { _, _ in
             replyTask?.cancel()
             replyTask = nil
@@ -126,10 +132,8 @@ struct LighthouseChatView: View {
 
             VStack(spacing: .spacing1x) {
                 BrightText(Constants.welcomeTitle, size: .standout3)
-                    .brightTextRevealV5()
 
                 BrightText(Constants.welcomePrompt, size: .subheading, color: .semiLightTextColor)
-                    .brightTextRevealV5(delay: Constants.welcomePromptDelay)
             }
             .multilineTextAlignment(.center)
 
@@ -264,6 +268,13 @@ struct LighthouseChatView: View {
         .animation(.brightSnappy, value: speed)
     }
 
+    // Also run on appear: the prompt can be set before the chat is on screen.
+    private func sendExternalPrompt() {
+        guard let prompt = externalPrompt.wrappedValue else { return }
+        externalPrompt.wrappedValue = nil
+        send(prompt)
+    }
+
     private func send(_ text: String) {
         let sent = attachments
         withAnimation(.brightSnappy) {
@@ -379,7 +390,6 @@ struct LighthouseChatView: View {
         ]
         static let welcomeTitle = "Welcome to Lighthouse."
         static let welcomePrompt = "What would you like to do?"
-        static let welcomePromptDelay: TimeInterval = 0.5
         static let thinkingSeconds: TimeInterval = 10
         static let thinkingDelay: TimeInterval = 0.4
     }

@@ -13,13 +13,13 @@ struct VaultGuidedTestingScreen: View {
     @State private var receipt: VaultTestOrder?
     @State private var showingLighthouse = false
     @Environment(\.isPresented) private var isPresented
-    @State private var lighthouseDetent = LighthouseTrayGuidedTesting.restDetent
+    @State private var lighthouseDetent = LighthouseTray.restDetent
 
     var body: some View {
         VaultGuidedTestingHomeView(onOrder: place)
             // A trial of Lighthouse as a tray that stays at the bottom, the way Maps keeps its search.
             .sheet(isPresented: $showingLighthouse) {
-                LighthouseTrayGuidedTesting(detent: $lighthouseDetent)
+                LighthouseTray(detent: $lighthouseDetent)
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                     .presentationDragIndicator(.visible)
                     .interactiveDismissDisabled()

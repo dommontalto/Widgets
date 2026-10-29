@@ -1,5 +1,5 @@
 //
-//  LighthouseTrayGuidedTesting.swift
+//  LighthouseTray.swift
 //  Widgets
 //
 
@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 // Lighthouse as a tray that lives at the bottom of a page. At rest it's a floating bar: the model on the left, the
 // ask field in the middle and dictation on the right. Pulled up, the chat fills in above the bar, and at full height
 // the menu sits top left.
-struct LighthouseTrayGuidedTesting: View {
+struct LighthouseTray: View {
     @Binding var detent: PresentationDetent
     // Opened on demand rather than kept at the foot of a page: there's no resting bar, so a swipe down from half
     // closes it as any sheet does.
@@ -153,7 +153,7 @@ struct LighthouseTrayGuidedTesting: View {
             attach(try? result.get())
         }
         .sheet(isPresented: $showingHistory) {
-            LighthouseHistoryGuidedTesting { _ in startNewChat() }
+            LighthouseHistorySheet { _ in startNewChat() }
         }
         .sheet(isPresented: $showingSettings) {
             LighthouseSettingsSheet()
@@ -301,7 +301,7 @@ struct LighthouseTrayGuidedTesting: View {
     // MARK: - Chat
 
     private var chat: some View {
-        LighthouseChatViewGuidedTesting(
+        LighthouseChatView(
             isThinking: $isThinking,
             selectedModel: $model,
             usesApiKey: !apiKey.isEmpty,
