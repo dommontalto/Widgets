@@ -390,17 +390,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                     .multilineTextAlignment(.leading)
                     .padding(.horizontal, .spacing2x)
                     .padding(.vertical, .spacing105x)
-                    // The tight bottom trailing corner stands in for a tail.
-                    .modifier(BrightGlassEffectV5(
-                        shape: .cornerRadii(RectangleCornerRadii(
-                            topLeading: .cardCornerRadius,
-                            bottomLeading: .cardCornerRadius,
-                            bottomTrailing: .squareCornerRadius,
-                            topTrailing: .cardCornerRadius
-                        )),
-                        tint: .defaultSkyBlue,
-                        interactive: false
-                    ))
+                    .modifier(BrightGlassEffectV5(shape: .capsule, tint: .defaultSkyBlue, interactive: false))
             }
         }
     }

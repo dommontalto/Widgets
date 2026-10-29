@@ -41,6 +41,10 @@ struct LighthouseTray: View {
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
     @FocusState private var isChatTyping: Bool
+    @State private var isContextAware = false
+    @State private var showsContextLabel = false
+    @State private var contextPulse = 0
+    @State private var labelTask: Task<Void, Never>?
     // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
     @State private var isKeyboardShowing = false
     // The welcome fades in only once the tray has finished moving to half or full.
@@ -289,13 +293,105 @@ struct LighthouseTray: View {
 
     // Pulled up only: the menu top right.
     private var menuRow: some View {
-        HStack(spacing: .spacing0x) {
+        HStack(spacing: .spacing2x) {
             Spacer(minLength: .spacing0x)
+
+            if showsContextLabel {
+                contextLabel
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: Constants.labelStartScale, anchor: .trailing)
+                            .combined(with: .opacity)
+                            .combined(with: .offset(x: .spacing2x)),
+                        removal: .opacity.combined(with: .scale(scale: Constants.labelStartScale, anchor: .trailing))
+                    ))
+            }
+
+            contextButton
 
             menu
         }
+        .animation(.brightBouncy, value: showsContextLabel)
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing3x)
+    }
+
+    // MARK: - Context
+
+    // A demo toggle for Lighthouse seeing the page behind it. On, it fills with the bubbles' blue, a ring rolls out
+    // from it and "Context aware" springs out to its left for a moment.
+    private var contextButton: some View {
+        Button(action: toggleContext) {
+            Image(systemName: isContextAware ? "iphone.radiowaves.left.and.right" : "iphone")
+                .font(.standard(size: .subheading1, weight: .regular))
+                .foregroundStyle(isContextAware ? Color.white : Color.textColor)
+                // Magic Replace morphs the phone into the phone with waves and back, rather than swapping them.
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+                .contentShape(Circle())
+                .modifier(BrightGlassEffectV5(shape: .circle, tint: isContextAware ? .defaultSkyBlue : .clear))
+        }
+        .buttonStyle(.plain)
+        .background { contextRipple }
+        .animation(.brightBouncy, value: isContextAware)
+        .brightHapticV5(trigger: contextPulse) { _, _ in isContextAware ? .impact : .light }
+        .accessibilityLabel(isContextAware ? "Context aware on" : "Context aware off")
+    }
+
+    // Two rings of blue rolling out from the button as it switches on.
+    private var contextRipple: some View {
+        ZStack {
+            ForEach(0 ..< Constants.rippleCount, id: \.self) { ring in
+                Circle()
+                    .stroke(Color.defaultSkyBlue, lineWidth: Constants.rippleWidth)
+                    .keyframeAnimator(initialValue: RipplePhase(), trigger: contextPulse) { content, phase in
+                        content
+                            .scaleEffect(phase.scale)
+                            .opacity(isContextAware ? phase.opacity : .zero)
+                    } keyframes: { _ in
+                        KeyframeTrack(\.scale) {
+                            LinearKeyframe(1, duration: Constants.rippleStagger * Double(ring))
+                            SpringKeyframe(Constants.rippleReach, duration: Constants.rippleDuration, spring: .smooth)
+                        }
+                        KeyframeTrack(\.opacity) {
+                            LinearKeyframe(.zero, duration: Constants.rippleStagger * Double(ring))
+                            LinearKeyframe(1, duration: Constants.rippleFlash)
+                            LinearKeyframe(.zero, duration: Constants.rippleDuration - Constants.rippleFlash)
+                        }
+                    }
+            }
+        }
+        .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+        .allowsHitTesting(false)
+    }
+
+    private var contextLabel: some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: "iphone.gen3")
+                .font(.standard(size: .body3, weight: .medium))
+                .symbolEffect(.variableColor.iterative, isActive: showsContextLabel)
+            BrightText(Constants.contextTitle, size: .body3, color: .defaultSkyBlue, weight: .medium)
+        }
+        .foregroundStyle(Color.defaultSkyBlue)
+        .padding(.horizontal, .spacing2x)
+        .frame(height: BrightButtonSizes.medium.rawValue)
+        .background(Color.defaultSkyBlue.opacity(.minimalOpacity), in: .capsule)
+        .shadow(color: Color.defaultSkyBlue.opacity(.lowOpacity), radius: .spacing1x)
+    }
+
+    private func toggleContext() {
+        isContextAware.toggle()
+        contextPulse += 1
+        labelTask?.cancel()
+        guard isContextAware else {
+            showsContextLabel = false
+            return
+        }
+        showsContextLabel = true
+        labelTask = Task {
+            try? await Task.sleep(for: .seconds(Constants.labelDuration))
+            guard !Task.isCancelled else { return }
+            showsContextLabel = false
+        }
     }
 
     // MARK: - Chat
@@ -439,6 +535,15 @@ struct LighthouseTray: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let plusSize: CGFloat = 28
+        static let contextTitle = "Context aware"
+        static let labelDuration: TimeInterval = 2.5
+        static let labelStartScale: CGFloat = 0.6
+        static let rippleCount = 2
+        static let rippleWidth: CGFloat = 2
+        static let rippleReach: CGFloat = 1.4
+        static let rippleDuration: TimeInterval = 0.7
+        static let rippleFlash: TimeInterval = 0.08
+        static let rippleStagger: TimeInterval = 0.12
         static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
@@ -508,4 +613,9 @@ private struct TrayAskBarLayout: Layout {
     private func rowHeight(_ subviews: Subviews) -> CGFloat {
         max(subviews[0].sizeThatFits(.unspecified).height, subviews[2].sizeThatFits(.unspecified).height)
     }
+}
+
+private struct RipplePhase {
+    var scale: CGFloat = 1
+    var opacity: Double = .zero
 }
