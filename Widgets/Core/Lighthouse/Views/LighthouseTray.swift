@@ -41,10 +41,6 @@ struct LighthouseTray: View {
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
     @FocusState private var isChatTyping: Bool
-    @State private var isContextAware = false
-    @State private var showsContextLabel = false
-    @State private var contextPulse = 0
-    @State private var labelTask: Task<Void, Never>?
     // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
     @State private var isKeyboardShowing = false
     // The welcome fades in only once the tray has finished moving to half or full.
@@ -175,10 +171,9 @@ struct LighthouseTray: View {
 
     // MARK: - Ask
 
-    // At rest one row with the field between the buttons; pulled up, the field rises onto its own line above them,
-    // starting where the model button does. One layout moves the same field, so it keeps focus as it goes.
+    // One row, the field centred between the buttons.
     private var askRow: some View {
-        TrayAskBarLayout(isStacked: !isResting) {
+        HStack(spacing: .spacing2x) {
             modelButton
 
             askField
@@ -193,8 +188,7 @@ struct LighthouseTray: View {
         }
         .padding(.horizontal, .spacing2x)
         .padding(.bottom, .spacing2x)
-        // Pulled up, the field's own 44pt height is room enough under the messages' edge.
-        .padding(.top, isResting ? .spacing2x : .spacing0x)
+        .padding(.top, .spacing2x)
         // At rest the whole bar is the field to tap; the buttons in it still take their own taps.
         .contentShape(.rect)
         .onTapGesture {
@@ -204,9 +198,6 @@ struct LighthouseTray: View {
         .animation(.brightSnappy, value: dictation.isListening)
     }
 
-    // Centred until there's something in it or it's being typed in, then it reads from the left.
-    // One field: at rest it hugs its placeholder in the middle, and on tap it widens to the full row from the
-    // leading edge, carrying the placeholder with it.
     private var askField: some View {
         TextField("", text: $draft, prompt: Text(Constants.askTitle).foregroundStyle(Color.lightTextColor))
             .font(.standard(size: .subheading2, weight: .light))
@@ -215,16 +206,11 @@ struct LighthouseTray: View {
             .focused($isFieldFocused)
             .submitLabel(.send)
             .onSubmit(send)
-            .fixedSize(horizontal: isPlaceholderCentred, vertical: false)
-            .frame(maxWidth: .infinity, alignment: isPlaceholderCentred ? .center : .leading)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
             .frame(height: BrightButtonSizes.large.rawValue)
             .contentShape(.rect)
             .onTapGesture { isFieldFocused = true }
-            .animation(.brightEaseInOut, value: isPlaceholderCentred)
-    }
-
-    private var isPlaceholderCentred: Bool {
-        isResting && !isFieldFocused && !hasDraft
     }
 
     // The model's tile fills the whole circle, in its own colours, which a round button's template glyph would flatten.
@@ -296,109 +282,10 @@ struct LighthouseTray: View {
         HStack(spacing: .spacing2x) {
             Spacer(minLength: .spacing0x)
 
-            if showsContextLabel {
-                contextLabel
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: Constants.labelStartScale, anchor: .trailing)
-                            .combined(with: .opacity)
-                            .combined(with: .offset(x: .spacing2x)),
-                        removal: .opacity.combined(with: .scale(scale: Constants.labelStartScale, anchor: .trailing))
-                    ))
-            }
-
-            contextButton
-
             menu
         }
-        .animation(.brightBouncy, value: showsContextLabel)
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing3x)
-    }
-
-    // MARK: - Context
-
-    // A demo toggle for Lighthouse seeing the page behind it. On, it fills with the bubbles' blue, a ring rolls out
-    // from it and "Context aware" springs out to its left for a moment.
-    private var contextButton: some View {
-        Button(action: toggleContext) {
-            Image(systemName: isContextAware ? "iphone.radiowaves.left.and.right" : "iphone")
-                .font(.standard(size: .subheading1, weight: .regular))
-                .foregroundStyle(isContextAware ? Color.white : Color.textColor)
-                // Magic Replace morphs the phone into the phone with waves and back, rather than swapping them.
-                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-                .contentShape(Circle())
-                .modifier(BrightGlassEffectV5(shape: .circle, tint: isContextAware ? .defaultSkyBlue : .clear))
-        }
-        .buttonStyle(.plain)
-        .background { contextRipple }
-        .animation(.brightBouncy, value: isContextAware)
-        .brightHapticV5(trigger: contextPulse) { _, _ in isContextAware ? .impact : .light }
-        .accessibilityLabel(isContextAware ? "Context aware on" : "Context aware off")
-    }
-
-    // Two rings of blue rolling out from the button as it switches on.
-    private var contextRipple: some View {
-        ZStack {
-            ForEach(0 ..< Constants.rippleCount, id: \.self) { ring in
-                Circle()
-                    .stroke(Color.defaultSkyBlue, lineWidth: Constants.rippleWidth)
-                    .keyframeAnimator(initialValue: RipplePhase(), trigger: contextPulse) { content, phase in
-                        content
-                            .scaleEffect(phase.scale)
-                            .opacity(isContextAware ? phase.opacity : .zero)
-                    } keyframes: { _ in
-                        // Each ring waits its turn. The first's wait is a sliver rather than none: a keyframe of no
-                        // length can't be eased and hands the layer a NaN.
-                        KeyframeTrack(\.scale) {
-                            LinearKeyframe(1, duration: rippleDelay(ring))
-                            SpringKeyframe(Constants.rippleReach, duration: Constants.rippleDuration, spring: .smooth)
-                        }
-                        KeyframeTrack(\.opacity) {
-                            LinearKeyframe(.zero, duration: rippleDelay(ring))
-                            LinearKeyframe(1, duration: Constants.rippleFlash)
-                            LinearKeyframe(.zero, duration: Constants.rippleDuration - Constants.rippleFlash)
-                        }
-                    }
-            }
-        }
-        .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-        .allowsHitTesting(false)
-    }
-
-    private func rippleDelay(_ ring: Int) -> TimeInterval {
-        max(Constants.rippleStagger * Double(ring), Constants.minimumKeyframe)
-    }
-
-    private var contextLabel: some View {
-        HStack(spacing: .spacing1x) {
-            Image(systemName: "iphone.gen3")
-                .font(.standard(size: .body3, weight: .medium))
-                .symbolEffect(.variableColor.iterative, isActive: showsContextLabel)
-            BrightText(Constants.contextTitle, size: .body3, color: .defaultSkyBlue, weight: .medium)
-        }
-        .foregroundStyle(Color.defaultSkyBlue)
-        .padding(.horizontal, .spacing2x)
-        .frame(height: BrightButtonSizes.medium.rawValue)
-        .background(Color.defaultSkyBlue.opacity(.minimalOpacity), in: .capsule)
-        .shadow(color: Color.defaultSkyBlue.opacity(.lowOpacity), radius: .spacing1x)
-    }
-
-    private func toggleContext() {
-        isContextAware.toggle()
-        contextPulse += 1
-        labelTask?.cancel()
-        guard isContextAware else {
-            showsContextLabel = false
-            return
-        }
-        showsContextLabel = true
-        LighthouseContextScan.shared.scan()
-        labelTask = Task {
-            try? await Task.sleep(for: .seconds(Constants.labelDuration))
-            guard !Task.isCancelled else { return }
-            showsContextLabel = false
-        }
     }
 
     // MARK: - Chat
@@ -542,16 +429,6 @@ struct LighthouseTray: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let plusSize: CGFloat = 28
-        static let contextTitle = "Context aware"
-        static let labelDuration: TimeInterval = 2.5
-        static let labelStartScale: CGFloat = 0.6
-        static let rippleCount = 2
-        static let rippleWidth: CGFloat = 2
-        static let rippleReach: CGFloat = 1.4
-        static let rippleDuration: TimeInterval = 0.7
-        static let rippleFlash: TimeInterval = 0.08
-        static let rippleStagger: TimeInterval = 0.12
-        static let minimumKeyframe: TimeInterval = 0.01
         static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
@@ -576,54 +453,4 @@ private struct TrayTypingDetent: CustomPresentationDetent {
     private enum Constants {
         static let keyboardShare: CGFloat = 0.4
     }
-}
-
-// The ask bar's two arrangements in one layout, so its field is never rebuilt between them.
-// Subviews: the model button, the field, then the trailing buttons.
-private struct TrayAskBarLayout: Layout {
-    var isStacked: Bool
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .zero
-        guard subviews.count == 3 else { return CGSize(width: width, height: .zero) }
-        let row = rowHeight(subviews)
-        guard isStacked else { return CGSize(width: width, height: row) }
-        let field = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: nil)).height
-        return CGSize(width: width, height: field + .spacing1x + row)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        guard subviews.count == 3 else { return }
-        let model = subviews[0].sizeThatFits(.unspecified)
-        let trailing = subviews[2].sizeThatFits(.unspecified)
-        let row = rowHeight(subviews)
-        let rowTop = isStacked ? bounds.maxY - row : bounds.minY
-
-        subviews[0].place(at: CGPoint(x: bounds.minX, y: rowTop + (row - model.height) / 2), proposal: ProposedViewSize(model))
-        subviews[2].place(
-            at: CGPoint(x: bounds.maxX - trailing.width, y: rowTop + (row - trailing.height) / 2),
-            proposal: ProposedViewSize(trailing)
-        )
-
-        if isStacked {
-            let field = ProposedViewSize(width: bounds.width, height: nil)
-            subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY), proposal: field)
-        } else {
-            let width = max(.zero, bounds.width - model.width - trailing.width - .spacing2x * 2)
-            let field = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: row))
-            subviews[1].place(
-                at: CGPoint(x: bounds.minX + model.width + .spacing2x, y: rowTop + (row - field.height) / 2),
-                proposal: ProposedViewSize(width: width, height: row)
-            )
-        }
-    }
-
-    private func rowHeight(_ subviews: Subviews) -> CGFloat {
-        max(subviews[0].sizeThatFits(.unspecified).height, subviews[2].sizeThatFits(.unspecified).height)
-    }
-}
-
-private struct RipplePhase {
-    var scale: CGFloat = 1
-    var opacity: Double = .zero
 }

@@ -130,13 +130,6 @@ struct LighthouseChatView: View {
                     return CGPoint(x: frame.midX, y: frame.midY)
                 } action: { onBeaconCentre($0) }
 
-            VStack(spacing: .spacing1x) {
-                BrightText(Constants.welcomeTitle, size: .standout3)
-
-                BrightText(Constants.welcomePrompt, size: .subheading, color: .semiLightTextColor)
-            }
-            .multilineTextAlignment(.center)
-
             Spacer(minLength: .spacing0x)
             Spacer(minLength: .spacing0x)
             Spacer(minLength: .spacing0x)
@@ -388,8 +381,6 @@ struct LighthouseChatView: View {
             BrightChatExample("graph.2d", "Forecast metrics"),
             BrightChatExample("fork.knife", "Log food"),
         ]
-        static let welcomeTitle = "Welcome to Lighthouse."
-        static let welcomePrompt = "What would you like to do?"
         static let thinkingSeconds: TimeInterval = 10
         static let thinkingDelay: TimeInterval = 0.4
     }

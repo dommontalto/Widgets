@@ -52,8 +52,6 @@ struct MainDockView: View {
                 }
             }
             .animation(.brightBouncy, value: isOnSubPage)
-            // Context aware switching on reads the whole screen, drawn here so it covers every page.
-            .overlay { LighthouseContextScanOverlay() }
             .sheet(isPresented: $showingLighthouse) {
                 LighthouseTray(
                     detent: $lighthouseDetent,
