@@ -12,6 +12,11 @@ import UniformTypeIdentifiers
 // the menu sits top left.
 struct LighthouseTrayGuidedTesting: View {
     @Binding var detent: PresentationDetent
+    // Opened on demand rather than kept at the foot of a page: there's no resting bar, so a swipe down from half
+    // closes it as any sheet does.
+    var hasRest = true
+    // Sent as soon as the tray opens, such as a widget's check-in.
+    var initialPrompt: String?
 
     // Just the ask bar: 12pt round its 44pt buttons.
     static let restHeight = CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x
@@ -36,6 +41,8 @@ struct LighthouseTrayGuidedTesting: View {
     @State private var dictation = BrightDictation()
     @FocusState private var isFieldFocused: Bool
     @FocusState private var isChatTyping: Bool
+    // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
+    @State private var isKeyboardShowing = false
     // The welcome fades in only once the tray has finished moving to half or full.
     @State private var showsWelcome = false
 
@@ -45,9 +52,10 @@ struct LighthouseTrayGuidedTesting: View {
 
     // While typing below full height, full is off the list: iOS would otherwise lift the tray there for the keyboard.
     private var allowedDetents: Set<PresentationDetent> {
-        isFieldFocused && detent != .large
+        let detents: Set<PresentationDetent> = isFieldFocused && detent != .large
             ? [Self.restDetent, .medium, Self.typingDetent]
             : [Self.restDetent, .medium, .large]
+        return hasRest ? detents : detents.subtracting([Self.restDetent])
     }
 
     private var hasDraft: Bool {
@@ -79,6 +87,10 @@ struct LighthouseTrayGuidedTesting: View {
             askRow
         }
         .frame(maxHeight: .infinity, alignment: .bottom)
+        .task {
+            guard let initialPrompt else { return }
+            sentPrompt = initialPrompt
+        }
         .animation(.brightSnappy, value: attachments.count)
         .presentationDetents(allowedDetents, selection: $detent)
         .animation(.brightEaseInOut, value: isResting)
@@ -93,19 +105,23 @@ struct LighthouseTrayGuidedTesting: View {
             if new == Self.restDetent { isFieldFocused = false }
             // Dragged up from the keyboard height while still typing: the keyboard goes and the tray carries on to
             // full, since full can't be on offer while it's up without iOS lifting the tray there itself.
-            if old == Self.typingDetent, new == .medium, isFieldFocused {
+            if old == Self.typingDetent, new == .medium, isKeyboardShowing {
                 isFieldFocused = false
                 withAnimation(.brightEaseInOut) { detent = .large }
             }
             settleWelcome(for: detent)
         }
+        // Opened straight to half, there's no change of height to bring the welcome in, so it settles from here too.
+        .onAppear { settleWelcome(for: detent) }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
             guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             TrayTypingDetent.keyboardHeight = frame.height
+            isKeyboardShowing = true
             guard isFieldFocused, detent != .large else { return }
             withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardShowing = false
             guard detent == Self.typingDetent else { return }
             withAnimation(.brightEaseInOut) { detent = .medium }
         }
