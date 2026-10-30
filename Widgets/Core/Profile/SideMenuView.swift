@@ -33,9 +33,7 @@ struct SideMenuView: View {
                     .staggered(at: 1, in: visibleRows)
             }
 
-            Rectangle()
-                .fill(Color.textColor.opacity(.veryLowOpacity))
-                .frame(height: Constants.dividerHeight)
+            BrightDividerV5()
                 .padding(.vertical, .spacing4x)
                 .staggered(at: 2, in: visibleRows)
 
@@ -58,7 +56,7 @@ struct SideMenuView: View {
                 item(systemImage: "ladybug.fill", color: .defaultWaveMagenta, title: "Report a bug")
                     .staggered(at: 10, in: visibleRows)
             }
-            .padding(.top, .spacing10x)
+            .padding(.top, .spacing8x)
 
             Spacer(minLength: .spacing4x)
 
@@ -161,7 +159,6 @@ struct SideMenuView: View {
         static let iconSize: CGFloat = 24
         static let tileSize: CGFloat = 36
         static let symbolSize: CGFloat = 20
-        static let dividerHeight: CGFloat = 0.5
         static let rowCount: Int = 12
         static let animationDuration: TimeInterval = 0.3
         static let bounce: TimeInterval = 0.1
