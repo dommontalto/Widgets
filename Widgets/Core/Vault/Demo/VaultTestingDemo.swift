@@ -8,7 +8,7 @@
 import Foundation
 
 extension VaultTestCategory {
-    static let demo: [VaultTestCategory] = [
+    static let all: [VaultTestCategory] = [
         VaultTestCategory(
             id: "longevity",
             name: "Longevity",
@@ -69,14 +69,24 @@ extension VaultTestCategory {
             tileName: ImageNames.vaultTestVitaminsTileV5,
             systemImage: "pills"
         ),
+        VaultTestCategory(
+            id: otherId,
+            name: "Other",
+            backgroundName: ImageNames.vaultTestSleepCategoryV5,
+            tileName: ImageNames.vaultTestSleepTileV5,
+            systemImage: "square.grid.2x2"
+        ),
     ]
 
+    // Where tests the category mapping doesn't cover go.
+    static let otherId = "other"
+
     static func named(_ id: String) -> VaultTestCategory? {
-        demo.first { $0.id == id }
+        all.first { $0.id == id }
     }
 
     @MainActor static var offered: [VaultTestCategory] {
-        demo.filter { VaultTestingClinic.testCount(in: $0.id) > 0 }
+        all.filter { VaultTestingClinic.testCount(in: $0.id) > 0 }
     }
 }
 
@@ -108,8 +118,12 @@ extension VaultTestingClinic {
 
     @MainActor static func testCount(in categoryId: String) -> Int {
         LabCatalog.shared.clinics.reduce(0) { count, clinic in
-            count + clinic.tests.filter { $0.categoryIds.contains(categoryId) }.count
+            count + clinic.count(in: categoryId)
         }
+    }
+
+    func count(in categoryId: String) -> Int {
+        tests.filter { $0.categoryIds.contains(categoryId) }.count
     }
 
     static let demo: [VaultTestingClinic] = [

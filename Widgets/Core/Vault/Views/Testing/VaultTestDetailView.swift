@@ -11,13 +11,16 @@ struct VaultTestDetailView: View {
     let test: VaultClinicTest
     let clinic: VaultTestingClinic
     let isSheet: Bool
+    let style: VaultTestCategory?
     let onOrder: (VaultTestOrder) -> Void
 
     @State private var selectedType: VaultTestAvailability
     @State private var showingPayment = false
     @State private var showingCart = false
+    @State private var pull: CGFloat = 0
 
     private let cart = LabCart.shared
+    private let catalog = LabCatalog.shared
 
     private var cardColor: Color {
         isSheet ? .defaultSheetModalCards : .defaultCards
@@ -27,58 +30,116 @@ struct VaultTestDetailView: View {
         test: VaultClinicTest,
         clinic: VaultTestingClinic,
         isSheet: Bool = true,
+        style: VaultTestCategory? = nil,
         onOrder: @escaping (VaultTestOrder) -> Void
     ) {
         self.test = test
         self.clinic = clinic
         self.isSheet = isSheet
+        self.style = style
         self.onOrder = onOrder
         _selectedType = State(initialValue: test.type)
     }
 
     var body: some View {
-        BrightPageViewV5(
-            horizontalPadding: .spacing0x,
-            backgroundColor: isSheet ? .defaultSheetBackground : .defaultBackground
-        ) {
+        page
+            .brightBottomButtonV5 {
+                orderButton
+            }
+            .navigationDestination(isPresented: $showingPayment) {
+                if test.labTestId != nil {
+                    LabPatientDetailsView(tests: [test], clinic: clinic, onOrder: onOrder)
+                } else {
+                    BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
+                        showingPayment = false
+                        onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showingCart) {
+                LabCartView(clinic: clinic, isSheet: isSheet, onOrder: onOrder)
+            }
+            .brightHapticV5(trigger: cart.items.count) { old, new in
+                new > old ? .success : .light
+            }
+    }
+
+    @ViewBuilder
+    private var page: some View {
+        if let style {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing3x) {
-                    header
-                    BrightDividerV5()
-                    included
-                    BrightDividerV5()
-                    typeSection
+                    VaultTestHero(
+                        category: style,
+                        title: test.name,
+                        subtitle: "\(test.included.count) \(test.included.count == 1 ? "test" : "tests")",
+                        pull: pull
+                    )
+
+                    VStack(alignment: .leading, spacing: .spacing3x) {
+                        detail
+                        price
+                        BrightDividerV5()
+                        included
+                        BrightDividerV5()
+                        typeSection
+                    }
+                    .padding(.horizontal, .spacing3x)
                 }
-                .padding(.horizontal, .spacing3x)
                 .padding(.bottom, .spacing12x)
             }
             .scrollIndicators(.hidden)
-        }
-        .overlay(alignment: .bottom) {
-            orderButton
-                .padding(.bottom, .spacing4x)
-        }
-        .navigationDestination(isPresented: $showingCart) {
-            LabCartView(clinic: clinic, isSheet: isSheet, onOrder: onOrder)
-        }
-        .brightHapticV5(trigger: cart.items.count) { old, new in
-            new > old ? .success : .light
-        }
-        .navigationDestination(isPresented: $showingPayment) {
-            if test.labTestId != nil {
-                LabPatientDetailsView(tests: [test], clinic: clinic, onOrder: onOrder)
-            } else {
-                BrightCheckoutViewV5(item: test.checkoutItem(type: selectedType, clinic: clinic)) { details in
-                    showingPayment = false
-                    onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, offset in
+                pull = max(0, -offset)
+            }
+            .brightSoftScrollEdgesV5()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.defaultBackground.ignoresSafeArea())
+            .ignoresSafeArea(edges: .top)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+        } else {
+            BrightPageViewV5(
+                horizontalPadding: .spacing0x,
+                backgroundColor: isSheet ? .defaultSheetBackground : .defaultBackground
+            ) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: .spacing3x) {
+                        header
+                        BrightDividerV5()
+                        included
+                        BrightDividerV5()
+                        typeSection
+                    }
+                    .padding(.horizontal, .spacing3x)
+                    .padding(.bottom, .spacing12x)
                 }
+                .scrollIndicators(.hidden)
             }
         }
     }
 
     @ViewBuilder
     private var orderButton: some View {
-        if test.labProvider == .eirly {
+        if let provider = test.labProvider, !catalog.canOrder(provider) {
+            BrightPillButton(Constants.comingSoon, systemImage: "clock", buttonSize: .large) {}
+                .disabled(true)
+                .opacity(.lowOpacity)
+        } else {
+            availableOrderButton
+        }
+    }
+
+    @ViewBuilder
+    private var availableOrderButton: some View {
+        switch test.labProvider {
+        case .junction, nil:
+            BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
+                showingPayment = true
+            }
+        case .eirly:
             if cart.contains(test) || cart.isFull {
                 BrightPillButton("View Cart", systemImage: "cart", buttonSize: .large) {
                     showingCart = true
@@ -88,22 +149,33 @@ struct VaultTestDetailView: View {
                     cart.add(test)
                 }
             }
-        } else {
-            BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
-                showingPayment = true
-            }
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             BrightText(test.name, size: .standout3, weight: .regular)
-
-            BrightText(test.detail, size: .body1, color: .lightTextColor)
-                .lineSpacing(.lineSpacingMedium)
-                .fixedSize(horizontal: false, vertical: true)
+            detail
+            price
         }
         .padding(.top, .spacing2x)
+    }
+
+    private var detail: some View {
+        BrightText(test.detail, size: .body1, color: .lightTextColor)
+            .lineSpacing(.lineSpacingMedium)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var price: some View {
+        HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
+            BrightText(test.priceText, size: .subheading1, weight: .regular)
+                .monospacedDigit()
+
+            if let note = test.priceNote {
+                BrightText(note, size: .body1, color: .lightTextColor)
+            }
+        }
     }
 
     private var included: some View {
@@ -116,13 +188,13 @@ struct VaultTestDetailView: View {
                 spacing: .spacing105x
             ) {
                 ForEach(test.included, id: \.self) { item in
-                    HStack(spacing: .spacing1x) {
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
                         Image(systemName: "checkmark.circle")
                             .font(.standardSFPro(size: .standout3, weight: .light))
                             .foregroundStyle(Color.defaultGreen)
 
                         BrightText(item, size: .body1, color: .semiLightTextColor)
-                            .lineLimit(1)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -130,52 +202,21 @@ struct VaultTestDetailView: View {
     }
 
     private var typeSection: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText("Test Type", size: .body1, color: .semiLightTextColor, weight: .regular)
-                .padding(.leading, .spacing1x)
-
-            VStack(spacing: .spacing0x) {
-                ForEach(test.availability) { availability in
-                    typeRow(availability, isLast: availability == test.availability.last)
+        BrightRowGroupV5(header: "Test Type", color: cardColor) {
+            ForEach(test.availability) { availability in
+                BrightRowV5(
+                    availability.rawValue,
+                    icon: .symbol(availability.systemImage),
+                    trailing: .tick(availability == selectedType)
+                ) {
+                    selectedType = availability
                 }
-            }
-            .padding(.horizontal, .spacing3x)
-            .padding(.vertical, .spacing105x)
-            .modifier(BrightCardModifierV5(color: cardColor, cornerRadius: .cardCornerRadius))
-        }
-    }
-
-    private func typeRow(_ availability: VaultTestAvailability, isLast: Bool) -> some View {
-        VStack(spacing: .spacing0x) {
-            Button {
-                selectedType = availability
-            } label: {
-                HStack(spacing: .spacing1x) {
-                    Image(systemName: availability.systemImage)
-                        .font(.standardSFPro(size: .body1, weight: .regular))
-                        .foregroundStyle(Color.textColor)
-                        .frame(width: Constants.iconSize, height: Constants.iconSize)
-                        .background(isSheet ? Color.defaultSheetBackground : Color.defaultBackground, in: Circle())
-
-                    BrightText(availability.rawValue, size: .body1)
-
-                    Spacer(minLength: .spacing0x)
-
-                    BrightTickV5(isTicked: availability == selectedType)
-                }
-                .padding(.vertical, .spacing2x)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if !isLast {
-                BrightDividerV5()
             }
         }
     }
 
     private enum Constants {
-        static let iconSize: CGFloat = 32
+        static let comingSoon = "Coming soon"
     }
 }
 

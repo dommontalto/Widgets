@@ -47,7 +47,7 @@ enum VaultTestAvailability: String, CaseIterable, Identifiable {
     }
 }
 
-enum LabProvider: String, Hashable {
+enum LabProvider: String, Hashable, CaseIterable {
     case junction
     case eirly
 
@@ -64,6 +64,13 @@ enum LabProvider: String, Hashable {
         case .eirly: "AU"
         }
     }
+
+    var website: URL? {
+        switch self {
+        case .junction: URL(string: "https://www.junction.com")
+        case .eirly: URL(string: "https://eirly.health")
+        }
+    }
 }
 
 struct VaultClinicTest: Identifiable, Hashable {
@@ -73,7 +80,8 @@ struct VaultClinicTest: Identifiable, Hashable {
     let categoryIds: [String]
     let included: [String]
     let availability: [VaultTestAvailability]
-    var price: Double = 499.99
+    // The demo clinics leave it out; the lab catalogue always sets it, nil meaning price on request.
+    var price: Double? = 499.99
     var currency = "AUD"
     var labTestId: String?
     var labProvider: LabProvider?
@@ -87,7 +95,18 @@ struct VaultClinicTest: Identifiable, Hashable {
     }
 
     var priceText: String {
-        "$\(price.formatted(.number.precision(.fractionLength(2))))"
+        guard let price else { return Constants.priceOnRequest }
+        return Decimal(price).formatted(.currency(code: currency.uppercased()).locale(.bright))
+    }
+
+    // Eirly checkout charges its quote: the tests plus service fee, collection fee and GST.
+    var priceNote: String? {
+        labProvider == .eirly && price != nil ? Constants.auFeesNote : nil
+    }
+
+    private enum Constants {
+        static let priceOnRequest = "Price on request"
+        static let auFeesNote = "+ fees & GST"
     }
 }
 
@@ -111,7 +130,7 @@ struct VaultTestingClinic: Identifiable, Hashable {
     }
 
     var categories: [VaultTestCategory] {
-        VaultTestCategory.demo.filter { offers($0.id) }
+        VaultTestCategory.all.filter { offers($0.id) }
     }
 
     func offers(_ categoryId: String) -> Bool {
@@ -202,20 +221,6 @@ extension VaultTestOrder {
     }
 }
 
-extension VaultClinicTest {
-    func checkoutItem(type: VaultTestAvailability, clinic: VaultTestingClinic) -> BrightCheckoutItem {
-        BrightCheckoutItem(
-            title: name,
-            subtitle: type.rawValue,
-            systemImage: type.systemImage,
-            detail: detail,
-            priceText: priceText,
-            currency: currency,
-            fulfilment: type.fulfilment(at: clinic)
-        )
-    }
-}
-
 enum VaultTestingSortOrder: String, CaseIterable, Identifiable {
     case proximity = "Proximity"
     case alphabetical = "Alphabetical"
@@ -236,5 +241,19 @@ enum VaultTestingSortOrder: String, CaseIterable, Identifiable {
         case .alphabetical:
             clinics.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         }
+    }
+}
+
+extension VaultClinicTest {
+    func checkoutItem(type: VaultTestAvailability, clinic: VaultTestingClinic) -> BrightCheckoutItem {
+        BrightCheckoutItem(
+            title: name,
+            subtitle: type.rawValue,
+            systemImage: type.systemImage,
+            detail: detail,
+            priceText: priceText,
+            currency: currency,
+            fulfilment: type.fulfilment(at: clinic)
+        )
     }
 }

@@ -12,6 +12,8 @@ final class LabCatalog {
 
     private(set) var clinics: [VaultTestingClinic] = []
     private(set) var region: LabRegion?
+    // Unknown until GET labs/availability answers; ordering stays closed until then.
+    private(set) var availability: [LabProvider: LabAvailability.Provider] = [:]
 
     private let service: LabOrdersServiceProtocol
     private var loaded: [LabRegion: VaultTestingClinic] = [:]
@@ -24,7 +26,7 @@ final class LabCatalog {
     }
 
     var isLoading: Bool {
-        guard let region else { return true }
+        guard let region else { return LabOrdering.isAvailable }
         return loadingRegions.contains(region)
     }
 
@@ -32,7 +34,29 @@ final class LabCatalog {
         loaded[region]
     }
 
+    func canOrder(_ provider: LabProvider) -> Bool {
+        availability[provider]?.available == true
+    }
+
+    func unavailableMessage(_ provider: LabProvider) -> String {
+        availability[provider]?.message ?? Constants.unavailableMessage
+    }
+
+    func refreshAvailability() async {
+        do {
+            let answer = try await service.getAvailability()
+            availability = Dictionary(uniqueKeysWithValues: LabProvider.allCases.compactMap { provider in
+                answer.providers[provider.rawValue].map { (provider, $0) }
+            })
+        } catch {
+            Log("Labs: availability failed – \(error)")
+            availability = [:]
+        }
+    }
+
     func loadIfNeeded() async {
+        guard LabOrdering.isAvailable else { return }
+        await refreshAvailability()
         if let region {
             await load(region)
         } else {
@@ -42,6 +66,8 @@ final class LabCatalog {
 
     func select(_ region: LabRegion) async {
         LabRegion.saved = region
+        // The home view loads through here: without this, ordering stays "Coming soon".
+        if availability.isEmpty { await refreshAvailability() }
         await load(region)
     }
 
@@ -65,11 +91,19 @@ final class LabCatalog {
         if self.region == region {
             clinics = clinic.map { [$0] } ?? []
         }
+        Log("Labs: \(region.title) catalogue shows \(clinic.map { "\($0.name) (\($0.tests.count) tests)" } ?? "nothing")")
     }
 
     private func loadJunction() async -> VaultTestingClinic? {
+        Log("Labs: loading demo Junction catalogue")
         do {
-            let tests = try await service.getLabTests().filter(\.isOrderable).map(Self.junctionTest)
+            let all = try await service.getLabTests()
+            Log("Labs: Junction returned \(all.count) tests")
+            for test in all {
+                Log("Labs: test \(test.id) '\(test.name)' method \(test.method ?? "nil") active \(test.isActive.map(String.init) ?? "nil") price \(test.price.map { "\($0)" } ?? "nil") markers \(test.markers?.count ?? 0) results \(test.markers?.reduce(0) { $0 + ($1.expectedResults?.count ?? 0) } ?? 0) orderable \(test.isOrderable)")
+            }
+            let tests = all.filter(\.isOrderable).map(Self.junctionTest)
+            logCategories(tests)
             Log("Labs: \(tests.count) orderable Junction tests")
             return tests.isEmpty ? nil : Self.clinic(.junction, tests: tests)
         } catch {
@@ -79,13 +113,22 @@ final class LabCatalog {
     }
 
     private func loadEirly() async -> VaultTestingClinic? {
+        Log("Labs: loading demo Eirly catalogue")
         do {
-            let tests = try await service.getEirlyTests().map(Self.eirlyTest)
-            Log("Labs: \(tests.count) Eirly tests")
+            let all = try await service.getEirlyTests()
+            Log("Labs: Eirly returned \(all.count) tests")
+            let tests = all.map(Self.eirlyTest)
+            logCategories(tests)
             return tests.isEmpty ? nil : Self.clinic(.eirly, tests: tests)
         } catch {
             Log("Labs: Eirly catalogue load failed – \(error)")
             return nil
+        }
+    }
+
+    private func logCategories(_ tests: [VaultClinicTest]) {
+        for test in tests {
+            Log("Labs: '\(test.name)' → categories \(test.categoryIds)")
         }
     }
 
@@ -97,7 +140,7 @@ final class LabCatalog {
             distanceKm: 0,
             latitude: 0,
             longitude: 0,
-            services: VaultTestCategory.demo.filter { category in
+            services: VaultTestCategory.all.filter { category in
                 tests.contains { $0.categoryIds.contains(category.id) }
             }.map(\.name),
             tests: tests,
@@ -106,7 +149,11 @@ final class LabCatalog {
     }
 
     private static func junctionTest(_ test: JunctionLabTest) -> VaultClinicTest {
-        let markers = test.markers?.compactMap(\.name) ?? []
+        // A panel is usually one marker whose individual tests are its expected results.
+        let markers = test.markers?.flatMap { marker in
+            let results = marker.expectedResults?.compactMap(\.name) ?? []
+            return results.isEmpty ? [marker.name].compactMap { $0 } : results
+        } ?? []
         return VaultClinicTest(
             id: test.id,
             name: test.name,
@@ -114,7 +161,7 @@ final class LabCatalog {
             categoryIds: LabTestTypes.junction(test.name),
             included: markers.isEmpty ? [sampleLabel(test.sampleType) ?? Constants.kitTitle] : markers,
             availability: [.atHomeKit],
-            price: test.price ?? 0,
+            price: test.shownPrice,
             currency: Constants.junctionCurrency,
             labTestId: test.id,
             labProvider: .junction
@@ -129,7 +176,7 @@ final class LabCatalog {
             categoryIds: LabTestTypes.eirly(test.id),
             included: [eirlyIncluded(test)],
             availability: [test.isKit ? .atHomeKit : .inPerson],
-            price: test.price ?? 0,
+            price: test.price,
             currency: Constants.eirlyCurrency,
             labTestId: test.id,
             labProvider: .eirly
@@ -163,6 +210,7 @@ final class LabCatalog {
         static let eirlyName = "Eirly"
         static let eirlyAddress = "Pathology referrals · Australian collection centres"
         static let eirlyCurrency = "AUD"
+        static let unavailableMessage = "Lab test ordering isn't available yet"
         static let eirlyDetail = "A pathology referral emailed to you. Take it to any partner collection centre in Australia, and your results appear in Bright. Collection fees and GST are added at checkout."
         static let eirlyKitDetail = "A test kit posted to your Australian address. Follow the instructions inside to collect your sample, and your results appear in Bright. Fees and GST are added at checkout."
         static let kitTitle = "At-home test kit"

@@ -5,6 +5,12 @@
 
 import Foundation
 
+enum LabOrdering {
+    static var isAvailable: Bool {
+        true
+    }
+}
+
 enum LabRegion: String, CaseIterable, Identifiable {
     case us
     case au
@@ -14,6 +20,13 @@ enum LabRegion: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .us: "United States"
+        case .au: "Australia"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .us: "US"
         case .au: "Australia"
         }
     }

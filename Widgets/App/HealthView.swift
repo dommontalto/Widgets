@@ -20,6 +20,7 @@ struct HealthView: View {
     @State private var showsEmptyState = false
     @State private var showingGenome = false
     @State private var showingGuidedTesting = false
+    @State private var showingMyOrders = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,10 @@ struct HealthView: View {
                     onDNA: {
                         isMenuExpanded.wrappedValue = false
                         showingGenome = true
+                    },
+                    onMyOrders: {
+                        isMenuExpanded.wrappedValue = false
+                        showingMyOrders = true
                     }
                 ) {
                     BrightHaptic.medium.play()
@@ -57,6 +62,9 @@ struct HealthView: View {
             }
             .navigationDestination(isPresented: $showingGuidedTesting) {
                 VaultGuidedTestingScreen()
+            }
+            .navigationDestination(isPresented: $showingMyOrders) {
+                MyOrdersView()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

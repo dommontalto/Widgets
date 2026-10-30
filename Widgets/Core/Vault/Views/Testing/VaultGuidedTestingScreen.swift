@@ -32,7 +32,7 @@ struct VaultGuidedTestingScreen: View {
                 if !presented { showingLighthouse = false }
             }
             .sheet(item: $receipt, onDismiss: { showingLighthouse = true }) { order in
-                BrightReceiptSheetV5(order: order)
+                LabReceiptSheet(order: order)
             }
     }
 

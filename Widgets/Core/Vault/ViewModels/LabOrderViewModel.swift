@@ -25,8 +25,12 @@ final class LabOrderViewModel {
     var email = ""
     var phone = ""
     var phoneCountry = BrightCountry.default
-    var dateOfBirth = Constants.defaultDateOfBirth
+    // Chosen by the person, never assumed.
+    var dateOfBirth: Date?
     var sex: LabPatientSex?
+    // The results go to this account's Vault, so the test must be for them.
+    var isForMe = false
+    var acceptedConsents = Set<String>()
     private(set) var formNudge = 0
 
     var showingCheckout = false
@@ -34,6 +38,9 @@ final class LabOrderViewModel {
     var showingCheckoutError = false
     private(set) var errorMessage = ""
     private(set) var isPaying = false
+    private(set) var isStartingCheckout = false
+    // What checkout charges: Eirly's quote adds its fees and GST to the tests.
+    private(set) var amountTotal: Double?
 
     private let service: LabOrdersServiceProtocol
     private let onOrder: (VaultTestOrder) -> Void
@@ -51,6 +58,9 @@ final class LabOrderViewModel {
         self.service = service ?? LabOrdersMockService()
         self.onOrder = onOrder
 
+        firstName = Constants.demoFirstName
+        lastName = Constants.demoLastName
+        email = Constants.demoEmail
         phoneCountry = Self.country(for: provider)
     }
 
@@ -75,7 +85,7 @@ final class LabOrderViewModel {
     }
 
     private var price: Double {
-        tests.reduce(0) { $0 + $1.price }
+        amountTotal ?? tests.reduce(0) { $0 + ($1.price ?? 0) }
     }
 
     private var currency: String {
@@ -84,6 +94,24 @@ final class LabOrderViewModel {
 
     var dateOfBirthRange: ClosedRange<Date> {
         Constants.oldestDateOfBirth...Constants.youngestDateOfBirth
+    }
+
+    var datePickerDate: Date {
+        get { dateOfBirth ?? Constants.defaultDateOfBirth }
+        set { dateOfBirth = newValue }
+    }
+
+    // Junction's patient consents; Eirly takes none.
+    var consents: [LabConsent] {
+        provider == .junction ? LabConsent.junction : []
+    }
+
+    func toggleConsent(_ consent: LabConsent) {
+        if acceptedConsents.contains(consent.type) {
+            acceptedConsents.remove(consent.type)
+        } else {
+            acceptedConsents.insert(consent.type)
+        }
     }
 
     var checkoutItem: BrightCheckoutItem {
@@ -102,15 +130,35 @@ final class LabOrderViewModel {
     // MARK: - Patient details
 
     func handleContinue() {
+        guard !isStartingCheckout else { return }
         guard isFormComplete else {
             formNudge += 1
             return
         }
-        showingCheckout = true
+        isStartingCheckout = true
+
+        Task {
+            defer { isStartingCheckout = false }
+            do {
+                switch provider {
+                case .junction:
+                    try await Task.sleep(for: .seconds(Constants.demoConfigSeconds))
+                    amountTotal = nil
+                case .eirly:
+                    let quote = try await service.getEirlyQuote(tests: labTestIds)
+                    amountTotal = Double(quote.amountTotal) / 100
+                }
+                showingCheckout = true
+            } catch {
+                Log("Labs: demo checkout start failed – \(error)")
+                showError(Constants.genericError)
+            }
+        }
     }
 
     private var isFormComplete: Bool {
-        ![firstName, lastName, phone].contains { trim($0).isEmpty } && sex != nil && trim(email).contains("@")
+        ![firstName, lastName, phone].contains { trim($0).isEmpty } && sex != nil && dateOfBirth != nil
+            && trim(email).contains("@") && isForMe && consents.allSatisfy { acceptedConsents.contains($0.type) }
     }
 
     // MARK: - Checkout
@@ -121,7 +169,7 @@ final class LabOrderViewModel {
             showError(provider == .junction ? Constants.usOnlyError : Constants.auOnlyError)
             return
         }
-        guard let labTestId = labTestIds.first, let sex else { return }
+        guard let labTestId = labTestIds.first, let sex, let dateOfBirth else { return }
         isPaying = true
 
         Task {
@@ -131,11 +179,11 @@ final class LabOrderViewModel {
                 switch provider {
                 case .junction:
                     intent = try await service.createPaymentIntent(
-                        junctionRequest(labTestId: labTestId, address: address, sex: sex)
+                        junctionRequest(labTestId: labTestId, address: address, sex: sex, dateOfBirth: dateOfBirth)
                     )
                 case .eirly:
                     intent = try await service.createEirlyPaymentIntent(
-                        eirlyRequest(address: address, sex: sex)
+                        eirlyRequest(address: address, sex: sex, dateOfBirth: dateOfBirth)
                     )
                 }
                 let number = String(intent.labOrderId.suffix(Constants.orderNumberLength)).uppercased()
@@ -179,7 +227,8 @@ final class LabOrderViewModel {
     private func junctionRequest(
         labTestId: String,
         address: BrightShippingAddress,
-        sex: LabPatientSex
+        sex: LabPatientSex,
+        dateOfBirth: Date
     ) -> LabPaymentIntentRequest {
         LabPaymentIntentRequest(
             labTestId: labTestId,
@@ -200,13 +249,17 @@ final class LabOrderViewModel {
                 country: provider.countryCode,
                 receiverName: address.name
             ),
-            savePaymentMethod: false
+            savePaymentMethod: false,
+            testIsForMe: isForMe,
+            consents: consents.map(\.type).filter { acceptedConsents.contains($0) },
+            consentsVersion: LabConsent.version
         )
     }
 
     private func eirlyRequest(
         address: BrightShippingAddress,
-        sex: LabPatientSex
+        sex: LabPatientSex,
+        dateOfBirth: Date
     ) -> EirlyPaymentIntentRequest {
         EirlyPaymentIntentRequest(
             tests: labTestIds,
@@ -225,7 +278,8 @@ final class LabOrderViewModel {
                 state: trim(address.state ?? "").uppercased(),
                 postCode: trim(address.postalCode)
             ),
-            savePaymentMethod: false
+            savePaymentMethod: false,
+            testIsForMe: isForMe
         )
     }
 
@@ -248,6 +302,10 @@ final class LabOrderViewModel {
 
     private enum Constants {
         static let orderNumberLength = 6
+        static let demoConfigSeconds = 0.6
+        static let demoFirstName = "Alex"
+        static let demoLastName = "Morgan"
+        static let demoEmail = "alex@example.com"
         static let genericError = "Something went wrong. Please try again later."
         static let usOnlyError = "Junction kits ship to US addresses only. Choose or add a US address to continue."
         static let auOnlyError = "Eirly referrals are for Australian addresses only. Choose or add an Australian address to continue."
@@ -260,4 +318,20 @@ final class LabOrderViewModel {
             Calendar.autoupdatingCurrent.date(byAdding: .year, value: -years, to: .now) ?? .now
         }
     }
+}
+
+// Junction's patient consents, accepted before payment and sent with the order. The wording
+// still needs sign-off.
+struct LabConsent: Identifiable, Hashable {
+    let type: String
+    let title: String
+
+    var id: String { type }
+
+    static let version = "draft-2026-10-29"
+    static let junction = [
+        LabConsent(type: "hipaa-authorization", title: "HIPAA authorization"),
+        LabConsent(type: "terms-of-use", title: "Lab partner terms of use"),
+        LabConsent(type: "telehealth-informed-consent", title: "Telehealth review of my order"),
+    ]
 }

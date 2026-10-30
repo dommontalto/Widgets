@@ -48,7 +48,12 @@ struct VaultTestCategoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                hero
+                VaultTestHero(
+                    category: category,
+                    title: category.name,
+                    subtitle: "\(count) \(count == 1 ? "test" : "tests")",
+                    pull: pull
+                )
 
                 VStack(spacing: .spacing3x) {
                     ForEach(ExploreSearchClinic.sponsored) { clinic in
@@ -180,8 +185,16 @@ struct VaultTestCategoryView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, .spacing2x)
     }
+}
 
-    private var hero: some View {
+// A category's artwork as a page header that stretches when pulled down.
+struct VaultTestHero: View {
+    let category: VaultTestCategory
+    let title: String
+    let subtitle: String
+    let pull: CGFloat
+
+    var body: some View {
         Color.clear
             .frame(height: Constants.heroHeight)
             .background { heroImage }
@@ -193,11 +206,13 @@ struct VaultTestCategoryView: View {
                     VaultTestCategoryIcon(category: category, symbolSize: .huge)
                         .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-                    BrightText(category.name, size: .standout1, weight: .regular)
+                    BrightText(title, size: .standout1, weight: .regular)
+                        .multilineTextAlignment(.center)
 
-                    BrightText("\(count) \(count == 1 ? "test" : "tests")", size: .standout3)
+                    BrightText(subtitle, size: .standout3)
                 }
                 .blendMode(.overlay)
+                .padding(.horizontal, .spacing3x)
                 .padding(.top, Constants.heroContentTop)
             }
     }
@@ -217,6 +232,7 @@ struct VaultTestCategoryView: View {
         Image(category.backgroundName)
             .resizable()
             .scaledToFill()
+            // Blur feathers the image's edges, so it runs past the clip.
             .scaleEffect(Constants.backgroundOverscan)
             .blur(radius: blur)
     }
@@ -238,7 +254,6 @@ struct VaultTestCategoryView: View {
         static let iconSize: CGFloat = 46
         static let backgroundBlur: CGFloat = 8
         static let fadeBlur: CGFloat = 22
-        // Blur feathers the image's edges, so it runs past the clip.
         static let backgroundOverscan: CGFloat = 1.2
         static let fadeStart: CGFloat = 0.25
     }
@@ -246,6 +261,6 @@ struct VaultTestCategoryView: View {
 
 #Preview {
     NavigationStack {
-        VaultTestCategoryView(category: VaultTestCategory.demo[2]) { _ in }
+        VaultTestCategoryView(category: VaultTestCategory.all[2]) { _ in }
     }
 }

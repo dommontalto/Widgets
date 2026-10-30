@@ -20,7 +20,7 @@ struct ExploreAdDetailView: View {
     @State private var receipt: VaultTestOrder?
 
     private var categories: [VaultTestCategory] {
-        VaultTestCategory.demo.filter { clinic.testingClinic.offers($0.id) }
+        VaultTestCategory.all.filter { clinic.testingClinic.offers($0.id) }
     }
 
     private var tests: [VaultClinicTest] {

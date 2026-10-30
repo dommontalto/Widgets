@@ -59,6 +59,9 @@ struct LabPatientDetailsView: View {
                         number: $viewModel.phone,
                         country: $viewModel.phoneCountry
                     )
+
+                    agreementField
+                        .padding(.top, .spacing2x)
                 }
                 .brightWiggleV5(trigger: viewModel.formNudge)
                 .padding(.horizontal, .spacing3x)
@@ -71,6 +74,7 @@ struct LabPatientDetailsView: View {
                 Constants.continueTitle,
                 systemImage: "arrow.right",
                 buttonSize: .large,
+                isLoading: viewModel.isStartingCheckout,
                 onTapCallback: viewModel.handleContinue
             )
         }
@@ -88,12 +92,13 @@ struct LabPatientDetailsView: View {
     // of it so a tap still opens the calendar.
     private var dateOfBirthField: some View {
         BrightRowV5(Constants.dateOfBirthTitle, color: .defaultSheetModalCards, trailing: {
-            BrightText(viewModel.dateOfBirth.formatted(.brightSlashDate), size: .body1)
+            BrightText(viewModel.dateOfBirth?.formatted(.brightSlashDate) ?? Constants.dateOfBirthPlaceholder, size: .body1,
+                       color: viewModel.dateOfBirth == nil ? .lightTextColor : .textColor)
                 .frame(maxHeight: .infinity)
                 .overlay {
                     DatePicker(
                         Constants.dateOfBirthTitle,
-                        selection: $viewModel.dateOfBirth,
+                        selection: $viewModel.datePickerDate,
                         in: viewModel.dateOfBirthRange,
                         displayedComponents: .date
                     )
@@ -105,6 +110,28 @@ struct LabPatientDetailsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
         })
+    }
+
+    // The results go to this account's Vault; Junction needs the person's consents too.
+    private var agreementField: some View {
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            BrightRowGroupV5(header: Constants.agreementHeader, color: .defaultSheetModalCards) {
+                BrightRowV5(Constants.forMeTitle, trailing: .tick(viewModel.isForMe)) {
+                    viewModel.isForMe.toggle()
+                }
+
+                ForEach(viewModel.consents) { consent in
+                    BrightRowV5(consent.title, trailing: .tick(viewModel.acceptedConsents.contains(consent.type))) {
+                        viewModel.toggleConsent(consent)
+                    }
+                }
+            }
+
+            BrightText(viewModel.consents.isEmpty ? Constants.forMeDetail : Constants.consentsDetail, size: .body3, color: .lightTextColor)
+                .lineSpacing(.lineSpacingMedium)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, .spacing2x)
+        }
     }
 
     private var sexField: some View {
@@ -123,6 +150,11 @@ struct LabPatientDetailsView: View {
         static let firstNamePlaceholder = "First name"
         static let lastNamePlaceholder = "Last name"
         static let dateOfBirthTitle = "Date of birth"
+        static let dateOfBirthPlaceholder = "Choose"
+        static let agreementHeader = "Before you pay"
+        static let forMeTitle = "This test is for me"
+        static let forMeDetail = "The results are saved in your Vault and Lighthouse can read them."
+        static let consentsDetail = "The results are saved in your Vault and Lighthouse can read them. The lab partner needs your HIPAA authorization, agreement to its terms of use and consent to its doctor reviewing your order."
         static let sexPlaceholder = "Sex at birth"
         static let emailPlaceholder = "Email"
         static let phonePlaceholder = "Phone"

@@ -19,10 +19,15 @@ enum LabTestTypes {
     }()
 
     static func eirly(_ testId: String) -> [String] {
-        mapping?.eirly[testId] ?? []
+        orOther(mapping?.eirly[testId])
     }
 
     static func junction(_ name: String) -> [String] {
-        mapping?.junction[name.trimmingCharacters(in: .whitespaces)] ?? []
+        orOther(mapping?.junction[name.trimmingCharacters(in: .whitespaces)])
+    }
+
+    private static func orOther(_ categoryIds: [String]?) -> [String] {
+        guard let categoryIds, !categoryIds.isEmpty else { return [VaultTestCategory.otherId] }
+        return categoryIds
     }
 }

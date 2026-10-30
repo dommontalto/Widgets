@@ -7,14 +7,25 @@
 
 import SwiftUI
 
+struct BrightReceiptStatus: Equatable {
+    let title: String
+    let detail: String
+    var isWorking = false
+    var isFailed = false
+}
+
 struct BrightReceiptSheetV5: View {
     let order: VaultTestOrder
+    var status: BrightReceiptStatus?
 
     var body: some View {
         BrightPageSheetViewV5(horizontalPadding: .spacing0x) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing3x) {
                     header
+                    if let status {
+                        statusCard(status)
+                    }
                     detailsCard
                     totalCard
                 }
@@ -34,6 +45,26 @@ struct BrightReceiptSheetV5: View {
             BrightText(order.placedAt.formatted(.brightDate), size: .body1, color: .lightTextColor)
         }
         .padding(.top, .spacing2x)
+    }
+
+    private func statusCard(_ status: BrightReceiptStatus) -> some View {
+        HStack(alignment: .top, spacing: .spacing2x) {
+            if status.isWorking {
+                ProgressView()
+                    .controlSize(.large)
+            }
+
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                BrightText(status.title, size: .body1, color: status.isFailed ? .defaultRed : .textColor, weight: .regular)
+
+                BrightText(status.detail, size: .body3, color: .lightTextColor)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.spacing3x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
+        .animation(.brightEaseInOut, value: status)
     }
 
     private var detailsCard: some View {

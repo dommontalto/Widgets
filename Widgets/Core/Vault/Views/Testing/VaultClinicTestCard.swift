@@ -48,8 +48,14 @@ struct VaultClinicTestCard: View {
 
                 Spacer(minLength: .spacing0x)
 
-                BrightText(test.priceText, size: .body1, weight: .regular)
-                    .monospacedDigit()
+                VStack(alignment: .trailing, spacing: .spacing05x) {
+                    BrightText(test.priceText, size: .body1, weight: .regular)
+                        .monospacedDigit()
+
+                    if let note = test.priceNote {
+                        BrightText(note, size: .body3, color: .lightTextColor)
+                    }
+                }
             }
 
             BrightDividerV5()

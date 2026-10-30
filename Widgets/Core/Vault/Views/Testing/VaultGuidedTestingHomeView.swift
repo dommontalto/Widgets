@@ -14,10 +14,11 @@ struct VaultGuidedTestingHomeView: View {
     @State private var showingMap = false
     @State private var showingCart = false
     @State private var selectedTest: VaultClinicTest?
+    @State private var selectedCategory: VaultTestCategory?
 
     private let catalog = LabCatalog.shared
 
-    // One page per lab, Eirly first.
+    // One page per region, Australia first.
     private let regions: [LabRegion] = [.au, .us]
 
     private var region: LabRegion {
@@ -26,7 +27,7 @@ struct VaultGuidedTestingHomeView: View {
 
     var body: some View {
         BrightSwipePageViewV5(
-            pages: regions.map { SwipePage(title: $0.provider.title, systemImage: $0.systemImage) },
+            pages: regions.map { SwipePage(title: $0.shortTitle, systemImage: $0.systemImage) },
             fakeLargeTitle: "Labs",
             backgroundColor: .defaultBackground,
             selectedIndex: $selectedPage
@@ -62,14 +63,21 @@ struct VaultGuidedTestingHomeView: View {
         }
         .navigationDestination(item: $selectedTest) { test in
             if let clinic = catalog.clinic(for: region) {
-                VaultTestDetailView(test: test, clinic: clinic, isSheet: false, onOrder: order)
+                VaultTestDetailView(
+                    test: test,
+                    clinic: clinic,
+                    isSheet: false,
+                    style: region.provider == .junction ? VaultPanelTile.styles(for: clinic.tests)[test.id] : nil,
+                    onOrder: order
+                )
             }
         }
+        .navigationDestination(item: $selectedCategory) { category in
+            VaultTestCategoryView(category: category, onOrder: order)
+        }
         .task {
-            await catalog.loadIfNeeded()
-            if let index = catalog.region.flatMap(regions.firstIndex) {
-                selectedPage = index
-            }
+            guard LabOrdering.isAvailable else { return }
+            await catalog.select(region)
         }
         .onChange(of: selectedPage) {
             Task { await catalog.select(region) }
@@ -81,10 +89,26 @@ struct VaultGuidedTestingHomeView: View {
     @ViewBuilder
     private func lab(_ region: LabRegion) -> some View {
         if let clinic = catalog.clinic(for: region) {
-            VaultClinicTestList(clinic: clinic, tests: clinic.tests) { selectedTest = $0 }
-                .padding(.horizontal, .spacing3x)
-                .padding(.top, .spacing3x)
-                .padding(.bottom, .spacing10x)
+            BrightCardGridV5(spacing: .spacing3x) {
+                switch region.provider {
+                case .junction:
+                    let styles = VaultPanelTile.styles(for: clinic.tests)
+                    ForEach(clinic.tests) { test in
+                        VaultPanelTile(test: test, style: styles[test.id] ?? VaultTestCategory.all[0]) {
+                            selectedTest = test
+                        }
+                    }
+                case .eirly:
+                    ForEach(clinic.categories) { category in
+                        VaultTestCategoryTile(category: category, fillsWidth: true, clinic: clinic) {
+                            selectedCategory = category
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, .spacing3x)
+            .padding(.top, .spacing3x)
+            .padding(.bottom, .spacing10x)
         } else if catalog.region != region || catalog.isLoading {
             BrightProgressViewV5()
                 .containerRelativeFrame(.vertical)
@@ -99,7 +123,43 @@ struct VaultGuidedTestingHomeView: View {
 
     private func order(_ order: VaultTestOrder) {
         selectedTest = nil
+        selectedCategory = nil
         onOrder(order)
+    }
+}
+
+// A single lab panel as a tile, wearing a category's artwork.
+struct VaultPanelTile: View {
+    let test: VaultClinicTest
+    let style: VaultTestCategory
+    let onTap: () -> Void
+
+    var body: some View {
+        BrightTileV5(
+            test.name,
+            subtitle: "\(test.included.count) \(test.included.count == 1 ? "test" : "tests")",
+            backgroundImage: style.tileName,
+            fillsWidth: true,
+            onTap: onTap
+        ) {
+            VaultTestCategoryIcon(category: style, symbolSize: .standout1)
+        }
+    }
+
+    // Each panel gets its own artwork: its first category not yet taken, else any unused one.
+    static func styles(for tests: [VaultClinicTest]) -> [String: VaultTestCategory] {
+        var unused = VaultTestCategory.all
+        var styles: [String: VaultTestCategory] = [:]
+        for test in tests {
+            if let index = unused.firstIndex(where: { test.categoryIds.contains($0.id) }) {
+                styles[test.id] = unused.remove(at: index)
+            }
+        }
+        for test in tests where styles[test.id] == nil {
+            let fallback = test.categoryIds.first.flatMap { id in VaultTestCategory.all.first { $0.id == id } }
+            styles[test.id] = unused.isEmpty ? fallback : unused.removeFirst()
+        }
+        return styles
     }
 }
 
@@ -226,10 +286,11 @@ struct VaultTestBrowse: View {
 struct VaultTestCategoryTile: View {
     let category: VaultTestCategory
     var fillsWidth = false
+    var clinic: VaultTestingClinic?
     let onTap: () -> Void
 
     private var count: Int {
-        VaultTestingClinic.testCount(in: category.id)
+        clinic?.count(in: category.id) ?? VaultTestingClinic.testCount(in: category.id)
     }
 
     var body: some View {

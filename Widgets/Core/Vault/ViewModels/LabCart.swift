@@ -9,7 +9,7 @@ struct LabCartItem: Codable, Hashable, Identifiable {
     let labTestId: String
     let testId: String
     let name: String
-    let price: Double
+    let price: Double?
 
     var id: String { labTestId }
 }

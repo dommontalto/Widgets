@@ -15,6 +15,7 @@ struct LabCartView: View {
     @State private var showingDetails = false
 
     private let cart = LabCart.shared
+    private let catalog = LabCatalog.shared
     private let service: LabOrdersServiceProtocol = LabOrdersMockService()
 
     private var cardColor: Color {
@@ -68,7 +69,11 @@ struct LabCartView: View {
             }
         }
         .brightBottomButtonV5 {
-            if !cart.items.isEmpty {
+            if !cart.items.isEmpty, !catalog.canOrder(.eirly) {
+                BrightPillButton(Constants.comingSoon, systemImage: "clock", buttonSize: .large) {}
+                    .disabled(true)
+                    .opacity(.lowOpacity)
+            } else if !cart.items.isEmpty {
                 BrightPillButton(
                     quote.map { "\(Constants.continueTitle) · \($0.totalText)" } ?? Constants.continueTitle,
                     systemImage: "arrow.right",
@@ -129,6 +134,9 @@ struct LabCartView: View {
                 BrightDividerV5()
 
                 priceRow(Constants.totalTitle, value: quote.totalText, weight: .regular)
+            } else if !catalog.canOrder(.eirly) {
+                BrightText(catalog.unavailableMessage(.eirly), size: .body1, color: .lightTextColor)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if quoteFailed {
                 BrightText(Constants.quoteError, size: .body1, color: .defaultRed)
                     .fixedSize(horizontal: false, vertical: true)
@@ -159,7 +167,7 @@ struct LabCartView: View {
         let ids = cart.labTestIds
         quote = nil
         quoteFailed = false
-        guard !ids.isEmpty else { return }
+        guard !ids.isEmpty, catalog.canOrder(.eirly) else { return }
         do {
             let priced = try await service.getEirlyQuote(tests: ids)
             guard ids == cart.labTestIds else { return }
@@ -177,6 +185,7 @@ struct LabCartView: View {
         static let emptyTitle = "Your cart is empty"
         static let emptySubtitle = "Add Australian pathology tests to order them together."
         static let continueTitle = "Continue"
+        static let comingSoon = "Coming soon"
         static let totalTitle = "Total (incl. GST)"
         static let quoteError = "Couldn't price these tests. Try again shortly."
         static let currency = "AUD"
