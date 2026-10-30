@@ -118,7 +118,7 @@ struct GenomeDataView: View {
 
     // Same gap above the dock as the badge has below the pills.
     private var descriptionBottomGap: CGFloat {
-        guard let dockTop else { return .spacing6x + hiddenBelow }
+        guard let dockTop else { return .spacing12x + hiddenBelow }
         return max(0, viewBottom - dockTop) + .spacing3x
     }
 
