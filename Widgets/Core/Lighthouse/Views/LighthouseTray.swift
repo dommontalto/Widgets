@@ -373,8 +373,11 @@ struct LighthouseTray: View {
         )
     }
 
+    // Only a new chat leaves the menu page; everything else opens over it.
     private func pick(_ action: MenuAction) {
-        withAnimation(.brightSnappy) { page = .chat }
+        if action == .newChat {
+            withAnimation(.brightSnappy) { page = .chat }
+        }
         run(action)
     }
 

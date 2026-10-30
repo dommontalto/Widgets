@@ -33,8 +33,12 @@ struct LighthouseMenuView: View {
                 // Typing a search clears the way for the results; the card and
                 // shortcuts come back as soon as the field is empty again.
                 if !isSearching {
-                    modelCard
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    VStack(alignment: .leading, spacing: .spacing3x) {
+                        modelRow
+                        LighthouseUsageView(used: Constants.demoUsage)
+                        BrightDividerV5()
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
 
                     shortcuts
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -67,8 +71,8 @@ struct LighthouseMenuView: View {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var modelCard: some View {
-        HStack(spacing: .spacing2x) {
+    private var modelRow: some View {
+        HStack(spacing: .spacing105x) {
             if usesApiKey {
                 LighthouseApiKeyGlyph(size: Constants.tierImageSize)
 
@@ -76,8 +80,9 @@ struct LighthouseMenuView: View {
             } else {
                 Image(model.tierImageName)
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
                     .frame(width: Constants.tierImageSize, height: Constants.tierImageSize)
+                    .clipShape(Circle())
 
                 BrightText(model.selectedTier().name, size: .heading, color: .semiLightTextColor)
             }
@@ -86,9 +91,6 @@ struct LighthouseMenuView: View {
 
             BrightPillButton(Constants.switchTitle, buttonSize: .small, onTapCallback: onSwitchModel)
         }
-        .padding(.horizontal, .spacing2x + .spacing05x)
-        .padding(.vertical, .spacing105x)
-        .modifier(BrightCardModifierV5())
     }
 
     private var shortcuts: some View {
@@ -322,7 +324,8 @@ struct LighthouseMenuView: View {
         static let renameAction = "Rename"
         static let deleteAction = "Delete"
         static let newChatTitle = "New Chat"
-        static let tierImageSize: CGFloat = 40
+        static let tierImageSize: CGFloat = 30
+        static let demoUsage = 0.34
         static let glyphWidth: CGFloat = 24
         static let rowHeight: CGFloat = 48
     }

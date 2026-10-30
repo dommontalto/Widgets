@@ -1,0 +1,15 @@
+{
+  "images" : [
+    {
+      "filename" : "lighthouse_usage_hatch_v5.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "preserves-vector-representation" : true
+  }
+}

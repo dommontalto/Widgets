@@ -81,33 +81,12 @@ struct LighthouseSettingsSheet: View {
 
     private var usageCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText("\(Constants.usedPercent)", size: .standout1)
-                    .monospacedDigit()
-
-                BrightText(Constants.usedLabel, size: .body1, color: .lightTextColor)
-            }
-
-            usageBar
+            LighthouseUsageView(used: Constants.used)
 
             BrightText(Constants.resetsLabel, size: .body1, color: .lightTextColor)
         }
         .padding(.spacing3x)
         .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
-    }
-
-    private var usageBar: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: .squareCornerRadius)
-                    .fill(Color.textColor.opacity(.ultraLowOpacity))
-
-                RoundedRectangle(cornerRadius: .squareCornerRadius)
-                    .fill(Color.defaultGreen)
-                    .frame(width: proxy.size.width * Double(Constants.usedPercent) / 100)
-            }
-        }
-        .frame(height: Constants.barHeight)
     }
 
     private func toggleCard(_ title: String, detail: String, isOn: Binding<Bool>) -> some View {
@@ -182,10 +161,8 @@ struct LighthouseSettingsSheet: View {
     private enum Constants {
         static let title = "Settings"
         static let limitsTitle = "Weekly Limits"
-        static let usedPercent = 34
-        static let usedLabel = "% used"
+        static let used = 0.34
         static let resetsLabel = "Usage resets 21 Sep, 10 AM"
-        static let barHeight: CGFloat = 24
         static let whisperTitle = "Whisper Mode"
         static let defaultWhisperTitle = "Default to Whisper Mode"
         static let defaultWhisperDetail = "Always open new chats in whisper mode."
