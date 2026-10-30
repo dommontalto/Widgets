@@ -77,8 +77,6 @@ struct LighthouseTray: View {
                 .tag(TrayPage.chat)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        // Full height, so the menu scrolls on under the sheet's edges rather than being cut at them.
-        .ignoresSafeArea(edges: .vertical)
         .scrollDisabled(isResting)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
@@ -214,10 +212,6 @@ struct LighthouseTray: View {
         .animation(.brightSnappy, value: dictation.isListening)
     }
 
-    private var isAskCentred: Bool {
-        !isFieldFocused && draft.isEmpty
-    }
-
     private var askField: some View {
         TextField("", text: $draft, prompt: Text(Constants.askTitle).foregroundStyle(Color.lightTextColor))
             .font(.standard(size: .subheading2, weight: .light))
@@ -226,9 +220,8 @@ struct LighthouseTray: View {
             .focused($isFieldFocused)
             .submitLabel(.send)
             .onSubmit(send)
-            .fixedSize(horizontal: isAskCentred, vertical: false)
-            .frame(maxWidth: .infinity, alignment: isAskCentred ? .center : .leading)
-            .animation(.brightSnappy, value: isAskCentred)
+            .multilineTextAlignment(isFieldFocused || !draft.isEmpty ? .leading : .center)
+            .frame(maxWidth: .infinity)
             .frame(height: BrightButtonSizes.large.rawValue)
             .contentShape(.rect)
             .onTapGesture { isFieldFocused = true }
