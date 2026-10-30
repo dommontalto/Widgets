@@ -273,6 +273,8 @@ struct LighthouseMenuView: View {
             BrightPillButton(
                 Constants.newChatTitle,
                 systemImage: "bubble.left",
+                color: .defaultSkyBlue,
+                textColor: .white,
                 buttonSize: .large,
                 onTapCallback: onNewChat
             )

@@ -44,6 +44,8 @@ struct LighthouseTray: View {
     // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
     @State private var isKeyboardShowing = false
     // The welcome fades in only once the tray has finished moving to half or full.
+    // The placeholder's own width: a centred field's ideal width alone cuts it short.
+    @State private var askPromptWidth: CGFloat = 0
     @State private var showsWelcome = false
 
     private var isResting: Bool {
@@ -87,8 +89,20 @@ struct LighthouseTray: View {
         .defaultScrollAnchor(.trailing)
         .scrollIndicators(.hidden)
         .scrollDisabled(isResting)
+        // Unfocused as the swipe starts, so the keyboard slides away as it does anywhere else.
+        .onScrollPhaseChange { _, phase in
+            if phase == .interacting { isFieldFocused = false }
+        }
+        // Pulled up to full, the tray reads as a page rather than a sheet.
+        .background(Color.defaultBackground.opacity(detent == .large ? 1 : 0).ignoresSafeArea())
+        .animation(.brightEaseInOut, value: detent == .large)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
+        }
+        .onChange(of: page) { _, page in
+            guard page == .menu else { return }
+            isFieldFocused = false
+            isChatTyping = false
         }
         .task {
             guard let initialPrompt else { return }
@@ -221,6 +235,10 @@ struct LighthouseTray: View {
         .animation(.brightSnappy, value: dictation.isListening)
     }
 
+    private var isAskCentred: Bool {
+        !isFieldFocused && draft.isEmpty
+    }
+
     private var askField: some View {
         TextField("", text: $draft, prompt: Text(Constants.askTitle).foregroundStyle(Color.lightTextColor))
             .font(.standard(size: .subheading2, weight: .light))
@@ -229,8 +247,17 @@ struct LighthouseTray: View {
             .focused($isFieldFocused)
             .submitLabel(.send)
             .onSubmit(send)
-            .multilineTextAlignment(isFieldFocused || !draft.isEmpty ? .leading : .center)
-            .frame(maxWidth: .infinity)
+            .frame(minWidth: isAskCentred ? askPromptWidth + .spacing2x : nil)
+            .fixedSize(horizontal: isAskCentred, vertical: false)
+            .frame(maxWidth: .infinity, alignment: isAskCentred ? .center : .leading)
+            .animation(.brightSnappy, value: isAskCentred)
+            .background {
+                Text(Constants.askTitle)
+                    .font(.standard(size: .subheading2, weight: .light))
+                    .fixedSize()
+                    .hidden()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { askPromptWidth = $0 }
+            }
             .frame(height: BrightButtonSizes.large.rawValue)
             .contentShape(.rect)
             .onTapGesture { isFieldFocused = true }
