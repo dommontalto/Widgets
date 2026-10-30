@@ -16,7 +16,7 @@ private struct BrightBottomButtonV5<Label: View>: ViewModifier {
                 button
                     .frame(maxWidth: .infinity)
                     .padding(.top, .spacing2x)
-                    .padding(.bottom, .spacing6x)
+                    .padding(.bottom, .spacing12x)
             }
     }
 }
