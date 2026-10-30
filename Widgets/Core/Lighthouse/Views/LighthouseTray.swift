@@ -33,7 +33,7 @@ struct LighthouseTray: View {
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
     @State private var showingSettings = false
-    @State private var page = TrayPage.chat
+    @State private var page: TrayPage? = .chat
     @State private var chatResetCount = 0
     @State private var attachments = [BrightChatAttachment]()
     @State private var attachmentSource: BrightChatAttachmentSource?
@@ -67,16 +67,25 @@ struct LighthouseTray: View {
     }
 
     var body: some View {
-        // The menu page sits to the left of the chat: swipe across to it, or tap the button.
-        TabView(selection: $page) {
-            lighthouseMenu
-                .padding(.top, .spacing2x)
-                .tag(TrayPage.menu)
+        // The menu page sits to the left of the chat: swipe across to it, or tap the button. A paging scroll view
+        // rather than a page TabView, which loses its place and falls back to the menu when the tray changes height.
+        ScrollView(.horizontal) {
+            HStack(spacing: .spacing0x) {
+                lighthouseMenu
+                    .padding(.top, .spacing2x)
+                    .containerRelativeFrame(.horizontal)
+                    .id(TrayPage.menu)
 
-            trayColumn
-                .tag(TrayPage.chat)
+                trayColumn
+                    .containerRelativeFrame(.horizontal)
+                    .id(TrayPage.chat)
+            }
+            .scrollTargetLayout()
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $page)
+        .defaultScrollAnchor(.trailing)
+        .scrollIndicators(.hidden)
         .scrollDisabled(isResting)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
