@@ -27,7 +27,7 @@ struct VaultGuidedTestingHomeView: View {
     var body: some View {
         BrightSwipePageViewV5(
             pages: regions.map { SwipePage(title: $0.provider.title, systemImage: $0.systemImage) },
-            fakeLargeTitle: "Guided Testing",
+            fakeLargeTitle: "Labs",
             backgroundColor: .defaultBackground,
             selectedIndex: $selectedPage
         ) { page in
@@ -200,7 +200,7 @@ struct VaultTestBrowse: View {
 
     var body: some View {
         if !categories.isEmpty {
-            BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Guided Testing", onTap: { showsAllCategories = true }) {
+            BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Labs", onTap: { showsAllCategories = true }) {
                 BrightTileRowV5(blur: blur) {
                     ForEach(categories) { category in
                         VaultTestCategoryTile(category: category) { selectedCategory = category }
@@ -252,7 +252,7 @@ struct VaultTestCategoriesView: View {
     @State private var selectedCategory: VaultTestCategory?
 
     var body: some View {
-        BrightPageViewV5(title: "Guided Testing") {
+        BrightPageViewV5(title: "Labs") {
             BrightCardGridV5(spacing: .spacing3x) {
                 ForEach(VaultTestCategory.offered) { category in
                     VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }

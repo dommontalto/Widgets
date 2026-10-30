@@ -104,7 +104,7 @@ enum LighthouseDemo {
         LighthouseHistoryEntry(title: "Zone 2 Volume for the Off-Season", when: "21 Aug"),
         LighthouseHistoryEntry(title: "Comparing Two Weeks of Recovery Scores", when: "18 Aug"),
         LighthouseHistoryEntry(title: "Travel Week: Keeping the Routine", when: "14 Aug"),
-        LighthouseHistoryEntry(title: "First Look at My Genome Summary", when: "9 Aug"),
+        LighthouseHistoryEntry(title: "First Look at My DNA Summary", when: "9 Aug"),
     ]
 
     static let checkIns = [

@@ -28,7 +28,7 @@ struct GenomeView: View {
     private var content: some View {
         BrightSwipePageViewV5(
             pages: GenomeViewTab.allCases.map { SwipePage(title: $0.displayTitle, systemImage: $0.systemImage) },
-            fakeLargeTitle: "Genome",
+            fakeLargeTitle: "DNA",
             pillAccessory: viewModel.isDemo ? AnyView(GenomeSampleTag()) : nil,
             verticalScrollDisabledPageIndex: GenomeViewTab.data.rawValue,
             bottomSafeArea: false,

@@ -25,10 +25,8 @@ struct GenomeCategoryView: View {
 
 
     var body: some View {
-        BrightPageViewV5 {
+        BrightPageViewV5(title: category.title) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                header
-
                 if let percentileBar = detail?.percentileBar {
                     BrightWaveWidgetV5(
                         title: "Genetic Risk Percentile",
@@ -61,27 +59,19 @@ struct GenomeCategoryView: View {
         }
     }
 
-    private var header: some View {
-        HStack(spacing: .spacing2x) {
-            Image(category.imageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: .spacing5x, height: .spacing5x)
-            BrightText(category.title, size: .standout3)
-        }
-    }
-
     private func section(title: String, markers: [GenomeCategoryMarker]) -> some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
             BrightText(title, size: .standout2)
                 .padding(.leading, .spacing2x)
-            ForEach(markers) { marker in
-                Button {
-                    onSelectMarker(marker.canonicalName)
-                } label: {
-                    GenomeCategoryMarkerRow(marker: marker)
+            VStack(spacing: .spacing2x) {
+                ForEach(markers) { marker in
+                    Button {
+                        onSelectMarker(marker.canonicalName)
+                    } label: {
+                        GenomeCategoryMarkerRow(marker: marker)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }

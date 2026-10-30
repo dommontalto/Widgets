@@ -50,7 +50,7 @@ struct GenomeOrderStatusWidget: View {
             HStack(spacing: .spacing2x) {
                 Image(ImageNames.genomeDnaV5)
 
-                BrightText("Genome", size: .body1)
+                BrightText("DNA", size: .body1)
             }
             Spacer()
 
@@ -81,7 +81,7 @@ struct GenomeOrderStatusWidget: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             BrightPillButton("Contact us", systemImage: "envelope") {
-                let subject = "Genome order — \(status.displayTitle)"
+                let subject = "DNA order — \(status.displayTitle)"
                     .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
                 if let url = URL(string: "mailto:hello@thebrightapp.xyz?subject=\(subject)") {
                     openURL(url)

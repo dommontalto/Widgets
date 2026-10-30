@@ -80,7 +80,7 @@ extension ExploreAgent {
             ],
             suggestions: [
                 ExerciseProgramChatExample("newspaper", "Weekly digest"),
-                ExerciseProgramChatExample("allergens", "My genome"),
+                ExerciseProgramChatExample("allergens", "My DNA"),
                 ExerciseProgramChatExample("drop", "My biomarkers"),
                 ExerciseProgramChatExample("checkmark.seal", "Trusted sources"),
             ],

@@ -14,7 +14,7 @@ struct GenomeOrderSheet: View {
                 VStack(spacing: .spacing0x) {
                     BrightPlaceholderViewV5(
                         image: ImageNames.genomeOrderDnaHeroV5,
-                        title: "Order your genome test",
+                        title: "Order your DNA test",
                         subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
                         fillsViewport: false
                     )

@@ -605,7 +605,7 @@ private struct WhatsNewSection: Identifiable {
             ]
         ),
         .init(
-            title: "Guided Testing",
+            title: "Labs",
             detail: "Order lab tests and medical scans from labs around the world, no subscription needed, with results sent to your Vault.",
             layout: .carousel,
             cards: [

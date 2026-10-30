@@ -7,7 +7,7 @@ import SwiftUI
 
 struct GenomeInfoSheet: View {
     var body: some View {
-        BrightPageSheetViewV5(title: "About Genome") {
+        BrightPageSheetViewV5(title: "About DNA") {
             content
         }
     }
