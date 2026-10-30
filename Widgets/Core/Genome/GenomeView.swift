@@ -172,8 +172,8 @@ private struct GenomePresentations: ViewModifier {
                 if index == GenomeViewTab.summary.rawValue { orderViewModel.isOrderTrayDismissed = false }
             }
             .onAppear { orderViewModel.isOrderTrayDismissed = false }
-            .sheet(item: $viewModel.selectedCategory) { category in
-                GenomeCategorySheet(category: category) { viewModel.showOnStrand(canonicalName: $0) }
+            .navigationDestination(item: $viewModel.selectedCategory) { category in
+                GenomeCategoryView(category: category) { viewModel.showOnStrand(canonicalName: $0) }
             }
     }
 

@@ -1,11 +1,11 @@
 //
-//  GenomeCategorySheet.swift
+//  GenomeCategoryView.swift
 //  Widgets
 //
 
 import SwiftUI
 
-struct GenomeCategorySheet: View {
+struct GenomeCategoryView: View {
     let category: GenomeCategory
     var onSelectMarker: (String) -> Void = { _ in }
 
@@ -25,39 +25,36 @@ struct GenomeCategorySheet: View {
 
 
     var body: some View {
-        BrightPageSheetViewV5 {
-            ScrollView {
-                VStack(alignment: .leading, spacing: .spacing3x) {
-                    header
+        BrightPageViewV5 {
+            VStack(alignment: .leading, spacing: .spacing3x) {
+                header
 
-                    if let percentileBar = detail?.percentileBar {
-                        BrightWaveWidgetV5(
-                            title: "Genetic Risk Percentile",
-                            fraction: Double(percentileBar.value) / 100,
-                            emptySubtitle: "",
-                            style: .genome
-                        )
+                if let percentileBar = detail?.percentileBar {
+                    BrightWaveWidgetV5(
+                        title: "Genetic Risk Percentile",
+                        fraction: Double(percentileBar.value) / 100,
+                        emptySubtitle: "",
+                        style: .genome
+                    )
 
-                        if let description = percentileBar.displayDescription {
-                            BrightText(description, size: .body4, color: .lightTextColor, weight: .regular)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .lineSpacing(.lineSpacingMedium)
-                                .padding(.horizontal, .spacing1x)
-                        }
-                    }
-
-                    if !featured.isEmpty {
-                        section(title: "Leading contributors", markers: featured)
-                    }
-
-                    if !others.isEmpty {
-                        section(title: "All markers", markers: others)
+                    if let description = percentileBar.displayDescription {
+                        BrightText(description, size: .body4, color: .lightTextColor, weight: .regular)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(.lineSpacingMedium)
+                            .padding(.horizontal, .spacing1x)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, .spacing3x)
+
+                if !featured.isEmpty {
+                    section(title: "Leading contributors", markers: featured)
+                }
+
+                if !others.isEmpty {
+                    section(title: "All markers", markers: others)
+                }
             }
-            .scrollIndicators(.hidden)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, .spacing3x)
         }
         .onAppear {
             detail = GenomeDemo.categoryDetail(id: category.id)
@@ -111,7 +108,7 @@ private struct GenomeCategoryMarkerRow: View {
         }
         .padding(.spacing3x)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
+        .modifier(BrightCardModifierV5())
     }
 
     private var trailing: some View {

@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-// The iOS app's side menu. Labs, DNA and Edit Home screen work;
+// The iOS app's side menu. What's New, Labs, DNA and Edit Home screen work;
 // the account rows and Log out are laid out but inert.
 struct SideMenuView: View {
     @Binding var isExpanded: Bool
@@ -23,6 +23,10 @@ struct SideMenuView: View {
                 .padding(.bottom, .spacing6x)
 
             VStack(alignment: .leading, spacing: .spacing3x) {
+                tile(image: ImageNames.sideMenuWhatsNewV5, title: "What’s New in V5") {
+                    showingWhatsNew = true
+                }
+                .staggered(at: 0, in: visibleRows)
                 tile(image: ImageNames.sideMenuLabsV5, title: "Labs", action: onLabs)
                     .staggered(at: 0, in: visibleRows)
                 tile(image: ImageNames.sideMenuDNAV5, title: "DNA", action: onDNA)

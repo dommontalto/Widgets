@@ -54,6 +54,9 @@ struct MainDockView: View {
                 }
             }
             .animation(.brightBouncy, value: isDockHidden)
+            .onChange(of: isMenuExpanded) { _, expanded in
+                if expanded { showingLighthouse = false }
+            }
             .sheet(isPresented: $showingLighthouse) {
                 LighthouseTray(
                     detent: $lighthouseDetent,
@@ -93,7 +96,8 @@ struct MainDockView: View {
                 HealthView(
                     onOpenLighthouse: openLighthouse,
                     onRootCovered: { setCovered(.home, $0) },
-                    isMenuExpanded: $isMenuExpanded
+                    isMenuExpanded: $isMenuExpanded,
+                    onNavTap: { showingLighthouse = false }
                 )
                 .toolbarVisibility(isMenuExpanded ? .hidden : dockVisibility, for: .tabBar)
             } label: {

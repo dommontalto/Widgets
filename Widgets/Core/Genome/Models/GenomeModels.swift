@@ -83,7 +83,7 @@ enum GenomeCategoryState: String {
     case unavailable
 }
 
-struct GenomeCategory: Codable, Identifiable {
+struct GenomeCategory: Codable, Identifiable, Hashable {
     let id: String
     let title: String
     let iconKey: String
