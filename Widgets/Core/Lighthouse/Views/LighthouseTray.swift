@@ -33,7 +33,7 @@ struct LighthouseTray: View {
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
     @State private var showingSettings = false
-    @State private var showingHistory = false
+    @State private var page = TrayPage.chat
     @State private var chatResetCount = 0
     @State private var attachments = [BrightChatAttachment]()
     @State private var attachmentSource: BrightChatAttachmentSource?
@@ -67,26 +67,20 @@ struct LighthouseTray: View {
     }
 
     var body: some View {
-        VStack(spacing: .spacing0x) {
-            if !isResting {
-                // The menu floats over the chat, so messages scroll on up under it rather than being cut at its edge.
-                chat
-                    .environment(\.brightChatShowsInput, false)
-                    .environment(\.brightChatShowsBottomEdge, true)
-                    .safeAreaPadding(.top, Constants.menuRowHeight)
-                    .brightSoftScrollEdgesV5()
-                    .overlay(alignment: .top) { menuRow }
-                    .transition(.opacity)
-            }
+        // The menu page sits to the left of the chat: swipe across to it, or tap the button.
+        TabView(selection: $page) {
+            lighthouseMenu
+                .padding(.top, .spacing2x)
+                .tag(TrayPage.menu)
 
-            if !attachments.isEmpty, !isResting {
-                attachmentStrip
-                    .transition(.opacity)
-            }
-
-            askRow
+            trayColumn
+                .tag(TrayPage.chat)
         }
-        .frame(maxHeight: .infinity, alignment: .bottom)
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .scrollDisabled(isResting)
+        .onChange(of: isResting) { _, resting in
+            if resting { page = .chat }
+        }
         .task {
             guard let initialPrompt else { return }
             sentPrompt = initialPrompt
@@ -152,9 +146,6 @@ struct LighthouseTray: View {
         ) { result in
             attach(try? result.get())
         }
-        .sheet(isPresented: $showingHistory) {
-            LighthouseHistorySheet { _ in startNewChat() }
-        }
         .sheet(isPresented: $showingSettings) {
             LighthouseSettingsSheet()
         }
@@ -167,6 +158,29 @@ struct LighthouseTray: View {
                 onApiKeySaved: { apiKey = $0 }
             ) { model = $0; apiKey = "" }
         }
+    }
+
+    private var trayColumn: some View {
+        VStack(spacing: .spacing0x) {
+            if !isResting {
+                // The menu floats over the chat, so messages scroll on up under it rather than being cut at its edge.
+                chat
+                    .environment(\.brightChatShowsInput, false)
+                    .environment(\.brightChatShowsBottomEdge, true)
+                    .safeAreaPadding(.top, Constants.menuRowHeight)
+                    .brightSoftScrollEdgesV5()
+                    .overlay(alignment: .top) { menuRow }
+                    .transition(.opacity)
+            }
+
+            if !attachments.isEmpty, !isResting {
+                attachmentStrip
+                    .transition(.opacity)
+            }
+
+            askRow
+        }
+        .frame(maxHeight: .infinity, alignment: .bottom)
     }
 
     // MARK: - Ask
@@ -206,7 +220,7 @@ struct LighthouseTray: View {
             .focused($isFieldFocused)
             .submitLabel(.send)
             .onSubmit(send)
-            .multilineTextAlignment(.center)
+            .multilineTextAlignment(isFieldFocused || !draft.isEmpty ? .leading : .center)
             .frame(maxWidth: .infinity)
             .frame(height: BrightButtonSizes.large.rawValue)
             .contentShape(.rect)
@@ -277,12 +291,13 @@ struct LighthouseTray: View {
         .accessibilityLabel("Attach")
     }
 
-    // Pulled up only: the menu top right.
+    // Pulled up only: the menu page's button top left.
     private var menuRow: some View {
         HStack(spacing: .spacing2x) {
-            Spacer(minLength: .spacing0x)
+            BrightRoundButton(systemImage: "sidebar.left", size: .large) { withAnimation(.brightSnappy) { page = .menu } }
+                .accessibilityLabel("Lighthouse menu")
 
-            menu
+            Spacer(minLength: .spacing0x)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing3x)
@@ -308,22 +323,46 @@ struct LighthouseTray: View {
         )
     }
 
-    // MARK: - Menu
+    // MARK: - Old menu page
 
-    private var menu: some View {
-        Menu {
-            Button("New Chat", systemImage: "square.and.pencil", action: startNewChat)
-            Button("History", systemImage: "clock.arrow.circlepath") { showingHistory = true }
-            Button("Switch Model", systemImage: "cpu") { showingModelSelector = true }
-            Divider()
-            Button("Check-Ins", systemImage: "person.badge.clock") { showingCheckIns = true }
-            Button("Configurations", systemImage: "slider.horizontal.3") { showingConfigurations = true }
-            Button("Settings", systemImage: "gearshape") { showingSettings = true }
-        } label: {
-            BrightRoundButton(systemImage: "line.3.horizontal", size: .large)
-                .allowsHitTesting(false)
+    private var lighthouseMenu: some View {
+        LighthouseMenuView(
+            model: model,
+            usesApiKey: !apiKey.isEmpty,
+            onSwitchModel: { pick(.switchModel) },
+            onCheckIns: { pick(.checkIns) },
+            onConfigurations: { pick(.configurations) },
+            onSettings: { pick(.settings) },
+            onNewChat: { pick(.newChat) }
+        )
+    }
+
+    private func pick(_ action: MenuAction) {
+        withAnimation(.brightSnappy) { page = .chat }
+        run(action)
+    }
+
+    private func run(_ action: MenuAction) {
+        switch action {
+        case .switchModel: showingModelSelector = true
+        case .checkIns: showingCheckIns = true
+        case .configurations: showingConfigurations = true
+        case .settings: showingSettings = true
+        case .newChat: startNewChat()
         }
-        .accessibilityLabel("Lighthouse menu")
+    }
+
+    private enum TrayPage {
+        case menu
+        case chat
+    }
+
+    private enum MenuAction {
+        case switchModel
+        case checkIns
+        case configurations
+        case settings
+        case newChat
     }
 
     // MARK: - Actions
