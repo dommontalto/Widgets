@@ -66,7 +66,8 @@ struct BrightLineChartWidgetV5: View {
         self.allowsSelection = allowsSelection
 
         let latest = samples.last?.date ?? .now
-        let interval = range.interval(endingAt: latest)
+        // The server counts a rolling hour back from now, so ending it at the last reading would leave its start empty.
+        let interval = range.interval(endingAt: range.isRolling ? .now : latest)
         let visible = Self.plotted(samples, in: interval, bucket: range.bucket)
         let values = visible.map(\.value)
 
