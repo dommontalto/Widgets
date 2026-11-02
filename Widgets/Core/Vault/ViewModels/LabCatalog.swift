@@ -38,10 +38,6 @@ final class LabCatalog {
         availability[provider]?.available == true
     }
 
-    func unavailableMessage(_ provider: LabProvider) -> String {
-        availability[provider]?.message ?? Constants.unavailableMessage
-    }
-
     func refreshAvailability() async {
         do {
             let answer = try await service.getAvailability()
@@ -210,7 +206,6 @@ final class LabCatalog {
         static let eirlyName = "Eirly"
         static let eirlyAddress = "Pathology referrals · Australian collection centres"
         static let eirlyCurrency = "AUD"
-        static let unavailableMessage = "Lab test ordering isn't available yet"
         static let eirlyDetail = "A pathology referral emailed to you. Take it to any partner collection centre in Australia, and your results appear in Bright. Collection fees and GST are added at checkout."
         static let eirlyKitDetail = "A test kit posted to your Australian address. Follow the instructions inside to collect your sample, and your results appear in Bright. Fees and GST are added at checkout."
         static let kitTitle = "At-home test kit"

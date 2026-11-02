@@ -10,8 +10,6 @@ struct VaultClinicTestCard: View {
     var color: Color = .defaultSheetModalCards
     let onTap: () -> Void
 
-    private let cart = LabCart.shared
-
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing105x) {
@@ -34,15 +32,6 @@ struct VaultClinicTestCard: View {
                         title: availability.rawValue,
                         tint: availability.tint,
                         fill: availability.tint.opacity(.veryMinimalOpacity)
-                    )
-                }
-
-                if cart.contains(test) {
-                    BrightChipV5(
-                        title: "In Cart",
-                        systemImage: "cart.fill",
-                        tint: .defaultGreen,
-                        fill: Color.defaultGreen.opacity(.veryMinimalOpacity)
                     )
                 }
 

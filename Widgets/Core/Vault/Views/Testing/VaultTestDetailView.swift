@@ -16,10 +16,8 @@ struct VaultTestDetailView: View {
 
     @State private var selectedType: VaultTestAvailability
     @State private var showingPayment = false
-    @State private var showingCart = false
     @State private var pull: CGFloat = 0
 
-    private let cart = LabCart.shared
     private let catalog = LabCatalog.shared
 
     private var cardColor: Color {
@@ -55,12 +53,6 @@ struct VaultTestDetailView: View {
                         onOrder(VaultTestOrder(test: test, clinic: clinic, type: selectedType, details: details))
                     }
                 }
-            }
-            .navigationDestination(isPresented: $showingCart) {
-                LabCartView(clinic: clinic, isSheet: isSheet, onOrder: onOrder)
-            }
-            .brightHapticV5(trigger: cart.items.count) { old, new in
-                new > old ? .success : .light
             }
     }
 
@@ -134,21 +126,8 @@ struct VaultTestDetailView: View {
 
     @ViewBuilder
     private var availableOrderButton: some View {
-        switch test.labProvider {
-        case .junction, nil:
-            BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
-                showingPayment = true
-            }
-        case .eirly:
-            if cart.contains(test) || cart.isFull {
-                BrightPillButton("View Cart", systemImage: "cart", buttonSize: .large) {
-                    showingCart = true
-                }
-            } else {
-                BrightPillButton("Add to Cart", systemImage: "cart.badge.plus", buttonSize: .large) {
-                    cart.add(test)
-                }
-            }
+        BrightPillButton("Order", systemImage: "cart.badge.plus", buttonSize: .large) {
+            showingPayment = true
         }
     }
 

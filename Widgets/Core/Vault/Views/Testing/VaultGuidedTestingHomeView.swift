@@ -12,7 +12,6 @@ struct VaultGuidedTestingHomeView: View {
 
     @State private var selectedPage = 0
     @State private var showingMap = false
-    @State private var showingCart = false
     @State private var selectedTest: VaultClinicTest?
     @State private var selectedCategory: VaultTestCategory?
 
@@ -39,26 +38,12 @@ struct VaultGuidedTestingHomeView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     LabCentresMapButton { showingMap = true }
                 }
-                if #available(iOS 26, *) {
-                    ToolbarSpacer(.fixed, placement: .topBarTrailing)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    LabCartButton { showingCart = true }
-                }
             }
         }
         .navigationDestination(isPresented: $showingMap) {
             LabCollectionCentresMapView { order in
                 showingMap = false
                 onOrder(order)
-            }
-        }
-        .navigationDestination(isPresented: $showingCart) {
-            if let clinic = catalog.clinic(for: .au) {
-                LabCartView(clinic: clinic, isSheet: false) { order in
-                    showingCart = false
-                    onOrder(order)
-                }
             }
         }
         .navigationDestination(item: $selectedTest) { test in
@@ -247,42 +232,6 @@ struct VaultClinicLogo: View {
     }
 }
 
-struct VaultTestBrowse: View {
-    var blur = false
-    let onOrder: (VaultTestOrder) -> Void
-
-    @State private var showsAllCategories = false
-    @State private var selectedCategory: VaultTestCategory?
-
-    private var categories: [VaultTestCategory] {
-        VaultTestCategory.offered
-    }
-
-    var body: some View {
-        if !categories.isEmpty {
-            BrightWidgetTitleV5(icon: .symbol("square.grid.2x2"), title: "Labs", onTap: { showsAllCategories = true }) {
-                BrightTileRowV5(blur: blur) {
-                    ForEach(categories) { category in
-                        VaultTestCategoryTile(category: category) { selectedCategory = category }
-                    }
-                }
-            }
-            .navigationDestination(isPresented: $showsAllCategories) {
-                VaultTestCategoriesView(onOrder: order)
-            }
-            .navigationDestination(item: $selectedCategory) { category in
-                VaultTestCategoryView(category: category, onOrder: order)
-            }
-        }
-    }
-
-    private func order(_ order: VaultTestOrder) {
-        showsAllCategories = false
-        selectedCategory = nil
-        onOrder(order)
-    }
-}
-
 struct VaultTestCategoryTile: View {
     let category: VaultTestCategory
     var fillsWidth = false
@@ -302,30 +251,6 @@ struct VaultTestCategoryTile: View {
             onTap: onTap
         ) {
             VaultTestCategoryIcon(category: category, symbolSize: .standout1)
-        }
-    }
-}
-
-// Every test category at once, laid out like Genome's categories.
-struct VaultTestCategoriesView: View {
-    let onOrder: (VaultTestOrder) -> Void
-
-    @State private var selectedCategory: VaultTestCategory?
-
-    var body: some View {
-        BrightPageViewV5(title: "Labs") {
-            BrightCardGridV5(spacing: .spacing3x) {
-                ForEach(VaultTestCategory.offered) { category in
-                    VaultTestCategoryTile(category: category, fillsWidth: true) { selectedCategory = category }
-                }
-            }
-            .padding(.bottom, .spacing4x)
-        }
-        .navigationDestination(item: $selectedCategory) { category in
-            VaultTestCategoryView(category: category) { order in
-                selectedCategory = nil
-                onOrder(order)
-            }
         }
     }
 }

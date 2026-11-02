@@ -84,10 +84,6 @@ extension VaultTestCategory {
     static func named(_ id: String) -> VaultTestCategory? {
         all.first { $0.id == id }
     }
-
-    @MainActor static var offered: [VaultTestCategory] {
-        all.filter { VaultTestingClinic.testCount(in: $0.id) > 0 }
-    }
 }
 
 extension VaultTestOrder {

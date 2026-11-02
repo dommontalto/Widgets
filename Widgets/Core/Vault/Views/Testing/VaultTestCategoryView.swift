@@ -14,13 +14,11 @@ struct VaultTestCategoryView: View {
     @State private var query = ""
     @State private var selectedTest: VaultClinicTest?
     @State private var showingMap = false
-    @State private var showingCart = false
     @State private var pull: CGFloat = 0
     @State private var shownAd: ExploreSearchClinic?
     @Namespace private var adZoom
 
     private let catalog = LabCatalog.shared
-    private let cart = LabCart.shared
 
     private var clinic: VaultTestingClinic? {
         catalog.region.flatMap(catalog.clinic(for:))
@@ -39,10 +37,6 @@ struct VaultTestCategoryView: View {
         guard let clinic else { return 0 }
         let sections = clinic.tests(in: category.id)
         return sections.primary.count + sections.also.count
-    }
-
-    private var showsCartButton: Bool {
-        catalog.region == .au && !cart.items.isEmpty
     }
 
     var body: some View {
@@ -96,17 +90,6 @@ struct VaultTestCategoryView: View {
                 }
             }
         }
-        .brightBottomButtonV5 {
-            if showsCartButton {
-                BrightPillButton(
-                    "View Cart · \(cart.items.count) \(cart.items.count == 1 ? "test" : "tests")",
-                    systemImage: "cart",
-                    buttonSize: .large
-                ) {
-                    showingCart = true
-                }
-            }
-        }
         .fullScreenCover(item: $shownAd) { clinic in
             ExploreAdDetailView(clinic: clinic)
                 .navigationTransition(.zoom(sourceID: clinic.id, in: adZoom))
@@ -122,18 +105,9 @@ struct VaultTestCategoryView: View {
                 VaultTestDetailView(test: test, clinic: clinic, isSheet: false, onOrder: onOrder)
             }
         }
-        .navigationDestination(isPresented: $showingCart) {
-            if let clinic = catalog.clinic(for: .au) {
-                LabCartView(clinic: clinic, isSheet: false) { order in
-                    showingCart = false
-                    onOrder(order)
-                }
-            }
-        }
         .onChange(of: catalog.region) { query = "" }
         .animation(.brightEaseInOut, value: catalog.region)
         .animation(.brightSnappy, value: query)
-        .animation(.brightEaseInOut, value: showsCartButton)
     }
 
     @ViewBuilder
