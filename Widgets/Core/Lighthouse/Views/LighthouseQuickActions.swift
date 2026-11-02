@@ -132,6 +132,8 @@ struct LighthouseQuickActions: View {
 
                 LighthouseQuickActionTile(title: "Customise") {
                     BrightHaptic.medium.play()
+                    // The grid needs the room the keyboard takes; resigning lets it slide down as it normally does.
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     withAnimation(.brightSpring) { isEditing = true }
                 } icon: {
                     Image(systemName: "slider.horizontal.3")

@@ -152,6 +152,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
     // Counts page changes that came from a swipe — the ones that buzz.
     @State private var swipeTick = 0
     @State private var state = BrightSwipePageState()
+    @Environment(\.brightLighthouseRestHeight) private var lighthouseRestHeight
 
     init(
         pages: [SwipePage],
@@ -257,6 +258,8 @@ struct BrightSwipePageViewV5<Content: View>: View {
                 updateActiveOpacity()
             }
             .safeAreaPadding(bottomSafeArea ? .bottom : [])
+            // Room under every page's last element, so screens don't each pad their own bottom.
+            .safeAreaPadding(.bottom, BrightPageBottomRoom.height(above: lighthouseRestHeight))
             .background {
                 if let backgroundColor {
                     backgroundColor.ignoresSafeArea()

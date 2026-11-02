@@ -19,13 +19,10 @@ struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
     @State private var coveredTabs: Set<MainDockTab> = []
     @State private var showingLighthouse = false
-    @State private var lighthouseDetent = PresentationDetent.medium
-    @State private var lighthousePrompt: String?
+    @State private var trayState = LighthouseTrayState()
     @State private var isMenuExpanded = false
     @State private var showingLighthouseCover = false
     @State private var lighthouseCoverDetent = PresentationDetent.large
-    @State private var quickActions = LighthouseQuickAction.defaults
-    @Namespace private var lighthouseZoom
 
     private var isOnSubPage: Bool {
         return coveredTabs.contains(selectedTab)
@@ -39,9 +36,29 @@ struct MainDockView: View {
         isOnSubPage || (selectedTab == .home && isMenuExpanded)
     }
 
+    // Sub pages hide the dock, and the tray rests as the mini bar in its place.
+    private var restsLighthouse: Bool {
+        isOnSubPage && !(selectedTab == .home && isMenuExpanded)
+    }
+
     var body: some View {
         tabView
-            .overlay(alignment: .bottomTrailing) { plusZoomSource }
+            .environment(\.brightLighthouseRestHeight, restsLighthouse ? LighthouseTray.restHeight : .zero)
+            .background(LighthouseTrayWindowInstaller(root: LighthouseTrayRoot(state: trayState, isOpen: $showingLighthouse)))
+            .onChange(of: restsLighthouse, initial: true) { _, rests in
+                trayState.rests = rests
+            }
+            .onChange(of: showingLighthouse) { _, showing in
+                if showing {
+                    if trayState.detent == LighthouseTray.restDetent { trayState.detent = .medium }
+                } else if restsLighthouse {
+                    withAnimation(.brightEaseInOut) { trayState.detent = LighthouseTray.restDetent }
+                }
+            }
+            .onChange(of: trayState.detent) { _, detent in
+                let isOpen = detent != LighthouseTray.restDetent
+                if showingLighthouse != isOpen { showingLighthouse = isOpen }
+            }
             // The plus is a tab of its own: undo the switch to it with the tab bar's
             // animations off, so it never shows, then open Lighthouse instead.
             .onChange(of: selectedTab) { oldTab, newTab in
@@ -60,48 +77,17 @@ struct MainDockView: View {
             .fullScreenCover(isPresented: $showingLighthouseCover) {
                 lighthouseCover
             }
-            .sheet(isPresented: $showingLighthouse) {
-                LighthouseTray(
-                    detent: $lighthouseDetent,
-                    hasRest: false,
-                    initialPrompt: lighthousePrompt
-                )
-                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .presentationDragIndicator(.visible)
-            }
     }
 
-    // The tray pinned at full height, with quick actions under its top row in
-    // place of the welcome beacon. Its chat's own close drops it to rest, which
-    // here means closing the cover.
+    // The tray pinned at full height. Its chat's own close drops it to rest,
+    // which here means closing the cover.
     private var lighthouseCover: some View {
-        LighthouseTray(
-            detent: $lighthouseCoverDetent,
-            hasRest: false,
-            isSolidAtFull: false,
-            hasWelcome: false,
-            quickActions: LighthouseQuickActions(actions: $quickActions) { _ in
-                showingLighthouseCover = false
-            },
-            onClose: { showingLighthouseCover = false }
-        )
-        .presentationBackground(.thinMaterial)
-        .navigationTransition(.zoom(sourceID: Constants.plusZoomID, in: lighthouseZoom))
+        LighthouseTray(detent: $lighthouseCoverDetent) {
+            showingLighthouseCover = false
+        }
         .onChange(of: lighthouseCoverDetent) { _, detent in
             if detent != .large { showingLighthouseCover = false }
         }
-    }
-
-    // The plus belongs to the system dock, which SwiftUI can't zoom from, so a
-    // clear stand-in sits exactly over it as the zoom's source.
-    private var plusZoomSource: some View {
-        Color.clear
-            .frame(width: Constants.plusSize, height: Constants.plusSize)
-            .matchedTransitionSource(id: Constants.plusZoomID, in: lighthouseZoom)
-            .padding(.trailing, Constants.plusTrailing)
-            .padding(.bottom, Constants.plusLift)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
     }
 
     private func openLighthouseCover() {
@@ -111,8 +97,8 @@ struct MainDockView: View {
     }
 
     private func openLighthouse(_ action: LighthouseAction?) {
-        lighthousePrompt = action?.prompt
-        lighthouseDetent = .medium
+        trayState.prompt = action?.prompt
+        trayState.detent = .medium
         showingLighthouse = true
     }
 
@@ -196,13 +182,6 @@ struct MainDockView: View {
         } icon: {
             Image(systemName: "plus")
         }
-    }
-
-    private enum Constants {
-        static let plusZoomID = "lighthousePlus"
-        static let plusSize: CGFloat = BrightButtonSizes.finalBossLarge.rawValue
-        static let plusTrailing: CGFloat = .spacing3x + .spacing05x
-        static let plusLift: CGFloat = .spacing10x
     }
 
     private func tabLabel(_ title: String, selected: String, unselected: String, tab: MainDockTab) -> some View {

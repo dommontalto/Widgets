@@ -227,10 +227,13 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 guard progress != bottomEdgeProgress else { return }
                 bottomEdgeProgress = progress
             }
-            .brightEdgeV5(progress: bottomEdgeProgress)
-            // Sits just above the input card, riding the keyboard with it.
+            // Off on an empty thread, which the insets round it can make read as having more below.
+            .brightEdgeV5(progress: messages.isEmpty ? .zero : bottomEdgeProgress)
+            // Sits just above the input card, riding the keyboard with it. Never on an
+            // empty thread: a change to the insets round it, like Lighthouse's quick
+            // actions opening out, can read as being scrolled away from nothing.
             .overlay(alignment: .bottom) {
-                if isAwayFromBottom {
+                if isAwayFromBottom, !messages.isEmpty {
                     BrightRoundButton(systemImage: "arrow.down", size: .small) {
                         withAnimation(.brightSnappy) { proxy.scrollTo(Constants.bottomID, anchor: .bottom) }
                     }
@@ -390,7 +393,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                     .multilineTextAlignment(.leading)
                     .padding(.horizontal, .spacing2x)
                     .padding(.vertical, .spacing105x)
-                    .modifier(BrightGlassEffectV5(shape: .capsule, tint: .defaultSkyBlue, interactive: false))
+                    .modifier(BrightGlassEffectV5(shape: .roundedRect, tint: .defaultSkyBlue, interactive: false))
             }
         }
     }

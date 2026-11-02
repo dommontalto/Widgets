@@ -12,20 +12,12 @@ import UniformTypeIdentifiers
 // the menu sits top left.
 struct LighthouseTray: View {
     @Binding var detent: PresentationDetent
-    // Opened on demand rather than kept at the foot of a page: there's no resting bar, so a swipe down from half
-    // closes it as any sheet does.
-    var hasRest = true
-    // Sent as soon as the tray opens, such as a widget's check-in.
+    // Kept at the foot of a sub page as the resting bar, which a swipe down returns to rather than closing.
+    var hasRest = false
+    var focusesOnOpen = false
+    // Sent as the tray opens, such as a widget's check-in; a tray left resting is handed later ones too.
     var initialPrompt: String?
-    // Pulled up to full it turns solid, to read as a page; off where whatever
-    // presents it supplies its own backdrop, like the dock's full-screen Lighthouse.
-    var isSolidAtFull = true
-    // Off where something else fills the empty chat, like the dock's quick actions.
-    var hasWelcome = true
-    // Shortcuts under the top row, on the chat page.
-    var quickActions: LighthouseQuickActions?
-    // Adds a close button to the top row, for where the tray isn't a sheet to swipe away.
-    var onClose: (() -> Void)?
+    let onClose: () -> Void
 
     // Just the ask bar: 12pt round its 44pt buttons.
     static let restHeight = CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x
@@ -56,7 +48,7 @@ struct LighthouseTray: View {
     // The placeholder's own width: a centred field's ideal width alone cuts it short.
     @State private var askPromptWidth: CGFloat = 0
     @State private var showsWelcome = false
-    @State private var topBarHeight = Constants.menuRowHeight
+    @State private var sendCount = 0
 
     private var isResting: Bool {
         detent == Self.restDetent
@@ -104,7 +96,7 @@ struct LighthouseTray: View {
             if phase == .interacting { isFieldFocused = false }
         }
         // Pulled up to full, the tray reads as a page rather than a sheet.
-        .background(Color.defaultBackground.opacity(isSolidAtFull && detent == .large ? 1 : 0).ignoresSafeArea())
+        .background(Color.defaultBackground.opacity(detent == .large ? 1 : 0).ignoresSafeArea())
         .animation(.brightEaseInOut, value: detent == .large)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
@@ -114,12 +106,13 @@ struct LighthouseTray: View {
             isFieldFocused = false
             isChatTyping = false
         }
-        .task {
+        .task(id: initialPrompt) {
             guard let initialPrompt else { return }
             sentPrompt = initialPrompt
         }
         .animation(.brightSnappy, value: attachments.count)
         .presentationDetents(allowedDetents, selection: $detent)
+        .interactiveDismissDisabled(hasRest)
         .animation(.brightEaseInOut, value: isResting)
 
         // Typing from rest or half goes straight to the keyboard-sized height, so the tray never sits at plain
@@ -139,7 +132,14 @@ struct LighthouseTray: View {
             settleWelcome(for: detent)
         }
         // Opened straight to half, there's no change of height to bring the welcome in, so it settles from here too.
-        .onAppear { settleWelcome(for: detent) }
+        .onAppear {
+            settleWelcome(for: detent)
+            guard focusesOnOpen else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(Constants.focusDelay))
+                isFieldFocused = true
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
             guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             TrayTypingDetent.keyboardHeight = frame.height
@@ -200,9 +200,9 @@ struct LighthouseTray: View {
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
-                    .safeAreaPadding(.top, topBarHeight)
+                    .safeAreaPadding(.top, Constants.menuRowHeight)
                     .brightSoftScrollEdgesV5()
-                    .overlay(alignment: .top) { topBar }
+                    .overlay(alignment: .top) { menuRow }
                     .transition(.opacity)
             }
 
@@ -243,6 +243,7 @@ struct LighthouseTray: View {
         }
         .animation(.brightSnappy, value: hasDraft)
         .animation(.brightSnappy, value: dictation.isListening)
+        .animation(.brightSnappy, value: isThinking)
     }
 
     private var isAskCentred: Bool {
@@ -276,6 +277,7 @@ struct LighthouseTray: View {
     // The model's tile fills the whole circle, in its own colours, which a round button's template glyph would flatten.
     private var modelButton: some View {
         Button {
+            guard !isThinking else { return }
             showingModelSelector = true
         } label: {
             Image(model.tierImageName)
@@ -286,13 +288,20 @@ struct LighthouseTray: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Switch model")
+        .accessibilityLabel(Constants.modelLabel)
+        .accessibilityValue(model.displayName)
     }
 
     // Dictation until there's something to send, then the send arrow; while it listens, a red wave that ripples.
     @ViewBuilder
     private var fieldAction: some View {
-        if canSend, !dictation.isListening {
+        if isThinking {
+            BrightRoundButton(systemImage: "stop.fill", size: .large, imageColor: .defaultRed) {
+                isThinking = false
+            }
+            .accessibilityLabel(Constants.stopLabel)
+            .transition(.scale.combined(with: .opacity))
+        } else if canSend, !dictation.isListening {
             // The sent bubble's own tinted glass, so the two read as the same blue.
             Button(action: send) {
                 Image(systemName: "arrow.up")
@@ -303,9 +312,9 @@ struct LighthouseTray: View {
                     .modifier(BrightGlassEffectV5(shape: .circle, tint: .defaultSkyBlue, interactive: false))
             }
             .buttonStyle(.plain)
-            .brightHapticV5(.light, trigger: sentPrompt)
-            .accessibilityLabel("Send")
-                .transition(.scale.combined(with: .opacity))
+            .brightHapticV5(.light, trigger: sendCount)
+            .accessibilityLabel(Constants.sendLabel)
+            .transition(.scale.combined(with: .opacity))
         } else {
             BrightRoundButton(
                 systemImage: "waveform",
@@ -334,30 +343,19 @@ struct LighthouseTray: View {
                 .frame(width: Constants.plusSize, height: Constants.plusSize)
                 .contentShape(Rectangle())
         }
-        .accessibilityLabel("Attach")
-    }
-
-    // The menu row, with any quick actions under it, measured so the chat starts below.
-    private var topBar: some View {
-        VStack(spacing: .spacing2x) {
-            menuRow
-            quickActions
-        }
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topBarHeight = $0 }
+        .accessibilityLabel(Constants.attachLabel)
     }
 
     // Pulled up only: the menu page's button top left.
     private var menuRow: some View {
         HStack(spacing: .spacing2x) {
             BrightRoundButton(systemImage: "sidebar.left", size: .large) { withAnimation(.brightSnappy) { page = .menu } }
-                .accessibilityLabel("Lighthouse menu")
+                .accessibilityLabel(Constants.menuLabel)
 
             Spacer(minLength: .spacing0x)
 
-            if let onClose {
-                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
-                    .accessibilityLabel("Close")
-            }
+            BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
+                .accessibilityLabel(Constants.closeLabel)
         }
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing3x)
@@ -376,10 +374,10 @@ struct LighthouseTray: View {
             dictation: dictation,
             resetCount: chatResetCount,
             action: nil,
-            onDismiss: { detent = Self.restDetent },
-            onAttach: { _ in },
+            onDismiss: onClose,
+            onAttach: { attachmentSource = $0 },
             externalPrompt: $sentPrompt,
-            showsWelcome: hasWelcome && showsWelcome
+            showsWelcome: showsWelcome
         )
     }
 
@@ -431,8 +429,9 @@ struct LighthouseTray: View {
     // MARK: - Actions
 
     private func send() {
-        guard canSend else { return }
+        guard canSend, !isThinking else { return }
         dictation.stop()
+        sendCount += 1
         sentPrompt = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         draft = ""
         // The keyboard stays up, as in Messages: closing it would move the tray off the keyboard height mid-send,
@@ -530,6 +529,13 @@ struct LighthouseTray: View {
 
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
+        static let modelLabel = "Model"
+        static let stopLabel = "Stop"
+        static let sendLabel = "Send"
+        static let attachLabel = "Attach"
+        static let menuLabel = "Lighthouse menu"
+        static let closeLabel = "Close"
+        static let focusDelay: TimeInterval = 0.35
         static let plusSize: CGFloat = 28
         static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
