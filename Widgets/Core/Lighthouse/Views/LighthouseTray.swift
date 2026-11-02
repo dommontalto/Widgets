@@ -47,6 +47,8 @@ struct LighthouseTray: View {
     // The placeholder's own width: a centred field's ideal width alone cuts it short.
     @State private var askPromptWidth: CGFloat = 0
     @State private var sendCount = 0
+    // Once a message goes, the suggestions step aside for the conversation; a new chat brings them back.
+    @State private var hasConversation = false
 
     private var isResting: Bool {
         detent == Self.restDetent
@@ -104,6 +106,7 @@ struct LighthouseTray: View {
         .task(id: initialPrompt) {
             guard let initialPrompt else { return }
             sentPrompt = initialPrompt
+            hasConversation = true
         }
         .animation(.brightSnappy, value: attachments.count)
         .presentationDetents(allowedDetents, selection: $detent)
@@ -198,6 +201,16 @@ struct LighthouseTray: View {
                     .transition(.opacity)
             }
 
+            // Before anything is asked, a few prompts to start from, just above the ask bar.
+            if !isResting, !hasConversation {
+                BrightSuggestionsV5 { prompt in
+                    draft = prompt
+                    send()
+                }
+                .padding(.bottom, .spacing1x)
+                .transition(.opacity)
+            }
+
             if !attachments.isEmpty, !isResting {
                 attachmentStrip
                     .transition(.opacity)
@@ -206,6 +219,7 @@ struct LighthouseTray: View {
             askRow
         }
         .frame(maxHeight: .infinity, alignment: .bottom)
+        .animation(.brightEaseInOut, value: hasConversation)
     }
 
     // MARK: - Ask
@@ -424,6 +438,7 @@ struct LighthouseTray: View {
         guard canSend, !isThinking else { return }
         dictation.stop()
         sendCount += 1
+        hasConversation = true
         sentPrompt = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         draft = ""
         // The keyboard stays up, as in Messages: closing it would move the tray off the keyboard height mid-send,
@@ -499,6 +514,7 @@ struct LighthouseTray: View {
     }
 
     private func startNewChat() {
+        hasConversation = false
         isThinking = false
         attachments = []
         chatResetCount += 1
