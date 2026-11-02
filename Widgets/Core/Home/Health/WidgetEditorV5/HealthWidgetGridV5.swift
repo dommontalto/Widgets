@@ -336,7 +336,7 @@ struct HealthWidgetGridV5: View {
                         resizeHandle(for: widget, growsLeading: growsLeading, cellSize: cellSize)
                     }
                 }
-                .modifier(HealthJiggleModifier(isEnabled: isJiggling && resize == nil, phase: jigglePhase, seed: index))
+                .modifier(BrightJiggleV5(isEnabled: isJiggling && resize == nil, phase: jigglePhase, seed: index))
                 .animation(.brightJigglePhase, value: jigglePhase)
                 .scaleEffect(isLifted ? Constants.liftedScale : 1)
                 .shadow(color: .black.opacity(isLifted ? .veryLowOpacity : .zero), radius: Constants.liftedShadowRadius)
@@ -439,35 +439,5 @@ private struct HealthResizeHandleShape: Shape {
         static let startAngle: Angle = .degrees(12)
         static let endAngle: Angle = .degrees(78)
         static let thickness: CGFloat = 10
-    }
-}
-
-// Each tile rocks with its own amplitude and direction, seeded by its index,
-// so the grid doesn't sway in unison.
-private struct HealthJiggleModifier: ViewModifier {
-    let isEnabled: Bool
-    let phase: Bool
-    let seed: Int
-
-    private var rotation: Double {
-        Constants.baseRotation + Double(seed % 5) * Constants.rotationStep
-    }
-
-    private var offset: CGFloat {
-        Constants.baseOffset + CGFloat((seed * 7) % 5) * Constants.offsetStep
-    }
-
-    func body(content: Content) -> some View {
-        let isLeaning = seed.isMultiple(of: 2) ? !phase : phase
-        content
-            .rotationEffect(.degrees(isEnabled ? (isLeaning ? rotation : -rotation) : 0))
-            .offset(x: isEnabled ? (isLeaning ? offset : -offset) : 0)
-    }
-
-    private enum Constants {
-        static let baseRotation: Double = 0.4
-        static let rotationStep: Double = 0.15
-        static let baseOffset: CGFloat = 0.8
-        static let offsetStep: CGFloat = 0.2
     }
 }

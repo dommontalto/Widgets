@@ -22,16 +22,10 @@ struct MainDockView: View {
     @State private var lighthouseDetent = PresentationDetent.medium
     @State private var lighthousePrompt: String?
     @State private var isMenuExpanded = false
-
-    private var tabSelection: Binding<MainDockTab> {
-        Binding {
-            selectedTab
-        } set: { newTab in
-            if newTab != .add {
-                selectedTab = newTab
-            }
-        }
-    }
+    @State private var showingLighthouseCover = false
+    @State private var lighthouseCoverDetent = PresentationDetent.large
+    @State private var quickActions = LighthouseQuickAction.defaults
+    @Namespace private var lighthouseZoom
 
     private var isOnSubPage: Bool {
         return coveredTabs.contains(selectedTab)
@@ -47,15 +41,24 @@ struct MainDockView: View {
 
     var body: some View {
         tabView
-            .overlay(alignment: .bottomTrailing) {
-                if !isDockHidden {
-                    lighthouseButton
-                        .transition(.opacity)
+            .overlay(alignment: .bottomTrailing) { plusZoomSource }
+            // The plus is a tab of its own: undo the switch to it with the tab bar's
+            // animations off, so it never shows, then open Lighthouse instead.
+            .onChange(of: selectedTab) { oldTab, newTab in
+                if newTab == .add {
+                    UITabBar.setAnimationsEnabled(false)
+                    selectedTab = oldTab
+                    DispatchQueue.main.async {
+                        UITabBar.setAnimationsEnabled(true)
+                        openLighthouseCover()
+                    }
                 }
             }
-            .animation(.brightBouncy, value: isDockHidden)
             .onChange(of: isMenuExpanded) { _, expanded in
                 if expanded { showingLighthouse = false }
+            }
+            .fullScreenCover(isPresented: $showingLighthouseCover) {
+                lighthouseCover
             }
             .sheet(isPresented: $showingLighthouse) {
                 LighthouseTray(
@@ -68,20 +71,43 @@ struct MainDockView: View {
             }
     }
 
-    // Floats over the dock's plus and opens the tray at half.
-    private var lighthouseButton: some View {
-        Button {
-            openLighthouse(nil)
-        } label: {
-            LighthouseBeacon(size: Constants.beaconSize, isLit: true)
-                .frame(width: Constants.lighthouseSize, height: Constants.lighthouseSize)
-                .contentShape(Circle())
-                .modifier(BrightGlassEffectV5(shape: .circle))
+    // The tray pinned at full height, with quick actions under its top row in
+    // place of the welcome beacon. Its chat's own close drops it to rest, which
+    // here means closing the cover.
+    private var lighthouseCover: some View {
+        LighthouseTray(
+            detent: $lighthouseCoverDetent,
+            hasRest: false,
+            isSolidAtFull: false,
+            hasWelcome: false,
+            quickActions: LighthouseQuickActions(actions: $quickActions) { _ in
+                showingLighthouseCover = false
+            },
+            onClose: { showingLighthouseCover = false }
+        )
+        .presentationBackground(.thinMaterial)
+        .navigationTransition(.zoom(sourceID: Constants.plusZoomID, in: lighthouseZoom))
+        .onChange(of: lighthouseCoverDetent) { _, detent in
+            if detent != .large { showingLighthouseCover = false }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Lighthouse")
-        .padding(.trailing, Constants.lighthouseTrailing)
-        .padding(.bottom, Constants.lighthouseLift)
+    }
+
+    // The plus belongs to the system dock, which SwiftUI can't zoom from, so a
+    // clear stand-in sits exactly over it as the zoom's source.
+    private var plusZoomSource: some View {
+        Color.clear
+            .frame(width: Constants.plusSize, height: Constants.plusSize)
+            .matchedTransitionSource(id: Constants.plusZoomID, in: lighthouseZoom)
+            .padding(.trailing, Constants.plusTrailing)
+            .padding(.bottom, Constants.plusLift)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    private func openLighthouseCover() {
+        BrightHaptic.light.play()
+        lighthouseCoverDetent = .large
+        showingLighthouseCover = true
     }
 
     private func openLighthouse(_ action: LighthouseAction?) {
@@ -91,7 +117,7 @@ struct MainDockView: View {
     }
 
     private var tabView: some View {
-        TabView(selection: tabSelection) {
+        TabView(selection: $selectedTab) {
             Tab(value: MainDockTab.home) {
                 HealthView(
                     onOpenLighthouse: openLighthouse,
@@ -138,6 +164,7 @@ struct MainDockView: View {
             }
         }
         .tint(.primary)
+        .modifier(MainDockMinimizesOnScroll())
     }
 
     private var vaultPage: some View {
@@ -171,6 +198,13 @@ struct MainDockView: View {
         }
     }
 
+    private enum Constants {
+        static let plusZoomID = "lighthousePlus"
+        static let plusSize: CGFloat = BrightButtonSizes.finalBossLarge.rawValue
+        static let plusTrailing: CGFloat = .spacing3x + .spacing05x
+        static let plusLift: CGFloat = .spacing10x
+    }
+
     private func tabLabel(_ title: String, selected: String, unselected: String, tab: MainDockTab) -> some View {
         Label {
             Text(title)
@@ -178,16 +212,19 @@ struct MainDockView: View {
             Image(selectedTab == tab ? selected : unselected)
         }
     }
-
-    private enum Constants {
-        // The size of the dock's own plus, centred over it.
-        static let lighthouseSize: CGFloat = BrightButtonSizes.finalBossLarge.rawValue
-        static let beaconSize: CGFloat = .spacing6x
-        static let lighthouseTrailing: CGFloat = .spacing3x + .spacing05x
-        static let lighthouseLift: CGFloat = .spacing10x
-    }
 }
 
 #Preview {
     MainDockView()
+}
+
+// iOS 26 only: the dock shrinks as a page scrolls down.
+private struct MainDockMinimizesOnScroll: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            content
+        }
+    }
 }

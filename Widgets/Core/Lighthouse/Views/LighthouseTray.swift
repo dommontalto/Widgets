@@ -17,6 +17,15 @@ struct LighthouseTray: View {
     var hasRest = true
     // Sent as soon as the tray opens, such as a widget's check-in.
     var initialPrompt: String?
+    // Pulled up to full it turns solid, to read as a page; off where whatever
+    // presents it supplies its own backdrop, like the dock's full-screen Lighthouse.
+    var isSolidAtFull = true
+    // Off where something else fills the empty chat, like the dock's quick actions.
+    var hasWelcome = true
+    // Shortcuts under the top row, on the chat page.
+    var quickActions: LighthouseQuickActions?
+    // Adds a close button to the top row, for where the tray isn't a sheet to swipe away.
+    var onClose: (() -> Void)?
 
     // Just the ask bar: 12pt round its 44pt buttons.
     static let restHeight = CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x
@@ -47,6 +56,7 @@ struct LighthouseTray: View {
     // The placeholder's own width: a centred field's ideal width alone cuts it short.
     @State private var askPromptWidth: CGFloat = 0
     @State private var showsWelcome = false
+    @State private var topBarHeight = Constants.menuRowHeight
 
     private var isResting: Bool {
         detent == Self.restDetent
@@ -94,7 +104,7 @@ struct LighthouseTray: View {
             if phase == .interacting { isFieldFocused = false }
         }
         // Pulled up to full, the tray reads as a page rather than a sheet.
-        .background(Color.defaultBackground.opacity(detent == .large ? 1 : 0).ignoresSafeArea())
+        .background(Color.defaultBackground.opacity(isSolidAtFull && detent == .large ? 1 : 0).ignoresSafeArea())
         .animation(.brightEaseInOut, value: detent == .large)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
@@ -190,9 +200,9 @@ struct LighthouseTray: View {
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
-                    .safeAreaPadding(.top, Constants.menuRowHeight)
+                    .safeAreaPadding(.top, topBarHeight)
                     .brightSoftScrollEdgesV5()
-                    .overlay(alignment: .top) { menuRow }
+                    .overlay(alignment: .top) { topBar }
                     .transition(.opacity)
             }
 
@@ -327,6 +337,15 @@ struct LighthouseTray: View {
         .accessibilityLabel("Attach")
     }
 
+    // The menu row, with any quick actions under it, measured so the chat starts below.
+    private var topBar: some View {
+        VStack(spacing: .spacing2x) {
+            menuRow
+            quickActions
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topBarHeight = $0 }
+    }
+
     // Pulled up only: the menu page's button top left.
     private var menuRow: some View {
         HStack(spacing: .spacing2x) {
@@ -334,6 +353,11 @@ struct LighthouseTray: View {
                 .accessibilityLabel("Lighthouse menu")
 
             Spacer(minLength: .spacing0x)
+
+            if let onClose {
+                BrightRoundButton(systemImage: "xmark", size: .large, onTapCallback: onClose)
+                    .accessibilityLabel("Close")
+            }
         }
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing3x)
@@ -355,7 +379,7 @@ struct LighthouseTray: View {
             onDismiss: { detent = Self.restDetent },
             onAttach: { _ in },
             externalPrompt: $sentPrompt,
-            showsWelcome: showsWelcome
+            showsWelcome: hasWelcome && showsWelcome
         )
     }
 

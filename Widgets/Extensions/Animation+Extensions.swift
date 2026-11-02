@@ -12,6 +12,9 @@ extension Animation {
     static let brightSnappy: Animation = .snappy(duration: 0.2)
     static let brightEaseInOut: Animation = .easeInOut(duration: 0.3)
     static let brightBouncy: Animation = .bouncy(duration: 0.3)
+    // A quick spring that overshoots a little and settles, for things that should
+    // pour in like liquid.
+    static let brightLiquid: Animation = .spring(duration: 0.35, bounce: 0.25)
     // Eases in, then overshoots and settles back, so a reveal lands with a bounce.
     static let brightReveal: Animation = .timingCurve(0.65, 0, 0.35, 1.5, duration: 0.5)
     // A line drawing across: an even pace that eases into its end, given longer than a

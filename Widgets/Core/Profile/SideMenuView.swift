@@ -72,14 +72,12 @@ struct SideMenuView: View {
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
         .task(id: isExpanded) {
-            guard isExpanded else {
-                withAnimation(.easeOut(duration: Constants.rowExitDuration)) { visibleRows.removeAll() }
-                return
-            }
+            // Rows stay put while the menu slides shut; the menu drops them the
+            // moment it's fully closed. Reopening mid-close keeps what's showing.
+            guard isExpanded else { return }
 
-            visibleRows = []
             try? await Task.sleep(for: .seconds(Constants.rowStartDelay))
-            for i in 0 ..< Constants.rowCount {
+            for i in 0 ..< Constants.rowCount where !visibleRows.contains(i) {
                 guard !Task.isCancelled else { return }
                 withAnimation(.bouncy(duration: Constants.animationDuration, extraBounce: Constants.bounce)) {
                     _ = visibleRows.insert(i)
@@ -165,7 +163,6 @@ struct SideMenuView: View {
         static let bounce: TimeInterval = 0.1
         static let rowStaggerDelay: TimeInterval = 0.03
         static let rowStartDelay: TimeInterval = 0.02
-        static let rowExitDuration: TimeInterval = 0.15
     }
 }
 
