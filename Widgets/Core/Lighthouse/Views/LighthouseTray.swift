@@ -44,10 +44,8 @@ struct LighthouseTray: View {
     @FocusState private var isChatTyping: Bool
     // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
     @State private var isKeyboardShowing = false
-    // The welcome fades in only once the tray has finished moving to half or full.
     // The placeholder's own width: a centred field's ideal width alone cuts it short.
     @State private var askPromptWidth: CGFloat = 0
-    @State private var showsWelcome = false
     @State private var sendCount = 0
 
     private var isResting: Bool {
@@ -95,9 +93,6 @@ struct LighthouseTray: View {
         .onScrollPhaseChange { _, phase in
             if phase == .interacting { isFieldFocused = false }
         }
-        // Pulled up to full, the tray reads as a page rather than a sheet.
-        .background(Color.defaultBackground.opacity(detent == .large ? 1 : 0).ignoresSafeArea())
-        .animation(.brightEaseInOut, value: detent == .large)
         .onChange(of: isResting) { _, resting in
             if resting { page = .chat }
         }
@@ -129,11 +124,8 @@ struct LighthouseTray: View {
                 isFieldFocused = false
                 withAnimation(.brightEaseInOut) { detent = .large }
             }
-            settleWelcome(for: detent)
         }
-        // Opened straight to half, there's no change of height to bring the welcome in, so it settles from here too.
         .onAppear {
-            settleWelcome(for: detent)
             guard focusesOnOpen else { return }
             Task {
                 try? await Task.sleep(for: .seconds(Constants.focusDelay))
@@ -377,7 +369,7 @@ struct LighthouseTray: View {
             onDismiss: onClose,
             onAttach: { attachmentSource = $0 },
             externalPrompt: $sentPrompt,
-            showsWelcome: showsWelcome
+            showsWelcome: false
         )
     }
 
@@ -438,20 +430,6 @@ struct LighthouseTray: View {
         // and iOS can jump it to full on the way.
         if isResting {
             withAnimation(.brightEaseInOut) { detent = .medium }
-        }
-    }
-
-    // Hidden at rest; between half, full and the typing height it stays put once it's in.
-    private func settleWelcome(for detent: PresentationDetent) {
-        guard detent != Self.restDetent else {
-            showsWelcome = false
-            return
-        }
-        guard !showsWelcome else { return }
-        Task {
-            try? await Task.sleep(for: .seconds(Constants.welcomeSettleDelay))
-            guard self.detent == detent else { return }
-            withAnimation(.brightEaseInOut) { showsWelcome = true }
         }
     }
 
@@ -541,8 +519,6 @@ struct LighthouseTray: View {
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
         static let removeSize: CGFloat = .spacing3x
-        // Roughly how long the sheet takes to land at a new height.
-        static let welcomeSettleDelay: TimeInterval = 0.4
         static let modelKey = "lighthouseSelectedModel"
         static let apiKeyKey = "lighthouseApiKey"
     }

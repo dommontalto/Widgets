@@ -85,6 +85,7 @@ struct MainDockView: View {
         LighthouseTray(detent: $lighthouseCoverDetent) {
             showingLighthouseCover = false
         }
+        .presentationBackground(.thinMaterial)
         .onChange(of: lighthouseCoverDetent) { _, detent in
             if detent != .large { showingLighthouseCover = false }
         }
