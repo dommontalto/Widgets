@@ -92,6 +92,7 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .brightSoftScrollEdgesV5()
+            .brightScreenLogV5(file: file, title: title)
             .toolbar(.visible, for: .navigationBar)
             .toolbar {
                 if let file {

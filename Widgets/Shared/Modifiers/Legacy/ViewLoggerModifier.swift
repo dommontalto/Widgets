@@ -12,7 +12,7 @@ private struct TrackViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onAppear {
-                Log("Open view: \(name)")
+                BrightScreenLog.record("Screen: open \(name)")
             }
     }
 }

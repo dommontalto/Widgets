@@ -269,6 +269,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(navigationBarVisibility, for: .navigationBar)
             .brightSoftScrollEdgesV5()
+            .brightScreenLogV5(file: file, title: fakeLargeTitle ?? "")
             .toolbar {
                 if pillsInToolbar {
                     ToolbarItem(placement: .principal) {

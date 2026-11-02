@@ -24,3 +24,9 @@ func Log(_ message: @autoclosure () -> String) -> String {
     Logger(subsystem: Bundle.main.bundleIdentifier ?? "Widgets", category: "App").info("\(text, privacy: .public)")
     return text
 }
+
+enum BrightScreenLog {
+    static func record(_ line: String) {
+        Log(line)
+    }
+}

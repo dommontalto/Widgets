@@ -82,6 +82,7 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
                 .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
                 .brightSoftScrollEdgesV5()
+                .brightScreenLogV5(file: file, title: title)
                 .toolbar {
                     if showBackButton {
                         ToolbarItem(placement: .topBarLeading) {
