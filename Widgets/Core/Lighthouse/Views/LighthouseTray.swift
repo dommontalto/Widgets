@@ -17,6 +17,8 @@ struct LighthouseTray: View {
     var focusesOnOpen = false
     // Sent as the tray opens, such as a widget's check-in; a tray left resting is handed later ones too.
     var initialPrompt: String?
+    // Shortcuts under the top row, until the first message goes.
+    var quickActions: LighthouseQuickActions?
     let onClose: () -> Void
 
     // Just the ask bar: 12pt round its 44pt buttons.
@@ -24,6 +26,9 @@ struct LighthouseTray: View {
     static let restDetent = PresentationDetent.height(restHeight)
     // Half height less the keyboard: iOS sets the tray on top of the keyboard, so its top stays where half was.
     static let typingDetent = PresentationDetent.custom(TrayTypingDetent.self)
+    // The tray's "half": a little under the system's medium, so more of the page shows above it.
+    nonisolated static let halfShare: CGFloat = 0.38
+    static let halfDetent = PresentationDetent.fraction(halfShare)
 
     @AppStorage(Constants.modelKey) private var model = LighthouseModel.chatGPT
     @AppStorage(Constants.apiKeyKey) private var apiKey = ""
@@ -49,16 +54,21 @@ struct LighthouseTray: View {
     @State private var sendCount = 0
     // Once a message goes, the suggestions step aside for the conversation; a new chat brings them back.
     @State private var hasConversation = false
+    @State private var topBarHeight: CGFloat = .zero
 
     private var isResting: Bool {
         detent == Self.restDetent
     }
 
+    private var isFull: Bool {
+        detent == .large
+    }
+
     // While typing below full height, full is off the list: iOS would otherwise lift the tray there for the keyboard.
     private var allowedDetents: Set<PresentationDetent> {
         let detents: Set<PresentationDetent> = isFieldFocused && detent != .large
-            ? [Self.restDetent, .medium, Self.typingDetent]
-            : [Self.restDetent, .medium, .large]
+            ? [Self.restDetent, Self.halfDetent, Self.typingDetent]
+            : [Self.restDetent, Self.halfDetent, .large]
         return hasRest ? detents : detents.subtracting([Self.restDetent])
     }
 
@@ -123,7 +133,7 @@ struct LighthouseTray: View {
             if new == Self.restDetent { isFieldFocused = false }
             // Dragged up from the keyboard height while still typing: the keyboard goes and the tray carries on to
             // full, since full can't be on offer while it's up without iOS lifting the tray there itself.
-            if old == Self.typingDetent, new == .medium, isKeyboardShowing {
+            if old == Self.typingDetent, new == Self.halfDetent, isKeyboardShowing {
                 isFieldFocused = false
                 withAnimation(.brightEaseInOut) { detent = .large }
             }
@@ -145,7 +155,7 @@ struct LighthouseTray: View {
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
             isKeyboardShowing = false
             guard detent == Self.typingDetent else { return }
-            withAnimation(.brightEaseInOut) { detent = .medium }
+            withAnimation(.brightEaseInOut) { detent = Self.halfDetent }
         }
         .sheet(isPresented: $showingCheckIns) {
             LighthouseCheckInsSheet()
@@ -195,9 +205,9 @@ struct LighthouseTray: View {
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
-                    .safeAreaPadding(.top, Constants.menuRowHeight)
+                    .safeAreaPadding(.top, topBarHeight)
                     .brightSoftScrollEdgesV5()
-                    .overlay(alignment: .top) { menuRow }
+                    .overlay(alignment: .top) { topBar }
                     .transition(.opacity)
             }
 
@@ -252,8 +262,9 @@ struct LighthouseTray: View {
         .animation(.brightSnappy, value: isThinking)
     }
 
+    // Centred only on the resting bar; pulled up, the prompt sits left where typing starts.
     private var isAskCentred: Bool {
-        !isFieldFocused && draft.isEmpty
+        isResting && !isFieldFocused && draft.isEmpty
     }
 
     private var askField: some View {
@@ -353,6 +364,25 @@ struct LighthouseTray: View {
     }
 
     // Pulled up only: the menu page's button top left.
+    // The menu row, at full height only (at half the tray is a quick ask, swiped away
+    // rather than closed), and any quick actions under it until the first message.
+    // Measured, so the chat starts below whatever shows.
+    private var topBar: some View {
+        VStack(spacing: .spacing2x) {
+            if isFull {
+                menuRow
+                    .transition(.opacity)
+            }
+            if let quickActions, !hasConversation {
+                quickActions
+                    .transition(.opacity)
+            }
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topBarHeight = $0 }
+        .animation(.brightEaseInOut, value: isFull)
+        .animation(.brightEaseInOut, value: hasConversation)
+    }
+
     private var menuRow: some View {
         HStack(spacing: .spacing2x) {
             BrightRoundButton(systemImage: "sidebar.left", size: .large) { withAnimation(.brightSnappy) { page = .menu } }
@@ -444,7 +474,7 @@ struct LighthouseTray: View {
         // The keyboard stays up, as in Messages: closing it would move the tray off the keyboard height mid-send,
         // and iOS can jump it to full on the way.
         if isResting {
-            withAnimation(.brightEaseInOut) { detent = .medium }
+            withAnimation(.brightEaseInOut) { detent = Self.halfDetent }
         }
     }
 
@@ -531,7 +561,6 @@ struct LighthouseTray: View {
         static let closeLabel = "Close"
         static let focusDelay: TimeInterval = 0.35
         static let plusSize: CGFloat = 28
-        static let menuRowHeight: CGFloat = .spacing3x + BrightButtonSizes.large.rawValue
         static let maxAttachments = 4
         static let thumbnailSize: CGFloat = .spacing10x
         static let removeSize: CGFloat = .spacing3x
@@ -547,7 +576,7 @@ private struct TrayTypingDetent: CustomPresentationDetent {
 
     static func height(in context: Context) -> CGFloat? {
         let keyboard = keyboardHeight ?? context.maxDetentValue * Constants.keyboardShare
-        return max(context.maxDetentValue / 2 - keyboard, .spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
+        return max(context.maxDetentValue * LighthouseTray.halfShare - keyboard, .spacing2x + BrightButtonSizes.large.rawValue + .spacing2x)
     }
 
     private enum Constants {

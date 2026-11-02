@@ -41,7 +41,7 @@ struct LighthouseTrayRoot: View {
                 ) {
                     isOpen = false
                 }
-                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                .presentationBackgroundInteraction(.enabled(upThrough: LighthouseTray.halfDetent))
                 .presentationDragIndicator(.visible)
             }
     }

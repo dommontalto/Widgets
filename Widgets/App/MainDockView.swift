@@ -23,6 +23,7 @@ struct MainDockView: View {
     @State private var isMenuExpanded = false
     @State private var showingLighthouseCover = false
     @State private var lighthouseCoverDetent = PresentationDetent.large
+    @State private var quickActions = LighthouseQuickAction.defaults
 
     private var isOnSubPage: Bool {
         return coveredTabs.contains(selectedTab)
@@ -50,7 +51,7 @@ struct MainDockView: View {
             }
             .onChange(of: showingLighthouse) { _, showing in
                 if showing {
-                    if trayState.detent == LighthouseTray.restDetent { trayState.detent = .medium }
+                    if trayState.detent == LighthouseTray.restDetent { trayState.detent = LighthouseTray.halfDetent }
                 } else if restsLighthouse {
                     withAnimation(.brightEaseInOut) { trayState.detent = LighthouseTray.restDetent }
                 }
@@ -79,10 +80,15 @@ struct MainDockView: View {
             }
     }
 
-    // The tray pinned at full height. Its chat's own close drops it to rest,
-    // which here means closing the cover.
+    // The tray pinned at full height, with quick actions under its top row. Its
+    // chat's own close drops it to rest, which here means closing the cover.
     private var lighthouseCover: some View {
-        LighthouseTray(detent: $lighthouseCoverDetent) {
+        LighthouseTray(
+            detent: $lighthouseCoverDetent,
+            quickActions: LighthouseQuickActions(actions: $quickActions) { _ in
+                showingLighthouseCover = false
+            }
+        ) {
             showingLighthouseCover = false
         }
         .presentationBackground(.thinMaterial)
@@ -99,7 +105,7 @@ struct MainDockView: View {
 
     private func openLighthouse(_ action: LighthouseAction?) {
         trayState.prompt = action?.prompt
-        trayState.detent = .medium
+        trayState.detent = LighthouseTray.halfDetent
         showingLighthouse = true
     }
 

@@ -72,18 +72,18 @@ struct BrightSuggestionsV5: View {
 // Generic health prompts, until each screen brings its own.
 enum BrightSuggestionsDemo {
     static let prompts = [
-        "How many Zone 2 minutes do I need to improve my HRV?",
-        "Predict my race pace for my upcoming half marathon",
-        "At my current activity level, how long will it take me to lose 5 kgs?",
-        "What's the best time for me to go to bed tonight?",
-        "Why was my resting heart rate higher this week?",
-        "How much protein should I be eating each day?",
-        "Am I recovered enough to train hard today?",
-        "What's been affecting my sleep quality lately?",
-        "How does my caffeine intake affect my sleep?",
-        "Build me a 4-week plan to improve my VO2 max",
-        "Which of my lab markers should I keep an eye on?",
-        "How much water should I drink on training days?",
+        "How do I improve my HRV?",
+        "Predict my half marathon pace",
+        "How long to lose 5 kg?",
+        "When should I sleep tonight?",
+        "Why is my resting HR up?",
+        "How much protein do I need?",
+        "Am I recovered to train hard?",
+        "What's affecting my sleep?",
+        "Does caffeine hurt my sleep?",
+        "Plan to raise my VO2 max",
+        "Which lab markers to watch?",
+        "How much water on training days?",
     ]
 }
 
