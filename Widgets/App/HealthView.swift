@@ -19,7 +19,6 @@ struct HealthView: View {
     @State private var revealReplay = 0
     @State private var showsEmptyState = false
     @State private var showingGenome = false
-    @State private var showingGuidedTesting = false
     @State private var showingMyOrders = false
 
     var body: some View {
@@ -31,10 +30,6 @@ struct HealthView: View {
             ) {
                 SideMenuView(
                     isExpanded: isMenuExpanded,
-                    onLabs: {
-                        isMenuExpanded.wrappedValue = false
-                        showingGuidedTesting = true
-                    },
                     onDNA: {
                         isMenuExpanded.wrappedValue = false
                         showingGenome = true
@@ -59,9 +54,6 @@ struct HealthView: View {
             .onDisappear { onRootCovered(true) }
             .navigationDestination(isPresented: $showingGenome) {
                 GenomeView()
-            }
-            .navigationDestination(isPresented: $showingGuidedTesting) {
-                VaultGuidedTestingScreen()
             }
             .navigationDestination(isPresented: $showingMyOrders) {
                 MyOrdersView()

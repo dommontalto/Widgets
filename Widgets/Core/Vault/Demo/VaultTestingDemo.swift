@@ -112,12 +112,6 @@ extension VaultTestingClinic {
         demo.first { $0.id == clinicId }?.tests ?? []
     }
 
-    @MainActor static func testCount(in categoryId: String) -> Int {
-        LabCatalog.shared.clinics.reduce(0) { count, clinic in
-            count + clinic.count(in: categoryId)
-        }
-    }
-
     func count(in categoryId: String) -> Int {
         tests.filter { $0.categoryIds.contains(categoryId) }.count
     }

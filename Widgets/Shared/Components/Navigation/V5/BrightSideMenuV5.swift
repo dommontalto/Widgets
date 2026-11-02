@@ -29,21 +29,16 @@ struct BrightSideMenuV5<MenuContent: View, Content: View>: View {
 
     @State private var offset: CGFloat = 0
     @State private var haptic = false
-    @State private var isClosing = false
-    @State private var closeCount = 0
 
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width * sideBarRatio
 
             ZStack(alignment: .topLeading) {
-                // Kept until the close finishes sliding, then dropped at once rather
-                // than faded, so a quick reopen never catches the old menu on its way out.
-                if isExpanded || offset > 0 || isClosing {
+                if isExpanded || offset > 0 {
                     menuContent
                         .frame(width: width)
                         .frame(maxHeight: .infinity)
-                        .transition(.identity)
                 }
 
                 content
@@ -68,14 +63,7 @@ struct BrightSideMenuV5<MenuContent: View, Content: View>: View {
             // same one the swipe does.
             .onChange(of: isExpanded) { _, isExpanded in
                 haptic.toggle()
-                closeCount += 1
-                let close = closeCount
-                isClosing = !isExpanded
-                withAnimation(.brightSnappy) {
-                    offset = isExpanded ? width : 0
-                } completion: {
-                    if close == closeCount { isClosing = false }
-                }
+                withAnimation(.brightSnappy) { offset = isExpanded ? width : 0 }
             }
         }
         .brightHapticV5(.soft, trigger: haptic)

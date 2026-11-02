@@ -5,11 +5,10 @@
 
 import SwiftUI
 
-// The iOS app's side menu. What's New, Labs, DNA, My Orders and Edit Home screen work;
+// The iOS app's side menu. What's New, DNA, My Orders and Edit Home screen work;
 // the account rows and Log out are laid out but inert.
 struct SideMenuView: View {
     @Binding var isExpanded: Bool
-    let onLabs: () -> Void
     let onDNA: () -> Void
     let onMyOrders: () -> Void
     let onEditHomescreen: () -> Void
@@ -28,8 +27,6 @@ struct SideMenuView: View {
                     showingWhatsNew = true
                 }
                 .staggered(at: 0, in: visibleRows)
-                tile(image: ImageNames.sideMenuLabsV5, title: "Labs", action: onLabs)
-                    .staggered(at: 0, in: visibleRows)
                 tile(image: ImageNames.sideMenuDNAV5, title: "DNA", action: onDNA)
                     .staggered(at: 1, in: visibleRows)
             }
@@ -72,12 +69,14 @@ struct SideMenuView: View {
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
         .task(id: isExpanded) {
-            // Rows stay put while the menu slides shut; the menu drops them the
-            // moment it's fully closed. Reopening mid-close keeps what's showing.
-            guard isExpanded else { return }
+            guard isExpanded else {
+                withAnimation(.easeOut(duration: Constants.rowExitDuration)) { visibleRows.removeAll() }
+                return
+            }
 
+            visibleRows = []
             try? await Task.sleep(for: .seconds(Constants.rowStartDelay))
-            for i in 0 ..< Constants.rowCount where !visibleRows.contains(i) {
+            for i in 0 ..< Constants.rowCount {
                 guard !Task.isCancelled else { return }
                 withAnimation(.bouncy(duration: Constants.animationDuration, extraBounce: Constants.bounce)) {
                     _ = visibleRows.insert(i)
@@ -163,6 +162,7 @@ struct SideMenuView: View {
         static let bounce: TimeInterval = 0.1
         static let rowStaggerDelay: TimeInterval = 0.03
         static let rowStartDelay: TimeInterval = 0.02
+        static let rowExitDuration: TimeInterval = 0.15
     }
 }
 
