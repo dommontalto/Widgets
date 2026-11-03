@@ -36,7 +36,6 @@ struct LighthouseMenuView: View {
                     VStack(alignment: .leading, spacing: .spacing3x) {
                         modelRow
                         LighthouseUsageView(used: Constants.demoUsage)
-                        BrightDividerV5()
                     }
                     .transition(.opacity.combined(with: .move(edge: .top)))
 
@@ -95,21 +94,21 @@ struct LighthouseMenuView: View {
 
     private var shortcuts: some View {
         VStack(spacing: .spacing0x) {
+            BrightDividerV5()
             shortcutRow(symbol: "person.badge.clock.fill", title: Constants.checkInTitle, action: onCheckIns)
             shortcutRow(symbol: "rectangle.3.group.fill", title: Constants.configurationsTitle, action: onConfigurations)
-            shortcutRow(symbol: "gearshape.fill", title: Constants.settingsTitle, action: onSettings)
+            shortcutRow(symbol: "gearshape.fill", title: Constants.settingsTitle, isLast: true, action: onSettings)
         }
-        .padding(.horizontal, .spacing1x)
     }
 
-    private func shortcutRow(symbol: String, title: String, action: @escaping () -> Void) -> some View {
+    private func shortcutRow(symbol: String, title: String, isLast: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: .spacing0x) {
                 HStack(spacing: .spacing2x) {
                     Image(systemName: symbol)
                         .font(.standard(size: .subheading, weight: .regular))
                         .foregroundStyle(Color.textColor)
-                        .frame(width: Constants.glyphWidth)
+                        .frame(width: Constants.glyphWidth, alignment: .leading)
 
                     BrightText(title, size: .body1)
 
@@ -121,7 +120,9 @@ struct LighthouseMenuView: View {
                 }
                 .frame(height: Constants.rowHeight)
 
-                BrightDividerV5()
+                if !isLast {
+                    BrightDividerV5()
+                }
             }
             .contentShape(Rectangle())
         }
@@ -134,7 +135,7 @@ struct LighthouseMenuView: View {
                 Image(systemName: "clock")
                     .font(.standard(size: .subheading, weight: .regular))
                     .foregroundStyle(Color.textColor)
-                    .frame(width: Constants.glyphWidth)
+                    .frame(width: Constants.glyphWidth, alignment: .leading)
 
                 BrightText(Constants.historyTitle, size: .body1)
 
@@ -152,7 +153,6 @@ struct LighthouseMenuView: View {
         }
         .animation(.brightSnappy, value: historySort)
         .animation(.brightSnappy, value: searchText)
-        .padding(.horizontal, .spacing1x)
         .padding(.top, .spacing2x)
     }
 

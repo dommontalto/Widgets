@@ -5,7 +5,7 @@
 //  Created by Dom Montalto on 3/9/2026.
 //
 
-import Foundation
+import SwiftUI
 
 struct LighthouseModelTier: Identifiable, Hashable {
     let id: String
@@ -40,6 +40,16 @@ enum LighthouseModel: String, CaseIterable, Identifiable {
         case .gemini: ImageNames.lighthouseGeminiTierV5
         case .claude: ImageNames.lighthouseClaudeTierV5
         case .grok: ImageNames.lighthouseGrokTierV5
+        }
+    }
+
+    // The main colour of the tier logo.
+    var tint: Color {
+        switch self {
+        case .chatGPT: .lighthouseGptTint
+        case .gemini: .lighthouseGeminiTint
+        case .claude: .lighthouseClaudeTint
+        case .grok: .lighthouseGrokTint
         }
     }
 

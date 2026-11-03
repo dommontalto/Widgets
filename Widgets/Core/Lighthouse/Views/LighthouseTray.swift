@@ -55,6 +55,7 @@ struct LighthouseTray: View {
     // Once a message goes, the suggestions step aside for the conversation; a new chat brings them back.
     @State private var hasConversation = false
     @State private var topBarHeight: CGFloat = .zero
+    @State private var isWhispering = false
 
     private var isResting: Bool {
         detent == Self.restDetent
@@ -207,6 +208,19 @@ struct LighthouseTray: View {
                     .environment(\.brightChatShowsBottomEdge, true)
                     .safeAreaPadding(.top, topBarHeight)
                     .brightSoftScrollEdgesV5()
+                    .overlay {
+                        if isWhispering, !hasConversation {
+                            BrightPlaceholderViewV5(
+                                image: ImageNames.lighthouseWhisperV5,
+                                title: Constants.whisperTitle,
+                                subtitle: Constants.whisperSubtitle,
+                                fillsViewport: false
+                            )
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                        }
+                    }
+                    .animation(.brightEaseInOut, value: isWhispering)
                     .overlay(alignment: .top) { topBar }
                     .transition(.opacity)
             }
@@ -373,7 +387,7 @@ struct LighthouseTray: View {
                 menuRow
                     .transition(.opacity)
             }
-            if let quickActions, !hasConversation {
+            if let quickActions, !hasConversation, !isWhispering {
                 quickActions
                     .transition(.opacity)
             }
@@ -381,12 +395,24 @@ struct LighthouseTray: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topBarHeight = $0 }
         .animation(.brightEaseInOut, value: isFull)
         .animation(.brightEaseInOut, value: hasConversation)
+        .animation(.brightEaseInOut, value: isWhispering)
     }
 
     private var menuRow: some View {
         HStack(spacing: .spacing2x) {
-            BrightRoundButton(systemImage: "sidebar.left", size: .large) { withAnimation(.brightSnappy) { page = .menu } }
+            BrightRoundButton(imageName: ImageNames.lighthouseMenuV5, size: .large, fontSize: .standout3) { withAnimation(.brightSnappy) { page = .menu } }
                 .accessibilityLabel(Constants.menuLabel)
+
+            BrightRoundButton(
+                imageName: ImageNames.lighthouseWhisperV5,
+                size: .large,
+                fontSize: .huge,
+                color: isWhispering ? .defaultSkyBlue : nil,
+                imageColor: isWhispering ? .white : nil,
+                onTapCallback: toggleWhisper
+            )
+            .accessibilityLabel(Constants.whisperTitle)
+            .accessibilityAddTraits(isWhispering ? .isSelected : [])
 
             Spacer(minLength: .spacing0x)
 
@@ -413,7 +439,8 @@ struct LighthouseTray: View {
             onDismiss: onClose,
             onAttach: { attachmentSource = $0 },
             externalPrompt: $sentPrompt,
-            showsWelcome: false
+            showsWelcome: false,
+            isWhispering: isWhispering
         )
     }
 
@@ -543,6 +570,15 @@ struct LighthouseTray: View {
         }
     }
 
+    // A whisper is a session of its own, so switching either way starts a fresh chat.
+    private func toggleWhisper() {
+        withAnimation(.brightSnappy) { isWhispering.toggle() }
+        hasConversation = false
+        isThinking = false
+        attachments = []
+        chatResetCount += 1
+    }
+
     private func startNewChat() {
         hasConversation = false
         isThinking = false
@@ -559,6 +595,8 @@ struct LighthouseTray: View {
         static let attachLabel = "Attach"
         static let menuLabel = "Lighthouse menu"
         static let closeLabel = "Close"
+        static let whisperTitle = "Whisper mode"
+        static let whisperSubtitle = "This session will disappear after 1 hour.\nYou can ask discreet questions here."
         static let focusDelay: TimeInterval = 0.35
         static let plusSize: CGFloat = 28
         static let maxAttachments = 4

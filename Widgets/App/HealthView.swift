@@ -12,7 +12,6 @@ struct HealthView: View {
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
     var onRootCovered: (Bool) -> Void = { _ in }
     var isMenuExpanded: Binding<Bool> = .constant(false)
-    var onNavTap: () -> Void = {}
 
     @State private var selectedPage = HomePage.health.rawValue
     @State private var editor = HealthWidgetEditorV5()
@@ -83,21 +82,12 @@ struct HealthView: View {
                     }
                 }
 
-                ToolbarItem(placement: .topBarTrailing) {
-                    if editor.isEditing {
+                if editor.isEditing {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             editor.endEditing()
                         } label: {
                             Label("Done", systemImage: "checkmark")
-                                .labelStyle(.iconOnly)
-                        }
-                    } else {
-                        // Until search is built, it opens the widget editor.
-                        Button {
-                            onNavTap()
-                            editor.beginEditing()
-                        } label: {
-                            Label("Search", systemImage: "magnifyingglass")
                                 .labelStyle(.iconOnly)
                         }
                     }

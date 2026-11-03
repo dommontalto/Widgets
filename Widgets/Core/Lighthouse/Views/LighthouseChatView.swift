@@ -40,6 +40,7 @@ struct LighthouseChatView: View {
     var externalPrompt: Binding<String?> = .constant(nil)
     // Held back by the tray until it has settled at its new height.
     var showsWelcome = true
+    var isWhispering = false
 
     @State private var messages = [LighthouseChatMessage]()
     // The tier picked from the pill; nil falls back to the stored choice, and
@@ -58,7 +59,7 @@ struct LighthouseChatView: View {
             isTyping: isTyping,
             showsThinkingOrb: false,
             focusesOnAppear: false,
-            suggestions: BrightChatSuggestions(
+            suggestions: isWhispering ? nil : BrightChatSuggestions(
                 prompts: Constants.quickActions,
                 custom: customPrompts,
                 onTap: send,

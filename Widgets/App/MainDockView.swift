@@ -115,8 +115,7 @@ struct MainDockView: View {
                 HealthView(
                     onOpenLighthouse: openLighthouse,
                     onRootCovered: { setCovered(.home, $0) },
-                    isMenuExpanded: $isMenuExpanded,
-                    onNavTap: { showingLighthouse = false }
+                    isMenuExpanded: $isMenuExpanded
                 )
                 .toolbarVisibility(isMenuExpanded ? .hidden : dockVisibility, for: .tabBar)
             } label: {

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// Presented as a cover: the model carousel with its tier menus, and a Choose
+// Presented as a cover: the model dial with a tier menu under it, and a Choose
 // button that hands the pick back. Closing without choosing still keeps any
 // tier changes.
 struct LighthouseModelSelectorView: View {
@@ -19,7 +19,7 @@ struct LighthouseModelSelectorView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var activeIndex: Int?
+    @State private var selection: LighthouseModelChoice
     @State private var selectedTiers: [String: BrightCarouselTier]
     @State private var isEnteringKey = false
 
@@ -31,22 +31,31 @@ struct LighthouseModelSelectorView: View {
         self.currentModel = currentModel
         self.onApiKeySaved = onApiKeySaved
         self.onModelSelected = onModelSelected
-        _activeIndex = State(initialValue: LighthouseModelPicker.index(of: currentModel))
+        _selection = State(initialValue: .model(currentModel))
         _selectedTiers = State(initialValue: LighthouseModelPicker.storedTiers())
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: .spacing0x) {
-                LighthouseModelPicker(activeIndex: $activeIndex, selectedTiers: $selectedTiers)
+            // The dial runs the full height behind the title and controls, so its
+            // rows fade out at the screen's edges rather than being cut off.
+            ZStack {
+                LighthouseModelWheel(selection: $selection)
+                    .ignoresSafeArea()
 
-                speedMenu
-                    .padding(.bottom, .spacing4x)
-
-                BrightPillButton(Constants.chooseTitle, buttonSize: .large, onTapCallback: choose)
-                    .padding(.bottom, .spacing8x)
+                controls
+            }
+            // Floated over the dial on its own, so nothing the controls or the dial do can shift it.
+            .overlay(alignment: .top) {
+                BrightText(Constants.title, size: .heading)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, .spacing2x)
+                    .padding(.horizontal, .spacing6x)
+                    .allowsHitTesting(false)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // The API key alert's keyboard would otherwise push the whole screen up.
+            .ignoresSafeArea(.keyboard)
             .background { LighthouseChatBackground() }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
@@ -64,12 +73,69 @@ struct LighthouseModelSelectorView: View {
                 }
             }
         }
+        // The tray's keyboard can still be going down as this opens; left in, the title rides it up and down.
+        .ignoresSafeArea(.keyboard)
         .presentationBackground(.clear)
         .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
             onApiKeySaved(key)
             dismiss()
         }
         .onDisappear { LighthouseModelPicker.save(selectedTiers) }
+    }
+
+    // Only the controls take touches; the space above them is the dial's.
+    private var controls: some View {
+        VStack(spacing: .spacing0x) {
+            Spacer(minLength: .spacing0x)
+                .allowsHitTesting(false)
+
+            tierMenu
+                .padding(.bottom, .spacing2x)
+                .opacity(selection.model == nil ? .zero : .opaque)
+                .allowsHitTesting(selection.model != nil)
+                .animation(.brightSnappy, value: selection)
+
+            speedMenu
+                .padding(.bottom, .spacing4x)
+
+            BrightPillButton(Constants.chooseTitle, buttonSize: .large, onTapCallback: choose)
+                .padding(.bottom, .spacing8x)
+        }
+    }
+
+    // The tiers of the model on the dial, in the menu the carousel used to carry under each card.
+    @ViewBuilder
+    private var tierMenu: some View {
+        let tiers = selection.model?.tiers ?? []
+        let selected = selectedTiers[selection.id]
+        Menu {
+            ForEach(tiers) { tier in
+                Button {
+                    selectedTiers[selection.id] = BrightCarouselTier(id: tier.id, name: tier.name, label: tier.label)
+                } label: {
+                    Label {
+                        Text("\(tier.name) — \(tier.label)")
+                    } icon: {
+                        if tier.id == selected?.id {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: .spacing1x) {
+                Text(selected?.name ?? " ")
+                    .font(.standard(size: .subheading2, weight: .light))
+                    .foregroundStyle(Color.textColor)
+                    .lineLimit(1)
+                    .contentTransition(.numericText())
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.semiLightTextColor)
+            }
+            .animation(.brightBouncy, value: selected?.id)
+            .contentShape(Rectangle())
+        }
     }
 
     private var speedMenu: some View {
@@ -103,7 +169,7 @@ struct LighthouseModelSelectorView: View {
     }
 
     private func choose() {
-        guard let model = LighthouseModelPicker.choice(at: activeIndex).model else {
+        guard let model = selection.model else {
             isEnteringKey = true
             return
         }
@@ -112,6 +178,7 @@ struct LighthouseModelSelectorView: View {
     }
 
     private enum Constants {
+        static let title = "Which LLM would you like to use?"
         static let chooseTitle = "Choose"
         static let speedTitle = "Speed"
         static let speedKey = "lighthouseSpeed"

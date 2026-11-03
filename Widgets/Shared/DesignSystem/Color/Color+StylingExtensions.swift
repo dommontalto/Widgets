@@ -60,6 +60,12 @@ nonisolated extension Color {
     static let defaultCherry = Color(hex: "#4D132D")
     static let defaultBlackCurrent = Color(hex: "#412F45")
     static let defaultBrightPink = Color(hex: "#FF80B5")
+
+    // Each Lighthouse model's logo colour, for outlines that match the logo.
+    static let lighthouseGptTint = Color(hex: "#12AEF2")
+    static let lighthouseGeminiTint = Color(hex: "#5FA77A")
+    static let lighthouseClaudeTint = Color(hex: "#F27F57")
+    static let lighthouseGrokTint = Color(hex: "#829BCF")
     static let defaultPink = Color(hex: "#FF4CC9")
     static let defaultPurplePink = Color(light: .defaultPurple, dark: .defaultPink)
     
