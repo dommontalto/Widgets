@@ -33,7 +33,7 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
         case .searchMeal: "Search"
         case .describeMeal: "Describe"
         case .activity: "Activity"
-        case .cycle: "Cycle"
+        case .cycle: "Menstrual"
         case .document: "Document"
         }
     }
