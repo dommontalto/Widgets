@@ -43,7 +43,7 @@ struct BrightTileV5<Icon: View>: View {
 
                 Spacer(minLength: .spacing0x)
 
-                BrightText(title, size: .subheading, color: .white, weight: .regular)
+                BrightText(title, size: .subheading, color: .white)
 
                 BrightText(subtitle, size: .body1, color: .white)
                     .blendMode(.overlay)

@@ -92,7 +92,7 @@ public struct BrightOTPView: View {
         otpFilledBorderWidth: CGFloat = 1,
         otpTextColor: UIColor = .black,
         otpFontSize: CGFloat = 27,
-        otpFont: UIFont = UIFont.systemFont(ofSize: 27, weight: .light),
+        otpFont: UIFont = UIFont.systemFont(ofSize: 27, weight: .regular),
         isSecureTextEntry: Bool = false,
         enableClearOTP: Bool = false,
         onCommit: (() -> Void)? = nil
@@ -420,7 +420,7 @@ extension BrightOTPTextField {
         delegate = implementation
         implementation.implementationDelegate = self
         becomeFirstResponder()
-        font = Font.standardUIFont(size: .standout1, weight: .light)
+        font = Font.standardUIFont(size: .standout1, weight: .regular)
     }
 
     private func createLabelsStackView(with count: Int) -> UIStackView {
@@ -445,7 +445,7 @@ extension BrightOTPTextField {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textAlignment = .center
         label.textColor = otpTextColor
-        label.font = Font.standardUIFont(size: .standout1, weight: .light)
+        label.font = Font.standardUIFont(size: .standout1, weight: .regular)
         // label.font = otpFont
         label.isUserInteractionEnabled = true
         label.layer.masksToBounds = true

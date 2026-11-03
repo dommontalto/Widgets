@@ -137,15 +137,15 @@ struct BrightSleepWidgetV5: View {
     private func vital(label: String, systemImage: String, value: Int, unit: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
             if size != .small {
-                BrightText(label, size: .body2, color: .semiLightTextColor, weight: .regular)
+                BrightText(label, size: .body2, color: .semiLightTextColor)
             }
 
             Image(systemName: systemImage)
-                .font(.standard(size: .subheading, weight: .light))
+                .font(.standard(size: .subheading, weight: .regular))
                 .foregroundStyle(Color.defaultRed)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                BrightText(isEmpty || value == 0 ? .brightEmptyValue : "\(value)", size: .body2, color: .defaultRed, weight: .regular)
+                BrightText(isEmpty || value == 0 ? .brightEmptyValue : "\(value)", size: .body2, color: .defaultRed)
                     .monospacedDigit()
 
                 BrightText(unit, size: .body2, color: .lightTextColor)
@@ -159,11 +159,11 @@ struct BrightSleepWidgetV5: View {
         HStack(spacing: .spacing0x) {
             if let selectedSegment {
                 HStack(spacing: .spacing05x) {
-                    BrightText(selectedSegment.stage.title, size: .body2, color: selectedSegment.stage.color, weight: .regular)
+                    BrightText(selectedSegment.stage.title, size: .body2, color: selectedSegment.stage.color)
                         .contentTransition(.numericText())
 
                     if size != .small {
-                        BrightText(duration(of: selectedSegment), size: .body2, color: selectedSegment.stage.color, weight: .regular)
+                        BrightText(duration(of: selectedSegment), size: .body2, color: selectedSegment.stage.color)
                             .monospacedDigit()
                             .contentTransition(.numericText())
                     }

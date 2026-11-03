@@ -267,7 +267,7 @@ struct BrightRingGroupWidgetV5: View {
             } else if let heldText = ring.heldText {
                 steady(isHeld: selectedRingID == ring.id) { isHeld in
                     if isHeld {
-                        BrightText(heldText, size: .heading, color: ring.color, weight: .regular)
+                        BrightText(heldText, size: .heading, color: ring.color)
                             .lineLimit(1)
                     } else if ring.isDuration {
                         duration(ring)

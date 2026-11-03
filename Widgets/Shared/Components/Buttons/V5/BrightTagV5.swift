@@ -17,6 +17,7 @@ struct BrightTagV5: View {
     // Glass by default; `false` for a flat capsule (see `BrightPillButton`).
     let isGlass: Bool
     let selectedTint: Color?
+    let buttonSize: BrightButtonSizes
     let action: () -> Void
 
     init(
@@ -26,6 +27,7 @@ struct BrightTagV5: View {
         isSelected: Bool,
         isGlass: Bool = true,
         selectedTint: Color? = nil,
+        buttonSize: BrightButtonSizes = .small,
         action: @escaping () -> Void
     ) {
         self.title = title
@@ -34,6 +36,7 @@ struct BrightTagV5: View {
         self.isSelected = isSelected
         self.isGlass = isGlass
         self.selectedTint = selectedTint
+        self.buttonSize = buttonSize
         self.action = action
     }
 
@@ -47,7 +50,7 @@ struct BrightTagV5: View {
             image: image,
             systemImage: systemImage,
             size: .body1,
-            buttonSize: .small,
+            buttonSize: buttonSize,
             isSelected: isSelected,
             isGlass: isGlass,
             selectedTint: selectedTint

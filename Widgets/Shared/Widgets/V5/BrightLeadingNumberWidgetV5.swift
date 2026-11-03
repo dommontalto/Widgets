@@ -69,7 +69,7 @@ struct BrightLeadingNumberWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 BrightWidgetIconV5(systemImage: systemImage, style: appearance.iconStyle)
 
-                BrightText(title, size: .body1, weight: .regular)
+                BrightText(title, size: .body1)
             }
             .lineLimit(1)
 
@@ -91,7 +91,7 @@ struct BrightLeadingNumberWidgetV5: View {
         .lineLimit(1)
         // Digits never use the room every line keeps below its baseline, so
         // it's pulled into the padding rather than lifting the number.
-        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
+        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .regular)?.descender ?? 0)
     }
 
     private var display: String {
@@ -114,7 +114,7 @@ extension BrightLeadingNumberWidgetV5 {
 
                     Spacer(minLength: .spacing1x)
 
-                    BrightText(detail.value, size: .body3, weight: .regular)
+                    BrightText(detail.value, size: .body3)
                         .monospacedDigit()
                 }
                 .lineLimit(1)

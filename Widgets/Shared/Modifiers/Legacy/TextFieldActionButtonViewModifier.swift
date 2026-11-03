@@ -17,9 +17,7 @@ private struct TextFieldActionButtonViewModifier: ViewModifier {
             content
             Spacer()
             Button(action: onTapAction) {
-                Text(buttonTitle)
-                    .font(.standard(size: .body1, weight: .light))
-                    .foregroundStyle(textColor)
+                BrightText(buttonTitle, size: .body1, color: textColor)
                     .padding()
             }
         }

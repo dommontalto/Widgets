@@ -87,7 +87,7 @@ struct BrightRowV5<Custom: View>: View {
                 BrightText(title, size: .body1, weight: .medium)
                     .lineLimit(1)
                 if let subtitle {
-                    BrightText(subtitle, size: .body2, color: .lightTextColor, weight: .regular)
+                    BrightText(subtitle, size: .body2, color: .lightTextColor)
                         .lineLimit(1)
                 }
             }

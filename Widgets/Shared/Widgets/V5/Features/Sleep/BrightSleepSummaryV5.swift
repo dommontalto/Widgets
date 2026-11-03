@@ -33,11 +33,11 @@ struct BrightSleepSummaryV5: View {
             Spacer(minLength: .spacing0x)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                BrightText(isEmpty || score == 0 ? .brightEmptyValue : revealed("\(score)"), size: .heading, color: .defaultGreen, weight: .regular)
+                BrightText(isEmpty || score == 0 ? .brightEmptyValue : revealed("\(score)"), size: .heading, color: .defaultGreen)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
-                BrightText("%", size: .body5, color: .defaultGreen.opacity(.lowOpacity), weight: .regular)
+                BrightText("%", size: .body5, color: .defaultGreen.opacity(.lowOpacity))
             }
             .padding(.horizontal, .spacing1x)
             .padding(.vertical, .spacing05x)
@@ -59,7 +59,7 @@ struct BrightSleepSummaryV5: View {
                 BrightWidgetIconV5(systemImage: systemImage, style: color)
             } else {
                 Image(systemName: systemImage)
-                    .font(.standard(size: .subheading, weight: .light))
+                    .font(.standard(size: .subheading, weight: .regular))
                     .foregroundStyle(color)
             }
 

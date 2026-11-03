@@ -23,7 +23,7 @@ struct BrightPDFViewerV5: View {
             } else if let loadError {
                 VStack(spacing: .spacing2x) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32, weight: .light))
+                        .font(.system(size: 32, weight: .regular))
                         .foregroundStyle(Color.defaultOrange)
                     BrightText("Couldn't load preview", size: .body1, weight: .medium)
                     BrightText(loadError, size: .body5, color: .lightTextColor)

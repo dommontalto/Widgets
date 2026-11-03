@@ -37,21 +37,20 @@ struct LighthouseModelSelectorView: View {
 
     var body: some View {
         NavigationStack {
-            // The dial runs the full height behind the title and controls, so its
+            // The dial runs the full height behind the controls, so its
             // rows fade out at the screen's edges rather than being cut off.
             ZStack {
                 LighthouseModelWheel(selection: $selection)
+                    .overlay(alignment: .leading) {
+                        tierMenu
+                            .padding(.leading, .spacing5x)
+                            .opacity(selection.model == nil ? .zero : .opaque)
+                            .allowsHitTesting(selection.model != nil)
+                            .animation(.brightSnappy, value: selection)
+                    }
                     .ignoresSafeArea()
 
                 controls
-            }
-            // Floated over the dial on its own, so nothing the controls or the dial do can shift it.
-            .overlay(alignment: .top) {
-                BrightText(Constants.title, size: .heading)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, .spacing2x)
-                    .padding(.horizontal, .spacing6x)
-                    .allowsHitTesting(false)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // The API key alert's keyboard would otherwise push the whole screen up.
@@ -73,7 +72,6 @@ struct LighthouseModelSelectorView: View {
                 }
             }
         }
-        // The tray's keyboard can still be going down as this opens; left in, the title rides it up and down.
         .ignoresSafeArea(.keyboard)
         .presentationBackground(.clear)
         .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
@@ -88,12 +86,6 @@ struct LighthouseModelSelectorView: View {
         VStack(spacing: .spacing0x) {
             Spacer(minLength: .spacing0x)
                 .allowsHitTesting(false)
-
-            tierMenu
-                .padding(.bottom, .spacing2x)
-                .opacity(selection.model == nil ? .zero : .opaque)
-                .allowsHitTesting(selection.model != nil)
-                .animation(.brightSnappy, value: selection)
 
             speedMenu
                 .padding(.bottom, .spacing4x)
@@ -124,9 +116,7 @@ struct LighthouseModelSelectorView: View {
             }
         } label: {
             HStack(spacing: .spacing1x) {
-                Text(selected?.name ?? " ")
-                    .font(.standard(size: .subheading2, weight: .light))
-                    .foregroundStyle(Color.textColor)
+                BrightText(selected?.name ?? " ", size: .subheading2)
                     .lineLimit(1)
                     .contentTransition(.numericText())
                 Image(systemName: "chevron.up.chevron.down")
@@ -153,9 +143,7 @@ struct LighthouseModelSelectorView: View {
             }
         } label: {
             HStack(spacing: .spacing1x) {
-                Text(speed.title)
-                    .font(.standard(size: .subheading2, weight: .light))
-                    .foregroundStyle(Color.textColor)
+                BrightText(speed.title, size: .subheading2)
                     .lineLimit(1)
                     .contentTransition(.numericText())
                 Image(systemName: "chevron.up.chevron.down")
@@ -178,7 +166,6 @@ struct LighthouseModelSelectorView: View {
     }
 
     private enum Constants {
-        static let title = "Which LLM would you like to use?"
         static let chooseTitle = "Choose"
         static let speedTitle = "Speed"
         static let speedKey = "lighthouseSpeed"

@@ -171,7 +171,7 @@ struct BrightLineChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 BrightWidgetIconV5(systemImage: systemImage, style: appearance.iconStyle)
 
-                BrightText(title, size: .body1, weight: .regular)
+                BrightText(title, size: .body1)
 
                 if size != .small {
                     extreme("arrow.up", value: high, color: tint)
@@ -191,7 +191,7 @@ struct BrightLineChartWidgetV5: View {
             Image(systemName: systemImage)
                 .font(.standard(size: .body3, weight: .regular))
 
-            BrightText(display(value), size: .body3, color: color, weight: .regular)
+            BrightText(display(value), size: .body3, color: color)
                 .monospacedDigit()
                 .contentTransition(.numericText())
         }
@@ -259,10 +259,10 @@ struct BrightLineChartWidgetV5: View {
                 .padding(.trailing, .spacing1x)
 
                 if isSmall {
-                    reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .light)
+                    reading(selectedSample?.value ?? current, unit: unit, valueSize: .huge, unitSize: .body3, weight: .regular)
                         // Digits never use the room every line keeps below its baseline, so
                         // it's pulled into the padding rather than lifting the number.
-                        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
+                        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .regular)?.descender ?? 0)
                         .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
                         .brightDebugBackgroundV5(.yellow)
                 }
@@ -398,7 +398,7 @@ struct BrightLineChartWidgetV5: View {
             GeometryReader { geometry in
                 ForEach(visibleEvents) { event in
                     Image(systemName: event.systemImage)
-                        .font(.standard(size: .body1, weight: .light))
+                        .font(.standard(size: .body1, weight: .regular))
                         .foregroundStyle(event.color)
                         .position(
                             x: xPosition(of: event.midpoint, width: geometry.size.width),
@@ -470,9 +470,9 @@ struct BrightLineChartWidgetV5: View {
 
     private var guideLabels: [GuideLabel] {
         var labels = [
-            GuideLabel(value: high, color: tint, weight: .light),
+            GuideLabel(value: high, color: tint, weight: .regular),
             GuideLabel(value: average, color: .textColor, weight: .regular),
-            GuideLabel(value: low, color: .defaultCyan, weight: .light),
+            GuideLabel(value: low, color: .defaultCyan, weight: .regular),
         ]
         if size == .large {
             labels.append(GuideLabel(value: domain.lowerBound, color: .textColor.opacity(.veryLowOpacity), weight: .regular))

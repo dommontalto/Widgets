@@ -126,7 +126,7 @@ private struct WhatsNewSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             VStack(alignment: .leading, spacing: .spacing2x) {
-                BrightText(section.title, size: .heading, weight: .regular)
+                BrightText(section.title, size: .heading)
                     .whatsNewReveal(isRevealed) { content, hidden in
                         content
                             .opacity(1 - hidden)

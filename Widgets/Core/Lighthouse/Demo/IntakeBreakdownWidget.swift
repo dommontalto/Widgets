@@ -84,8 +84,7 @@ struct IntakeBreakdownWidget: View {
                 BrightText(
                     title,
                     size: .body2,
-                    color: .lightTextColor,
-                    weight: .regular
+                    color: .lightTextColor
                 )
                 .frame(
                     maxWidth: .infinity,

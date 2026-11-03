@@ -155,16 +155,16 @@ struct BrightCheckoutViewV5: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
-            BrightText(item.title, size: .standout1, weight: .regular)
+            BrightText(item.title, size: .standout1)
 
             if let subtitle = item.subtitle {
                 HStack(spacing: .spacing1x) {
                     if let systemImage = item.systemImage {
                         Image(systemName: systemImage)
-                            .font(.standard(size: .subheading, weight: .light))
+                            .font(.standard(size: .subheading, weight: .regular))
                     }
 
-                    BrightText(subtitle, size: .subheading, weight: .regular)
+                    BrightText(subtitle, size: .subheading)
                 }
             }
 
@@ -216,7 +216,7 @@ struct BrightCheckoutViewV5: View {
                     selectedShipping = option.id
                 } label: {
                     VStack(alignment: .leading, spacing: .spacing05x) {
-                        BrightText(option.name, size: .body1, weight: .regular)
+                        BrightText(option.name, size: .body1)
 
                         BrightText(option.detail, size: .body1, color: .lightTextColor)
                     }
@@ -238,7 +238,7 @@ struct BrightCheckoutViewV5: View {
 
             BrightDividerV5()
 
-            BrightText(name, size: .body1, weight: .regular)
+            BrightText(name, size: .body1)
 
             BrightText(address, size: .body1, color: .lightTextColor)
                 .fixedSize(horizontal: false, vertical: true)
@@ -286,11 +286,11 @@ struct BrightCheckoutViewV5: View {
     private func methodLabel(_ method: BrightPaymentMethod) -> some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
             HStack(spacing: .spacing1x) {
-                BrightText(method.name, size: .body1, weight: .regular)
+                BrightText(method.name, size: .body1)
                     .lineLimit(1)
 
                 if let last4 = method.last4 {
-                    BrightText("\(Constants.mask) \(last4)", size: .body1, weight: .regular)
+                    BrightText("\(Constants.mask) \(last4)", size: .body1)
                         .monospacedDigit()
                         .fixedSize()
                 }
@@ -321,13 +321,13 @@ struct BrightCheckoutViewV5: View {
 
     private var totalCard: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(Constants.totalTitle, size: .body1, weight: .regular)
+            BrightText(Constants.totalTitle, size: .body1)
 
             Spacer(minLength: .spacing2x)
 
             BrightChipV5(title: item.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
 
-            BrightText(item.priceText, size: .body1, weight: .regular)
+            BrightText(item.priceText, size: .body1)
                 .monospacedDigit()
         }
         .modifier(SectionCard(nudge: 0))
@@ -338,10 +338,10 @@ struct BrightCheckoutViewV5: View {
     private func sectionTitle(_ section: Section) -> some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: section.systemImage)
-                .font(.standard(size: .heading, weight: .light))
+                .font(.standard(size: .heading, weight: .regular))
                 .foregroundStyle(Color.semiLightTextColor)
 
-            BrightText(section.title, size: .body1, color: .semiLightTextColor, weight: .regular)
+            BrightText(section.title, size: .body1, color: .semiLightTextColor)
 
             Spacer(minLength: .spacing2x)
         }

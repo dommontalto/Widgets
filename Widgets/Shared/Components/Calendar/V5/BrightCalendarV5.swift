@@ -101,7 +101,7 @@ struct BrightCalendarV5<Trailing: View>: View {
                         .frame(width: Constants.iconSize, height: Constants.iconSize)
                         .foregroundStyle(Color.textColor)
                 }
-                BrightText(selectedDate.formatted(.brightCalendarDate), size: .body1, color: .semiLightTextColor, weight: .regular)
+                BrightText(selectedDate.formatted(.brightCalendarDate), size: .body1, color: .semiLightTextColor)
                     .contentTransition(.numericText())
                     .animation(.brightSnappy, value: selectedDate)
             }
@@ -325,7 +325,7 @@ private struct DayCell: View {
 
     var body: some View {
         VStack(spacing: .spacing05x) {
-            BrightText(date.formatted(.brightDay), size: .subheading, weight: .regular)
+            BrightText(date.formatted(.brightDay), size: .subheading)
                 .opacity(isSelected || fill != nil ? .opaque : .minimalOpacity)
                 .frame(width: Constants.circleSize, height: Constants.circleSize)
                 .background {
@@ -359,7 +359,7 @@ private struct DayCell: View {
                 .opacity(isSelected ? 0 : .opaque)
                 .offset(y: -.spacing1x)
 
-            BrightText(date.formatted(.brightWeekdayInitial), size: .body1, weight: .regular)
+            BrightText(date.formatted(.brightWeekdayInitial), size: .body1)
                 .opacity(isSelected ? .opaque : .minimalOpacity)
 
             dot

@@ -36,7 +36,7 @@ struct GenomeCategoryView: View {
                     )
 
                     if let description = percentileBar.displayDescription {
-                        BrightText(description, size: .body4, color: .lightTextColor, weight: .regular)
+                        BrightText(description, size: .body4, color: .lightTextColor)
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(.lineSpacingMedium)
                             .padding(.horizontal, .spacing1x)

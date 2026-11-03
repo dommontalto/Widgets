@@ -163,7 +163,7 @@ struct LighthouseChatResponse: View {
 
     private func actionIcon(_ systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.standardSFPro(size: .body1, weight: .light))
+            .font(.standardSFPro(size: .body1, weight: .regular))
             .foregroundStyle(Color.lightTextColor)
             .frame(width: Constants.iconSize, height: Constants.iconSize)
             .contentShape(Rectangle())

@@ -29,7 +29,7 @@ struct BrightAddPaymentMethodSheetV5: View {
         BrightPageSheetViewV5(horizontalPadding: .spacing0x) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing2x) {
-                    BrightText(Constants.title, size: .standout1, weight: .regular)
+                    BrightText(Constants.title, size: .standout1)
                         .padding(.bottom, .spacing2x)
 
                     BrightTextFieldV5(
@@ -86,7 +86,7 @@ struct BrightAddPaymentMethodSheetV5: View {
 
     private var billingCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(Constants.billingTitle, size: .body1, color: .semiLightTextColor, weight: .regular)
+            BrightText(Constants.billingTitle, size: .body1, color: .semiLightTextColor)
 
             BrightDividerV5()
 
@@ -99,7 +99,7 @@ struct BrightAddPaymentMethodSheetV5: View {
 
                     if let billing {
                         VStack(alignment: .leading, spacing: .spacing05x) {
-                            BrightText(billing.name, size: .body1, weight: .regular)
+                            BrightText(billing.name, size: .body1)
 
                             BrightText(billing.street, size: .body1, color: .lightTextColor)
                                 .fixedSize(horizontal: false, vertical: true)

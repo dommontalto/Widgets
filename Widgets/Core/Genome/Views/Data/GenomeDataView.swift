@@ -284,7 +284,7 @@ private struct GenomeRungAnnotations: View {
     ) {
         ctx.draw(
             Text(letter)
-                .font(.standard(size: .heading, weight: .light))
+                .font(.standard(size: .heading, weight: .regular))
                 .foregroundColor(accent),
             at: point
         )
@@ -323,7 +323,7 @@ private struct GenomeStrandMarkerHeader: View {
             }
 
             if let rsid = marker.rsid {
-                BrightText(rsid, size: .body2, color: .lightTextColor, weight: .regular)
+                BrightText(rsid, size: .body2, color: .lightTextColor)
                     .monospaced()
             }
         }
@@ -388,7 +388,7 @@ private struct GenomeStrandMarkerMeaning: View {
     }
 
     private var text: some View {
-        BrightText(meaning, size: .body3, color: .lightTextColor, weight: .regular)
+        BrightText(meaning, size: .body3, color: .lightTextColor)
             .multilineTextAlignment(.trailing)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { textHeight = $0 }
     }

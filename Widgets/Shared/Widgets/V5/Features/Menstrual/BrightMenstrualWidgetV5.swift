@@ -170,7 +170,7 @@ struct BrightMenstrualWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 BrightWidgetIconV5(systemImage: isEmpty ? Constants.emptySystemImage : phase.systemImage, style: isEmpty ? Color.defaultPink : phase.color)
 
-                BrightText(isEmpty ? Constants.emptyTitle : phase.title, size: .body1, weight: .regular)
+                BrightText(isEmpty ? Constants.emptyTitle : phase.title, size: .body1)
                     .contentTransition(.numericText())
             }
             .lineLimit(1)
@@ -188,14 +188,14 @@ struct BrightMenstrualWidgetV5: View {
             BrightText("Period:", size: .body5, color: .lightTextColor)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(isEmpty ? .brightEmptyValue : nextPeriod.formatted(.brightDate), size: .body1, weight: .regular)
+                BrightText(isEmpty ? .brightEmptyValue : nextPeriod.formatted(.brightDate), size: .body1)
 
                 Circle()
                     .fill(Color.lightTextColor)
                     .frame(width: .spacing05x, height: .spacing05x)
                     .alignmentGuide(.firstTextBaseline) { $0[.bottom] + .spacing05x }
 
-                BrightText(isEmpty ? .brightEmptyValue : "\(daysUntilPeriod)D", size: .body1, color: .lightTextColor, weight: .regular)
+                BrightText(isEmpty ? .brightEmptyValue : "\(daysUntilPeriod)D", size: .body1, color: .lightTextColor)
                     .monospacedDigit()
             }
         }
@@ -376,7 +376,7 @@ struct BrightMenstrualWidgetV5: View {
     // The icon fades on its own, over the card-coloured disc that cuts it out of the bracket.
     private func markerIcon(_ phase: Phase, at x: CGFloat, opacity: Double) -> some View {
         Image(systemName: phase.systemImage)
-            .font(.standard(size: .body5, weight: .light))
+            .font(.standard(size: .body5, weight: .regular))
             .foregroundStyle(phase.color)
             .opacity(opacity)
             .background(Circle().fill(Color.defaultHomeCards))
@@ -444,7 +444,7 @@ struct BrightMenstrualWidgetV5: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(value, size: .standout2, weight: .regular)
+                BrightText(value, size: .standout2)
                     .monospacedDigit()
 
                 if let unit {

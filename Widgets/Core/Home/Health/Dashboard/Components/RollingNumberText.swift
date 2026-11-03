@@ -53,7 +53,7 @@ struct RollingDecimalText: View {
     let format: String
     let size: FontSizes
     let color: Color
-    var weight: Font.Weight = .light
+    var weight: Font.Weight = .regular
 
     @State private var displayed: Double = 0
 

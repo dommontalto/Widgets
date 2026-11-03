@@ -62,7 +62,7 @@ struct LighthouseSettingsSheet: View {
     private var header: some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: "gear")
-                .font(.standard(size: .standout2, weight: .light))
+                .font(.standard(size: .standout2, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
             BrightText(Constants.title, size: .standout3)
@@ -72,7 +72,7 @@ struct LighthouseSettingsSheet: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(title, size: .body1, color: .semiLightTextColor, weight: .regular)
+            BrightText(title, size: .body1, color: .semiLightTextColor)
                 .padding(.horizontal, .spacing2x)
 
             content()

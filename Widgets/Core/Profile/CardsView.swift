@@ -57,7 +57,7 @@ struct CardsView: View {
             mark(card)
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText("\(card.brandName) •••• \(card.last4)", size: .body1, weight: .regular)
+                BrightText("\(card.brandName) •••• \(card.last4)", size: .body1)
 
                 BrightText("Expires \(card.expiry)", size: .body1, color: .lightTextColor)
             }

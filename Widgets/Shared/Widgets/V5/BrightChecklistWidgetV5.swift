@@ -64,7 +64,7 @@ struct BrightChecklistWidgetV5: View {
                 .scaledToFit()
                 .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-            BrightText(title, size: .body1, weight: .regular)
+            BrightText(title, size: .body1)
         }
         .lineLimit(1)
     }
@@ -128,7 +128,7 @@ struct BrightChecklistWidgetV5: View {
                 .contentTransition(.numericText())
         }
         .lineLimit(1)
-        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .light)?.descender ?? 0)
+        .padding(.bottom, Font.standardUIFont(size: .huge, weight: .regular)?.descender ?? 0)
     }
 
     private func status(of day: Day) -> String {

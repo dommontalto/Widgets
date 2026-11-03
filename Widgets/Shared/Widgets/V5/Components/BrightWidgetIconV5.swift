@@ -15,7 +15,7 @@ struct BrightWidgetIconV5<Style: ShapeStyle>: View {
         Image(systemName: systemImage)
             .resizable()
             .scaledToFit()
-            .fontWeight(.light)
+            .fontWeight(.regular)
             .foregroundStyle(style)
             .frame(width: Constants.size, height: Constants.size)
     }

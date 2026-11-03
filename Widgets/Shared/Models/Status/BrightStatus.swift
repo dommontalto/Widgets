@@ -87,6 +87,8 @@ struct BrightStatus: View {
             Color.defaultOrange
         case "LOW", "HIGH", "LOWER", "HIGHER":
             Color.defaultRed
+        case "SAMPLE":
+            Color.defaultYellow
         default:
             Color.lightTextColor
         }

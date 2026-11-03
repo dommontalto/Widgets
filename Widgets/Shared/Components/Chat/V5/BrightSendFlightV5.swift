@@ -73,7 +73,7 @@ final class BrightSendFlight {
 
     private func fitsOneLine(_ text: String, textSize: FontSizes, horizontalPadding: CGFloat) -> Bool {
         guard fieldFrame.width > 0,
-              let font = Font.standardUIFont(size: textSize, weight: .light)
+              let font = Font.standardUIFont(size: textSize, weight: .regular)
         else { return false }
         let width = NSString(string: text).size(withAttributes: [.font: font]).width
         return width < fieldFrame.width - horizontalPadding * 2

@@ -15,9 +15,9 @@ struct BrightCountryFieldV5: View {
         BrightCountryMenuV5(country: countrySelection, showsDialCodes: false) {
             HStack(spacing: .spacing2x) {
                 if let country {
-                    BrightText("\(country.flag)  \(country.name)", size: .body1, weight: .regular)
+                    BrightText("\(country.flag)  \(country.name)", size: .body1)
                 } else {
-                    BrightText(placeholder, size: .body1, color: .lightTextColor, weight: .regular)
+                    BrightText(placeholder, size: .body1, color: .lightTextColor)
                 }
 
                 Spacer(minLength: .spacing2x)
@@ -50,7 +50,7 @@ struct BrightPhoneFieldV5: View {
                     HStack(spacing: .spacing1x) {
                         BrightText(country.flag, size: .body1)
 
-                        BrightText(country.dialCode, size: .body1, color: .lightTextColor, weight: .regular)
+                        BrightText(country.dialCode, size: .body1, color: .lightTextColor)
                             .monospacedDigit()
 
                         Image(systemName: "chevron.up.chevron.down")
@@ -110,7 +110,7 @@ struct BrightFormToggleRowV5: View {
 
     var body: some View {
         HStack(spacing: .spacing2x) {
-            BrightText(title, size: .body1, weight: .regular)
+            BrightText(title, size: .body1)
 
             Spacer(minLength: .spacing2x)
 

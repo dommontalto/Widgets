@@ -19,7 +19,7 @@ struct BrightCohortRowV5: View {
                 .foregroundStyle(Color.textColor, Color.lightTextColor, Color.textColor.opacity(.semiLowOpacity))
                 .font(.standardSFPro(size: .subheading2, weight: .regular))
 
-            BrightText("Cohort:", size: .body2, color: .semiLightTextColor, weight: .regular)
+            BrightText("Cohort:", size: .body2, color: .semiLightTextColor)
                 .lineLimit(1)
 
             menu(selection: $gender, options: Self.genderOptions) { $0 == "women" ? "Female" : "Male" }
@@ -44,7 +44,7 @@ struct BrightCohortRowV5: View {
                 }
             }
         } label: {
-            BrightText(title(selection.wrappedValue), size: .body4, weight: .regular)
+            BrightText(title(selection.wrappedValue), size: .body4)
                 .contentTransition(.numericText())
                 .lineLimit(1)
                 .padding(.horizontal, .spacing105x)

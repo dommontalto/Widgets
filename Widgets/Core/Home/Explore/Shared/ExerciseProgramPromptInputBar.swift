@@ -98,7 +98,7 @@ struct ExerciseProgramPromptInputBar<ModelPicker: View>: View {
             }
 
             TextField("", text: $text, axis: .vertical)
-                .font(.standard(size: .subheading2, weight: .light))
+                .font(.standard(size: .subheading2, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .lineLimit(1 ... Constants.maxLines)
                 .focused(isFocused)

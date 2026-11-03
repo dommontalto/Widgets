@@ -133,7 +133,7 @@ struct VaultTestDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(test.name, size: .standout3, weight: .regular)
+            BrightText(test.name, size: .standout3)
             detail
             price
         }
@@ -148,7 +148,7 @@ struct VaultTestDetailView: View {
 
     private var price: some View {
         HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
-            BrightText(test.priceText, size: .subheading1, weight: .regular)
+            BrightText(test.priceText, size: .subheading1)
                 .monospacedDigit()
 
             if let note = test.priceNote {
@@ -159,7 +159,7 @@ struct VaultTestDetailView: View {
 
     private var included: some View {
         VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightText("What’s included?", size: .body1, color: .semiLightTextColor, weight: .regular)
+            BrightText("What’s included?", size: .body1, color: .semiLightTextColor)
 
             LazyVGrid(
                 columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
@@ -169,7 +169,7 @@ struct VaultTestDetailView: View {
                 ForEach(test.included, id: \.self) { item in
                     HStack(alignment: .firstTextBaseline, spacing: .spacing1x) {
                         Image(systemName: "checkmark.circle")
-                            .font(.standardSFPro(size: .standout3, weight: .light))
+                            .font(.standardSFPro(size: .standout3, weight: .regular))
                             .foregroundStyle(Color.defaultGreen)
 
                         BrightText(item, size: .body1, color: .semiLightTextColor)

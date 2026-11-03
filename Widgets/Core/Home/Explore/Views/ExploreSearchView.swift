@@ -94,7 +94,7 @@ struct ExploreResultCard: View {
                 ExploreClinicLogo(clinic: clinic)
 
                 VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(clinic.name, size: .heading, color: .semiLightTextColor, weight: .regular)
+                    BrightText(clinic.name, size: .heading, color: .semiLightTextColor)
 
                     BrightText(clinic.address, size: .body1, color: .lightTextColor)
                         .fixedSize(horizontal: false, vertical: true)
@@ -111,10 +111,10 @@ struct ExploreResultCard: View {
 
             HStack(spacing: .spacing1x) {
                 Image(systemName: "pencil.and.list.clipboard")
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
 
-                BrightText("Services", size: .body1, color: .semiLightTextColor, weight: .regular)
+                BrightText("Services", size: .body1, color: .semiLightTextColor)
             }
 
             FlowLayout(spacing: .spacing1x) {

@@ -143,7 +143,7 @@ struct BrightRoundButton: View {
                 .scaledToFit()
                 .frame(width: glyphBox, height: glyphBox)
         case .text(let title):
-            BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor, weight: .regular)
+            BrightText(title, size: fontSize ?? size.defaultFontSize, color: resolvedImageColor)
         }
     }
 

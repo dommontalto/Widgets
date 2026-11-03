@@ -162,7 +162,7 @@ struct BrightWaterWidgetV5: View {
                     .offset(y: levelY - Constants.markerSize / 2)
                     .opacity(isEmpty ? .zero : .opaque)
 
-                BrightText(isRevealed ? full(level) : full(level).zeroedDigits, size: size == .small ? .standout1 : .huge, color: appearance.tint, weight: .regular)
+                BrightText(isRevealed ? full(level) : full(level).zeroedDigits, size: size == .small ? .standout1 : .huge, color: appearance.tint)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     .lineLimit(1)

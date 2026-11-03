@@ -97,7 +97,7 @@ struct AddressesView: View {
     private func row(_ address: BrightShippingAddress) -> some View {
         HStack(alignment: .top, spacing: .spacing2x) {
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(address.name, size: .body1, weight: .regular)
+                BrightText(address.name, size: .body1)
 
                 BrightText(address.street, size: .body1, color: .lightTextColor)
                     .fixedSize(horizontal: false, vertical: true)

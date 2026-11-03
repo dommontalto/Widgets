@@ -160,7 +160,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
         titleAccessory: AnyView? = nil,
         pillAccessory: AnyView? = nil,
         titleSize: FontSizes = .huge205,
-        titleWeight: Font.Weight = .light,
+        titleWeight: Font.Weight = .regular,
         titleSubtitle: AnyView? = nil,
         titleTopInset: CGFloat = 0,
         titlePillSpacing: CGFloat = .spacing2x,
@@ -667,7 +667,8 @@ private struct SwipePagePillRow: View {
                     image: pages[i].image,
                     systemImage: pages[i].systemImage,
                     isSelected: isSelected,
-                    selectedTint: .defaultGreen,
+                    selectedTint: .swipePagePillGreen,
+                    buttonSize: .medium,
                     action: { onPillTap(i) }
                 )
                 .accessibilityLabel(pages[i].title)
@@ -717,7 +718,7 @@ private struct OptionalRefresh: ViewModifier {
 // Not `private`: `pillFollowMaxShift` is the default for an initialiser parameter,
 // so it has to be at least as visible as the initialiser itself.
 enum SwipePageConstants {
-    static let pillHeight: CGFloat = BrightButtonSizes.small.rawValue
+    static let pillHeight: CGFloat = BrightButtonSizes.medium.rawValue
     static let inlineTabSpacing: CGFloat = .spacing1x
     // Max upward distance the floating pill travels as the big title scrolls away,
     // stopping it just below the nav bar.

@@ -218,7 +218,7 @@ struct HealthWidgetViewV5: View {
         HStack(spacing: .spacing1x) {
             BrightWidgetIconV5(systemImage: systemImage, style: color)
 
-            BrightText(title, size: .body1, weight: .regular)
+            BrightText(title, size: .body1)
                 .contentTransition(.numericText())
         }
         .lineLimit(1)

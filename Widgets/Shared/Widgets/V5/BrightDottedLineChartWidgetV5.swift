@@ -66,7 +66,7 @@ struct BrightDottedLineChartWidgetV5: View {
 
                         BrightText(trend.text, size: .body5, color: .defaultCyan)
                     }
-                    .font(.standard(size: .body5, weight: .light))
+                    .font(.standard(size: .body5, weight: .regular))
                     .foregroundStyle(Color.defaultCyan)
                     .lineLimit(1)
                     .padding(.top, .spacing05x)
@@ -128,7 +128,7 @@ struct BrightDottedLineChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 BrightWidgetIconV5(systemImage: appearance.systemImage, style: appearance.iconStyle)
 
-                BrightText(appearance.title, size: .body1, weight: .regular)
+                BrightText(appearance.title, size: .body1)
             }
             .lineLimit(1)
 
@@ -148,13 +148,13 @@ struct BrightDottedLineChartWidgetV5: View {
                     .alignmentGuide(.firstTextBaseline) { $0[.bottom] - Constants.checkmarkBaselineLift }
             }
 
-            BrightText(isEmpty ? .brightEmptyValue : revealed(appearance.format(shownPoint?.value ?? 0)), size: size == .large ? .standout1 : .standout3, weight: .regular)
+            BrightText(isEmpty ? .brightEmptyValue : revealed(appearance.format(shownPoint?.value ?? 0)), size: size == .large ? .standout1 : .standout3)
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.brightEaseInOut, value: shownPoint)
 
             if let unit = appearance.unit {
-                BrightText(unit, size: .body1, color: .lightTextColor, weight: .regular)
+                BrightText(unit, size: .body1, color: .lightTextColor)
             }
         }
         .lineLimit(1)
@@ -304,7 +304,7 @@ struct BrightDottedLineChartWidgetV5: View {
                 .foregroundStyle(Color.defaultCyan)
 
             if let title {
-                BrightText(title, size: .body5, color: .lightTextColor, weight: .regular)
+                BrightText(title, size: .body5, color: .lightTextColor)
             }
         }
         .lineLimit(1)
@@ -317,7 +317,7 @@ struct BrightDottedLineChartWidgetV5: View {
                 .padding(.vertical, .spacing025x)
                 .background(Capsule().fill(Color.textColor.opacity(.ultraLowOpacity)))
 
-            BrightText(isEmpty ? .brightEmptyValue : change.value, size: .standout3, weight: .regular)
+            BrightText(isEmpty ? .brightEmptyValue : change.value, size: .standout3)
                 .monospacedDigit()
         }
     }

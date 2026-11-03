@@ -52,7 +52,7 @@ struct BrightRoundPickerV5: View {
 
     private func tileView(_ icon: BrightRoundPickerIcon) -> some View {
         Image(systemName: icon.symbol)
-            .font(.standard(size: size.defaultFontSize, weight: .light))
+            .font(.standard(size: size.defaultFontSize, weight: .regular))
             .foregroundStyle(icon == selection ? icon.accentColor : .semiLightTextColor)
             .frame(width: tile, height: tile)
             .background {

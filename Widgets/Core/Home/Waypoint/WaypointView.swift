@@ -99,7 +99,7 @@ struct WaypointView: View {
             .padding(.top, .spacing5x)
 
             VStack(spacing: .spacing1x) {
-                BrightText(bearing.status, size: .body1, color: bearing.color, weight: .regular)
+                BrightText(bearing.status, size: .body1, color: bearing.color)
                     .contentTransition(.opacity)
 
                 HStack(spacing: .spacing05x) {
@@ -176,7 +176,7 @@ struct WaypointView: View {
                 .font(.standardSFPro(size: .subheading, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(title, size: .subheading, weight: .regular)
+            BrightText(title, size: .subheading)
         }
     }
 
@@ -451,7 +451,7 @@ private struct WaypointAdjustmentGroupSheet: View {
 
     private func activityIcon(_ activity: WaypointActivity) -> some View {
         Image(systemName: activity.systemImage)
-            .font(.standardSFPro(size: .subheading, weight: .light))
+            .font(.standardSFPro(size: .subheading, weight: .regular))
             .foregroundStyle(activity.color)
             .frame(width: Constants.activitySize, height: Constants.activitySize)
             .background(activity.color.opacity(.veryLowOpacity), in: Circle())
@@ -480,7 +480,7 @@ private struct WaypointAdjustmentDetailView: View {
                             .font(.standardSFPro(size: .subheading2, weight: .regular))
                             .foregroundStyle(Color.textColor)
 
-                        BrightText("Why it changed", size: .body1, weight: .regular)
+                        BrightText("Why it changed", size: .body1)
                     }
 
                     BrightText(adjustment.reason, size: .body1, color: .semiLightTextColor)

@@ -223,7 +223,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
         return VStack(spacing: .spacing4x) {
             if let example {
                 Image(systemName: example.symbol)
-                    .font(.system(size: Constants.exampleIconSize, weight: .light))
+                    .font(.system(size: Constants.exampleIconSize, weight: .regular))
                     .foregroundStyle(tint)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(height: Constants.exampleIconSize)
@@ -513,7 +513,7 @@ struct ExerciseProgramChat<Payload, Response: View, ModelPicker: View>: View {
                 )
             }
             TextField("", text: $newPromptText)
-                .font(.standard(size: .body1, weight: .light))
+                .font(.standard(size: .body1, weight: .regular))
                 .focused($isNewPromptFocused)
         }
         .padding(.horizontal, .spacing3x)

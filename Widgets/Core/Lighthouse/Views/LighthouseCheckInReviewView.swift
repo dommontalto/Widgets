@@ -41,7 +41,7 @@ struct LighthouseCheckInReviewView: View {
     private func label(_ title: String, symbol: String) -> some View {
         HStack(spacing: .spacing1x) {
             Image(systemName: symbol)
-                .font(.standardSFPro(size: .body1, weight: .light))
+                .font(.standardSFPro(size: .body1, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
             BrightText(title, size: .body1)
@@ -108,7 +108,7 @@ struct LighthouseCheckInReviewView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Image(systemName: "chevron.down")
-                        .font(.standardSFPro(size: .body1, weight: .light))
+                        .font(.standardSFPro(size: .body1, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                 }

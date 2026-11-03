@@ -33,7 +33,7 @@ struct LighthouseConfigurationsSheet: View {
     private var header: some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: "rectangle.3.group.fill")
-                .font(.standard(size: .standout2, weight: .light))
+                .font(.standard(size: .standout2, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
             BrightText(Constants.title, size: .standout3)
@@ -45,11 +45,11 @@ struct LighthouseConfigurationsSheet: View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(alignment: .top, spacing: .spacing2x) {
                 VStack(alignment: .leading, spacing: .spacing1x) {
-                    BrightText(configuration.wrappedValue.title, size: .body1, weight: .regular)
+                    BrightText(configuration.wrappedValue.title, size: .body1)
 
                     HStack(spacing: .spacing1x) {
                         Image(systemName: "clock")
-                            .font(.standard(size: .body1, weight: .light))
+                            .font(.standard(size: .body1, weight: .regular))
                             .foregroundStyle(Color.semiLightTextColor)
 
                         BrightText(configuration.wrappedValue.created, size: .body1, color: .semiLightTextColor)

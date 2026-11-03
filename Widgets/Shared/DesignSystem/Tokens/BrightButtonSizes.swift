@@ -13,8 +13,8 @@ enum BrightButtonSizes: CGFloat {
     case extraSmall = 24
     // Round button size 30pt.
     case small = 30
-    // Round button size 36pt.
-    case medium = 36
+    // Round button size 34pt.
+    case medium = 34
     // Forced by iOS to use for toolbars
     case large = 44
     // Round button size 62pt — the largest, for a screen's single hero control.

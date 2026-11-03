@@ -32,7 +32,7 @@ struct LighthouseThinkingStatus: View {
     var body: some View {
         HStack(spacing: .spacing105x) {
             Image(systemName: isListening ? "mic.fill" : step.symbol)
-                .font(.standard(size: .body2, weight: .light))
+                .font(.standard(size: .body2, weight: .regular))
                 .foregroundStyle(Color.white.opacity(.mediumOpacity))
                 .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
 

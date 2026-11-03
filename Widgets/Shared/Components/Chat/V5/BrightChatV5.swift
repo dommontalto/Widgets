@@ -297,7 +297,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
         return VStack(spacing: .spacing4x) {
             if let example {
                 Image(systemName: example.symbol)
-                    .font(.system(size: Constants.exampleIconSize, weight: .light))
+                    .font(.system(size: Constants.exampleIconSize, weight: .regular))
                     .foregroundStyle(Color.defaultSlateBlue)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(height: Constants.exampleIconSize)
@@ -444,7 +444,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
         } label: {
             HStack(spacing: .spacing105x) {
                 Image(systemName: "brain")
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
 
                 BrightText("Thought for \(seconds) seconds", size: .body1, color: .lightTextColor)
                     .monospacedDigit()
@@ -645,7 +645,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
 //                )
 //            }
 //            TextField("", text: $newPromptText)
-//                .font(.standard(size: .body1, weight: .light))
+//                .font(.standard(size: .body1, weight: .regular))
 //                .focused($isNewPromptFocused)
 //        }
 //        .padding(.horizontal, .spacing3x)

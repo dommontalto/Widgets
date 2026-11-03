@@ -103,7 +103,7 @@ struct LighthouseThinkingInline: View {
                 ZStack {
                     if isFinished {
                         Image(systemName: "brain")
-                            .font(.standard(size: .body1, weight: .light))
+                            .font(.standard(size: .body1, weight: .regular))
                             .foregroundStyle(Color.semiLightTextColor)
                             .transition(.opacity)
                     } else {
@@ -129,7 +129,7 @@ struct LighthouseThinkingInline: View {
                 }
 
                 Image(systemName: "chevron.forward")
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
                     .rotationEffect(.degrees(isExpanded ? Constants.openChevronDegrees : 0))
 
@@ -157,7 +157,7 @@ struct LighthouseThinkingInline: View {
         } label: {
             HStack(spacing: .spacing105x) {
                 Image(systemName: step.symbol)
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(isCurrent || isOpen ? Color.textColor : Color.semiLightTextColor)
                     .frame(width: Constants.column, height: Constants.column)
                     .drawOnTransition()
@@ -176,7 +176,7 @@ struct LighthouseThinkingInline: View {
 
                 if step.isExpandable {
                     Image(systemName: "chevron.down")
-                        .font(.standard(size: .body3, weight: .light))
+                        .font(.standard(size: .body3, weight: .regular))
                         .foregroundStyle(Color.lightTextColor)
                         .rotationEffect(.degrees(isOpen ? Constants.flippedChevronDegrees : 0))
                 }
@@ -231,7 +231,7 @@ struct LighthouseThinkingInline: View {
         } label: {
             HStack(alignment: .top, spacing: .spacing105x) {
                 Image(systemName: "doc.text")
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
 
                 VStack(alignment: .leading, spacing: .spacing025x) {
@@ -245,7 +245,7 @@ struct LighthouseThinkingInline: View {
                 Spacer(minLength: .spacing0x)
 
                 Image(systemName: "arrow.up.right")
-                    .font(.standard(size: .body1, weight: .light))
+                    .font(.standard(size: .body1, weight: .regular))
                     .foregroundStyle(Color.lightTextColor)
             }
             .padding(.spacing2x)

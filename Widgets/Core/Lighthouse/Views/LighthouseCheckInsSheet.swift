@@ -38,7 +38,7 @@ struct LighthouseCheckInsSheet: View {
     private var header: some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: "person.badge.clock.fill")
-                .font(.standard(size: .standout2, weight: .light))
+                .font(.standard(size: .standout2, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
             BrightText(Constants.title, size: .standout3)
@@ -52,7 +52,7 @@ struct LighthouseCheckInsSheet: View {
 
         if !group.isEmpty {
             VStack(alignment: .leading, spacing: .spacing2x) {
-                BrightText(frequency.title, size: .body1, color: .semiLightTextColor, weight: .regular)
+                BrightText(frequency.title, size: .body1, color: .semiLightTextColor)
                     .padding(.horizontal, .spacing2x)
 
                 VStack(spacing: .spacing3x) {
@@ -67,7 +67,7 @@ struct LighthouseCheckInsSheet: View {
     private func card(_ checkIn: Binding<LighthouseCheckIn>) -> some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing2x) {
-                BrightText(checkIn.wrappedValue.title, size: .body1, weight: .regular)
+                BrightText(checkIn.wrappedValue.title, size: .body1)
 
                 Spacer(minLength: .spacing2x)
 

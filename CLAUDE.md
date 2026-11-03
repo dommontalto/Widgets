@@ -131,7 +131,7 @@ Defined in `Double+StylingExtensions.swift` as `static` properties on `Double`.
 Use `Font.standard(size:weight:)` (SFCompactRounded) for all body/UI text.
 Use `Font.standardSFPro(size:weight:)` only when explicitly matching SF Pro designs.
 
-**`BrightText` defaults to `weight: .light`** (and `color: .textColor`) — never pass `weight: .light` or `color: .textColor` explicitly; only pass them when different.
+**`BrightText` defaults to `weight: .regular`** (and `color: .textColor`) — light is gone; never pass `weight: .regular` or `color: .textColor` explicitly; only pass them when different.
 
 Available weights via `Font.standard`: `.regular`, `.light`, `.medium`.
 

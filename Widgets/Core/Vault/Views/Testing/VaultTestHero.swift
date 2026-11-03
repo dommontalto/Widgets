@@ -24,7 +24,7 @@ struct VaultTestHero: View {
                     VaultTestCategoryIcon(category: category, symbolSize: .huge)
                         .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-                    BrightText(title, size: .standout1, weight: .regular)
+                    BrightText(title, size: .standout1)
                         .multilineTextAlignment(.center)
 
                     BrightText(subtitle, size: .standout3)

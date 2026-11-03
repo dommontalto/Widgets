@@ -62,7 +62,7 @@ struct BrightAddAddressSheetV5: View {
         BrightPageSheetViewV5(horizontalPadding: .spacing0x) {
             ScrollView {
                 VStack(alignment: .leading, spacing: .spacing2x) {
-                    BrightText(editing == nil ? Constants.title : Constants.editTitle, size: .standout1, weight: .regular)
+                    BrightText(editing == nil ? Constants.title : Constants.editTitle, size: .standout1)
                         .padding(.bottom, .spacing2x)
 
                     BrightCountryFieldV5(placeholder: Constants.countryPlaceholder, country: $country)

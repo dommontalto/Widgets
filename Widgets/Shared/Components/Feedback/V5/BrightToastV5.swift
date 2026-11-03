@@ -248,7 +248,7 @@ private struct BrightToastV5: View {
             }
             .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-            BrightText(shown?.text ?? "", size: .subheading, color: .defaultWhite, weight: .regular)
+            BrightText(shown?.text ?? "", size: .subheading, color: .defaultWhite)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
                 .brightShimmerV5(isActive: kind == .loading)

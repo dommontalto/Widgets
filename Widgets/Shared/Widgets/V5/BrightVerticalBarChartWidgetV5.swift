@@ -155,7 +155,7 @@ struct BrightVerticalBarChartWidgetV5: View {
                 reading(valueSize: .huge205)
                     // Digits never use the room every line keeps below its baseline, so
                     // it's pulled into the padding rather than lifting the number.
-                    .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .light)?.descender ?? 0)
+                    .padding(.bottom, Font.standardUIFont(size: .huge205, weight: .regular)?.descender ?? 0)
                     .matchedGeometryEffect(id: Constants.readingID, in: namespace, properties: .position)
                     .brightDebugBackgroundV5(.yellow)
             }
@@ -177,7 +177,7 @@ struct BrightVerticalBarChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 BrightWidgetIconV5(systemImage: systemImage, style: appearance.iconStyle)
 
-                BrightText(title, size: .body1, weight: .regular)
+                BrightText(title, size: .body1)
             }
             .lineLimit(1)
 
@@ -232,16 +232,16 @@ struct BrightVerticalBarChartWidgetV5: View {
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
-                    BrightText("\(part.label):", size: .body1, color: .lightTextColor, weight: .regular)
+                    BrightText("\(part.label):", size: .body1, color: .lightTextColor)
 
-                    BrightText(revealed(display(part.value)), size: .subheading, color: part.color, weight: .regular)
+                    BrightText(revealed(display(part.value)), size: .subheading, color: part.color)
                         .monospacedDigit()
                         .contentTransition(.numericText())
                 }
             }
 
             if selectedIndex == nil {
-                BrightText("avg", size: .body1, color: .lightTextColor, weight: .regular)
+                BrightText("avg", size: .body1, color: .lightTextColor)
             }
         }
         .lineLimit(1)
@@ -426,7 +426,7 @@ struct BrightVerticalBarChartWidgetV5: View {
     private func extremeLabel(_ systemImage: String, value: Double) -> some View {
         VStack(spacing: .spacing025x) {
             Image(systemName: systemImage)
-                .font(.standard(size: .body4, weight: .light))
+                .font(.standard(size: .body4, weight: .regular))
 
             BrightText(display(value), size: .body6, color: .semiLightTextColor)
                 .monospacedDigit()

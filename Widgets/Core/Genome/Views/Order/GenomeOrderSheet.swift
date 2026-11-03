@@ -45,7 +45,8 @@ struct GenomeOrderSheet: View {
 }
 
 // The order sheet and tray's backdrop: the lighter blue waves drifting slowly on uneven
-// periods so they never visibly loop, sinking into black towards the bottom.
+// periods so they never visibly loop, breathing brighter and dimmer while their colour
+// wash turns, sinking into black towards the bottom.
 struct GenomeOrderWaves: View {
     // Covers its whole frame in blue rather than fading into black below the image.
     var fills = false
@@ -55,6 +56,7 @@ struct GenomeOrderWaves: View {
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { context in
             let t = context.date.timeIntervalSinceReferenceDate * Constants.speed
+            let turn = t / Constants.washPeriod
             Image(ImageNames.genomeOrderBackgroundV5)
                 .resizable()
                 .aspectRatio(contentMode: fills ? .fill : .fit)
@@ -62,11 +64,16 @@ struct GenomeOrderWaves: View {
                 .rotationEffect(.degrees(Constants.rotation * sin(t / 11)))
                 .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
                 .overlay {
-                    LinearGradient(colors: [.defaultCyan, .defaultSkyBlue, .defaultDeepBlue], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        .blendMode(.color)
+                    LinearGradient(
+                        colors: [.defaultCyan, .defaultSkyBlue, .defaultDeepBlue],
+                        startPoint: UnitPoint(x: 0.5 - 0.5 * cos(turn), y: 0.5 - 0.5 * sin(turn)),
+                        endPoint: UnitPoint(x: 0.5 + 0.5 * cos(turn), y: 0.5 + 0.5 * sin(turn))
+                    )
+                    .blendMode(.color)
                 }
                 .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: .top)
                 .clipped()
+                .brightness(Constants.pulse * sin(t / Constants.pulsePeriod))
                 .blur(radius: 20, opaque: true)
         }
         .overlay {
@@ -88,6 +95,11 @@ struct GenomeOrderWaves: View {
         static let scaleSwing: CGFloat = 0.06
         static let rotation: Double = 3
         static let drift: CGFloat = .spacing4x
+        // How far the waves brighten and dim either side of normal, and how slowly.
+        static let pulse: Double = 0.08
+        static let pulsePeriod: Double = 3
+        // The colour wash turns a full circle every 2π of these.
+        static let washPeriod: Double = 13
     }
 }
 

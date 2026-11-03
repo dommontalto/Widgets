@@ -283,7 +283,7 @@ struct LighthouseTray: View {
 
     private var askField: some View {
         TextField("", text: $draft, prompt: Text(Constants.askTitle).foregroundStyle(Color.lightTextColor))
-            .font(.standard(size: .subheading2, weight: .light))
+            .font(.standard(size: .subheading2, weight: .regular))
             .foregroundStyle(Color.textColor)
             .lineLimit(1)
             .focused($isFieldFocused)
@@ -295,7 +295,7 @@ struct LighthouseTray: View {
             .animation(.brightSnappy, value: isAskCentred)
             .background {
                 Text(Constants.askTitle)
-                    .font(.standard(size: .subheading2, weight: .light))
+                    .font(.standard(size: .subheading2, weight: .regular))
                     .fixedSize()
                     .hidden()
                     .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { askPromptWidth = $0 }

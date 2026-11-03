@@ -21,8 +21,6 @@ extension Font {
     static func standardSFPro(size: FontSizes, weight: Font.Weight) -> Font {
         if weight == .regular {
             Font.custom("SF-Pro-Text-Regular", size: size.rawValue)
-        } else if weight == .light {
-            Font.custom("SF-Pro-Text-Light", size: size.rawValue)
         } else if weight == .medium {
             Font.custom("SF-Pro-Text-Medium", size: size.rawValue)
         } else {
@@ -31,15 +29,11 @@ extension Font {
     }
 
     private static func standardWeight(_ weight: Font.Weight) -> Font.Weight {
-        switch weight {
-        case .light, .medium: weight
-        default: .regular
-        }
+        weight == .medium ? .medium : .regular
     }
 
     private static func standardUIWeight(_ weight: Font.Weight) -> UIFont.Weight {
         switch weight {
-        case .light: .light
         case .medium: .medium
         default: .regular
         }

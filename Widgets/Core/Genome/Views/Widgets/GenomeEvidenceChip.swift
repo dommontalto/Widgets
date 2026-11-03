@@ -6,7 +6,7 @@ struct GenomeEvidenceChip: View {
     let level: GenomeEvidenceLevel
 
     var body: some View {
-        BrightText(level.label.uppercased(), size: .body3, color: level.color, weight: .light)
+        BrightText(level.label.uppercased(), size: .body3, color: level.color)
             .padding(.spacing1x)
             .background(level.color.opacity(.minimalOpacity), in: Capsule())
     }

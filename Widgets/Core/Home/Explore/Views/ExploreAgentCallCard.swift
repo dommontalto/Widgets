@@ -77,7 +77,7 @@ struct ExploreAgentCallCard: View {
                 .background(agent.tint.opacity(.minimalOpacity), in: Circle())
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(title, size: .body1, weight: .regular)
+                BrightText(title, size: .body1)
                     .contentTransition(.opacity)
                     .frame(maxWidth: .infinity, alignment: .leading)
 

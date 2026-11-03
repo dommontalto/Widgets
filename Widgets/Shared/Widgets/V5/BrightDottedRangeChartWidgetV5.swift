@@ -103,10 +103,10 @@ struct BrightDottedRangeChartWidgetV5: View {
     private var header: some View {
         HStack(spacing: .spacing05x) {
             Image(systemName: appearance.systemImage)
-                .font(.standard(size: .subheading, weight: .light))
+                .font(.standard(size: .subheading, weight: .regular))
                 .foregroundStyle(appearance.iconStyle)
 
-            BrightText(size == .small ? selectedMeasure.map { "\($0.label) \($0.reading)" } ?? appearance.title : appearance.title, size: .body1, weight: .regular)
+            BrightText(size == .small ? selectedMeasure.map { "\($0.label) \($0.reading)" } ?? appearance.title : appearance.title, size: .body1)
                 .monospacedDigit()
                 .contentTransition(.numericText())
         }
@@ -199,7 +199,7 @@ struct BrightDottedRangeChartWidgetV5: View {
             ForEach(measures) { measure in
                 VStack(spacing: .spacing05x) {
                     Image(systemName: measure.systemImage)
-                        .font(.standard(size: .body1, weight: .light))
+                        .font(.standard(size: .body1, weight: .regular))
                         .foregroundStyle(measure.iconColor)
                         .frame(height: Constants.iconHeight)
 

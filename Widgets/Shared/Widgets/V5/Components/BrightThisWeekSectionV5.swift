@@ -23,7 +23,7 @@ struct BrightThisWeekSectionV5: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(title, size: .body3, color: .semiLightTextColor, weight: .regular)
+            BrightText(title, size: .body3, color: .semiLightTextColor)
                 .contentTransition(.numericText())
 
             LazyVGrid(
@@ -60,7 +60,7 @@ struct BrightThisWeekSectionV5: View {
                 case let .targets(target):
                     HStack(spacing: .spacing05x) {
                         Image(systemName: value >= target ? "arrow.up" : "arrow.down")
-                            .font(.standard(size: .body3, weight: .light))
+                            .font(.standard(size: .body3, weight: .regular))
 
                         BrightText(format(abs(value - target)), size: .body3, color: .semiLightTextColor)
                             .monospacedDigit()

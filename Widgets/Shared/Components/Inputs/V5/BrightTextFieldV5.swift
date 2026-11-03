@@ -102,7 +102,7 @@ struct BrightTextFieldV5: View {
         HStack(spacing: .spacing2x) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.standard(size: .heading, weight: .light))
+                    .font(.standard(size: .heading, weight: .regular))
                     .foregroundStyle(Color.semiLightTextColor)
             }
 
@@ -130,7 +130,7 @@ struct BrightTextFieldV5: View {
                     if focus != nil { focus = activeField }
                 } label: {
                     Image(systemName: isRevealed ? "eye" : "eye.slash")
-                        .font(.standard(size: .subheading2, weight: .light))
+                        .font(.standard(size: .subheading2, weight: .regular))
                         .foregroundStyle(Color.semiLightTextColor)
                         .contentTransition(.symbolEffect(.replace))
                         .frame(maxHeight: .infinity)

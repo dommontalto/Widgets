@@ -190,7 +190,7 @@ struct BrightCalendarDayV5: View {
                 }
             }
         } label: {
-            BrightText("+\(events.count)", size: .body2, color: .semiLightTextColor, weight: .regular)
+            BrightText("+\(events.count)", size: .body2, color: .semiLightTextColor)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     Color.textColor.opacity(.ultraLowOpacity),
@@ -232,13 +232,13 @@ struct BrightCalendarDayV5: View {
                 .frame(width: 2, height: isCompact ? Constants.compactBarHeight : Constants.barHeight)
 
             if isCompact {
-                BrightText(event.name, size: .body2, color: event.color, weight: .regular)
+                BrightText(event.name, size: .body2, color: event.color)
                     .lineLimit(1)
                 Spacer()
                 detailLabel(event)
             } else {
                 VStack(alignment: .leading, spacing: .spacing05x) {
-                    BrightText(event.name, size: .body2, color: event.color, weight: .regular)
+                    BrightText(event.name, size: .body2, color: event.color)
                         .lineLimit(1)
                     detailLabel(event)
                 }
@@ -259,7 +259,7 @@ struct BrightCalendarDayV5: View {
         HStack(spacing: .spacing05x) {
             if let icon = event.detailIcon {
                 Image(systemName: icon)
-                    .font(.standard(size: .body2, weight: .light))
+                    .font(.standard(size: .body2, weight: .regular))
                     .foregroundStyle(event.color)
             }
             BrightText(event.detail, size: .body2, color: event.color)
@@ -272,7 +272,7 @@ struct BrightCalendarDayV5: View {
             let minutes = calendar.component(.hour, from: context.date) * 60
                 + calendar.component(.minute, from: context.date)
             HStack(spacing: .spacing0x) {
-                BrightText(context.date.formatted(.brightTime24), size: .body2, color: .defaultBlackWhite, weight: .regular)
+                BrightText(context.date.formatted(.brightTime24), size: .body2, color: .defaultBlackWhite)
                     .monospacedDigit()
                     .frame(width: Constants.nowPillWidth, height: Constants.nowPillHeight)
                     .background(Color.textColor, in: Capsule())
@@ -416,10 +416,10 @@ private struct TimelineHourGrid: View, Equatable {
                 .padding(.leading, Constants.gutterWidth)
 
             HStack(spacing: .spacing05x) {
-                BrightText("\(hour % 12 == 0 ? 12 : hour % 12)", size: .body2, weight: .regular)
+                BrightText("\(hour % 12 == 0 ? 12 : hour % 12)", size: .body2)
                     .monospacedDigit()
                     .frame(width: Constants.hourLabelWidth, alignment: .trailing)
-                BrightText(hour < 12 ? "AM" : "PM", size: .body2, weight: .regular)
+                BrightText(hour < 12 ? "AM" : "PM", size: .body2)
                     .opacity(.semiLowOpacity)
             }
             .offset(y: -Constants.hourLabelOffset)

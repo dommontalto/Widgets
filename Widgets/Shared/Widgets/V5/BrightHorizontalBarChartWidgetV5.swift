@@ -115,18 +115,18 @@ struct BrightHorizontalBarChartWidgetV5: View {
             HStack(spacing: .spacing1x) {
                 icon(bar, size: Constants.iconSize)
 
-                BrightText(bar.label, size: .body1, weight: .regular)
+                BrightText(bar.label, size: .body1)
             }
             .lineLimit(1)
 
             HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                BrightText(isHeld(bar) ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: .huge2, weight: .regular)
+                BrightText(isHeld(bar) ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: .huge2)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
                 let unit = isHeld(bar) ? bar.gapUnit : bar.unit
                 if !unit.isEmpty {
-                    BrightText(unit, size: .body1, color: .lightTextColor, weight: .regular)
+                    BrightText(unit, size: .body1, color: .lightTextColor)
                         .contentTransition(.numericText())
                 }
             }
@@ -135,7 +135,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .padding(.top, .spacing2x)
 
             if let subtitle, !isEmpty {
-                BrightText(subtitle, size: .body5, color: subtitleColor.opacity(.mediumOpacity), weight: .regular)
+                BrightText(subtitle, size: .body5, color: subtitleColor.opacity(.mediumOpacity))
                     .lineLimit(1)
             }
 
@@ -158,11 +158,11 @@ struct BrightHorizontalBarChartWidgetV5: View {
                         }
 
                         HStack(alignment: .firstTextBaseline, spacing: .spacing025x) {
-                            BrightText(isHeld(bar) && isMedium ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color, weight: .regular)
+                            BrightText(isHeld(bar) && isMedium ? bar.formattedGap : revealed(isEmpty ? .brightEmptyValue : bar.formattedValue), size: isMedium ? .standout1 : .heading, color: bar.color)
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
 
-                            BrightText(isHeld(bar) && isMedium ? bar.gapUnit : (isMedium ? bar.unit : ""), size: .body3, color: .lightTextColor, weight: .regular)
+                            BrightText(isHeld(bar) && isMedium ? bar.gapUnit : (isMedium ? bar.unit : ""), size: .body3, color: .lightTextColor)
                                 .contentTransition(.numericText())
                         }
                         .lineLimit(1)
@@ -176,11 +176,11 @@ struct BrightHorizontalBarChartWidgetV5: View {
             .overlay {
                 if !isMedium, let bar = bars.first(where: isHeld) {
                     HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                        BrightText(bar.formattedGap, size: .heading, color: bar.color, weight: .regular)
+                        BrightText(bar.formattedGap, size: .heading, color: bar.color)
                             .monospacedDigit()
                             .contentTransition(.numericText())
 
-                        BrightText(bar.gapUnit, size: .body3, color: .lightTextColor, weight: .regular)
+                        BrightText(bar.gapUnit, size: .body3, color: .lightTextColor)
                             .contentTransition(.numericText())
                     }
                     .lineLimit(1)
@@ -267,7 +267,7 @@ struct BrightHorizontalBarChartWidgetV5: View {
         } else if let systemImage = bar.systemImage {
             BrightWidgetIconV5(systemImage: systemImage, style: bar.color)
         } else {
-            BrightText(bar.shortLabel, size: .body3, color: bar.color, weight: .regular)
+            BrightText(bar.shortLabel, size: .body3, color: bar.color)
                 .frame(width: size, height: size)
         }
     }

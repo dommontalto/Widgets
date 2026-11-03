@@ -145,9 +145,7 @@ struct BrightCarouselV5<Item: Identifiable & Hashable, Card: View>: View {
             }
         } label: {
             HStack(spacing: .spacing1x) {
-                Text(selected?.name ?? "")
-                    .font(.standard(size: .subheading2, weight: .light))
-                    .foregroundStyle(Color.textColor)
+                BrightText(selected?.name ?? "", size: .subheading2)
                     .lineLimit(1)
                     .contentTransition(.numericText())
                 Image(systemName: "chevron.up.chevron.down")

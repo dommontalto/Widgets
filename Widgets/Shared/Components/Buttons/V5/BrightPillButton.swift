@@ -59,10 +59,14 @@ struct BrightPillButton: View {
         self.onTapCallback = onTapCallback
     }
 
+    private var isIconOnly: Bool {
+        title.isEmpty && (systemImage != nil || image != nil)
+    }
+
     private var horizontalPadding: CGFloat {
         switch buttonSize {
         case .large: .spacing3x
-        case .medium: .spacing2x
+        case .medium: .spacing1x
         default: .spacing1x
         }
     }
@@ -115,14 +119,13 @@ struct BrightPillButton: View {
                     .transition(.opacity)
                 }
             }
-            .padding(.horizontal, isLoading ? .spacing0x : horizontalPadding)
-            .frame(width: isLoading ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
+            .padding(.horizontal, isLoading || isIconOnly ? .spacing0x : horizontalPadding)
+            .frame(width: isLoading || isIconOnly ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
             .clipShape(Capsule())
         }
         .disabled(isLoading)
         .background(backgroundFill, in: Capsule())
         .modifier(OptionalGlass(isOn: isGlass, isClear: isClear))
-        .opacity(isSelected ? .opaque : .semiLowOpacity)
         .animation(Constants.morph, value: isLoading)
     }
 

@@ -70,16 +70,16 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
                         .font(.standardSFPro(size: .standout3, weight: .regular))
 
                     HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                        BrightText(shownValue.ordinalSuffix(), size: .standout2, weight: .regular)
+                        BrightText(shownValue.ordinalSuffix(), size: .standout2)
                             .monospacedDigit()
                             .contentTransition(.numericText())
 
-                        BrightText(unit, size: .body2, color: .lightTextColor, weight: .regular)
+                        BrightText(unit, size: .body2, color: .lightTextColor)
                     }
                 }
                 .animation(.brightEaseInOut, value: shownValue)
             } else {
-                BrightText(emptySubtitle, size: .body1, color: .lightTextColor, weight: .regular)
+                BrightText(emptySubtitle, size: .body1, color: .lightTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -206,7 +206,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
                 .font(.standardSFPro(size: .subheading, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
-            BrightText("\(Self.percent(abs(delta))) this week".uppercased(), size: .body1, color: .lightTextColor, weight: .regular)
+            BrightText("\(Self.percent(abs(delta))) this week".uppercased(), size: .body1, color: .lightTextColor)
                 .monospacedDigit()
                 .contentTransition(.numericText())
         }

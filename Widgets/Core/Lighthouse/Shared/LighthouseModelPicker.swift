@@ -105,10 +105,10 @@ struct LighthouseApiKeyCard: View {
     var body: some View {
         VStack(spacing: .spacing3x) {
             Image(systemName: LighthouseModelChoice.apiKeySymbol)
-                .font(.system(size: Constants.glyphSize, weight: .light))
+                .font(.system(size: Constants.glyphSize, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(Constants.title, size: .body1, weight: .regular)
+            BrightText(Constants.title, size: .body1)
         }
         .frame(width: width, height: height)
         .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .screenCornerRadius))
@@ -125,7 +125,7 @@ struct LighthouseApiKeyGlyph: View {
 
     var body: some View {
         Image(systemName: LighthouseModelChoice.apiKeySymbol)
-            .font(.system(size: size * Constants.glyphRatio, weight: .light))
+            .font(.system(size: size * Constants.glyphRatio, weight: .regular))
             .foregroundStyle(Color.textColor)
             .frame(width: size, height: size)
             .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: size * Constants.cornerRatio))

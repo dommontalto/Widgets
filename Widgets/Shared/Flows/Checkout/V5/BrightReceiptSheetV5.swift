@@ -38,9 +38,9 @@ struct BrightReceiptSheetV5: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing05x) {
-            BrightText(Constants.title, size: .standout1, weight: .regular)
+            BrightText(Constants.title, size: .standout1)
 
-            BrightText(order.reference, size: .subheading, weight: .regular)
+            BrightText(order.reference, size: .subheading)
 
             BrightText(order.placedAt.formatted(.brightDate), size: .body1, color: .lightTextColor)
         }
@@ -55,7 +55,7 @@ struct BrightReceiptSheetV5: View {
             }
 
             VStack(alignment: .leading, spacing: .spacing05x) {
-                BrightText(status.title, size: .body1, color: status.isFailed ? .defaultRed : .textColor, weight: .regular)
+                BrightText(status.title, size: .body1, color: status.isFailed ? .defaultRed : .textColor)
 
                 BrightText(status.detail, size: .body3, color: .lightTextColor)
                     .fixedSize(horizontal: false, vertical: true)
@@ -70,13 +70,13 @@ struct BrightReceiptSheetV5: View {
     private var detailsCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             labelledRow(Constants.clinicTitle) {
-                BrightText(order.clinic.name, size: .body1, weight: .regular)
+                BrightText(order.clinic.name, size: .body1)
             }
 
             BrightDividerV5()
 
             labelledRow(Constants.testTitle) {
-                BrightText(order.test.name, size: .body1, weight: .regular)
+                BrightText(order.test.name, size: .body1)
             }
 
             BrightDividerV5()
@@ -84,10 +84,10 @@ struct BrightReceiptSheetV5: View {
             labelledRow(Constants.typeTitle) {
                 HStack(spacing: .spacing1x) {
                     Image(systemName: order.type.systemImage)
-                        .font(.standard(size: .body1, weight: .light))
+                        .font(.standard(size: .body1, weight: .regular))
                         .foregroundStyle(Color.semiLightTextColor)
 
-                    BrightText(order.type.rawValue, size: .body1, weight: .regular)
+                    BrightText(order.type.rawValue, size: .body1)
                 }
             }
 
@@ -104,19 +104,19 @@ struct BrightReceiptSheetV5: View {
     private var totalCard: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
             HStack(spacing: .spacing2x) {
-                BrightText(Constants.totalTitle, size: .body1, weight: .regular)
+                BrightText(Constants.totalTitle, size: .body1)
 
                 Spacer(minLength: .spacing2x)
 
                 BrightChipV5(title: order.test.currency, tint: .defaultBlue, fill: .defaultBlue.opacity(.veryMinimalOpacity))
 
-                BrightText(order.test.priceText, size: .body1, weight: .regular)
+                BrightText(order.test.priceText, size: .body1)
                     .monospacedDigit()
             }
 
             BrightDividerV5()
 
-            BrightText(Constants.paymentTitle, size: .body1, weight: .regular)
+            BrightText(Constants.paymentTitle, size: .body1)
 
             if let method = order.paymentMethod {
                 HStack(spacing: .spacing2x) {
@@ -132,7 +132,7 @@ struct BrightReceiptSheetV5: View {
                     .scaledToFit()
                     .frame(width: method.markSize.width, height: method.markSize.height)
 
-                    BrightText(maskedNumber(method), size: .body1, weight: .regular)
+                    BrightText(maskedNumber(method), size: .body1)
                         .monospacedDigit()
 
                     Spacer(minLength: .spacing2x)

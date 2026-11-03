@@ -111,7 +111,7 @@ struct LighthouseWaypointSheet: View {
                 .font(.standard(size: .body1, weight: .regular))
                 .foregroundStyle(Color.textColor)
 
-            BrightText(Constants.title, size: .body1, weight: .regular)
+            BrightText(Constants.title, size: .body1)
         }
     }
 
@@ -122,7 +122,7 @@ struct LighthouseWaypointSheet: View {
     private var nameField: some View {
         TextField(Constants.namePlaceholder, text: $name)
             .focused($isNamingFocus)
-            .font(.standard(size: .heading, weight: .light))
+            .font(.standard(size: .heading, weight: .regular))
             .foregroundStyle(Color.textColor)
             .brightWiggleV5(trigger: nameNudge)
             .padding(.horizontal, .spacing2x)
@@ -260,7 +260,7 @@ struct LighthouseWaypointSheet: View {
                 }
             } label: {
                 HStack(spacing: .spacing2x) {
-                    BrightText(endDate.title, size: .body1, weight: .regular)
+                    BrightText(endDate.title, size: .body1)
 
                     BrightRoundButton(systemImage: "chevron.up.chevron.down", size: .small) {}
                         .allowsHitTesting(false)
@@ -282,7 +282,7 @@ struct LighthouseWaypointSheet: View {
             }
 
             TextField("", text: $focus, axis: .vertical)
-                .font(.standard(size: .body1, weight: .light))
+                .font(.standard(size: .body1, weight: .regular))
                 .foregroundStyle(Color.textColor)
                 .lineLimit(Constants.focusLines, reservesSpace: true)
         }
@@ -293,7 +293,7 @@ struct LighthouseWaypointSheet: View {
     private func rowLabel(symbol: String, title: String) -> some View {
         HStack(spacing: .spacing2x) {
             Image(systemName: symbol)
-                .font(.standard(size: .body1, weight: .light))
+                .font(.standard(size: .body1, weight: .regular))
                 .foregroundStyle(Color.semiLightTextColor)
                 .frame(width: Constants.glyphWidth)
 

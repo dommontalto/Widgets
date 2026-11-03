@@ -55,7 +55,7 @@ struct DocumentQuickLookView: View {
         VStack(spacing: .spacing2x) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32, weight: .light))
+                .font(.system(size: 32, weight: .regular))
                 .foregroundStyle(Color.defaultOrange)
             BrightText("Couldn't load document", size: .body1, weight: .medium)
             Spacer()

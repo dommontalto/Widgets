@@ -65,9 +65,9 @@ struct ExploreAgentSheet: View {
                     .frame(width: .spacing10x, height: .spacing10x)
                     .padding(.bottom, .spacing1x)
 
-                BrightText(agent.name, size: .standout1, color: .white, weight: .regular)
+                BrightText(agent.name, size: .standout1, color: .white)
 
-                BrightText(agent.blurb, size: .body1, color: .white, weight: .regular)
+                BrightText(agent.blurb, size: .body1, color: .white)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: Constants.blurbWidth)
             }
