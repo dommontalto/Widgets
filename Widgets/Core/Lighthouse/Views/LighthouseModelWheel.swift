@@ -57,6 +57,7 @@ struct LighthouseModelWheel: View {
                 }
             }
             .scrollTargetLayout()
+            .background(ScrollViewBounceOff())
         }
         .contentMargins(.vertical, max(.zero, (height - Constants.rowHeight) / 2), for: .scrollContent)
         .scrollTargetBehavior(.viewAligned)
@@ -99,7 +100,7 @@ struct LighthouseModelWheel: View {
                     .frame(width: Constants.tileWidth, height: Constants.tileHeight)
                     .background {
                         Capsule()
-                            .fill(isSelected ? tint(of: choice).opacity(.ultraLowOpacity) : Color.textColor.opacity(.finalBossLowOpacity))
+                            .fill(isSelected ? tint(of: choice).opacity(.minimalOpacity) : Color.textColor.opacity(.finalBossLowOpacity))
                             .strokeBorder(isSelected ? tint(of: choice) : .clear, lineWidth: Constants.selectedStroke)
                     }
             }
@@ -181,6 +182,27 @@ private struct DialPlacement {
     }
 
     private typealias Constants = LighthouseModelWheelConstants
+}
+
+// The dial stops dead at its first and last rows: a bounce past them drags the
+// rows off the handle. SwiftUI only turns bouncing off for content that fits,
+// so this reaches the scroll view it sits in.
+private struct ScrollViewBounceOff: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        DispatchQueue.main.async {
+            let scrollView = sequence(first: view, next: \.superview)
+                .lazy
+                .compactMap { $0 as? UIScrollView }
+                .first
+            scrollView?.bounces = false
+        }
+    }
 }
 
 private enum LighthouseModelWheelConstants {
