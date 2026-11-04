@@ -161,11 +161,9 @@ struct MainDockView: View {
 
     private var vaultPage: some View {
         NavigationStack {
-            BrightPageViewV5 {
-                VaultSummaryWidget(ranking: .demo)
-            }
-            .onAppear { setCovered(.vault, false) }
-            .onDisappear { setCovered(.vault, true) }
+            VaultView(title: "Vault")
+                .onAppear { setCovered(.vault, false) }
+                .onDisappear { setCovered(.vault, true) }
         }
     }
 
