@@ -206,6 +206,7 @@ struct LighthouseTray: View {
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
+                    .environment(\.brightChatShowsContext, isFull && hasConversation)
                     .safeAreaPadding(.top, topBarHeight)
                     .brightSoftScrollEdgesV5()
                     .overlay {
@@ -227,7 +228,7 @@ struct LighthouseTray: View {
 
             // Before anything is asked, a few prompts to start from, just above the ask bar.
             if !isResting, !hasConversation {
-                BrightSuggestionsV5 { prompt in
+                BrightSuggestionsV5(topics: suggestionTopics, initialTopic: screenTopic) { prompt in
                     draft = prompt
                     send()
                 }
@@ -244,6 +245,21 @@ struct LighthouseTray: View {
         }
         .frame(maxHeight: .infinity, alignment: .bottom)
         .animation(.brightEaseInOut, value: hasConversation)
+    }
+
+    // The screen's starter questions lead, ahead of the general topics. Demo questions here; the app takes the
+    // current screen's from the server.
+    private var suggestionTopics: [BrightSuggestionTopic] {
+        [screenTopic] + BrightSuggestionsDemo.topics
+    }
+
+    private var screenTopic: BrightSuggestionTopic {
+        BrightSuggestionTopic(
+            title: Constants.suggestedTitle,
+            systemImage: "sparkles",
+            prompts: Constants.demoStarters,
+            isFixed: true
+        )
     }
 
     // MARK: - Ask
@@ -387,8 +403,14 @@ struct LighthouseTray: View {
                 menuRow
                     .transition(.opacity)
             }
-            if let quickActions, !hasConversation, !isWhispering {
+            if let quickActions, !hasConversation, !isWhispering, !isFieldFocused {
                 quickActions
+                    .transition(.opacity)
+            }
+            // Before the first message the context sits here; once a thread starts it moves into the chat and scrolls with it.
+            if isFull, !hasConversation {
+                BrightChatContextV5()
+                    .padding(.horizontal, .spacing3x)
                     .transition(.opacity)
             }
         }
@@ -396,6 +418,7 @@ struct LighthouseTray: View {
         .animation(.brightEaseInOut, value: isFull)
         .animation(.brightEaseInOut, value: hasConversation)
         .animation(.brightEaseInOut, value: isWhispering)
+        .animation(.brightEaseInOut, value: isFieldFocused)
     }
 
     private var menuRow: some View {
@@ -595,6 +618,12 @@ struct LighthouseTray: View {
         static let attachLabel = "Attach"
         static let menuLabel = "Lighthouse menu"
         static let closeLabel = "Close"
+        static let suggestedTitle = "Suggested"
+        static let demoStarters = [
+            "How did I sleep last night?",
+            "What should I focus on today?",
+            "Am I recovered enough to train?",
+        ]
         static let whisperTitle = "Whisper mode"
         static let whisperSubtitle = "This session will disappear after 1 hour.\nYou can ask discreet questions here."
         static let focusDelay: TimeInterval = 0.35

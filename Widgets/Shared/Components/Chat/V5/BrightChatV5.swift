@@ -141,6 +141,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
     // How much of the thread runs on below the visible part, as the bottom edge's strength.
     @State private var bottomEdgeProgress: CGFloat = 0
     @Environment(\.brightChatShowsBottomEdge) private var showsBottomEdge
+    @Environment(\.brightChatShowsContext) private var showsContext
 
     // The message currently flying out of the input field: the newest one, held
     // back by the thread until the copy over the field hands it over.
@@ -192,6 +193,10 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: .spacing0x) {
                     VStack(spacing: .spacing3x) {
+                        if showsContext {
+                            BrightChatContextV5()
+                        }
+
                         ForEach(messages) { message in
                             row(for: message)
                                 .id(message.id)
@@ -758,4 +763,5 @@ extension EnvironmentValues {
 extension EnvironmentValues {
     // A hairline under the thread that strengthens as messages run on below it, for a container with its own input.
     @Entry var brightChatShowsBottomEdge = false
+    @Entry var brightChatShowsContext = false
 }
