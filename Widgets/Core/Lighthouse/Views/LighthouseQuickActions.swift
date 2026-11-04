@@ -6,7 +6,6 @@
 import SwiftUI
 
 enum LighthouseQuickAction: String, CaseIterable, Identifiable {
-    case voice
     case exercise
     case food
     case water
@@ -20,11 +19,10 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    static let defaults: [LighthouseQuickAction] = [.voice, .exercise, .food, .water, .weight, .searchMeal]
+    static let defaults: [LighthouseQuickAction] = [.exercise, .food, .water, .weight, .searchMeal]
 
     var title: String {
         switch self {
-        case .voice: "Voice"
         case .exercise: "Exercise"
         case .food: "Food"
         case .water: "Water"
@@ -40,7 +38,6 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .voice: "waveform"
         case .exercise: HealthWidgetKindV5.exercise.systemImage
         case .food: HealthWidgetKindV5.nutrition.systemImage
         case .water: HealthWidgetKindV5.water.systemImage

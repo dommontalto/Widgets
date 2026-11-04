@@ -19,6 +19,7 @@ struct HealthView: View {
     @State private var showsEmptyState = false
     @State private var showingGenome = false
     @State private var showingMyOrders = false
+    @State private var openedWidget: HealthWidgetKindV5?
 
     var body: some View {
         NavigationStack {
@@ -56,6 +57,11 @@ struct HealthView: View {
             }
             .navigationDestination(isPresented: $showingMyOrders) {
                 MyOrdersView()
+            }
+            .navigationDestination(item: $openedWidget) { kind in
+                BrightPageViewV5(title: kind.title) {
+                    EmptyView()
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -191,7 +197,7 @@ struct HealthView: View {
 
     private var healthPage: some View {
         VStack(spacing: .spacing0x) {
-            HealthWidgetGridV5(editor: editor)
+            HealthWidgetGridV5(editor: editor, onOpen: { openedWidget = $0.kind })
                 .brightWidgetEmptyV5(showsEmptyState)
 
             // Room below the last widget to drag into while editing.

@@ -10,6 +10,8 @@ struct BrightSuggestionTopic: Identifiable, Hashable {
     let title: String
     let systemImage: String
     let prompts: [String]
+    // Shown whole and in the order given, with no Randomise, for prompts already picked and ranked.
+    var isFixed = false
 
     var id: String { title }
 }
@@ -20,6 +22,8 @@ struct BrightSuggestionTopic: Identifiable, Hashable {
 struct BrightSuggestionsV5: View {
     var topics: [BrightSuggestionTopic] = BrightSuggestionsDemo.topics
     var count = Constants.defaultCount
+    // Opens straight into this topic's prompts; back still returns to the tags.
+    var initialTopic: BrightSuggestionTopic?
     let onSelect: (String) -> Void
 
     @State private var topic: BrightSuggestionTopic?
@@ -38,6 +42,11 @@ struct BrightSuggestionsV5: View {
                 tags
                     .transition(.move(edge: .leading).combined(with: .opacity))
             }
+        }
+        .onAppear {
+            guard topic == nil, let initialTopic else { return }
+            deal(from: initialTopic)
+            topic = initialTopic
         }
     }
 
@@ -66,8 +75,10 @@ struct BrightSuggestionsV5: View {
 
                 Spacer(minLength: .spacing2x)
 
-                BrightPillButton(Constants.randomiseTitle, systemImage: "shuffle", buttonSize: .small) {
-                    withAnimation(.brightSnappy) { deal(from: topic) }
+                if !topic.isFixed {
+                    BrightPillButton(Constants.randomiseTitle, systemImage: "shuffle", buttonSize: .small) {
+                        withAnimation(.brightSnappy) { deal(from: topic) }
+                    }
                 }
             }
 
@@ -116,6 +127,10 @@ struct BrightSuggestionsV5: View {
 
     // A new set each time, never repeating the one on screen while the topic allows.
     private func deal(from topic: BrightSuggestionTopic) {
+        guard !topic.isFixed else {
+            shown = topic.prompts
+            return
+        }
         let fresh = topic.prompts.filter { !shown.contains($0) }
         let source = fresh.count >= count ? fresh : topic.prompts
         shown = Array(source.shuffled().prefix(count))
@@ -137,60 +152,60 @@ enum BrightSuggestionsDemo {
             title: "Forecast metrics",
             systemImage: "graph.2d",
             prompts: [
-                "Predict my race pace for my upcoming half marathon based on my recent runs",
-                "Where will my resting heart rate be in a month if I keep training like this?",
-                "Forecast my VO2 max over the next twelve weeks at my current training load",
-                "At my current activity level, how long will it take me to lose 5 kgs?",
-                "How will my HRV trend over the next fortnight if my sleep stays the same?",
-                "When am I likely to hit my step goal every day at this current rate?",
-                "Predict my sleep score this week based on my last month of bedtimes",
-                "How long until my body fat reaches 15% if I keep my current calories?",
-                "Forecast my recovery for this weekend given this week's training load",
+                "Predict my half marathon pace",
+                "My resting heart rate in a month?",
+                "Forecast my VO2 max for 12 weeks",
+                "How long to lose 5 kg?",
+                "Where's my HRV heading?",
+                "When will I hit my step goal daily?",
+                "Predict this week's sleep score",
+                "When will I reach 15% body fat?",
+                "How recovered will I be this weekend?",
             ]
         ),
         BrightSuggestionTopic(
             title: "Create check-in",
             systemImage: "person.badge.clock.fill",
             prompts: [
-                "Check in with me every morning about how well I slept the night before",
-                "Remind me each evening to log my water intake and how I'm feeling today",
-                "Set up a weekly check-in on my training load and how recovered I feel",
-                "Ask me after every workout how hard it felt and whether anything hurt",
-                "Check in each night about my stress levels and what caused them today",
-                "Create a monthly review of my weight, sleep and resting heart rate trends",
-                "Remind me mid-afternoon to get up and walk if my steps are running low",
-                "Check in on my mood each morning and spot patterns with my sleep data",
-                "Ask me weekly whether I'm sticking to my nutrition plan and what's hard",
+                "Ask how I slept each morning",
+                "Remind me to log water each evening",
+                "Weekly check-in on my training load",
+                "Ask how each workout felt",
+                "Check in on my stress each night",
+                "Monthly review of my key trends",
+                "Nudge me to walk if steps are low",
+                "Track my mood against my sleep",
+                "Weekly check on my nutrition plan",
             ]
         ),
         BrightSuggestionTopic(
             title: "Create a training plan",
             systemImage: "figure.run",
             prompts: [
-                "Build me a twelve week plan to run a half marathon in under two hours",
-                "Create a strength plan for three days a week that fits around my runs",
-                "How many Zone 2 minutes do I need each week to improve my HRV?",
-                "Plan a four week block to raise my VO2 max without overtraining myself",
-                "Make me a beginner's plan to run 5 km without stopping in six weeks",
-                "Design a mobility routine I can do in ten minutes before every session",
-                "Create a deload week based on my current training load and recovery",
-                "Build a cycling plan to lift my FTP by 10% before the end of summer",
-                "Plan my training around my cycle so harder sessions land on better days",
+                "12-week sub-2 half marathon plan",
+                "3-day strength plan around my runs",
+                "How much Zone 2 for better HRV?",
+                "4 weeks to raise my VO2 max",
+                "Couch to 5 km in six weeks",
+                "10-minute pre-session mobility",
+                "Plan a deload week for me",
+                "Lift my FTP by 10% this summer",
+                "Train around my cycle",
             ]
         ),
         BrightSuggestionTopic(
             title: "Impact analysis",
             systemImage: "exclamationmark.magnifyingglass",
             prompts: [
-                "How does drinking alcohol in the evening affect my sleep and recovery?",
-                "Does caffeine after midday change how long it takes me to fall asleep?",
-                "What impact do late workouts have on my resting heart rate overnight?",
-                "How much does a bad night's sleep affect my HRV the following day?",
-                "Is my screen time before bed hurting my deep sleep? Show me the data",
-                "How do my rest days change my recovery score compared with active ones?",
-                "What effect has my higher protein intake had on my body composition?",
-                "Does travelling across time zones still show up in my sleep a week later?",
-                "How do stressful days at work show up in my heart rate and my sleep?",
+                "How does alcohol affect my sleep?",
+                "Does afternoon caffeine keep me up?",
+                "Do late workouts raise my heart rate?",
+                "How does bad sleep hit my HRV?",
+                "Is screen time hurting my deep sleep?",
+                "Rest days vs active days on recovery",
+                "What has extra protein done for me?",
+                "How long does jet lag affect my sleep?",
+                "How does work stress show up in me?",
             ]
         ),
     ]
