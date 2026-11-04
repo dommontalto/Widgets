@@ -14,8 +14,9 @@ import SwiftUI
 // completeness is still loading it renders an all-muted placeholder grid.
 struct VaultDatapointsWidget: View {
     var datapoints: [VaultCompletenessDatapoint] = []
+    var onExpand: (() -> Void)?
 
-    private static let topColor: Color = .defaultGreen
+    private static let topColor: Color = .defaultBrightGreen
     private static let bottomColor: Color = .defaultCyan
     private static let legendFill = LinearGradient(colors: [topColor, bottomColor], startPoint: .top, endPoint: .bottom)
 
@@ -25,8 +26,9 @@ struct VaultDatapointsWidget: View {
 
     @State private var selectedId: String?
 
-    init(datapoints: [VaultCompletenessDatapoint] = []) {
+    init(datapoints: [VaultCompletenessDatapoint] = [], onExpand: (() -> Void)? = nil) {
         self.datapoints = datapoints
+        self.onExpand = onExpand
         ordered = datapoints.indices
             .sorted { Self.scatterHash($0) < Self.scatterHash($1) }
             .map { datapoints[$0] }
@@ -64,7 +66,7 @@ struct VaultDatapointsWidget: View {
                 let fill = lit ? colour : colour.opacity(.ultraLowOpacity)
                 // Looked at, a recorded dot shows where its value sits: red, yellow or green.
                 if lit, let position = ordered[i].markerPosition {
-                    let stops = VaultMarkerWidget.stops(forMarkerPosition: position)
+                    let stops = VaultMarkerWidget.stops(forMarkerPosition: position, direction: VaultMarkerDirection(ordered[i].direction))
                     return BrightDotGridV5Dot(id: String(i), fill: fill, revealFill: LinearGradient(colors: stops, startPoint: .top, endPoint: .bottom))
                 }
                 return BrightDotGridV5Dot(id: String(i), fill: fill, isSelectable: !isPlaceholder)
@@ -84,21 +86,14 @@ struct VaultDatapointsWidget: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    BrightText("\(filled) ", size: .huge2)
-                    BrightText("/\(total)", size: .standout3, color: .lightTextColor)
-                }
-                BrightText("recorded data points", size: .body2, color: Color.lightTextColor)
-            }
-            .padding(.leading, .spacing2x)
+        VStack(alignment: .leading, spacing: .spacing3x) {
+            header
 
             datapointsGrid
-                .padding(.spacing3x)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .modifier(BrightCardModifierV5())
         }
+        .padding(.spacing3x)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(BrightCardModifierV5())
         .brightMiniSheetV5(isPresented: sheetShown) {
             if let dp = datapoint(id: selectedId) {
                 VaultDatapointMiniSheet(
@@ -109,8 +104,36 @@ struct VaultDatapointsWidget: View {
                     onClose: { selectedId = nil },
                     value: dp.value,
                     markerId: dp.id,
-                    markerPosition: dp.markerPosition
+                    markerPosition: dp.markerPosition,
+                    direction: VaultMarkerDirection(dp.direction)
                 )
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: .spacing05x) {
+                HStack(spacing: .spacing1x) {
+                    BrightRingV5(
+                        progress: total == 0 ? 0 : Double(filled) / Double(total),
+                        color: Self.topColor,
+                        size: .extraSmall
+                    )
+
+                    HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
+                        BrightText("\(filled) ", size: .huge2)
+                        BrightText("/\(total)", size: .standout3, color: .lightTextColor)
+                    }
+                }
+
+                BrightText("Recorded datapoints", size: .body2, color: .lightTextColor)
+            }
+
+            Spacer()
+
+            if let onExpand {
+                BrightRoundButton(systemImage: "arrow.down.backward.and.arrow.up.forward", onTapCallback: onExpand)
             }
         }
     }

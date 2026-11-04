@@ -11,7 +11,7 @@ import SwiftUI
 struct BrightWidgetTitleV5<Content: View, Accessory: View>: View {
     enum Icon {
         case asset(String)
-        case symbol(String)
+        case symbol(String, tint: Color = .textColor)
     }
 
     let icon: Icon
@@ -79,10 +79,10 @@ struct BrightWidgetTitleV5<Content: View, Accessory: View>: View {
                 .resizable()
                 .scaledToFit()
                 .foregroundStyle(Color.textColor)
-        case let .symbol(name):
+        case let .symbol(name, tint):
             Image(systemName: name)
                 .font(.standardSFPro(size: .subheading2, weight: .regular))
-                .foregroundStyle(Color.textColor)
+                .foregroundStyle(tint)
         }
     }
 }

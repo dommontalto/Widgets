@@ -37,6 +37,7 @@ struct VaultCompletenessDatapoint: Equatable {
     var id: String? = nil
     var value: String? = nil
     var markerPosition: Double? = nil
+    var direction: String? = nil
 }
 
 struct VaultMarkerHistoryData {

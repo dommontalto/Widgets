@@ -41,15 +41,13 @@ struct VaultView: View {
 
     @State private var selectedTabIndex = 0
     @State private var detailData: VaultMarkerDetailData?
-    @State private var dataSearchText = ""
-    @State private var isDataSearchFocused = false
     @State private var viewModel = VaultViewModel()
+    @State private var openedPage: VaultPage?
 
     var body: some View {
         BrightSwipePageViewV5(
             pages: VaultViewTab.allCases.map { SwipePage(title: $0.displayTitle, systemImage: $0.systemImage) },
             fakeLargeTitle: title,
-            scrollDismissesKeyboardMode: .interactively,
             backgroundColor: .defaultBackground,
             selectedIndex: $selectedTabIndex
         ) { index in
@@ -62,9 +60,48 @@ struct VaultView: View {
                 dataTab
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    openedPage = .upload
+                } label: {
+                    Label("Upload", systemImage: "arrow.down.document")
+                        .labelStyle(.iconOnly)
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    openedPage = .share
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .labelStyle(.iconOnly)
+                }
+            }
+        }
         .onAppear { viewModel.loadIfNeeded() }
         .sheet(item: $detailData) { data in
             VaultMarkerDetailSheet(data: data)
+        }
+        .sheet(item: $openedPage) { page in
+            switch page {
+            case .upload:
+                VaultUploadSheet()
+            case .datapoints:
+                VaultDatapointsListSheet(markers: viewModel.performanceMarkers)
+            case .documents:
+                VaultDocumentsListSheet(documents: viewModel.documents) { document in
+                    VaultDocumentPreviewView(document: document)
+                }
+            case let .document(document):
+                BrightPageSheetViewV5(title: document.labName, horizontalPadding: .spacing0x) {
+                    VaultDocumentPreviewView(document: document)
+                }
+            default:
+                BrightPageSheetViewV5(title: page.title) {
+                    EmptyView()
+                }
+            }
         }
     }
 
@@ -123,63 +160,71 @@ struct VaultView: View {
     }
 
     private var dataTab: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            BrightSearchBarV5("Search data points", text: $dataSearchText) { isDataSearchFocused = $0 }
-
-            VStack(alignment: .leading, spacing: .spacing3x) {
-                if !isSearchingData {
-                    VaultDatapointsWidget(
-                        datapoints: viewModel.completeness?.datapoints ?? []
-                    )
-
-                    BrightText("All Datapoints", size: .standout2)
-                        .padding([.top, .leading], .spacing2x)
+        VStack(alignment: .leading, spacing: .spacing5x) {
+            BrightWidgetTitleV5(icon: .symbol("circle.hexagonpath.fill"), title: "All datapoints") {
+                VaultDatapointsWidget(datapoints: viewModel.completeness?.datapoints ?? []) {
+                    openedPage = .datapoints
                 }
-
-                dataMarkerList
             }
-            .opacity(isDataFaded ? .zero : .opaque)
-            .allowsHitTesting(!isDataFaded)
+
+            if !viewModel.documents.isEmpty {
+                BrightWidgetTitleV5(icon: .symbol("waveform.path.ecg.text.page.fill"), title: "My Documents") {
+                    VaultDocumentsWidget(
+                        documents: Array(viewModel.documents.prefix(3)),
+                        onExpand: { openedPage = .documents },
+                        onOpen: { openedPage = .document($0) }
+                    )
+                }
+            }
         }
         .padding(.spacing3x)
-        .animation(.brightEaseInOut, value: isSearchingData)
-        .animation(.brightEaseInOut, value: isDataFaded)
     }
+}
 
-    private var isSearchingData: Bool {
-        !dataSearchText.isEmpty
-    }
+private struct VaultUploadSheet: View {
+    @State private var showingImportInstructions = false
 
-    private var isDataFaded: Bool {
-        isDataSearchFocused && !isSearchingData
-    }
-
-    private var dataMarkers: [VaultMarkerData] {
-        viewModel.markers(searchText: dataSearchText)
-    }
-
-    @ViewBuilder
-    private var dataMarkerList: some View {
-        if dataMarkers.isEmpty, isSearchingData {
-            BrightPlaceholderViewV5(
-                systemImage: "magnifyingglass",
-                title: "No matches",
-                subtitle: "Try a different search."
+    var body: some View {
+        BrightPageSheetViewV5 {
+            VaultUploadRecordsView(
+                onScan: {},
+                onChooseImage: {},
+                onChooseFile: {},
+                onImportFromApp: { showingImportInstructions = true }
             )
-            .padding(.spacing3x)
-        } else if dataMarkers.isEmpty {
-            VaultLoadStatePlaceholder(state: viewModel.summaryState) {
-                viewModel.reload()
+        }
+        .brightMiniSheetV5(isPresented: $showingImportInstructions) {
+            ShareFromAppInstructionsMiniSheet {
+                showingImportInstructions = false
             }
-        } else {
-            LazyVStack(spacing: .spacing3x) {
-                ForEach(dataMarkers) { marker in
-                    VaultMarkerWidget(data: VaultViewModel.rangeMarker(from: marker)) {
-                        detailData = VaultViewModel.detail(from: marker)
-                    }
-                    .equatable()
-                }
-            }
+        }
+    }
+}
+
+private enum VaultPage: Identifiable {
+    case upload
+    case share
+    case datapoints
+    case documents
+    case document(VaultDocumentSummary)
+
+    var id: String {
+        switch self {
+        case .upload: "upload"
+        case .share: "share"
+        case .datapoints: "datapoints"
+        case .documents: "documents"
+        case let .document(document): document.id
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .upload: "Upload"
+        case .share: "Share"
+        case .datapoints: "All datapoints"
+        case .documents: "My Documents"
+        case let .document(document): document.labName
         }
     }
 }

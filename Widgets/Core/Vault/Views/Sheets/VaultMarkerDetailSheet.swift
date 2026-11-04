@@ -17,6 +17,7 @@ struct VaultMarkerDetailData: Identifiable {
     let status: String?
     let accentColor: Color
     let normalRange: ClosedRange<Double>?
+    var direction: VaultMarkerDirection = .optimalBand
 }
 
 struct VaultMarkerDetailSheet: View {
@@ -192,7 +193,7 @@ struct VaultMarkerDetailSheet: View {
             value: Double(data.value),
             unit: data.unit,
             status: data.status,
-            markerPosition: VaultViewModel.markerPosition(value: data.value, range: data.normalRange),
+            markerPosition: VaultViewModel.markerPosition(value: data.value, range: data.normalRange, direction: data.direction),
             normalLow: data.normalRange?.lowerBound,
             normalHigh: data.normalRange?.upperBound,
             reportId: "latest"
@@ -208,7 +209,7 @@ struct VaultMarkerDetailSheet: View {
     // their latest string value as a single entry instead of a blank "-".
     private var allReadingsMarkers: [VaultRangeMarkerData] {
         if let real = history?.readings, !real.isEmpty {
-            return real.map { Self.rangeMarker(from: $0, unit: data.unit) }
+            return real.map { Self.rangeMarker(from: $0, unit: data.unit, direction: data.direction) }
         }
         guard loadState != .loading, !data.value.isEmpty else { return [] }
         return [
@@ -218,7 +219,9 @@ struct VaultMarkerDetailSheet: View {
                 lastUpdated: "",
                 value: data.value,
                 unit: data.unit,
-                markerPosition: VaultViewModel.markerPosition(value: data.value, range: data.normalRange)
+                markerPosition: VaultViewModel.markerPosition(value: data.value, range: data.normalRange, direction: data.direction),
+                direction: data.direction,
+                hasRange: data.normalRange != nil
             )
         ]
     }
@@ -291,7 +294,7 @@ struct VaultMarkerDetailSheet: View {
 
     // MARK: - Helpers
 
-    private static func rangeMarker(from reading: VaultMarkerHistoryReading, unit: String) -> VaultRangeMarkerData {
+    private static func rangeMarker(from reading: VaultMarkerHistoryReading, unit: String, direction: VaultMarkerDirection) -> VaultRangeMarkerData {
         let date = displayDate(reading.date)
         return VaultRangeMarkerData(
             id: reading.id,
@@ -299,7 +302,9 @@ struct VaultMarkerDetailSheet: View {
             lastUpdated: reading.lastUpdated ?? "",
             value: reading.value.map { formattedValue($0) } ?? "-",
             unit: reading.unit ?? unit,
-            markerPosition: reading.markerPosition ?? 0
+            markerPosition: reading.markerPosition ?? 0,
+            direction: direction,
+            hasRange: reading.normalLow != nil || reading.normalHigh != nil
         )
     }
 

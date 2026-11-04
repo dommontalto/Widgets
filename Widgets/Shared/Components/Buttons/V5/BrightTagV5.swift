@@ -17,6 +17,7 @@ struct BrightTagV5: View {
     // Glass by default; `false` for a flat capsule (see `BrightPillButton`).
     let isGlass: Bool
     let selectedTint: Color?
+    let selectedFill: Color?
     let buttonSize: BrightButtonSizes
     let action: () -> Void
 
@@ -27,6 +28,7 @@ struct BrightTagV5: View {
         isSelected: Bool,
         isGlass: Bool = true,
         selectedTint: Color? = nil,
+        selectedFill: Color? = nil,
         buttonSize: BrightButtonSizes = .small,
         action: @escaping () -> Void
     ) {
@@ -36,6 +38,7 @@ struct BrightTagV5: View {
         self.isSelected = isSelected
         self.isGlass = isGlass
         self.selectedTint = selectedTint
+        self.selectedFill = selectedFill
         self.buttonSize = buttonSize
         self.action = action
     }
@@ -53,7 +56,8 @@ struct BrightTagV5: View {
             buttonSize: buttonSize,
             isSelected: isSelected,
             isGlass: isGlass,
-            selectedTint: selectedTint
+            selectedTint: selectedTint,
+            selectedFill: selectedFill
         ) {
             tapTick += 1
             // A tap carries its own haptic; the pop is for a selection that

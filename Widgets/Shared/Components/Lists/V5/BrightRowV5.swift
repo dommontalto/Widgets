@@ -158,7 +158,7 @@ struct BrightRowV5<Custom: View>: View {
         case let .toggle(isOn):
             Toggle("", isOn: isOn)
                 .labelsHidden()
-                .tint(.defaultGreen)
+                .tint(.defaultBrightGreen)
         }
     }
 

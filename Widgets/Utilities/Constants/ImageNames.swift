@@ -125,6 +125,9 @@ nonisolated class ImageNames {
     static let vaultTestGutHealthIconV5       = "Vault/Icon/vault_test_gut_health_icon_v5"
     static let vaultTestMetabolicHealthIconV5 = "Vault/Icon/vault_test_metabolic_health_icon_v5"
     static let vaultTestFertilityIconV5       = "Vault/Icon/vault_test_fertility_icon_v5"
+    static let vaultUploadHealthRecordsV5     = "Vault/Upload/vault_upload_health_records_v5"
+    static let vaultUploadMriV5               = "Vault/Upload/vault_upload_mri_v5"
+    static let vaultUploadPrescriptionsV5     = "Vault/Upload/vault_upload_prescriptions_v5"
 
     // MARK: - Cycle Tracking
 

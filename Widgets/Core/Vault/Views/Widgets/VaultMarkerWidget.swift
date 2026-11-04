@@ -7,6 +7,65 @@
 
 import SwiftUI
 
+// Which way is good for a marker, which sets the range bar's shape. Two-sided
+// markers are bad at both ends; one-sided ones have no bad zone on their good side.
+enum VaultMarkerDirection: String {
+    case optimalBand = "optimal_band"
+    case higherBetter = "higher_better"
+    case lowerBetter = "lower_better"
+
+    init(_ rawValue: String?) {
+        self = rawValue.flatMap(Self.init(rawValue:)) ?? .optimalBand
+    }
+
+    // The bar's segments left to right, each over the share of the bar it spans.
+    // The seams match the zones the server places `markerPosition` in.
+    var segments: [(band: VaultMarkerBand, span: ClosedRange<Double>)] {
+        switch self {
+        case .optimalBand:
+            [(.low, 0.00...0.12), (.lowEdge, 0.12...0.20), (.optimal, 0.20...0.70), (.highEdge, 0.70...0.78), (.high, 0.78...1.00)]
+        case .higherBetter:
+            [(.low, 0.00...0.12), (.lowEdge, 0.12...0.20), (.optimal, 0.20...1.00)]
+        case .lowerBetter:
+            [(.optimal, 0.00...0.70), (.highEdge, 0.70...0.78), (.high, 0.78...1.00)]
+        }
+    }
+
+    // Half-open bands so a value sitting on a seam lights exactly one segment.
+    func band(for markerPosition: Double) -> VaultMarkerBand {
+        let position = min(1, max(0, markerPosition))
+        return segments.first { position < $0.span.upperBound }?.band ?? segments[segments.count - 1].band
+    }
+}
+
+enum VaultMarkerBand {
+    case low
+    case lowEdge
+    case optimal
+    case highEdge
+    case high
+
+    // Status label matched to the lit colour, rendered by `BrightStatus`.
+    var statusLabel: String {
+        switch self {
+        case .low: "Low"
+        case .high: "High"
+        case .lowEdge, .highEdge: "Sub-Optimal"
+        case .optimal: "Optimal"
+        }
+    }
+
+    var stops: [Color] {
+        switch self {
+        case .low: [Color(hex: "FF3A3A"), Color(hex: "FF7891")]
+        case .lowEdge: [Color(hex: "FF9378"), Color(hex: "FFC43A")]
+        case .optimal: [.defaultCyan, Color(hex: "58CB81")]
+        case .highEdge: [Color(hex: "FFC43A"), Color(hex: "FF9378")]
+        case .high: [Color(hex: "FF7891"), Color(hex: "FF3A3A")]
+        }
+    }
+}
+
 struct VaultRangeMarkerData: Identifiable, Equatable {
     let id: String
     let title: String
@@ -15,31 +74,17 @@ struct VaultRangeMarkerData: Identifiable, Equatable {
     let unit: String
     // 0 ... 1 — where the marker sits along the bar.
     let markerPosition: Double
+    var direction: VaultMarkerDirection = .optimalBand
+    // A marker with no reference range has nothing to place it against, so it
+    // shows its value without a bar or status.
+    var hasRange = true
 
-    // The single lit segment (0...4), derived from `markerPosition`.
-    // Half-open bands so a value sitting on a seam lights exactly one segment.
-    var litSegmentIndex: Int {
-        Self.segmentIndex(for: markerPosition)
+    var band: VaultMarkerBand {
+        direction.band(for: markerPosition)
     }
 
-    static func segmentIndex(for markerPosition: Double) -> Int {
-        switch min(1, max(0, markerPosition)) {
-        case ..<0.12: 0   // red (low)
-        case ..<0.20: 1   // orange (low)
-        case ..<0.70: 2   // green (in range)
-        case ..<0.78: 3   // orange (high)
-        default: 4        // red (high)
-        }
-    }
-
-    // Status label matched to the lit colour, rendered by `BrightStatus`.
     var statusLabel: String {
-        switch litSegmentIndex {
-        case 0: "Low"
-        case 4: "High"
-        case 1, 3: "Sub-Optimal"
-        default: "Optimal"
-        }
+        band.statusLabel
     }
 }
 
@@ -68,7 +113,9 @@ struct VaultMarkerWidget: View, Equatable {
 
                 Spacer()
 
-                BrightStatus(status: data.statusLabel)
+                if data.hasRange {
+                    BrightStatus(status: data.statusLabel)
+                }
             }
 
             if !data.lastUpdated.isEmpty {
@@ -87,8 +134,10 @@ struct VaultMarkerWidget: View, Equatable {
                 .padding(.top, .spacing2x)
             }
 
-            rangeBar
-                .padding(.top, .spacing1x)
+            if data.hasRange {
+                rangeBar
+                    .padding(.top, .spacing1x)
+            }
         }
         .padding(.vertical, .spacing2x)
         .padding(.horizontal, .spacing3x)
@@ -101,25 +150,18 @@ struct VaultMarkerWidget: View, Equatable {
         GeometryReader { proxy in
             let width = proxy.size.width
             let spacing: CGFloat = 2
-            let usableWidth = width - 4 * spacing
-            let segments: [SegmentSpec] = [
-                SegmentSpec(stops: Self.redLow, fractionalRange: 0.00...0.12),
-                SegmentSpec(stops: Self.orangeLow, fractionalRange: 0.12...0.20),
-                SegmentSpec(stops: Self.middleBlueGreen, fractionalRange: 0.20...0.70),
-                SegmentSpec(stops: Self.orangeHigh, fractionalRange: 0.70...0.78),
-                SegmentSpec(stops: Self.redHigh, fractionalRange: 0.78...1.00),
-            ]
-
+            let segments = data.direction.segments
+            let usableWidth = width - CGFloat(segments.count - 1) * spacing
             let clampedPosition = min(1.0, max(0.0, data.markerPosition))
             ZStack(alignment: .leading) {
                 HStack(spacing: spacing) {
-                    ForEach(Array(segments.enumerated()), id: \.offset) { offset, segment in
-                        let selected = offset == data.litSegmentIndex
-                        let segmentWidth = usableWidth * CGFloat(segment.fractionalRange.upperBound - segment.fractionalRange.lowerBound)
+                    ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                        let selected = segment.band == data.band
+                        let segmentWidth = usableWidth * CGFloat(segment.span.upperBound - segment.span.lowerBound)
                         Capsule()
                             .fill(
                                 LinearGradient(
-                                    colors: segment.stops.map { $0.opacity(selected ? 1 : .veryMinimalOpacity) },
+                                    colors: segment.band.stops.map { $0.opacity(selected ? 1 : .veryMinimalOpacity) },
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -145,19 +187,8 @@ struct VaultMarkerWidget: View, Equatable {
         .frame(height: 18)
     }
 
-    private struct SegmentSpec {
-        let stops: [Color]
-        let fractionalRange: ClosedRange<Double>
-    }
-
     // The colour of the band a position falls in, the one lit on the range bar.
-    static func stops(forMarkerPosition position: Double) -> [Color] {
-        [redLow, orangeLow, middleBlueGreen, orangeHigh, redHigh][VaultRangeMarkerData.segmentIndex(for: position)]
+    static func stops(forMarkerPosition position: Double, direction: VaultMarkerDirection = .optimalBand) -> [Color] {
+        direction.band(for: position).stops
     }
-
-    private static let redLow: [Color] = [Color(hex: "FF3A3A"), Color(hex: "FF7891")]
-    private static let redHigh: [Color] = [Color(hex: "FF7891"), Color(hex: "FF3A3A")]
-    private static let orangeLow: [Color] = [Color(hex: "FF9378"), Color(hex: "FFC43A")]
-    private static let orangeHigh: [Color] = [Color(hex: "FFC43A"), Color(hex: "FF9378")]
-    private static let middleBlueGreen: [Color] = [.defaultCyan, Color(hex: "58CB81")]
 }

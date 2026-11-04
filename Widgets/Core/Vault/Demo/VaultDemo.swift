@@ -47,20 +47,66 @@ enum VaultDemo {
         Marker(id: "ls-body-fat", name: "Body Fat", category: "Body", type: "lifestyle", value: 16.2, unit: "%", low: 10, high: 20, daysAgo: 1),
         Marker(id: "ls-spo2", name: "Blood Oxygen", category: "Respiratory", type: "lifestyle", value: 97, unit: "%", low: 95, high: 100, daysAgo: 0),
         Marker(id: "ls-respiratory-rate", name: "Respiratory Rate", category: "Respiratory", type: "lifestyle", value: 14.5, unit: "br/min", low: 12, high: 20, daysAgo: 0),
+        Marker(id: "bc-rbc", name: "Red Blood Cells", category: "Blood Count", type: "clinical", value: 5.0, unit: "10^12/L", low: 4.5, high: 6.5),
+        Marker(id: "bc-haematocrit", name: "Haematocrit", category: "Blood Count", type: "clinical", value: 0.44, unit: "L/L", low: 0.4, high: 0.54),
+        Marker(id: "lp-total-cholesterol", name: "Total Cholesterol", category: "Lipids", type: "clinical", value: 5.6, unit: "mmol/L", low: 3, high: 5.5),
+        Marker(id: "lp-apob", name: "ApoB", category: "Lipids", type: "clinical", value: 0.95, unit: "g/L", low: 0.5, high: 1),
+        Marker(id: "mt-insulin", name: "Fasting Insulin", category: "Metabolic", type: "clinical", value: 6.8, unit: "mU/L", low: 2, high: 12),
+        Marker(id: "th-free-t4", name: "Free T4", category: "Thyroid Health", type: "clinical", value: 15, unit: "pmol/L", low: 10, high: 20),
+        Marker(id: "vt-folate", name: "Folate", category: "Vitamins", type: "clinical", value: 21, unit: "nmol/L", low: 7, high: 45),
+        Marker(id: "mn-magnesium", name: "Magnesium", category: "Minerals", type: "clinical", value: 0.82, unit: "mmol/L", low: 0.7, high: 1.1),
+        Marker(id: "mn-iron", name: "Iron", category: "Minerals", type: "clinical", value: 11, unit: "umol/L", low: 10, high: 30),
+        Marker(id: "lv-ast", name: "AST", category: "Liver", type: "clinical", value: 28, unit: "U/L", low: 5, high: 35),
+        Marker(id: "lv-ggt", name: "GGT", category: "Liver", type: "clinical", value: 19, unit: "U/L", low: 5, high: 50),
+        Marker(id: "kd-egfr", name: "eGFR", category: "Kidney", type: "clinical", value: 96, unit: "mL/min", low: 60, high: 120),
+        Marker(id: "ho-shbg", name: "SHBG", category: "Hormones", type: "clinical", value: 34, unit: "nmol/L", low: 15, high: 50),
+        Marker(id: "in-homocysteine", name: "Homocysteine", category: "Inflammation", type: "clinical", value: 13.5, unit: "umol/L", low: 5, high: 12),
+        Marker(id: "ls-deep-sleep", name: "Deep Sleep", category: "Sleep", type: "lifestyle", value: 1.3, unit: "hrs", low: 1, high: 2, daysAgo: 0),
+        Marker(id: "ls-rem-sleep", name: "REM Sleep", category: "Sleep", type: "lifestyle", value: 1.6, unit: "hrs", low: 1.5, high: 2.5, daysAgo: 0),
+        Marker(id: "ls-wrist-temp", name: "Wrist Temperature", category: "Body", type: "lifestyle", value: 36.4, unit: "°C", low: 35.8, high: 37, daysAgo: 0),
+        Marker(id: "ls-walking-speed", name: "Walking Speed", category: "Activity", type: "lifestyle", value: 5.1, unit: "km/h", low: 4, high: 6.5, daysAgo: 1),
+        Marker(id: "ls-active-energy", name: "Active Energy", category: "Activity", type: "lifestyle", value: 640, unit: "kcal", low: 400, high: 900, daysAgo: 0),
+        Marker(id: "ls-water", name: "Water Intake", category: "Nutrition", type: "lifestyle", value: 1.8, unit: "L", low: 2, high: 3.5, daysAgo: 0),
+        Marker(id: "ls-protein", name: "Protein Intake", category: "Nutrition", type: "lifestyle", value: 142, unit: "g", low: 100, high: 180, daysAgo: 0),
+        Marker(id: "gn-actn3", name: "ACTN3", category: "Genetics", type: "genetic", value: nil, unit: "", low: 0, high: 1, daysAgo: 120),
+        Marker(id: "gn-cyp1a2", name: "CYP1A2", category: "Genetics", type: "genetic", value: nil, unit: "", low: 0, high: 1, daysAgo: 120),
         Marker(id: "gn-apoe", name: "APOE", category: "Genetics", type: "genetic", value: nil, unit: "", low: 0, high: 1, daysAgo: 120),
         Marker(id: "gn-mthfr", name: "MTHFR", category: "Genetics", type: "genetic", value: nil, unit: "", low: 0, high: 1, daysAgo: 120),
     ]
+
+    // Which way is good for each one-sided marker; the rest are bad at both ends.
+    private static let higherBetter: Set<String> = [
+        "lp-hdl", "vt-vitamin-d", "vt-b12", "vt-folate", "mn-iron", "mn-magnesium", "bc-ferritin", "kd-egfr",
+        "ls-hrv", "ls-vo2max", "ls-steps", "ls-spo2", "ls-deep-sleep", "ls-rem-sleep", "ls-active-energy", "ls-water", "ls-protein",
+    ]
+    private static let lowerBetter: Set<String> = [
+        "lp-ldl", "lp-triglycerides", "lp-total-cholesterol", "lp-apob", "in-crp", "in-homocysteine", "mt-glucose", "mt-hba1c",
+        "mt-insulin", "lv-alt", "lv-ast", "lv-ggt", "ls-resting-hr", "ls-body-fat",
+    ]
+
+    private static func direction(_ marker: Marker) -> VaultMarkerDirection {
+        if higherBetter.contains(marker.id) { return .higherBetter }
+        if lowerBetter.contains(marker.id) { return .lowerBetter }
+        return .optimalBand
+    }
 
     private static let summaryIds = ["ls-hrv", "lp-ldl", "vt-vitamin-d", "ls-resting-hr"]
 
     // Markers the user hasn't recorded yet; they fill out the datapoints grid as unlit dots.
     private static let missing: [(name: String, category: String, type: String)] = {
-        let clinical = ["Iron", "Transferrin", "Magnesium", "Zinc", "Folate", "Insulin", "ApoB", "Lp(a)", "Homocysteine", "Uric Acid",
-                        "Free T4", "Free T3", "Oestradiol", "SHBG", "DHEA-S", "Prolactin", "AST", "GGT", "Albumin", "eGFR",
-                        "Sodium", "Potassium", "Calcium", "Phosphate", "Omega-3 Index", "Vitamin A", "Vitamin E", "Copper", "Selenium", "Cystatin C"]
-        let lifestyle = ["Wrist Temperature", "Walking Speed", "Stand Hours", "Mindful Minutes", "Water Intake", "Caffeine", "Alcohol",
-                         "Protein Intake", "Fibre Intake", "Cardio Load", "Strength Volume", "Deep Sleep", "REM Sleep", "Sleep Latency"]
-        let genetic = ["ACTN3", "FTO", "CYP1A2", "PER3", "COMT", "BDNF", "VDR", "TCF7L2"]
+        let clinical = ["Transferrin", "Zinc", "Lp(a)", "Uric Acid", "Free T3", "Oestradiol", "DHEA-S", "Prolactin", "Albumin",
+                        "Sodium", "Potassium", "Calcium", "Phosphate", "Omega-3 Index", "Vitamin A", "Vitamin E", "Copper", "Selenium",
+                        "Cystatin C", "Urea", "Chloride", "Bicarbonate", "Globulin", "Bilirubin", "ALP", "LDH", "CK", "Amylase", "Lipase",
+                        "Neutrophils", "Lymphocytes", "Monocytes", "Eosinophils", "Basophils", "MCV", "MCH", "MCHC", "RDW", "ESR",
+                        "Fibrinogen", "D-Dimer", "IGF-1", "Growth Hormone", "LH", "FSH", "Progesterone", "Free Testosterone", "PSA",
+                        "Reverse T3", "TPO Antibodies", "Vitamin K", "Vitamin B6", "Vitamin B1", "Iodine", "Chromium", "Manganese",
+                        "C-Peptide", "Adiponectin", "Leptin", "Small Dense LDL", "Oxidised LDL", "Interleukin-6", "TNF-alpha"]
+        let lifestyle = ["Stand Hours", "Mindful Minutes", "Caffeine", "Alcohol", "Fibre Intake", "Cardio Load", "Strength Volume",
+                         "Sleep Latency", "Sleep Consistency", "Daylight Exposure", "Screen Time", "Noise Exposure", "Flights Climbed",
+                         "Running Power", "Cadence", "Ground Contact Time", "Blood Pressure", "Body Water", "Lean Mass", "Bone Mass",
+                         "Waist Circumference", "Sugar Intake", "Sodium Intake", "Carbohydrate Intake", "Fat Intake", "Glucose Variability"]
+        let genetic = ["FTO", "PER3", "COMT", "BDNF", "VDR", "TCF7L2", "MCM6", "HFE", "FADS1", "PPARG", "CLOCK", "ADRB2",
+                       "COL5A1", "SLC30A8", "GSTM1", "SOD2", "NOS3", "AMPD1"]
         return clinical.map { ($0, "Clinical", "clinical") }
             + lifestyle.map { ($0, "Lifestyle", "lifestyle") }
             + genetic.map { ($0, "Genetics", "genetic") }
@@ -68,12 +114,37 @@ enum VaultDemo {
 
     static let ranking = VaultRankingData.demo
 
-    static var summaryMarkers: [VaultMarkerData] {
-        summaryIds.compactMap { id in markers.first { $0.id == id } }.map(markerData)
+    // One bundled lab report that every demo document opens.
+    static let documentURL = Bundle.main.url(forResource: "vault_demo_report", withExtension: "pdf")
+
+    static var documents: [VaultDocumentSummary] {
+        let items: [(daysAgo: Int, lab: String, category: VaultDocumentCategory)] = [
+            (12, "LabCorp", .bloodWork), (40, "Imaging Associates", .mri), (68, "Quest Diagnostics", .bloodWork),
+            (95, "Royal North Shore Hospital", .ecg), (190, "LabCorp", .bloodWork), (240, "Laverty Pathology", .bloodWork),
+            (305, "Sonic Healthcare", .clinicalNotes), (380, "Australian Clinical Labs", .bloodWork), (450, "23andMe", .dna),
+            (520, "Quest Diagnostics", .bloodWork), (610, "Douglass Hanly Moir", .bloodWork), (700, "Imaging Associates", .xrays),
+            (760, "PRP Imaging", .xrays),
+        ]
+        return items.enumerated().map { index, item in
+            let date = Calendar.current.date(byAdding: .day, value: -item.daysAgo, to: .now) ?? .now
+            return VaultDocumentSummary(
+                id: "demo-report-\(index)",
+                labName: item.lab,
+                collectedAt: date,
+                sourceFilename: nil,
+                confirmedAt: date,
+                isGeneticReport: item.category == .dna,
+                category: item.category
+            )
+        }
     }
 
     static var dataMarkers: [VaultMarkerData] {
         markers.map(markerData)
+    }
+
+    static var summaryMarkers: [VaultMarkerData] {
+        summaryIds.compactMap { id in markers.first { $0.id == id } }.map(markerData)
     }
 
     static var completeness: VaultCompletenessData {
@@ -87,7 +158,8 @@ enum VaultDemo {
                 lastUpdated: dayKey(daysAgo: marker.daysAgo),
                 id: marker.id,
                 value: valueText(marker),
-                markerPosition: marker.value.map { position(value: $0, low: marker.low, high: marker.high) }
+                markerPosition: marker.value.map { position(value: $0, marker: marker) },
+                direction: direction(marker).rawValue
             )
         }
         let unrecorded = missing.map { item in
@@ -164,13 +236,13 @@ enum VaultDemo {
             : [(marker.daysAgo, 0), (marker.daysAgo + 120, -0.12), (marker.daysAgo + 300, 0.08), (marker.daysAgo + 700, -0.2)]
         let readings = offsets.map { offset in
             let value = ((latest + span * offset.change) * 10).rounded() / 10
-            let markerPosition = position(value: value, low: marker.low, high: marker.high)
+            let markerPosition = position(value: value, marker: marker)
             return VaultMarkerHistoryReading(
                 date: dayKey(daysAgo: offset.days),
                 lastUpdated: dayKey(daysAgo: offset.days),
                 value: value,
                 unit: marker.unit,
-                status: statusLabel(markerPosition),
+                status: statusLabel(markerPosition, marker: marker),
                 markerPosition: markerPosition,
                 normalLow: marker.low,
                 normalHigh: marker.high,
@@ -193,18 +265,19 @@ enum VaultDemo {
     }
 
     private static func markerData(_ marker: Marker) -> VaultMarkerData {
-        let markerPosition = marker.value.map { position(value: $0, low: marker.low, high: marker.high) }
+        let markerPosition = marker.value.map { position(value: $0, marker: marker) }
         return VaultMarkerData(
             id: marker.id,
             name: marker.name,
             category: marker.category,
             type: marker.type,
-            status: markerPosition.map(statusLabel) ?? "",
+            status: markerPosition.map { statusLabel($0, marker: marker) } ?? "",
             value: valueText(marker),
             lastUpdated: dayKey(daysAgo: marker.daysAgo),
             unit: marker.unit,
             trend: marker.value.map { [$0] } ?? [],
-            normalRange: marker.value == nil ? nil : marker.low ... marker.high
+            normalRange: marker.value == nil ? nil : marker.low ... marker.high,
+            direction: direction(marker)
         )
     }
 
@@ -213,12 +286,12 @@ enum VaultDemo {
         return value.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(value)) : String(format: "%.1f", value)
     }
 
-    private static func position(value: Double, low: Double, high: Double) -> Double {
-        VaultViewModel.markerPosition(value: String(value), range: low ... high)
+    private static func position(value: Double, marker: Marker) -> Double {
+        VaultViewModel.markerPosition(value: String(value), range: marker.low ... marker.high, direction: direction(marker))
     }
 
-    private static func statusLabel(_ position: Double) -> String {
-        VaultRangeMarkerData(id: "", title: "", lastUpdated: "", value: "", unit: "", markerPosition: position).statusLabel
+    private static func statusLabel(_ position: Double, marker: Marker) -> String {
+        direction(marker).band(for: position).statusLabel
     }
 
     private static func dayKey(daysAgo: Int) -> String {

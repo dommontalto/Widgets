@@ -62,7 +62,8 @@ struct LighthouseWaypointSheet: View {
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.defaultSkyBlue)
+                        .tint(.defaultGreen)
+                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             },

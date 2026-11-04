@@ -17,4 +17,5 @@ struct VaultMarkerData: Identifiable, Equatable {
     let unit: String
     let trend: [Double]
     let normalRange: ClosedRange<Double>?
+    var direction: VaultMarkerDirection = .optimalBand
 }

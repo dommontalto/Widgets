@@ -63,7 +63,7 @@ enum IntakeGraphData {
             case .cumulative:
                 .textColor
             case .breakfast:
-                .defaultGreen
+                .defaultBrightGreen
             case .lunch:
                 .defaultBrightPink
             case .dinner:

@@ -51,6 +51,7 @@ nonisolated extension Color {
     static let defaultGrey = Color(hex: "#F2F2F7")
     
     static let defaultDarkGreen = Color(hex: "#1A3D45")
+    static let defaultBrightGreen = Color(hex: "#2FB360")
     
     static let defaultElectricBlue = Color(hex: "#506CFF")
     static let defaultSkyBlue = Color(hex: "#3DAEFF")

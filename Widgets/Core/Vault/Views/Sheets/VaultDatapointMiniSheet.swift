@@ -16,18 +16,13 @@ struct VaultDatapointMiniSheet: View {
     var value: String?
     var markerId: String?
     var markerPosition: Double?
+    var direction: VaultMarkerDirection = .optimalBand
 
     @State private var showDetail = false
 
     private var statusLabel: String {
         guard let markerPosition else { return "Optimal" }
-        let position = min(1, max(0, markerPosition))
-        if position < 0.12 { return "Low" }
-        if position >= 0.78 { return "High" }
-        if position < 0.20 || position >= 0.70 {
-            return "Sub-Optimal"
-        }
-        return "Optimal"
+        return direction.band(for: markerPosition).statusLabel
     }
 
     var body: some View {
@@ -43,7 +38,8 @@ struct VaultDatapointMiniSheet: View {
                             unit: unit,
                             status: statusLabel,
                             accentColor: BrightStatus(status: statusLabel).color,
-                            normalRange: nil
+                            normalRange: nil,
+                            direction: direction
                         )
                     )
                     .presentationCornerRadius(.cardCornerRadius)

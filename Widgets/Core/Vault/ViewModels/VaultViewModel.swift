@@ -28,6 +28,7 @@ final class VaultViewModel {
     // Data
     private(set) var completeness: VaultCompletenessData?
     private(set) var performanceMarkers: [VaultMarkerData] = []
+    private(set) var documents: [VaultDocumentSummary] = []
 
     func loadIfNeeded() {
         guard summaryState == .idle else {
@@ -42,16 +43,8 @@ final class VaultViewModel {
         impactCards = VaultDemo.impactCards
         completeness = VaultDemo.completeness
         performanceMarkers = VaultDemo.dataMarkers
+        documents = VaultDemo.documents
         summaryState = .loaded
-    }
-
-    // Filtering
-
-    func markers(searchText: String) -> [VaultMarkerData] {
-        let matched = performanceMarkers
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        guard !searchText.isEmpty else { return matched }
-        return matched.filter { $0.name.localizedStandardContains(searchText) }
     }
 
     // Display mapping
@@ -63,16 +56,27 @@ final class VaultViewModel {
             lastUpdated: marker.lastUpdated ?? "",
             value: marker.value,
             unit: marker.unit,
-            markerPosition: markerPosition(value: marker.value, range: marker.normalRange)
+            markerPosition: markerPosition(value: marker.value, range: marker.normalRange, direction: marker.direction),
+            direction: marker.direction,
+            hasRange: marker.normalRange != nil
         )
     }
 
-    static func markerPosition(value: String, range: ClosedRange<Double>?) -> Double {
+    // Where a value sits on the range bar. In range it fills the green segment, which runs
+    // to the bar's edge on a one-sided marker's good side.
+    static func markerPosition(value: String, range: ClosedRange<Double>?, direction: VaultMarkerDirection = .optimalBand) -> Double {
         guard let value = Double(value),
               let range,
               range.upperBound > range.lowerBound else { return 0.45 }
         let normalized = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
-        return min(1, max(0, 0.20 + normalized * 0.50))
+        switch direction {
+        case .higherBetter where normalized >= 0:
+            return min(1, 0.20 + normalized * 0.75)
+        case .lowerBetter where normalized <= 1:
+            return max(0, 0.05 + normalized * 0.65)
+        default:
+            return min(1, max(0, 0.20 + normalized * 0.50))
+        }
     }
 
     static func detail(from marker: VaultMarkerData) -> VaultMarkerDetailData {
@@ -84,7 +88,8 @@ final class VaultViewModel {
             unit: marker.unit,
             status: marker.status,
             accentColor: BrightStatus(status: marker.status).color,
-            normalRange: marker.normalRange
+            normalRange: marker.normalRange,
+            direction: marker.direction
         )
     }
 }

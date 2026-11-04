@@ -26,6 +26,8 @@ struct BrightPillButton: View {
     let isGlass: Bool
     // While selected: the label and icon in this colour over a 30% wash of it.
     let selectedTint: Color?
+    // While selected: the fill behind the label, when it differs from `selectedTint`.
+    let selectedFill: Color?
     let isLoading: Bool
     let onTapCallback: () -> Void
 
@@ -41,6 +43,7 @@ struct BrightPillButton: View {
         isSelected: Bool = true,
         isGlass: Bool = true,
         selectedTint: Color? = nil,
+        selectedFill: Color? = nil,
         isLoading: Bool = false,
         onTapCallback: @escaping (() -> Void)
     ) {
@@ -55,6 +58,7 @@ struct BrightPillButton: View {
         self.isSelected = isSelected
         self.isGlass = isGlass
         self.selectedTint = selectedTint
+        self.selectedFill = selectedFill
         self.isLoading = isLoading
         self.onTapCallback = onTapCallback
     }
@@ -71,6 +75,11 @@ struct BrightPillButton: View {
         }
     }
 
+    // An icon before the title sits closer to the edge at every size.
+    private var leadingPadding: CGFloat {
+        systemImage != nil || image != nil ? .spacing105x : horizontalPadding
+    }
+
     private var resolvedTextColor: Color {
         if let textColor { return textColor }
         if isSelected, let selectedTint { return selectedTint }
@@ -79,7 +88,11 @@ struct BrightPillButton: View {
     }
 
     private var resolvedSize: FontSizes {
-        size ?? buttonSize.defaultFontSize
+        if let size { return size }
+        switch buttonSize {
+        case .medium, .large: return .heading
+        default: return buttonSize.defaultFontSize
+        }
     }
 
     private static func outlineName(of name: String) -> String {
@@ -119,7 +132,8 @@ struct BrightPillButton: View {
                     .transition(.opacity)
                 }
             }
-            .padding(.horizontal, isLoading || isIconOnly ? .spacing0x : horizontalPadding)
+            .padding(.leading, isLoading || isIconOnly ? .spacing0x : leadingPadding)
+            .padding(.trailing, isLoading || isIconOnly ? .spacing0x : horizontalPadding)
             .frame(width: isLoading || isIconOnly ? buttonSize.rawValue : nil, height: buttonSize.rawValue)
             .clipShape(Capsule())
         }
@@ -130,7 +144,7 @@ struct BrightPillButton: View {
     }
 
     private var backgroundFill: Color {
-        if isSelected, let selectedTint { return selectedTint.opacity(.veryLowOpacity) }
+        if isSelected, let fill = selectedFill ?? selectedTint { return fill.opacity(.veryLowOpacity) }
         return (color ?? flatFill).opacity(.veryHighOpacity)
     }
 
