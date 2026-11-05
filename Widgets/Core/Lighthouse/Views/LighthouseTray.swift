@@ -36,6 +36,8 @@ struct LighthouseTray: View {
     @State private var sentPrompt: String?
     @State private var isThinking = false
     @State private var showingModelSelector = false
+    @State private var modelLogoFrame: CGRect = .zero
+    @State private var modelReturns = 0
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
     @State private var showingSettings = false
@@ -200,6 +202,8 @@ struct LighthouseTray: View {
         .fullScreenCover(isPresented: $showingModelSelector) {
             LighthouseModelSelectorView(
                 currentModel: model,
+                sourceFrame: modelLogoFrame,
+                onReturned: { modelReturns += 1 },
                 onApiKeySaved: { apiKey = $0 }
             ) { model = $0; apiKey = "" }
         }
@@ -330,16 +334,13 @@ struct LighthouseTray: View {
     private var modelButton: some View {
         Button {
             guard !isThinking else { return }
-            showingModelSelector = true
+            openModelSelector()
         } label: {
-            Image(model.tierImageName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-                .clipShape(Circle())
-                .contentShape(Circle())
+            LighthouseTrayModelLogo(model: model, glowTrigger: modelReturns)
+                .opacity(showingModelSelector ? .zero : .opaque)
         }
         .buttonStyle(.plain)
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { modelLogoFrame = $0 }
         .accessibilityLabel(Constants.modelLabel)
         .accessibilityValue(model.displayName)
     }
@@ -486,9 +487,16 @@ struct LighthouseTray: View {
         run(action)
     }
 
+    // The selector draws its own entrance from the logo, so the cover itself appears without sliding up.
+    private func openModelSelector() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { showingModelSelector = true }
+    }
+
     private func run(_ action: MenuAction) {
         switch action {
-        case .switchModel: showingModelSelector = true
+        case .switchModel: openModelSelector()
         case .checkIns: showingCheckIns = true
         case .configurations: showingConfigurations = true
         case .settings: showingSettings = true
@@ -645,5 +653,33 @@ private struct TrayTypingDetent: CustomPresentationDetent {
 
     private enum Constants {
         static let keyboardShare: CGFloat = 0.4
+    }
+}
+
+// The model's logo in the tray. It keeps its own glow, so lighting it up redraws only the logo, not the tray:
+// it arrives back from the selector lit, as it left the dial, and dims after a moment.
+private struct LighthouseTrayModelLogo: View {
+    let model: LighthouseModel
+    let glowTrigger: Int
+
+    @State private var glow: Double = .zero
+
+    var body: some View {
+        Image(model.tierImageName)
+            .resizable()
+            .scaledToFill()
+            .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+            .clipShape(Circle())
+            .contentShape(Circle())
+            .modifier(LighthouseModelGlow(color: model.tint, amount: glow))
+            .onChange(of: glowTrigger) {
+                glow = .opaque
+                withAnimation(.easeOut(duration: Constants.glowFadeDuration).delay(Constants.glowHold)) { glow = .zero }
+            }
+    }
+
+    private enum Constants {
+        static let glowHold: TimeInterval = 2
+        static let glowFadeDuration: TimeInterval = 1
     }
 }

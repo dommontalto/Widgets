@@ -11,6 +11,12 @@ import SwiftUI
 // it settles, so the screen redrawing mid-scroll can't feed back into it.
 struct LighthouseModelWheel: View {
     @Binding var selection: LighthouseModelChoice
+    var slidesIn = true
+    var glow: Double = .zero
+
+    // The selected row's logo: drawn this size, its centre this far in from the right edge, level with the middle.
+    static var selectedLogoSize: CGFloat { Constants.logoSize * Constants.selectedScale }
+    static var selectedLogoTrailing: CGFloat { Constants.rimTrailing + Constants.rimGap + selectedLogoSize / 2 }
 
     @State private var scrolled: LighthouseModelChoice?
     @State private var hasAppeared = false
@@ -29,7 +35,7 @@ struct LighthouseModelWheel: View {
                 rim(x: proxy.size.width - Constants.rimTrailing, midY: height / 2)
 
                 dial(height: height, centreY: proxy.frame(in: .global).midY)
-                    .offset(x: hasAppeared ? .zero : Constants.enterOffset)
+                    .offset(x: hasAppeared || !slidesIn ? .zero : Constants.enterOffset)
                     .opacity(hasAppeared ? .opaque : .zero)
             }
         }
@@ -97,6 +103,7 @@ struct LighthouseModelWheel: View {
                     .lineLimit(1)
 
                 icon(of: choice)
+                    .modifier(LighthouseModelGlow(color: choice.model?.tint ?? .clear, amount: isSelected ? glow : .zero))
                     .frame(width: Constants.tileWidth, height: Constants.tileWidth)
                     .opacity(isSelected ? .opaque : .lowOpacity)
             }
@@ -132,6 +139,32 @@ struct LighthouseModelWheel: View {
     }
 
     private typealias Constants = LighthouseModelWheelConstants
+}
+
+// A model's logo lit in its own colour, `amount` from off to full.
+struct LighthouseModelGlow: ViewModifier, Animatable {
+    let color: Color
+    var amount: Double
+
+    var animatableData: Double {
+        get { amount }
+        set { amount = newValue }
+    }
+
+    // No shadow at all while unlit, so the dial's other rows don't each pay for one as they scroll.
+    func body(content: Content) -> some View {
+        if amount > .zero {
+            content
+                .shadow(color: color.opacity(amount * Constants.strength), radius: Constants.radius * amount)
+        } else {
+            content
+        }
+    }
+
+    private enum Constants {
+        static let radius: CGFloat = 16
+        static let strength: Double = 0.45
+    }
 }
 
 // Where a row sits on the dial, from how far it is above or below the middle:

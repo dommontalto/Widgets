@@ -12,8 +12,12 @@ import SwiftUI
 // tier changes.
 struct LighthouseModelSelectorView: View {
     let currentModel: LighthouseModel
+    // The logo it was opened from, in screen space: a copy flies from there to the dial's middle row.
+    var sourceFrame: CGRect?
     let onModelSelected: (LighthouseModel) -> Void
     let onApiKeySaved: (String) -> Void
+    // Called as the logo lands back where it came from, just before the selector goes.
+    var onReturned: () -> Void = {}
 
     @AppStorage(Constants.speedKey) private var speed = LighthouseSpeed.adaptive
 
@@ -22,13 +26,23 @@ struct LighthouseModelSelectorView: View {
     @State private var selection: LighthouseModelChoice
     @State private var selectedTiers: [String: BrightCarouselTier]
     @State private var isEnteringKey = false
+    @State private var isShowing = false
+    @State private var hasLanded = false
+    @State private var showsContent = false
+    @State private var showsCopy = true
+    @State private var glow: Double = .zero
+    @State private var isClosing = false
 
     init(
         currentModel: LighthouseModel = .chatGPT,
+        sourceFrame: CGRect? = nil,
+        onReturned: @escaping () -> Void = {},
         onApiKeySaved: @escaping (String) -> Void = { _ in },
         onModelSelected: @escaping (LighthouseModel) -> Void = { _ in }
     ) {
         self.currentModel = currentModel
+        self.sourceFrame = sourceFrame
+        self.onReturned = onReturned
         self.onApiKeySaved = onApiKeySaved
         self.onModelSelected = onModelSelected
         _selection = State(initialValue: .model(currentModel))
@@ -36,11 +50,58 @@ struct LighthouseModelSelectorView: View {
     }
 
     var body: some View {
+        ZStack {
+            veil
+            selector
+                .opacity(showsContent ? .opaque : .zero)
+            if showsCopy, let sourceFrame {
+                flyingLogo(from: sourceFrame)
+            }
+        }
+        .ignoresSafeArea(.keyboard)
+        .presentationBackground(.clear)
+        .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
+            onApiKeySaved(key)
+            close()
+        }
+        .onAppear(perform: enter)
+        .onDisappear { LighthouseModelPicker.save(selectedTiers) }
+    }
+
+    // The plus menu's frosted, dimmed layer.
+    private var veil: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay { Color.defaultOverlayDim }
+            .ignoresSafeArea()
+            .opacity(isShowing ? .opaque : .zero)
+    }
+
+    private func flyingLogo(from source: CGRect) -> some View {
+        GeometryReader { proxy in
+            let landing = CGPoint(
+                x: proxy.size.width - LighthouseModelWheel.selectedLogoTrailing,
+                y: proxy.size.height / 2
+            )
+            let size = hasLanded ? LighthouseModelWheel.selectedLogoSize : source.width
+            Image(currentModel.tierImageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+                .modifier(LighthouseModelGlow(color: currentModel.tint, amount: isClosing ? glow : .zero))
+                .position(hasLanded ? landing : CGPoint(x: source.midX, y: source.midY))
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private var selector: some View {
         NavigationStack {
             // The dial runs the full height behind the controls, so its
             // rows fade out at the screen's edges rather than being cut off.
             ZStack {
-                LighthouseModelWheel(selection: $selection)
+                LighthouseModelWheel(selection: $selection, slidesIn: sourceFrame == nil, glow: glow)
                     .overlay(alignment: .leading) {
                         tierMenu
                             .padding(.leading, .spacing5x)
@@ -55,7 +116,7 @@ struct LighthouseModelSelectorView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // The API key alert's keyboard would otherwise push the whole screen up.
             .ignoresSafeArea(.keyboard)
-            .background { LighthouseChatBackground() }
+            .containerBackground(.clear, for: .navigation)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -64,7 +125,7 @@ struct LighthouseModelSelectorView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        dismiss()
+                        choose()
                     } label: {
                         Image(systemName: "xmark")
                             .foregroundStyle(Color.textColor)
@@ -72,13 +133,66 @@ struct LighthouseModelSelectorView: View {
                 }
             }
         }
-        .ignoresSafeArea(.keyboard)
-        .presentationBackground(.clear)
-        .lighthouseApiKeyAlert(isPresented: $isEnteringKey) { key in
-            onApiKeySaved(key)
-            dismiss()
+    }
+
+    // The veil fades up as the copy of the logo flies to the dial's middle row; the dial and controls then fade in under it, and the copy goes once they're there.
+    private func enter() {
+        withAnimation(.easeIn(duration: Constants.fadeDuration)) { isShowing = true }
+        guard sourceFrame != nil else {
+            showsCopy = false
+            withAnimation(.easeIn(duration: Constants.fadeDuration)) { showsContent = true }
+            return
         }
-        .onDisappear { LighthouseModelPicker.save(selectedTiers) }
+        withAnimation(.brightSpring) {
+            hasLanded = true
+        } completion: {
+            withAnimation(.brightEaseInOut) {
+                showsContent = true
+                glow = .opaque
+            } completion: {
+                showsCopy = false
+                withAnimation(.easeOut(duration: Constants.glowFadeDuration).delay(Constants.glowHold)) { glow = .zero }
+            }
+        }
+    }
+
+    // The entrance run backwards: the logo lights up on the dial, the dial fades away, then the logo flies home
+    // still lit as the veil lifts, and the real logo takes the glow over. `currentModel` is the chosen model by now, so that's the logo that lands.
+    private func close() {
+        guard !isClosing else { return }
+        isClosing = true
+        guard sourceFrame != nil else {
+            withAnimation(.easeOut(duration: Constants.fadeDuration)) {
+                isShowing = false
+                showsContent = false
+            } completion: {
+                dismissInstantly()
+            }
+            return
+        }
+        hasLanded = true
+        showsCopy = true
+        withAnimation(.brightEaseInOut) {
+            glow = .opaque
+            showsContent = false
+        } completion: {
+            withAnimation(.easeOut(duration: Constants.fadeDuration)) {
+                isShowing = false
+            }
+            // Waits for the spring to come fully to rest on the logo, not just to look done, so the hand-over doesn't jump.
+            withAnimation(.brightSpring, completionCriteria: .removed) {
+                hasLanded = false
+            } completion: {
+                onReturned()
+                dismissInstantly()
+            }
+        }
+    }
+
+    private func dismissInstantly() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { dismiss() }
     }
 
     // Only the controls take touches; the space above them is the dial's.
@@ -162,13 +276,16 @@ struct LighthouseModelSelectorView: View {
             return
         }
         onModelSelected(model)
-        dismiss()
+        close()
     }
 
     private enum Constants {
         static let chooseTitle = "Choose"
         static let speedTitle = "Speed"
         static let speedKey = "lighthouseSpeed"
+        static let fadeDuration: TimeInterval = 0.25
+        static let glowHold: TimeInterval = 2
+        static let glowFadeDuration: TimeInterval = 1
     }
 }
 

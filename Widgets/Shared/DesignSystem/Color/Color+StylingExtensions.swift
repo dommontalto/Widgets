@@ -37,6 +37,7 @@ nonisolated extension Color {
     static let textFields = Color(light: .black.opacity(.finalBossLowOpacity), dark: .defaultTextFieldDark)
     static let defaultTextFieldDark = Color(hex: "#B4B4CF").opacity(.ultraLowOpacity)
     static let defaultSearchBarBg = Color(hex: "#9E9E9E").opacity(.minimalOpacity)
+    static let defaultOverlayDim = Color(light: .clear, dark: .black.opacity(.lowOpacity))
     
     static let defaultBlue = Color(light: .defaultElectricBlue, dark: .defaultSkyBlue)
     static let defaultSlateBlue = Color(light: .slateBlueLight, dark: .slateBlueDark)
