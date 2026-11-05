@@ -143,10 +143,10 @@ struct LighthouseModelSelectorView: View {
             withAnimation(.easeIn(duration: Constants.fadeDuration)) { showsContent = true }
             return
         }
-        withAnimation(.brightSpring) {
+        withAnimation(.snappy(duration: Constants.flyDuration)) {
             hasLanded = true
         } completion: {
-            withAnimation(.brightEaseInOut) {
+            withAnimation(.easeInOut(duration: Constants.fadeDuration)) {
                 showsContent = true
                 glow = .opaque
             } completion: {
@@ -172,16 +172,17 @@ struct LighthouseModelSelectorView: View {
         }
         hasLanded = true
         showsCopy = true
-        withAnimation(.brightEaseInOut) {
+        withAnimation(.easeInOut(duration: Constants.fadeDuration)) {
             glow = .opaque
             showsContent = false
         } completion: {
-            withAnimation(.brightSpring) {
-                hasLanded = false
-            }
             withAnimation(.easeOut(duration: Constants.fadeDuration)) {
                 isShowing = false
+            }
+            withAnimation(.easeInOut(duration: Constants.returnDuration)) {
+                hasLanded = false
             } completion: {
+                showsCopy = false
                 onReturned()
                 dismissInstantly()
             }
@@ -282,7 +283,9 @@ struct LighthouseModelSelectorView: View {
         static let chooseTitle = "Choose"
         static let speedTitle = "Speed"
         static let speedKey = "lighthouseSpeed"
-        static let fadeDuration: TimeInterval = 0.25
+        static let fadeDuration: TimeInterval = 0.18
+        static let flyDuration: TimeInterval = 0.25
+        static let returnDuration: TimeInterval = 0.28
         static let glowHold: TimeInterval = 2
         static let glowFadeDuration: TimeInterval = 1
     }
