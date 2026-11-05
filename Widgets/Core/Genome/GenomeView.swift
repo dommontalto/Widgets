@@ -98,12 +98,18 @@ struct GenomeView: View {
                     style: .genome
                 )
 
-                // With no order yet, ordering lives in the tray over this tab (see GenomePresentations).
-                if !viewModel.hasResults, !viewModel.canOrder {
-                    GenomeOrderStatusWidget(
-                        status: viewModel.orderStatus,
-                        order: viewModel.orderInfo
-                    )
+                if !viewModel.hasResults {
+                    if viewModel.canOrder {
+                        Button { orderViewModel.handleOrderTapped() } label: {
+                            GenomeOrderWidget()
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        GenomeOrderStatusWidget(
+                            status: viewModel.orderStatus,
+                            order: viewModel.orderInfo
+                        )
+                    }
                 }
 
                 if !viewModel.leadingContributors.isEmpty {
@@ -145,63 +151,14 @@ private struct GenomePresentations: ViewModifier {
             .sheet(isPresented: $viewModel.showingGenomeInfo) {
                 GenomeInfoSheet()
             }
-            // Like Atlas's tray, with two states: the order card resting at the
-            // bottom of Summary, and the full order sheet when drawn up or tapped.
-            .sheet(isPresented: orderTrayShown) {
-                GenomeOrderTray(
-                    viewModel: orderViewModel,
-                    isExpanded: orderViewModel.showingOrderSheet,
-                    expand: { orderViewModel.handleOrderTapped() },
-                    collapse: { orderViewModel.showingOrderSheet = false },
-                    dismiss: { orderViewModel.isOrderTrayDismissed = true }
-                )
-                .presentationDetents([Self.trayRestDetent, .large], selection: orderTrayDetent)
-                // Like Atlas: swiping down from the peek puts it away, from full height it folds down.
-                .interactiveDismissDisabled(orderViewModel.showingOrderSheet)
-                .presentationBackgroundInteraction(.enabled(upThrough: Self.trayRestDetent))
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(.screenCornerRadius)
-                .presentationBackground {
-                    GenomeOrderWaves(fills: true)
-                }
+            .sheet(
+                isPresented: $orderViewModel.showingOrderSheet,
+                onDismiss: { orderViewModel.handleOrderSheetDismissed() }
+            ) {
+                GenomeOrderSheet(viewModel: orderViewModel)
             }
-            .onChange(of: orderViewModel.showingOrderSheet) { _, shown in
-                if !shown { orderViewModel.handleOrderSheetDismissed() }
-            }
-            .onChange(of: viewModel.selectedTabIndex) { _, index in
-                if index == GenomeViewTab.summary.rawValue { orderViewModel.isOrderTrayDismissed = false }
-            }
-            .onAppear { orderViewModel.isOrderTrayDismissed = false }
             .navigationDestination(item: $viewModel.selectedCategory) { category in
                 GenomeCategoryView(category: category) { viewModel.showOnStrand(canonicalName: $0) }
             }
-    }
-
-    private static let trayRestDetent: PresentationDetent = .height(.spacing12x * 3)
-
-    // Up on Summary while there's nothing ordered, and wherever an order button asks for it.
-    private var orderTrayShown: Binding<Bool> {
-        Binding(
-            get: {
-                orderViewModel.showingOrderSheet
-                    || (!orderViewModel.isOrderTrayDismissed && viewModel.canOrder && !viewModel.hasResults
-                        && viewModel.selectedTabIndex == GenomeViewTab.summary.rawValue)
-            },
-            set: { shown in
-                guard !shown else { return }
-                if orderViewModel.showingOrderSheet {
-                    orderViewModel.showingOrderSheet = false
-                } else {
-                    orderViewModel.isOrderTrayDismissed = true
-                }
-            }
-        )
-    }
-
-    private var orderTrayDetent: Binding<PresentationDetent> {
-        Binding(
-            get: { orderViewModel.showingOrderSheet ? .large : Self.trayRestDetent },
-            set: { orderViewModel.showingOrderSheet = $0 == .large }
-        )
     }
 }

@@ -87,8 +87,8 @@ final class BrightDNAStrandRendererV5: NSObject, MTKViewDelegate {
     private var lastFrame: CFTimeInterval = CACurrentMediaTime()
     // Entrance: the strand twists up from below the screen into place.
     private var introStart: CFTimeInterval?
-    private let introDuration: CFTimeInterval = 2.4
-    private let introTwist: Float = 2.6
+    private let introDuration: CFTimeInterval = 4.2
+    private let introTwist: Float = 4.2
 
     init?(view: MTKView, state: GenomeState) {
         guard let device = view.device ?? MTLCreateSystemDefaultDevice(),
