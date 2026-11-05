@@ -33,6 +33,10 @@ struct GenomeOrderWidget: View {
                 .scaleEffect(Constants.scale + Constants.scaleSwing * sin(t / 5))
                 .rotationEffect(.degrees(Constants.rotation * sin(t / 11)))
                 .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
+                .overlay {
+                    LinearGradient(gradient: BrightWaveStyle.genome.curve, startPoint: .topLeading, endPoint: .bottomTrailing)
+                        .blendMode(.color)
+                }
                 .blur(radius: 10, opaque: true)
                 // The order sheet's fall-off: the waves sink into black towards the bottom.
                 .overlay {

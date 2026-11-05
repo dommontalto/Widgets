@@ -142,23 +142,13 @@ struct LighthouseModelWheel: View {
 }
 
 // A model's logo lit in its own colour, `amount` from off to full.
-struct LighthouseModelGlow: ViewModifier, Animatable {
+struct LighthouseModelGlow: ViewModifier {
     let color: Color
-    var amount: Double
+    let amount: Double
 
-    var animatableData: Double {
-        get { amount }
-        set { amount = newValue }
-    }
-
-    // No shadow at all while unlit, so the dial's other rows don't each pay for one as they scroll.
     func body(content: Content) -> some View {
-        if amount > .zero {
-            content
-                .shadow(color: color.opacity(amount * Constants.strength), radius: Constants.radius * amount)
-        } else {
-            content
-        }
+        content
+            .shadow(color: color.opacity(amount * Constants.strength), radius: Constants.radius * amount)
     }
 
     private enum Constants {

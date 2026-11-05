@@ -176,12 +176,11 @@ struct LighthouseModelSelectorView: View {
             glow = .opaque
             showsContent = false
         } completion: {
+            withAnimation(.brightSpring) {
+                hasLanded = false
+            }
             withAnimation(.easeOut(duration: Constants.fadeDuration)) {
                 isShowing = false
-            }
-            // Waits for the spring to come fully to rest on the logo, not just to look done, so the hand-over doesn't jump.
-            withAnimation(.brightSpring, completionCriteria: .removed) {
-                hasLanded = false
             } completion: {
                 onReturned()
                 dismissInstantly()

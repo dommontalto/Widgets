@@ -37,7 +37,7 @@ struct LighthouseTray: View {
     @State private var isThinking = false
     @State private var showingModelSelector = false
     @State private var modelLogoFrame: CGRect = .zero
-    @State private var modelReturns = 0
+    @State private var modelGlow: Double = .zero
     @State private var showingCheckIns = false
     @State private var showingConfigurations = false
     @State private var showingSettings = false
@@ -203,7 +203,7 @@ struct LighthouseTray: View {
             LighthouseModelSelectorView(
                 currentModel: model,
                 sourceFrame: modelLogoFrame,
-                onReturned: { modelReturns += 1 },
+                onReturned: glowModelLogo,
                 onApiKeySaved: { apiKey = $0 }
             ) { model = $0; apiKey = "" }
         }
@@ -336,7 +336,13 @@ struct LighthouseTray: View {
             guard !isThinking else { return }
             openModelSelector()
         } label: {
-            LighthouseTrayModelLogo(model: model, glowTrigger: modelReturns)
+            Image(model.tierImageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
+                .clipShape(Circle())
+                .contentShape(Circle())
+                .modifier(LighthouseModelGlow(color: model.tint, amount: modelGlow))
                 .opacity(showingModelSelector ? .zero : .opaque)
         }
         .buttonStyle(.plain)
@@ -494,6 +500,12 @@ struct LighthouseTray: View {
         withTransaction(transaction) { showingModelSelector = true }
     }
 
+    // The logo arrives back lit, as it left the dial, and dims after a moment.
+    private func glowModelLogo() {
+        modelGlow = .opaque
+        withAnimation(.easeOut(duration: Constants.glowFadeDuration).delay(Constants.glowHold)) { modelGlow = .zero }
+    }
+
     private func run(_ action: MenuAction) {
         switch action {
         case .switchModel: openModelSelector()
@@ -618,6 +630,8 @@ struct LighthouseTray: View {
     private enum Constants {
         static let askTitle = "Ask Lighthouse anything"
         static let modelLabel = "Model"
+        static let glowHold: TimeInterval = 2
+        static let glowFadeDuration: TimeInterval = 1
         static let stopLabel = "Stop"
         static let sendLabel = "Send"
         static let attachLabel = "Attach"
@@ -653,33 +667,5 @@ private struct TrayTypingDetent: CustomPresentationDetent {
 
     private enum Constants {
         static let keyboardShare: CGFloat = 0.4
-    }
-}
-
-// The model's logo in the tray. It keeps its own glow, so lighting it up redraws only the logo, not the tray:
-// it arrives back from the selector lit, as it left the dial, and dims after a moment.
-private struct LighthouseTrayModelLogo: View {
-    let model: LighthouseModel
-    let glowTrigger: Int
-
-    @State private var glow: Double = .zero
-
-    var body: some View {
-        Image(model.tierImageName)
-            .resizable()
-            .scaledToFill()
-            .frame(width: BrightButtonSizes.large.rawValue, height: BrightButtonSizes.large.rawValue)
-            .clipShape(Circle())
-            .contentShape(Circle())
-            .modifier(LighthouseModelGlow(color: model.tint, amount: glow))
-            .onChange(of: glowTrigger) {
-                glow = .opaque
-                withAnimation(.easeOut(duration: Constants.glowFadeDuration).delay(Constants.glowHold)) { glow = .zero }
-            }
-    }
-
-    private enum Constants {
-        static let glowHold: TimeInterval = 2
-        static let glowFadeDuration: TimeInterval = 1
     }
 }

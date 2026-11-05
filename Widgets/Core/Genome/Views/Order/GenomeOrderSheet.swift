@@ -65,7 +65,7 @@ struct GenomeOrderWaves: View {
                 .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
                 .overlay {
                     LinearGradient(
-                        colors: [.defaultCyan, .defaultSkyBlue, .defaultDeepBlue],
+                        gradient: BrightWaveStyle.genome.curve,
                         startPoint: UnitPoint(x: 0.5 - 0.5 * cos(turn), y: 0.5 - 0.5 * sin(turn)),
                         endPoint: UnitPoint(x: 0.5 + 0.5 * cos(turn), y: 0.5 + 0.5 * sin(turn))
                     )
