@@ -57,13 +57,15 @@ struct LighthouseWaypointSheet: View {
 
                 if !isEditing {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(Constants.skipTitle) {
+                        Button {
                             onSkip()
                             dismiss()
+                        } label: {
+                            Text(Constants.skipTitle)
+                                .foregroundStyle(Color.defaultBlack)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultGreen)
-                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             },

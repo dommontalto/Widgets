@@ -667,24 +667,6 @@ final class HealthWidgetLayoutV5 {
         HealthWidgetItemV5(kind: .exercise, style: .exerciseSplits, size: .medium),
     ]
 
-    var layoutText: String {
-        widgets.map { widget in
-            var line = "HealthWidgetItemV5(kind: .\(widget.kind.rawValue), style: .\(widget.style.rawValue), size: .\(widget.size.rawValue)"
-            if widget.style.ranges.count > 1 {
-                line += ", range: .\(widget.range.rawValue)"
-            }
-            switch widget.style.pick {
-            case .macro: line += ", macro: .\(widget.macro.rawValue)"
-            case .stage: line += ", stage: .\(widget.stage.rawValue)"
-            case .score: line += ", score: .\(widget.score.rawValue)"
-            case .nutrients: line += ", nutrients: [\(widget.nutrients.map { ".\($0.rawValue)" }.joined(separator: ", "))]"
-            case nil: break
-            }
-            return line + "),"
-        }
-        .joined(separator: "\n")
-    }
-
     init() {
         widgets = Self.loadSaved() ?? Self.defaultWidgets
         pack()

@@ -6,12 +6,10 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct AddWidgetSheetV5: View {
     // How many widgets are on the grid now, for the debug stats.
     var widgetCount: Int?
-    var layoutText: String?
     let onAdd: (HealthWidgetItemV5) -> Void
     let onReset: () -> Void
     var onAddAll: (() -> Void)?
@@ -43,12 +41,6 @@ struct AddWidgetSheetV5: View {
                             isConfirmingReset = true
                         }
 
-                        if let layoutText {
-                            ShareLink(item: HealthLayoutFileV5(text: layoutText), preview: SharePreview(HealthLayoutFileV5.name)) {
-                                BrightRowV5("Share current layout", icon: .symbol("square.and.arrow.up"), trailing: .none) {}
-                                    .allowsHitTesting(false)
-                            }
-                        }
 
                         #if DEBUG
                         if let onAddAll {
@@ -165,20 +157,6 @@ struct AddWidgetSheetV5: View {
     }
 }
 
-struct HealthLayoutFileV5: Transferable {
-    static let name = "Home Layout.txt"
-
-    let text: String
-
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(exportedContentType: .plainText) { file in
-            let url = FileManager.default.temporaryDirectory.appending(path: name)
-            try file.text.write(to: url, atomically: true, encoding: .utf8)
-            return SentTransferredFile(url)
-        }
-    }
-}
-
 struct EditWidgetSheetV5: View {
     let onSave: (HealthWidgetItemV5) -> Void
 
@@ -197,15 +175,17 @@ struct EditWidgetSheetV5: View {
         BrightPageSheetViewV5(title: "Edit Widget", horizontalPadding: .spacing0x) {
             ToolbarItem(placement: .topBarTrailing) {
                 if widget != initialWidget {
-                    Button("Save") {
+                    Button {
                         guard widget != initialWidget else { return }
                         BrightHaptic.medium.play()
                         onSave(widget)
                         dismiss()
+                    } label: {
+                        Text("Save")
+                            .foregroundStyle(Color.defaultBlack)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.defaultGreen)
-                    .foregroundStyle(Color.defaultBlack)
                     .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
                 }
             }
@@ -233,13 +213,15 @@ struct ChooseWidgetSizePageV5: View {
             backgroundColor: .defaultSheetBackground
         ) {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Add") {
+                Button {
                     BrightHaptic.medium.play()
                     onAdd(widget)
+                } label: {
+                    Text("Add")
+                        .foregroundStyle(Color.defaultBlack)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultGreen)
-                .foregroundStyle(Color.defaultBlack)
                 .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
             }
         } content: {

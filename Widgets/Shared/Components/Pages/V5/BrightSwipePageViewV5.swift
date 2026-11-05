@@ -421,7 +421,6 @@ struct BrightSwipePageViewV5<Content: View>: View {
                         }
                         content(i)
                     }
-                    .background(TabBarScrollSource(isActive: (scrollPosition ?? selectedIndex) == i))
                 }
                 .scrollDismissesKeyboard(scrollDismissesKeyboardMode)
                 .scrollDisabled(i == verticalScrollDisabledPageIndex)

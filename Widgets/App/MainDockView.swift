@@ -156,7 +156,6 @@ struct MainDockView: View {
             }
         }
         .tint(.primary)
-        .modifier(MainDockMinimizesOnScroll())
     }
 
     private var vaultPage: some View {
@@ -199,15 +198,4 @@ struct MainDockView: View {
 
 #Preview {
     MainDockView()
-}
-
-// iOS 26 only: the dock shrinks as a page scrolls down.
-private struct MainDockMinimizesOnScroll: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content.tabBarMinimizeBehavior(.onScrollDown)
-        } else {
-            content
-        }
-    }
 }

@@ -132,6 +132,12 @@ struct LighthouseTray: View {
         }
         .onChange(of: detent) { old, new in
             if new == Self.restDetent { isFieldFocused = false }
+            if old == Self.restDetent, hasConversation {
+                hasConversation = false
+                isThinking = false
+                attachments = []
+                chatResetCount += 1
+            }
             // Dragged up from the keyboard height while still typing: the keyboard goes and the tray carries on to
             // full, since full can't be on offer while it's up without iOS lifting the tray there itself.
             if old == Self.typingDetent, new == Self.halfDetent, isKeyboardShowing {
@@ -206,7 +212,6 @@ struct LighthouseTray: View {
                 chat
                     .environment(\.brightChatShowsInput, false)
                     .environment(\.brightChatShowsBottomEdge, true)
-                    .environment(\.brightChatShowsContext, isFull && hasConversation)
                     .safeAreaPadding(.top, topBarHeight)
                     .brightSoftScrollEdgesV5()
                     .overlay {
@@ -364,7 +369,7 @@ struct LighthouseTray: View {
             .transition(.scale.combined(with: .opacity))
         } else {
             BrightRoundButton(
-                systemImage: "waveform",
+                systemImage: dictation.isListening ? "waveform" : "mic.fill",
                 size: .large,
                 imageColor: dictation.isListening ? .defaultRed : nil
             ) {
@@ -403,22 +408,14 @@ struct LighthouseTray: View {
                 menuRow
                     .transition(.opacity)
             }
-            if let quickActions, !hasConversation, !isWhispering, !isFieldFocused {
+            if let quickActions, !hasConversation {
                 quickActions
-                    .transition(.opacity)
-            }
-            // Before the first message the context sits here; once a thread starts it moves into the chat and scrolls with it.
-            if isFull, !hasConversation {
-                BrightChatContextV5()
-                    .padding(.horizontal, .spacing3x)
                     .transition(.opacity)
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topBarHeight = $0 }
         .animation(.brightEaseInOut, value: isFull)
         .animation(.brightEaseInOut, value: hasConversation)
-        .animation(.brightEaseInOut, value: isWhispering)
-        .animation(.brightEaseInOut, value: isFieldFocused)
     }
 
     private var menuRow: some View {

@@ -95,16 +95,16 @@ struct HealthView: View {
                         } label: {
                             Label("Done", systemImage: "checkmark")
                                 .labelStyle(.iconOnly)
+                                .foregroundStyle(Color.defaultBlack)
                         }
                         .buttonStyle(.borderedProminent)
                         .buttonBorderShape(.circle)
                         .tint(.defaultGreen)
-                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             }
             .sheet(isPresented: $editor.isShowingAddSheet) {
-                AddWidgetSheetV5(widgetCount: editor.layout.widgets.count, layoutText: editor.layout.layoutText) {
+                AddWidgetSheetV5(widgetCount: editor.layout.widgets.count) {
                     editor.add($0)
                 } onReset: {
                     editor.layout.reset()

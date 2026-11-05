@@ -12,6 +12,10 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
     case weight
     case barcode
     case searchMeal
+    case savedMeals
+    case imageSearch
+    case createRecipe
+    case importRecipe
     case describeMeal
     case activity
     case cycle
@@ -19,7 +23,7 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    static let defaults: [LighthouseQuickAction] = [.exercise, .food, .water, .weight, .searchMeal]
+    static let defaults: [LighthouseQuickAction] = [.exercise, .food, .water, .weight, .searchMeal, .savedMeals]
 
     var title: String {
         switch self {
@@ -29,6 +33,10 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
         case .weight: "Weight"
         case .barcode: "Barcode"
         case .searchMeal: "Search"
+        case .savedMeals: "Saved"
+        case .imageSearch: "Photo"
+        case .createRecipe: "Recipe"
+        case .importRecipe: "Import"
         case .describeMeal: "Describe"
         case .activity: "Activity"
         case .cycle: "Menstrual"
@@ -44,10 +52,27 @@ enum LighthouseQuickAction: String, CaseIterable, Identifiable {
         case .weight: HealthWidgetKindV5.weight.systemImage
         case .barcode: "barcode.viewfinder"
         case .searchMeal: "magnifyingglass"
+        case .savedMeals: "bookmark"
+        case .imageSearch: "camera.viewfinder"
+        case .createRecipe: "frying.pan"
+        case .importRecipe: "square.and.arrow.down"
         case .describeMeal: "text.bubble"
         case .activity: HealthWidgetKindV5.activity.systemImage
         case .cycle: HealthWidgetKindV5.menstrual.systemImage
-        case .document: "doc"
+        case .document: "arrow.down.document"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .exercise: HealthWidgetKindV5.exercise.tint
+        case .food, .barcode, .searchMeal, .describeMeal, .savedMeals, .imageSearch, .createRecipe, .importRecipe:
+            HealthWidgetKindV5.nutrition.tint
+        case .water: HealthWidgetKindV5.water.tint
+        case .weight: HealthWidgetKindV5.weight.tint
+        case .activity: HealthWidgetKindV5.activity.tint
+        case .cycle: HealthWidgetKindV5.menstrual.tint
+        case .document: .textColor
         }
     }
 }
@@ -204,6 +229,7 @@ struct LighthouseQuickActions: View {
         } icon: {
             Image(systemName: action.systemImage)
                 .font(.standard(size: .heading, weight: .regular))
+                .foregroundStyle(action.tint)
         }
         .overlay(alignment: .topTrailing) {
             if isEditing {
