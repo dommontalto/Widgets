@@ -92,11 +92,11 @@ struct HealthView: View {
                         } label: {
                             Label("Done", systemImage: "checkmark")
                                 .labelStyle(.iconOnly)
-                                .foregroundStyle(Color.defaultBlack)
                         }
                         .buttonStyle(.borderedProminent)
                         .buttonBorderShape(.circle)
                         .tint(.defaultGreen)
+                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             }

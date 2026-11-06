@@ -66,35 +66,35 @@ enum TabPlusItem: String, CaseIterable, Identifiable {
     var icon: BrightRowV5Icon {
         switch self {
         case .manualLog:
-            .asset(ImageNames.addManualLogV5)
+            .asset(ImageNames.manualLogTileV5)
         case .searchMeal:
-            .asset(ImageNames.addSearchMealV5)
+            .asset(ImageNames.searchMealTileV5)
         case .imageSearch:
-            .asset(ImageNames.addImageSearchV5)
+            .asset(ImageNames.cameraTileV5)
         case .describeMeal:
-            .asset(ImageNames.addDescribeV5)
+            .asset(ImageNames.describeTileV5)
         case .scanBarcode:
-            .asset(ImageNames.addScanBarcodeV5)
+            .asset(ImageNames.scanBarcodeTileV5)
         case .importRecipe:
-            .asset(ImageNames.addImportRecipeV5)
+            .asset(ImageNames.importRecipeTileV5)
         case .createRecipe:
-            .asset(ImageNames.addCreateRecipeV5)
+            .asset(ImageNames.createRecipeTileV5)
         case .savedMeals:
-            .asset(ImageNames.addSavedMealsV5)
+            .asset(ImageNames.savedMealsTileV5)
         case .logWeight:
-            .asset(ImageNames.addLogWeightV5)
+            .asset(ImageNames.weightTileV5)
         case .logActivity:
-            .asset(ImageNames.addLogActivityV5)
+            .asset(ImageNames.activityTileV5)
         case .logWater:
-            .asset(ImageNames.addLogWaterV5)
+            .asset(ImageNames.waterTileV5)
         case .logCycle:
-            .asset(ImageNames.menstrualMainV5)
+            .asset(ImageNames.menstrualTileV5)
         case .lighthouse:
-            .template(ImageNames.lighthouseV5)
+            .asset(ImageNames.lighthouseTileV5)
         case .uploadDocument:
-            .asset(ImageNames.vaultTabIconUnselectedV5)
+            .asset(ImageNames.uploadDocumentTileV5)
         case .startExercise:
-            .symbol(HealthWidgetKindV5.exercise.systemImage, tint: HealthWidgetKindV5.exercise.tint)
+            .asset(ImageNames.exerciseTileV5)
         }
     }
 }

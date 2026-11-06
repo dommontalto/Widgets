@@ -82,7 +82,7 @@ struct BrightRowGroupV5<Content: View, HeaderAccessory: View>: View {
     }
 
     private enum Constants {
-        static var rowIconSize: CGFloat { 24 }
+        static var rowIconSize: CGFloat { 28 }
     }
 }
 

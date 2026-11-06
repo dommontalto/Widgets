@@ -182,10 +182,10 @@ struct EditWidgetSheetV5: View {
                         dismiss()
                     } label: {
                         Text("Save")
-                            .foregroundStyle(Color.defaultBlack)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.defaultGreen)
+                    .foregroundStyle(Color.defaultBlack)
                     .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
                 }
             }
@@ -218,10 +218,10 @@ struct ChooseWidgetSizePageV5: View {
                     onAdd(widget)
                 } label: {
                     Text("Add")
-                        .foregroundStyle(Color.defaultBlack)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultGreen)
+                .foregroundStyle(Color.defaultBlack)
                 .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
             }
         } content: {

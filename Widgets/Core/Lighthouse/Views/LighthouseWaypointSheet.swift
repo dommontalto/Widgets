@@ -62,10 +62,10 @@ struct LighthouseWaypointSheet: View {
                             dismiss()
                         } label: {
                             Text(Constants.skipTitle)
-                                .foregroundStyle(Color.defaultBlack)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultGreen)
+                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             },

@@ -170,7 +170,7 @@ struct BrightRowV5<Custom: View>: View {
 
     private enum Constants {
         static var height: CGFloat { .rowHeight }
-        static var iconSize: CGFloat { 24 }
+        static var iconSize: CGFloat { 28 }
     }
 }
 

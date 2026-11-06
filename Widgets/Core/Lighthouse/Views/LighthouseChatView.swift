@@ -160,6 +160,11 @@ struct LighthouseChatView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(height: BrightButtonSizes.small.rawValue)
+                .overlay {
+                    Color.clear
+                        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: Constants.tierCornerRadius, isClear: true, interactive: false))
+                        .allowsHitTesting(false)
+                }
         }
     }
 
@@ -322,6 +327,7 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
+        static let tierCornerRadius: CGFloat = 5
         static let quickActions = [
             BrightChatExample("bell.badge.waveform", "Create alerts"),
             BrightChatExample("person.fill.checkmark.and.xmark", "Check In"),

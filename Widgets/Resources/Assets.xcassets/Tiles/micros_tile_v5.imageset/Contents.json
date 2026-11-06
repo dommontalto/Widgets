@@ -1,0 +1,8 @@
+{
+  "images" : [
+    { "filename" : "micros_tile.png", "idiom" : "universal", "scale" : "1x" },
+    { "filename" : "micros_tile@2x.png", "idiom" : "universal", "scale" : "2x" },
+    { "filename" : "micros_tile@3x.png", "idiom" : "universal", "scale" : "3x" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}

@@ -9,11 +9,15 @@ import SwiftUI
 
 struct BrightEdgeV5: View {
     var progress: CGFloat
+    var axis: Axis = .horizontal
 
     var body: some View {
         Rectangle()
             .fill(Color.textColor.opacity(.ultraLowOpacity))
-            .frame(height: Constants.lineHeight)
+            .frame(
+                width: axis == .vertical ? Constants.lineHeight : nil,
+                height: axis == .horizontal ? Constants.lineHeight : nil
+            )
             .opacity(min(max(progress, 0), 1))
             .allowsHitTesting(false)
     }

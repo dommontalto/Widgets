@@ -80,22 +80,21 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
         }
     }
 
-    // The black-and-white icon its row shows in the add sheet.
     var rowIcon: BrightRowV5Icon {
         switch self {
-        case .activity: .template(ImageNames.activityAlertsIconV5)
-        case .exercise: .symbol(systemImage)
-        case .heart: .template(ImageNames.heartDashIconV4)
-        case .intake: .template(ImageNames.logFoodIconV1)
-        case .journal: .template(ImageNames.pencilBlueV5)
-        case .macros: .template(ImageNames.macronutrientGraphV5)
-        case .menstrual: .template(ImageNames.cycleTrackingMainV5)
-        case .micros: .symbol(systemImage)
-        case .nutrition: .symbol(systemImage)
-        case .sleep: .template(ImageNames.sleepInfoV4)
-        case .water: .template(ImageNames.waterIconV5)
-        case .weight: .template(ImageNames.weightIconV4)
-        case .wellbeing: .template(ImageNames.recoveryV5)
+        case .activity: .asset(ImageNames.activityTileV5)
+        case .exercise: .asset(ImageNames.exerciseTileV5)
+        case .heart: .asset(ImageNames.heartTileV5)
+        case .intake: .asset(ImageNames.intakeTileV5)
+        case .journal: .asset(ImageNames.journalTileV5)
+        case .macros: .asset(ImageNames.macrosTileV5)
+        case .menstrual: .asset(ImageNames.menstrualTileV5)
+        case .micros: .asset(ImageNames.microsTileV5)
+        case .nutrition: .asset(ImageNames.nutritionTileV5)
+        case .sleep: .asset(ImageNames.sleepTileV5)
+        case .water: .asset(ImageNames.waterTileV5)
+        case .weight: .asset(ImageNames.weightTileV5)
+        case .wellbeing: .asset(ImageNames.wellbeingTileV5)
         }
     }
 

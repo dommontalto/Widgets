@@ -62,10 +62,10 @@ struct CustomiseMenuView: View {
                             isSaving = false
                         } label: {
                             Text("Save")
-                                .foregroundStyle(Color.defaultBlack)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.defaultGreen)
+                        .foregroundStyle(Color.defaultBlack)
                         .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
                     }
                 }
