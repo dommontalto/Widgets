@@ -24,8 +24,6 @@ private struct BrightMiniSheet<SheetContent: View>: ViewModifier {
         content
             .sheet(isPresented: $isPresented) {
                 sheetContent()
-                    // A sheet covers the resting Lighthouse bar, so nothing inside it needs to clear it.
-                    .environment(\.brightLighthouseRestHeight, .zero)
                     .background(
                         GeometryReader { proxy in
                             Color.clear.preference(key: BrightMiniSheetHeightKey.self, value: proxy.size.height)

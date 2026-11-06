@@ -19,7 +19,6 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
     let content: Content
 
     @Environment(\.brightPageBackground) private var pageBackground
-    @Environment(\.brightLighthouseRestHeight) private var lighthouseRestHeight
     @State private var inlineTitleOpacity: CGFloat = 0
     @State private var scrollY: CGFloat = 0
 
@@ -78,7 +77,7 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .safeAreaPadding(bottomSafeArea ? .bottom : [])
             // Room under every page's last element, so screens don't each pad their own bottom.
-            .safeAreaPadding(.bottom, BrightPageBottomRoom.height(above: lighthouseRestHeight))
+            .safeAreaPadding(.bottom, BrightPageBottomRoom.height)
             .scrollDismissesKeyboard(.interactively)
             .background((backgroundColor ?? pageBackground).edgesIgnoringSafeArea(.all))
             .onTapGesture {
@@ -179,17 +178,4 @@ struct EmptyToolbarContent: ToolbarContent {
 // scroll view picks it up, not sideways rows nested inside it.
 enum BrightPageBottomRoom {
     static let height: CGFloat = .spacing3x
-
-    // Over the resting Lighthouse bar, clearing the bar is room enough; the page's
-    // own padding gives the gap above it.
-    static func height(above lighthouseRestHeight: CGFloat) -> CGFloat {
-        lighthouseRestHeight > .zero ? lighthouseRestHeight : height
-    }
-}
-
-extension EnvironmentValues {
-    // The resting Lighthouse bar's height while it sits over the foot of the screen,
-    // so pages scroll clear of it. Padding the tab view doesn't reach pages the
-    // system tab bar hosts; the environment does, pushed pages included.
-    @Entry var brightLighthouseRestHeight: CGFloat = .zero
 }

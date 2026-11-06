@@ -17,95 +17,93 @@ enum MainDockTab: Int {
 
 struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
-    @State private var coveredTabs: Set<MainDockTab> = []
     @State private var showingLighthouse = false
-    @State private var trayState = LighthouseTrayState()
+    @State private var lighthouseDetent = PresentationDetent.large
+    @State private var lighthousePrompt: String?
     @State private var isMenuExpanded = false
-    @State private var showingLighthouseCover = false
-    @State private var lighthouseCoverDetent = PresentationDetent.large
-    @State private var quickActions = LighthouseQuickAction.defaults
-
-    private var isOnSubPage: Bool {
-        return coveredTabs.contains(selectedTab)
-    }
-
-    private var dockVisibility: Visibility {
-        isOnSubPage ? .hidden : .visible
-    }
-
-    private var isDockHidden: Bool {
-        isOnSubPage || (selectedTab == .home && isMenuExpanded)
-    }
-
-    // Sub pages hide the dock, and the tray rests as the mini bar in its place.
-    private var restsLighthouse: Bool {
-        isOnSubPage && !(selectedTab == .home && isMenuExpanded)
-    }
+    @State private var plusMenu = TabPlusOverlayController()
 
     var body: some View {
-        tabView
-            .environment(\.brightLighthouseRestHeight, restsLighthouse ? LighthouseTray.restHeight : .zero)
-            .background(LighthouseTrayWindowInstaller(root: LighthouseTrayRoot(state: trayState, isOpen: $showingLighthouse)))
-            .onChange(of: restsLighthouse, initial: true) { _, rests in
-                trayState.rests = rests
-            }
-            .onChange(of: showingLighthouse) { _, showing in
-                if showing {
-                    if trayState.detent == LighthouseTray.restDetent { trayState.detent = LighthouseTray.halfDetent }
-                } else if restsLighthouse {
-                    withAnimation(.brightEaseInOut) { trayState.detent = LighthouseTray.restDetent }
+        ZStack(alignment: .bottom) {
+            tabView
+            plusOverlayButton
+            TabPlusOverlayHost(controller: plusMenu)
+        }
+        // The plus is a tab of its own: undo the switch to it with the tab bar's
+        // animations off, so it never shows, then open the plus menu instead.
+        .onChange(of: selectedTab) { oldTab, newTab in
+            if newTab == .add {
+                UITabBar.setAnimationsEnabled(false)
+                selectedTab = oldTab
+                DispatchQueue.main.async {
+                    UITabBar.setAnimationsEnabled(true)
+                    openPlusMenu()
                 }
             }
-            .onChange(of: trayState.detent) { _, detent in
-                let isOpen = detent != LighthouseTray.restDetent
-                if showingLighthouse != isOpen { showingLighthouse = isOpen }
-            }
-            // The plus is a tab of its own: undo the switch to it with the tab bar's
-            // animations off, so it never shows, then open Lighthouse instead.
-            .onChange(of: selectedTab) { oldTab, newTab in
-                if newTab == .add {
-                    UITabBar.setAnimationsEnabled(false)
-                    selectedTab = oldTab
-                    DispatchQueue.main.async {
-                        UITabBar.setAnimationsEnabled(true)
-                        openLighthouseCover()
-                    }
-                }
-            }
-            .onChange(of: isMenuExpanded) { _, expanded in
-                if expanded { showingLighthouse = false }
-            }
-            .fullScreenCover(isPresented: $showingLighthouseCover) {
-                lighthouseCover
-            }
+        }
+        .onChange(of: isMenuExpanded) { _, expanded in
+            if expanded { showingLighthouse = false }
+        }
+        .fullScreenCover(isPresented: $showingLighthouse) {
+            lighthouseScreen
+        }
     }
 
-    // The tray pinned at full height, with quick actions under its top row. Its
-    // chat's own close drops it to rest, which here means closing the cover.
-    private var lighthouseCover: some View {
-        LighthouseTray(
-            detent: $lighthouseCoverDetent,
-            quickActions: LighthouseQuickActions(actions: $quickActions) { _ in
-                showingLighthouseCover = false
-            }
-        ) {
-            showingLighthouseCover = false
+    // Lighthouse at full height over the whole app; dropping it below full closes it.
+    private var lighthouseScreen: some View {
+        LighthouseTray(detent: $lighthouseDetent, initialPrompt: lighthousePrompt) {
+            showingLighthouse = false
         }
         .presentationBackground(.thinMaterial)
-        .onChange(of: lighthouseCoverDetent) { _, detent in
-            if detent != .large { showingLighthouseCover = false }
+        .onAppear { lighthouseDetent = .large }
+        .onChange(of: lighthouseDetent) { _, detent in
+            guard detent != .large else { return }
+            lighthouseDetent = .large
+            showingLighthouse = false
         }
+        .onDisappear { lighthousePrompt = nil }
     }
 
-    private func openLighthouseCover() {
-        BrightHaptic.light.play()
-        lighthouseCoverDetent = .large
-        showingLighthouseCover = true
+    // Laid over the system plus tab: a tap opens the plus menu, a hold opens Lighthouse.
+    private var plusOverlayButton: some View {
+        Button {
+            openPlusMenu()
+        } label: {
+            Color.clear
+                .frame(width: Constants.plusTargetWidth, height: Constants.plusTargetHeight)
+                .contentShape(Rectangle())
+        }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: Constants.holdDuration)
+                .onEnded { _ in toggleLighthouse() }
+        )
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.trailing, .spacing4x)
+        .offset(y: isPlusHidden ? Constants.hiddenOffset : Constants.restingOffset)
+        .allowsHitTesting(!isPlusHidden)
+    }
+
+    private var isPlusHidden: Bool {
+        selectedTab == .home && isMenuExpanded
+    }
+
+    private func openPlusMenu() {
+        guard !showingLighthouse else { return }
+        plusMenu.open()
+    }
+
+    private func toggleLighthouse() {
+        BrightHaptic.medium.play()
+        plusMenu.dismissImmediately()
+        if showingLighthouse {
+            showingLighthouse = false
+        } else {
+            openLighthouse(nil)
+        }
     }
 
     private func openLighthouse(_ action: LighthouseAction?) {
-        trayState.prompt = action?.prompt
-        trayState.detent = LighthouseTray.halfDetent
+        lighthousePrompt = action?.prompt
         showingLighthouse = true
     }
 
@@ -114,17 +112,15 @@ struct MainDockView: View {
             Tab(value: MainDockTab.home) {
                 HealthView(
                     onOpenLighthouse: openLighthouse,
-                    onRootCovered: { setCovered(.home, $0) },
                     isMenuExpanded: $isMenuExpanded
                 )
-                .toolbarVisibility(isMenuExpanded ? .hidden : dockVisibility, for: .tabBar)
+                .toolbarVisibility(isMenuExpanded ? .hidden : .visible, for: .tabBar)
             } label: {
                 tabLabel("Home", selected: ImageNames.homeTabIconSelectedV5, unselected: ImageNames.homeTabIconUnselectedV5, tab: .home)
             }
 
             Tab(value: MainDockTab.vault) {
                 vaultPage
-                    .toolbarVisibility(dockVisibility, for: .tabBar)
             } label: {
                 tabLabel("Vault", selected: ImageNames.vaultTabIconSelectedV5, unselected: ImageNames.vaultTabIconUnselectedV5, tab: .vault)
             }
@@ -161,17 +157,6 @@ struct MainDockView: View {
     private var vaultPage: some View {
         NavigationStack {
             VaultView(title: "Vault")
-                .onAppear { setCovered(.vault, false) }
-                .onDisappear { setCovered(.vault, true) }
-        }
-    }
-
-    // A tab switch also hides its root, which isn't a sub page.
-    private func setCovered(_ tab: MainDockTab, _ covered: Bool) {
-        if !covered {
-            coveredTabs.remove(tab)
-        } else if selectedTab == tab {
-            coveredTabs.insert(tab)
         }
     }
 
@@ -193,6 +178,14 @@ struct MainDockView: View {
         } icon: {
             Image(selectedTab == tab ? selected : unselected)
         }
+    }
+
+    private enum Constants {
+        static let holdDuration: TimeInterval = 0.5
+        static let plusTargetWidth: CGFloat = 60
+        static let plusTargetHeight: CGFloat = 50
+        static let restingOffset: CGFloat = 4
+        static let hiddenOffset: CGFloat = 120
     }
 }
 

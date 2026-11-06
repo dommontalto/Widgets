@@ -179,4 +179,22 @@ nonisolated class ImageNames {
     static let atlasTabIconUnselectedV5        = "MainTab/atlas_tab_icon_unselected_v5"
     static let logTabIconSelectedV5            = "MainTab/log_tab_icon_selected_v5"
     static let logTabIconUnselectedV5          = "MainTab/log_tab_icon_unselected_v5"
+
+    // MARK: - Tab Plus Menu
+
+    static let addManualLogV5                  = "TabPlus/add_manual_log_v5"
+    static let addSearchMealV5                 = "TabPlus/add_search_meal_v5"
+    static let addImageSearchV5                = "TabPlus/add_camera_v5"
+    static let addDescribeV5                   = "TabPlus/add_describe_v5"
+    static let addScanBarcodeV5                = "TabPlus/add_scan_barcode_v5"
+    static let addImportRecipeV5               = "TabPlus/add_import_recipe_v5"
+    static let addCreateRecipeV5               = "TabPlus/add_create_recipe_v5"
+    static let addSavedMealsV5                 = "TabPlus/add_saved_meals_v5"
+    static let addLogWeightV5                  = "TabPlus/add_log_weight_v5"
+    static let addLogActivityV5                = "TabPlus/add_log_activity_v5"
+    static let addLogWaterV5                   = "TabPlus/add_log_water_v5"
+    static let menstrualMainV5                 = "TabPlus/menstrual_main_v5"
+    static let lighthouseV5                    = "TabPlus/lighthouse_v5"
+    static let movementsTop                    = "TabPlus/movements_top"
+    static let templateIcon                    = "TabPlus/TemplateIcon"
 }

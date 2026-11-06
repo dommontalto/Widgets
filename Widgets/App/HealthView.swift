@@ -10,7 +10,6 @@ import SwiftUI
 struct HealthView: View {
     var rootResetID = 0
     var onOpenLighthouse: (LighthouseAction?) -> Void = { _ in }
-    var onRootCovered: (Bool) -> Void = { _ in }
     var isMenuExpanded: Binding<Bool> = .constant(false)
 
     @State private var selectedPage = HomePage.health.rawValue
@@ -50,8 +49,6 @@ struct HealthView: View {
                 content
             }
             .background(Color.defaultBackground)
-            .onAppear { onRootCovered(false) }
-            .onDisappear { onRootCovered(true) }
             .navigationDestination(isPresented: $showingGenome) {
                 GenomeView()
             }

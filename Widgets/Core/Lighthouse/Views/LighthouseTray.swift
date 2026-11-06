@@ -7,23 +7,15 @@ import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
-// Lighthouse as a tray that lives at the bottom of a page. At rest it's a floating bar: the model on the left, the
-// ask field in the middle and dictation on the right. Pulled up, the chat fills in above the bar, and at full height
-// the menu sits top left.
+// Lighthouse, shown full screen from the dock: the chat above an ask bar with the model on the left, the ask field in
+// the middle and dictation on the right, and the menu top left.
 struct LighthouseTray: View {
     @Binding var detent: PresentationDetent
-    // Kept at the foot of a sub page as the resting bar, which a swipe down returns to rather than closing.
-    var hasRest = false
     var focusesOnOpen = false
     // Sent as the tray opens, such as a widget's check-in; a tray left resting is handed later ones too.
     var initialPrompt: String?
-    // Shortcuts under the top row, until the first message goes.
-    var quickActions: LighthouseQuickActions?
     let onClose: () -> Void
 
-    // Just the ask bar: 12pt round its 44pt buttons.
-    static let restHeight = CGFloat.spacing2x + BrightButtonSizes.large.rawValue + .spacing2x
-    static let restDetent = PresentationDetent.height(restHeight)
     // Half height less the keyboard: iOS sets the tray on top of the keyboard, so its top stays where half was.
     static let typingDetent = PresentationDetent.custom(TrayTypingDetent.self)
     // The tray's "half": a little under the system's medium, so more of the page shows above it.
@@ -51,17 +43,11 @@ struct LighthouseTray: View {
     @FocusState private var isChatTyping: Bool
     // From the keyboard's own notices, so a drag up can be told apart from the keyboard closing after a send.
     @State private var isKeyboardShowing = false
-    // The placeholder's own width: a centred field's ideal width alone cuts it short.
-    @State private var askPromptWidth: CGFloat = 0
     @State private var sendCount = 0
     // Once a message goes, the suggestions step aside for the conversation; a new chat brings them back.
     @State private var hasConversation = false
     @State private var topBarHeight: CGFloat = .zero
     @State private var isWhispering = false
-
-    private var isResting: Bool {
-        detent == Self.restDetent
-    }
 
     private var isFull: Bool {
         detent == .large
@@ -69,10 +55,9 @@ struct LighthouseTray: View {
 
     // While typing below full height, full is off the list: iOS would otherwise lift the tray there for the keyboard.
     private var allowedDetents: Set<PresentationDetent> {
-        let detents: Set<PresentationDetent> = isFieldFocused && detent != .large
-            ? [Self.restDetent, Self.halfDetent, Self.typingDetent]
-            : [Self.restDetent, Self.halfDetent, .large]
-        return hasRest ? detents : detents.subtracting([Self.restDetent])
+        isFieldFocused && detent != .large
+            ? [Self.halfDetent, Self.typingDetent]
+            : [Self.halfDetent, .large]
     }
 
     private var hasDraft: Bool {
@@ -103,13 +88,9 @@ struct LighthouseTray: View {
         .scrollPosition(id: $page)
         .defaultScrollAnchor(.trailing)
         .scrollIndicators(.hidden)
-        .scrollDisabled(isResting)
         // Unfocused as the swipe starts, so the keyboard slides away as it does anywhere else.
         .onScrollPhaseChange { _, phase in
             if phase == .interacting { isFieldFocused = false }
-        }
-        .onChange(of: isResting) { _, resting in
-            if resting { page = .chat }
         }
         .onChange(of: page) { _, page in
             guard page == .menu else { return }
@@ -123,8 +104,6 @@ struct LighthouseTray: View {
         }
         .animation(.brightSnappy, value: attachments.count)
         .presentationDetents(allowedDetents, selection: $detent)
-        .interactiveDismissDisabled(hasRest)
-        .animation(.brightEaseInOut, value: isResting)
 
         // Typing from rest or half goes straight to the keyboard-sized height, so the tray never sits at plain
         // half while the keyboard comes up under it.
@@ -133,13 +112,6 @@ struct LighthouseTray: View {
             withAnimation(.brightEaseInOut) { detent = Self.typingDetent }
         }
         .onChange(of: detent) { old, new in
-            if new == Self.restDetent { isFieldFocused = false }
-            if old == Self.restDetent, hasConversation {
-                hasConversation = false
-                isThinking = false
-                attachments = []
-                chatResetCount += 1
-            }
             // Dragged up from the keyboard height while still typing: the keyboard goes and the tray carries on to
             // full, since full can't be on offer while it's up without iOS lifting the tray there itself.
             if old == Self.typingDetent, new == Self.halfDetent, isKeyboardShowing {
@@ -211,32 +183,30 @@ struct LighthouseTray: View {
 
     private var trayColumn: some View {
         VStack(spacing: .spacing0x) {
-            if !isResting {
-                // The menu floats over the chat, so messages scroll on up under it rather than being cut at its edge.
-                chat
-                    .environment(\.brightChatShowsInput, false)
-                    .environment(\.brightChatShowsBottomEdge, true)
-                    .safeAreaPadding(.top, topBarHeight)
-                    .brightSoftScrollEdgesV5()
-                    .overlay {
-                        if isWhispering, !hasConversation {
-                            BrightPlaceholderViewV5(
-                                image: ImageNames.lighthouseWhisperV5,
-                                title: Constants.whisperTitle,
-                                subtitle: Constants.whisperSubtitle,
-                                fillsViewport: false
-                            )
-                            .allowsHitTesting(false)
-                            .transition(.opacity)
-                        }
+            // The menu floats over the chat, so messages scroll on up under it rather than being cut at its edge.
+            chat
+                .environment(\.brightChatShowsInput, false)
+                .environment(\.brightChatShowsBottomEdge, true)
+                .safeAreaPadding(.top, topBarHeight)
+                .brightSoftScrollEdgesV5()
+                .overlay {
+                    if isWhispering, !hasConversation {
+                        BrightPlaceholderViewV5(
+                            image: ImageNames.lighthouseWhisperV5,
+                            title: Constants.whisperTitle,
+                            subtitle: Constants.whisperSubtitle,
+                            fillsViewport: false
+                        )
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
                     }
-                    .animation(.brightEaseInOut, value: isWhispering)
-                    .overlay(alignment: .top) { topBar }
-                    .transition(.opacity)
-            }
+                }
+                .animation(.brightEaseInOut, value: isWhispering)
+                .overlay(alignment: .top) { topBar }
+                .transition(.opacity)
 
             // Before anything is asked, a few prompts to start from, just above the ask bar.
-            if !isResting, !hasConversation {
+            if !hasConversation {
                 BrightSuggestionsV5(topics: suggestionTopics, initialTopic: screenTopic) { prompt in
                     draft = prompt
                     send()
@@ -245,7 +215,7 @@ struct LighthouseTray: View {
                 .transition(.opacity)
             }
 
-            if !attachments.isEmpty, !isResting {
+            if !attachments.isEmpty {
                 attachmentStrip
                     .transition(.opacity)
             }
@@ -281,29 +251,16 @@ struct LighthouseTray: View {
             askField
 
             HStack(spacing: .spacing1x) {
-                if !isResting {
-                    attachMenu
-                        .transition(.scale.combined(with: .opacity))
-                }
+                attachMenu
                 fieldAction
             }
         }
         .padding(.horizontal, .spacing2x)
         .padding(.bottom, .spacing2x)
         .padding(.top, .spacing2x)
-        // At rest the whole bar is the field to tap; the buttons in it still take their own taps.
-        .contentShape(.rect)
-        .onTapGesture {
-            if isResting { isFieldFocused = true }
-        }
         .animation(.brightSnappy, value: hasDraft)
         .animation(.brightSnappy, value: dictation.isListening)
         .animation(.brightSnappy, value: isThinking)
-    }
-
-    // Centred only on the resting bar; pulled up, the prompt sits left where typing starts.
-    private var isAskCentred: Bool {
-        isResting && !isFieldFocused && draft.isEmpty
     }
 
     private var askField: some View {
@@ -314,17 +271,7 @@ struct LighthouseTray: View {
             .focused($isFieldFocused)
             .submitLabel(.send)
             .onSubmit(send)
-            .frame(minWidth: isAskCentred ? askPromptWidth + .spacing2x : nil)
-            .fixedSize(horizontal: isAskCentred, vertical: false)
-            .frame(maxWidth: .infinity, alignment: isAskCentred ? .center : .leading)
-            .animation(.brightSnappy, value: isAskCentred)
-            .background {
-                Text(Constants.askTitle)
-                    .font(.standard(size: .subheading2, weight: .regular))
-                    .fixedSize()
-                    .hidden()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { askPromptWidth = $0 }
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: BrightButtonSizes.large.rawValue)
             .contentShape(.rect)
             .onTapGesture { isFieldFocused = true }
@@ -388,7 +335,6 @@ struct LighthouseTray: View {
         }
     }
 
-    // Pulled up only, so the resting bar stays two buttons.
     private var attachMenu: some View {
         Menu {
             ForEach(BrightChatAttachmentSource.allCases.filter(\.isAvailable).reversed()) { source in
@@ -413,10 +359,6 @@ struct LighthouseTray: View {
         VStack(spacing: .spacing2x) {
             if isFull {
                 menuRow
-                    .transition(.opacity)
-            }
-            if let quickActions, !hasConversation {
-                quickActions
                     .transition(.opacity)
             }
         }
@@ -540,9 +482,6 @@ struct LighthouseTray: View {
         draft = ""
         // The keyboard stays up, as in Messages: closing it would move the tray off the keyboard height mid-send,
         // and iOS can jump it to full on the way.
-        if isResting {
-            withAnimation(.brightEaseInOut) { detent = Self.halfDetent }
-        }
     }
 
     // MARK: - Attachments
@@ -655,7 +594,7 @@ struct LighthouseTray: View {
     }
 }
 
-// Half the screen less the keyboard, never shorter than the resting bar. The last keyboard's height is kept, and
+// Half the screen less the keyboard, never shorter than the ask bar. The last keyboard's height is kept, and
 // before the first one it's a typical keyboard's share of the screen.
 private struct TrayTypingDetent: CustomPresentationDetent {
     nonisolated(unsafe) static var keyboardHeight: CGFloat?
