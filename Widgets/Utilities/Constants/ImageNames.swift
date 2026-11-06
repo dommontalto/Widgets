@@ -15,16 +15,6 @@ nonisolated class ImageNames {
     static let exerciseTileV5 = "exercise_tile_v5"
     static let heartTileV5 = "heart_tile_v5"
     static let intakeTileV5 = "intake_tile_v5"
-    static let manualLogTileV5 = "manual_log_tile_v5"
-    static let searchMealTileV5 = "search_meal_tile_v5"
-    static let cameraTileV5 = "camera_tile_v5"
-    static let describeTileV5 = "describe_tile_v5"
-    static let scanBarcodeTileV5 = "scan_barcode_tile_v5"
-    static let importRecipeTileV5 = "import_recipe_tile_v5"
-    static let createRecipeTileV5 = "create_recipe_tile_v5"
-    static let savedMealsTileV5 = "saved_meals_tile_v5"
-    static let uploadDocumentTileV5 = "upload_document_tile_v5"
-    static let lighthouseTileV5 = "lighthouse_tile_v5"
     static let journalTileV5 = "journal_tile_v5"
     static let macrosTileV5 = "macros_tile_v5"
     static let menstrualTileV5 = "menstrual_tile_v5"
@@ -34,11 +24,6 @@ nonisolated class ImageNames {
     static let waterTileV5 = "water_tile_v5"
     static let weightTileV5 = "weight_tile_v5"
     static let wellbeingTileV5 = "wellbeing_tile_v5"
-    static let customiseTileV5 = "customise_tile_v5"
-    static let sleepInfoV4 = "sleep_info_v4"
-    static let waterIconV5 = "water_icon_v5"
-    static let weightIconV4 = "weight_icon_v4"
-    static let cycleTrackingMainV5 = "cycle_tracking_main_v5"
     static let pencilBlueV5 = "pencil_blue_v5"
 
     // MARK: - Genome
@@ -98,28 +83,7 @@ nonisolated class ImageNames {
     static let stressV5   = "stress_v5"
     static let strainV5   = "strain_v5"
 
-    // MARK: - Heart
-
-    static let heartPulseRedV5 = "Heart/heart_pulse_red_v5"
-    static let heartPulseBlueV5 = "Heart/heart_pulse_blue_v5"
-    static let heartRedDownV5  = "Heart/heart_red_down_v5"
-    static let cardioFitnessV5 = "Heart/cardio_fitness_v5"
-    static let durationV5      = "Heart/duration_v5"
-    static let distanceV5      = "Heart/distance_v5"
-    static let altitudeGainV5  = "Heart/altitude_gain_v5"
-    static let stopwatchV5     = "Heart/stopwatch_v5"
-    static let caloriesBurntV5 = "Heart/calories_burnt_v5"
-    static let energyBurntV5   = "Heart/energy_burnt_v5"
-
-    // MARK: - Health
-
-    static let hrvV4                 = "Health/hrv_v4"
-    static let circleChevronTopV5    = "Health/circle_chevron_top_v5"
-    static let circleChevronBottomV5 = "Health/circle_chevron_bottom_v5"
-    static let activityWidgetIconV5  = "Health/activity_widget_icon_v5"
-
     // MARK: - Vault
-
 
     static let vaultTestLongevityCategoryV5         = "Vault/Category/vault_test_longevity_category_v5"
     static let vaultTestHeartHealthCategoryV5       = "Vault/Category/vault_test_heart_health_category_v5"
@@ -182,8 +146,6 @@ nonisolated class ImageNames {
     static let warningDiamondYellowV4          = "warning_diamond_yellow_v4"
     static let warningTriangleOrangeV5         = "warning_triangle_orange_v5"
     static let warningDiamondV4                = "warning_diamond_v4"
-    static let warningIconV4                   = "warning_icon_v4"
-    static let notificationsV5                 = "Account/notifications_v5"
     static let sideMenuWhatsNewV5              = "Account/side_menu_whats_new_v5"
     static let sideMenuLabsV5                  = "Account/side_menu_labs_v5"
     static let sideMenuDNAV5                   = "Account/side_menu_dna_v5"
@@ -199,11 +161,4 @@ nonisolated class ImageNames {
     static let atlasTabIconUnselectedV5        = "MainTab/atlas_tab_icon_unselected_v5"
     static let logTabIconSelectedV5            = "MainTab/log_tab_icon_selected_v5"
     static let logTabIconUnselectedV5          = "MainTab/log_tab_icon_unselected_v5"
-
-    // MARK: - Tab Plus Menu
-
-    static let menstrualMainV5                 = "TabPlus/menstrual_main_v5"
-    static let lighthouseV5                    = "TabPlus/lighthouse_v5"
-    static let movementsTop                    = "TabPlus/movements_top"
-    static let templateIcon                    = "TabPlus/TemplateIcon"
 }

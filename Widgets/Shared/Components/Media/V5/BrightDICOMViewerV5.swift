@@ -167,12 +167,13 @@ struct BrightDICOMViewerV5<Footer: View>: View {
         .padding(.spacing4x)
     }
 
+    // Works for bundled files and downloads alike; decoding runs off the main actor.
     private func load() async {
-        let url = url
-        let decoded = await Task.detached(priority: .userInitiated) { () -> BrightDICOMFile? in
-            guard let data = try? Data(contentsOf: url) else { return nil }
-            return BrightDICOMFile(data: data)
-        }.value
+        guard let (data, _) = try? await URLSession.shared.data(from: url) else {
+            didFail = true
+            return
+        }
+        let decoded = await Task.detached(priority: .userInitiated) { BrightDICOMFile(data: data) }.value
         file = decoded
         didFail = decoded == nil
     }
