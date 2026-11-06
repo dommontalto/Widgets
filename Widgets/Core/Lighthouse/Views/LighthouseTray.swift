@@ -74,7 +74,6 @@ struct LighthouseTray: View {
         ScrollView(.horizontal) {
             HStack(spacing: .spacing0x) {
                 lighthouseMenu
-                    .padding(.top, .spacing2x)
                     .containerRelativeFrame(.horizontal)
                     .id(TrayPage.menu)
 
@@ -205,15 +204,12 @@ struct LighthouseTray: View {
                 .overlay(alignment: .top) { topBar }
                 .transition(.opacity)
 
-            // Before anything is asked, a few prompts to start from, just above the ask bar.
-            if !hasConversation {
-                BrightSuggestionsV5(topics: suggestionTopics, initialTopic: screenTopic) { prompt in
-                    draft = prompt
-                    send()
-                }
-                .padding(.bottom, .spacing1x)
-                .transition(.opacity)
+            // The topic pills stay above the ask bar all through the chat; a picked prompt folds its card back into them.
+            BrightSuggestionsV5(topics: suggestionTopics, initialTopic: screenTopic) { prompt in
+                draft = prompt
+                send()
             }
+            .padding(.bottom, .spacing1x)
 
             if !attachments.isEmpty {
                 attachmentStrip
@@ -389,7 +385,6 @@ struct LighthouseTray: View {
                 .accessibilityLabel(Constants.closeLabel)
         }
         .padding(.horizontal, .spacing3x)
-        .padding(.top, .spacing3x)
     }
 
     // MARK: - Chat

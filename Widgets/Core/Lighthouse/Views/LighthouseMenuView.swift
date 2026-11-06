@@ -20,6 +20,7 @@ struct LighthouseMenuView: View {
 
     @State private var historySort = HistorySort.newest
     @State private var searchText = ""
+    @State private var searchRowHeight: CGFloat = .zero
     @State private var entries = LighthouseDemo.history
     // The chat being renamed, and the name being typed for it.
     @State private var renaming: LighthouseHistoryEntry?
@@ -28,8 +29,6 @@ struct LighthouseMenuView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: .spacing3x) {
-                BrightSearchBarV5(Constants.searchPlaceholder, text: $searchText)
-
                 // Typing a search clears the way for the results; the card and
                 // shortcuts come back as soon as the field is empty again.
                 if !isSearching {
@@ -50,6 +49,9 @@ struct LighthouseMenuView: View {
             .animation(.brightSnappy, value: isSearching)
         }
         .scrollDismissesKeyboard(.interactively)
+        .safeAreaPadding(.top, searchRowHeight)
+        .brightSoftScrollEdgesV5()
+        .overlay(alignment: .top) { searchRow }
         // A tap anywhere off the search field puts the keyboard away.
         .contentShape(Rectangle())
         .onTapGesture {
@@ -270,6 +272,13 @@ struct LighthouseMenuView: View {
         entries[index].title = trimmed
     }
 
+    private var searchRow: some View {
+        BrightSearchBarV5(Constants.searchPlaceholder, text: $searchText)
+            .padding(.horizontal, .spacing3x)
+            .padding(.bottom, .spacing2x)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { searchRowHeight = $0 }
+    }
+
     private var bottomBar: some View {
         HStack(spacing: .spacing0x) {
             BrightPillButton(
@@ -280,9 +289,8 @@ struct LighthouseMenuView: View {
                 buttonSize: .large,
                 onTapCallback: onNewChat
             )
-
-            Spacer()
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
     }

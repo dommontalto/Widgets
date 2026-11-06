@@ -16,9 +16,9 @@ struct BrightSuggestionTopic: Identifiable, Hashable {
     var id: String { title }
 }
 
-// Topic tags first; picking one swaps them for a few of its prompts, drawn at
-// random, with Randomise to deal a fresh set and back to return to the tags.
-// Each prompt sends itself through `onSelect`.
+// Topic tags first; picking one grows that tag into a glass card of a few of its
+// prompts, drawn at random, with Randomise to deal a fresh set and back to shrink
+// it into the tags again. Each prompt sends itself through `onSelect` and folds the card away.
 struct BrightSuggestionsV5: View {
     var topics: [BrightSuggestionTopic] = BrightSuggestionsDemo.topics
     var count = Constants.defaultCount
@@ -31,16 +31,21 @@ struct BrightSuggestionsV5: View {
     // Flipped once the prompts are on screen, so their rows can stagger in after the slide.
     @State private var isRevealed = false
 
+    @Namespace private var morph
+
     var body: some View {
         Group {
             if let topic {
                 prompts(in: topic)
+                    .padding(.spacing3x)
+                    .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .cardCornerRadius, interactive: false))
+                    .matchedGeometryEffect(id: topic.id, in: morph)
                     .padding(.horizontal, .spacing3x)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(.opacity)
                     .onAppear { isRevealed = true }
             } else {
                 tags
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                    .transition(.opacity)
             }
         }
         .onAppear {
@@ -57,6 +62,7 @@ struct BrightSuggestionsV5: View {
                     BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {
                         open(topic)
                     }
+                    .matchedGeometryEffect(id: topic.id, in: morph)
                 }
             }
         }
@@ -67,10 +73,7 @@ struct BrightSuggestionsV5: View {
     private func prompts(in topic: BrightSuggestionTopic) -> some View {
         VStack(spacing: .spacing1x) {
             HStack(spacing: .spacing0x) {
-                BrightRoundButton(systemImage: "arrow.left", size: .small) {
-                    isRevealed = false
-                    withAnimation(.brightLiquid) { self.topic = nil }
-                }
+                BrightRoundButton(systemImage: "arrow.left", size: .small, onTapCallback: close)
                 .accessibilityLabel(Constants.backLabel)
 
                 Spacer(minLength: .spacing2x)
@@ -97,6 +100,7 @@ struct BrightSuggestionsV5: View {
     private func row(_ prompt: String, isLast: Bool) -> some View {
         Button {
             onSelect(prompt)
+            close()
         } label: {
             HStack(spacing: .spacing2x) {
                 BrightText(prompt, size: .body1, color: .semiLightTextColor)
@@ -117,6 +121,11 @@ struct BrightSuggestionsV5: View {
                 BrightDividerV5()
             }
         }
+    }
+
+    private func close() {
+        isRevealed = false
+        withAnimation(.brightLiquid) { topic = nil }
     }
 
     private func open(_ topic: BrightSuggestionTopic) {
