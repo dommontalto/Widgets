@@ -290,7 +290,7 @@ struct LighthouseMenuView: View {
                 onTapCallback: onNewChat
             )
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, .spacing3x)
         .padding(.bottom, .spacing2x)
     }

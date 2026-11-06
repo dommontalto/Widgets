@@ -201,9 +201,6 @@ struct LighthouseModelSelectorView: View {
             Spacer(minLength: .spacing0x)
                 .allowsHitTesting(false)
 
-            speedMenu
-                .padding(.bottom, .spacing4x)
-
             BrightPillButton(Constants.chooseTitle, buttonSize: .large, onTapCallback: choose)
                 .padding(.bottom, .spacing8x)
         }
@@ -242,34 +239,6 @@ struct LighthouseModelSelectorView: View {
         }
     }
 
-    private var speedMenu: some View {
-        Menu {
-            Picker(Constants.speedTitle, selection: $speed) {
-                ForEach(LighthouseSpeed.allCases) { speed in
-                    Label {
-                        Text(speed.title)
-                        Text(speed.subtitle)
-                    } icon: {
-                        Image(systemName: speed.symbol)
-                    }
-                    .tag(speed)
-                }
-            }
-        } label: {
-            HStack(spacing: .spacing1x) {
-                BrightText(speed.title, size: .subheading2)
-                    .lineLimit(1)
-                    .contentTransition(.numericText())
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.semiLightTextColor)
-            }
-            .animation(.brightBouncy, value: speed)
-            .contentShape(Rectangle())
-        }
-        .brightHapticV5(.light, trigger: speed)
-    }
-
     private func choose() {
         guard let model = selection.model else {
             isEnteringKey = true
@@ -281,7 +250,6 @@ struct LighthouseModelSelectorView: View {
 
     private enum Constants {
         static let chooseTitle = "Choose"
-        static let speedTitle = "Speed"
         static let speedKey = "lighthouseSpeed"
         static let fadeDuration: TimeInterval = 0.18
         static let flyDuration: TimeInterval = 0.25

@@ -29,13 +29,15 @@ struct BrightSideMenuV5<MenuContent: View, Content: View>: View {
 
     @State private var offset: CGFloat = 0
     @State private var haptic = false
+    @State private var settleCount = 0
+    @State private var isSettling = false
 
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width * sideBarRatio
 
             ZStack(alignment: .topLeading) {
-                if isExpanded || offset > 0 {
+                if isExpanded || offset > 0 || isSettling {
                     menuContent
                         .frame(width: width)
                         .frame(maxHeight: .infinity)
@@ -63,7 +65,7 @@ struct BrightSideMenuV5<MenuContent: View, Content: View>: View {
             // same one the swipe does.
             .onChange(of: isExpanded) { _, isExpanded in
                 haptic.toggle()
-                withAnimation(.brightSnappy) { offset = isExpanded ? width : 0 }
+                settle(isExpanded, over: width)
             }
         }
         .brightHapticV5(.soft, trigger: haptic)
@@ -115,14 +117,23 @@ struct BrightSideMenuV5<MenuContent: View, Content: View>: View {
         default:
             // Flicks land where they were thrown rather than where they let go.
             let projected = translation + pan.velocity(in: pan.view).x / Constants.flick
-            setExpanded(projected > width / 2, over: width)
+            let expanded = projected > width / 2
+            if expanded == isExpanded {
+                settle(expanded, over: width)
+            } else {
+                withAnimation(.brightSnappy) { isExpanded = expanded }
+            }
         }
     }
 
-    private func setExpanded(_ expanded: Bool, over width: CGFloat) {
+    private func settle(_ expanded: Bool, over width: CGFloat) {
+        settleCount += 1
+        let settling = settleCount
+        isSettling = true
         withAnimation(.brightSnappy) {
             offset = expanded ? width : 0
-            isExpanded = expanded
+        } completion: {
+            if settleCount == settling { isSettling = false }
         }
     }
 }

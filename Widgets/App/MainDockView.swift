@@ -18,7 +18,6 @@ enum MainDockTab: Int {
 struct MainDockView: View {
     @State private var selectedTab = MainDockTab.home
     @State private var showingLighthouse = false
-    @State private var lighthouseDetent = PresentationDetent.large
     @State private var lighthousePrompt: String?
     @State private var isMenuExpanded = false
 
@@ -38,26 +37,17 @@ struct MainDockView: View {
                 }
             }
         }
-        .onChange(of: isMenuExpanded) { _, expanded in
-            if expanded { showingLighthouse = false }
-        }
         .fullScreenCover(isPresented: $showingLighthouse) {
             lighthouseScreen
         }
     }
 
-    // Lighthouse at full height over the whole app; dropping it below full closes it.
+    // Lighthouse at full height over the whole app.
     private var lighthouseScreen: some View {
-        LighthouseTray(detent: $lighthouseDetent, focusesOnOpen: true, initialPrompt: lighthousePrompt) {
+        LighthouseScreen(initialPrompt: lighthousePrompt) {
             showingLighthouse = false
         }
-        .presentationBackground(.thinMaterial)
-        .onAppear { lighthouseDetent = .large }
-        .onChange(of: lighthouseDetent) { _, detent in
-            guard detent != .large else { return }
-            lighthouseDetent = .large
-            showingLighthouse = false
-        }
+        .presentationBackground(.clear)
         .onDisappear { lighthousePrompt = nil }
     }
 
@@ -67,7 +57,8 @@ struct MainDockView: View {
             .frame(width: Constants.plusTargetWidth, height: Constants.plusTargetHeight)
             .contentShape(Rectangle())
             .onLongPressGesture(minimumDuration: Constants.holdDuration) {
-                toggleLighthouse()
+                BrightHaptic.medium.play()
+                openLighthouse(nil)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.trailing, .spacing4x)
@@ -77,15 +68,6 @@ struct MainDockView: View {
 
     private var isPlusHidden: Bool {
         selectedTab == .home && isMenuExpanded
-    }
-
-    private func toggleLighthouse() {
-        BrightHaptic.medium.play()
-        if showingLighthouse {
-            showingLighthouse = false
-        } else {
-            openLighthouse(nil)
-        }
     }
 
     private func openLighthouse(_ action: LighthouseAction?) {

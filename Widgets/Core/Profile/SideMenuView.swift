@@ -20,7 +20,7 @@ struct SideMenuView: View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             header
                 .padding(.top, .spacing2x)
-                .padding(.bottom, .spacing6x)
+                .padding(.bottom, .spacing4x)
 
             VStack(alignment: .leading, spacing: .spacing3x) {
                 tile(image: ImageNames.sideMenuWhatsNewV5, title: "What’s New in V5") {
@@ -34,7 +34,8 @@ struct SideMenuView: View {
             }
 
             BrightDividerV5()
-                .padding(.vertical, .spacing4x)
+                .padding(.top, .spacing4x)
+                .padding(.bottom, .spacing3x)
                 .staggered(at: 2, in: visibleRows)
 
             VStack(alignment: .leading, spacing: .spacing4x) {

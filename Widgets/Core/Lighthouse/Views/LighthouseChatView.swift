@@ -140,6 +140,7 @@ struct LighthouseChatView: View {
     private var modelPickerButton: some View {
         Button {
             guard !isThinking else { return }
+            isTyping.wrappedValue = false
             showingModelSelector = true
         } label: {
             modelGlyph
@@ -158,13 +159,9 @@ struct LighthouseChatView: View {
         } else {
             Image(selectedModel.tierImageName)
                 .resizable()
-                .scaledToFit()
-                .frame(height: BrightButtonSizes.small.rawValue)
-                .overlay {
-                    Color.clear
-                        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: Constants.tierCornerRadius, isClear: true, interactive: false))
-                        .allowsHitTesting(false)
-                }
+                .scaledToFill()
+                .frame(width: BrightButtonSizes.small.rawValue, height: BrightButtonSizes.small.rawValue)
+                .clipShape(Circle())
         }
     }
 
@@ -327,7 +324,6 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
-        static let tierCornerRadius: CGFloat = 6
         static let quickActions = [
             BrightChatExample("bell.badge.waveform", "Create alerts"),
             BrightChatExample("person.fill.checkmark.and.xmark", "Check In"),

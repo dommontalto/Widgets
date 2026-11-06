@@ -118,6 +118,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
 
     @State private var draft = ""
     @Environment(\.brightChatShowsInput) private var showsInput
+    @Environment(\.brightChatTopics) private var topics
     @State private var flight = BrightSendFlight()
     @Namespace private var sendNamespace
     @State private var promptIndex = 0
@@ -483,7 +484,10 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
 
     private var inputCard: some View {
         VStack(spacing: .spacing0x) {
-            if let suggestions, !suggestions.isEmpty {
+            if let topics {
+                BrightSuggestionsV5(topics: topics.topics, opensOnAppear: topics.opensOnAppear, onSelect: topics.onSelect)
+                    .padding(.bottom, .spacing1x)
+            } else if let suggestions, !suggestions.isEmpty {
                 suggestionChips(suggestions)
                     .padding(.leading, .spacing2x)
             }
@@ -503,7 +507,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 modelPicker
             }
             .padding(.horizontal, .spacing3x)
-            .padding(.bottom, .spacing3x)
+            .padding(.bottom, .spacing5x)
         }
         .coordinateSpace(.named(BrightChatSpace.input))
         .overlay(alignment: .topLeading) { sentSource }

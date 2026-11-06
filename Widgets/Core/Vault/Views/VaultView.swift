@@ -65,7 +65,7 @@ struct VaultView: View {
                 Button {
                     openedPage = .upload
                 } label: {
-                    Label("Upload", systemImage: "arrow.down.document")
+                    Label("Upload", systemImage: "arrow.up.document")
                         .labelStyle(.iconOnly)
                 }
             }

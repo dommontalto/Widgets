@@ -5,64 +5,43 @@
 
 import SwiftUI
 
-// A topic to start from, holding the prompts it deals.
 struct BrightSuggestionTopic: Identifiable, Hashable {
     let title: String
     let systemImage: String
     let prompts: [String]
-    // Shown whole and in the order given, with no Randomise, for prompts already picked and ranked.
-    var isFixed = false
 
     var id: String { title }
 }
 
-// Topic tags first; picking one grows that tag into a glass card of a few of its
-// prompts, drawn at random, with Randomise to deal a fresh set and back to shrink
-// it into the tags again. Each prompt sends itself through `onSelect` and folds the card away.
+// Topic pills a chat shows above its own input instead of its suggestion chips.
+struct BrightChatTopics {
+    let topics: [BrightSuggestionTopic]
+    var opensOnAppear: BrightSuggestionTopic.ID?
+    let onSelect: (String) -> Void
+}
+
+extension EnvironmentValues {
+    @Entry var brightChatTopics: BrightChatTopics?
+}
+
 struct BrightSuggestionsV5: View {
     var topics: [BrightSuggestionTopic] = BrightSuggestionsDemo.topics
-    var count = Constants.defaultCount
-    // Opens straight into this topic's prompts; back still returns to the tags.
-    var initialTopic: BrightSuggestionTopic?
+    var opensOnAppear: BrightSuggestionTopic.ID?
     let onSelect: (String) -> Void
 
-    @State private var topic: BrightSuggestionTopic?
-    @State private var shown: [String] = []
-    // Flipped once the prompts are on screen, so their rows can stagger in after the slide.
-    @State private var isRevealed = false
-
-    @Namespace private var morph
-
     var body: some View {
-        Group {
-            if let topic {
-                prompts(in: topic)
-                    .padding(.spacing3x)
-                    .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: .cardCornerRadius, interactive: false))
-                    .matchedGeometryEffect(id: topic.id, in: morph)
-                    .padding(.horizontal, .spacing3x)
-                    .transition(.opacity)
-                    .onAppear { isRevealed = true }
-            } else {
-                tags
-                    .transition(.opacity)
-            }
-        }
-        .onAppear {
-            guard topic == nil, let initialTopic else { return }
-            deal(from: initialTopic)
-            topic = initialTopic
-        }
-    }
-
-    private var tags: some View {
         ScrollView(.horizontal) {
             HStack(spacing: .spacing1x) {
                 ForEach(topics) { topic in
-                    BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {
-                        open(topic)
-                    }
-                    .matchedGeometryEffect(id: topic.id, in: morph)
+                    BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {}
+                        .allowsHitTesting(false)
+                        .overlay {
+                            BrightSuggestionMenuButton(
+                                prompts: Array(topic.prompts.prefix(Constants.promptCount)),
+                                opensOnAppear: topic.id == opensOnAppear,
+                                onSelect: onSelect
+                            )
+                        }
                 }
             }
         }
@@ -70,87 +49,53 @@ struct BrightSuggestionsV5: View {
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
     }
 
-    private func prompts(in topic: BrightSuggestionTopic) -> some View {
-        VStack(spacing: .spacing1x) {
-            HStack(spacing: .spacing0x) {
-                BrightRoundButton(systemImage: "arrow.left", size: .small, onTapCallback: close)
-                .accessibilityLabel(Constants.backLabel)
+    private enum Constants {
+        static let promptCount = 3
+    }
+}
 
-                Spacer(minLength: .spacing2x)
+// SwiftUI's Menu can't be opened from code; a UIButton's menu can, through performPrimaryAction.
+private struct BrightSuggestionMenuButton: UIViewRepresentable {
+    let prompts: [String]
+    let opensOnAppear: Bool
+    let onSelect: (String) -> Void
 
-                if !topic.isFixed {
-                    BrightPillButton(Constants.randomiseTitle, systemImage: "shuffle", buttonSize: .small) {
-                        withAnimation(.brightSnappy) { deal(from: topic) }
-                    }
-                }
-            }
-
-            VStack(spacing: .spacing0x) {
-                ForEach(Array(shown.enumerated()), id: \.element) { index, prompt in
-                    row(prompt, isLast: index == shown.count - 1)
-                        .opacity(isRevealed ? .opaque : .zero)
-                        .offset(y: isRevealed ? .zero : .spacing2x)
-                        .animation(.brightStaggered(Double(index) * Constants.staggerStep), value: isRevealed)
-                        .transition(.blurReplace)
-                }
-            }
-        }
+    func makeUIView(context: Context) -> MenuButton {
+        let button = MenuButton()
+        button.showsMenuAsPrimaryAction = true
+        button.opensOnAppear = opensOnAppear
+        button.menu = menu
+        return button
     }
 
-    private func row(_ prompt: String, isLast: Bool) -> some View {
-        Button {
-            onSelect(prompt)
-            close()
-        } label: {
-            HStack(spacing: .spacing2x) {
-                BrightText(prompt, size: .body1, color: .semiLightTextColor)
-                    .lineLimit(Constants.lineLimit)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+    func updateUIView(_ button: MenuButton, context: Context) {
+        button.menu = menu
+    }
 
-                Image(systemName: "arrow.turn.down.right")
-                    .font(.standard(size: .body1, weight: .regular))
-                    .foregroundStyle(Color.semiLightTextColor)
+    private var menu: UIMenu {
+        UIMenu(children: prompts.map { prompt in
+            UIAction(title: prompt, image: UIImage(systemName: Constants.promptSymbol)) { _ in onSelect(prompt) }
+        })
+    }
+
+    final class MenuButton: UIButton {
+        var opensOnAppear = false
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            guard window != nil, opensOnAppear else { return }
+            opensOnAppear = false
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(Constants.openDelay))
+                guard let self, self.window != nil else { return }
+                self.performPrimaryAction()
             }
-            .padding(.vertical, .spacing3x)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .overlay(alignment: .bottom) {
-            if !isLast {
-                BrightDividerV5()
-            }
-        }
-    }
-
-    private func close() {
-        isRevealed = false
-        withAnimation(.brightLiquid) { topic = nil }
-    }
-
-    private func open(_ topic: BrightSuggestionTopic) {
-        shown = []
-        deal(from: topic)
-        withAnimation(.brightLiquid) { self.topic = topic }
-    }
-
-    // A new set each time, never repeating the one on screen while the topic allows.
-    private func deal(from topic: BrightSuggestionTopic) {
-        guard !topic.isFixed else {
-            shown = topic.prompts
-            return
-        }
-        let fresh = topic.prompts.filter { !shown.contains($0) }
-        let source = fresh.count >= count ? fresh : topic.prompts
-        shown = Array(source.shuffled().prefix(count))
     }
 
     private enum Constants {
-        static let defaultCount = 3
-        static let lineLimit = 2
-        static let staggerStep = 0.06
-        static let randomiseTitle = "Randomise"
-        static let backLabel = "Back to topics"
+        static let openDelay: TimeInterval = 0.5
+        static let promptSymbol = "arrow.turn.down.right"
     }
 }
 

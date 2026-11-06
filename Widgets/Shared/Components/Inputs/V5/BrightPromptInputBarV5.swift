@@ -133,16 +133,8 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
         .frame(maxWidth: .infinity)
         .contentShape(.rect)
         .onTapGesture { isFocused.wrappedValue = true }
-        .modifier(BrightGlassEffectV5(shape: .unevenRoundedRect(top: Constants.topCorner, bottom: bottomCorner)))
-        .animation(.brightSnappy, value: bottomCorner)
+        .modifier(BrightGlassEffectV5(shape: .roundedRect, cornerRadius: Constants.corner))
         .geometryGroup()
-    }
-
-    // Riding above the keyboard the card is a shape in its own right, so it
-    // rounds evenly; sat on the bottom of the screen the lower corners open out
-    // to follow the display's own curve.
-    private var bottomCorner: CGFloat {
-        isFocused.wrappedValue ? Constants.topCorner : Constants.bottomCorner
     }
 
     private var field: some View {
@@ -308,8 +300,7 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
 }
 
 private enum Constants {
-    static let topCorner: CGFloat = .cardCornerRadius
-    static let bottomCorner: CGFloat = .screenCornerRadius
+    static let corner: CGFloat = .cardCornerRadius
     static let maxLines = 8
     static let thumbnailSize: CGFloat = .spacing10x
     static let removeSize: CGFloat = .spacing3x
