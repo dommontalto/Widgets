@@ -185,7 +185,6 @@ struct EditWidgetSheetV5: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.defaultGreen)
-                    .foregroundStyle(Color.defaultBlack)
                     .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
                 }
             }
@@ -221,7 +220,6 @@ struct ChooseWidgetSizePageV5: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.defaultGreen)
-                .foregroundStyle(Color.defaultBlack)
                 .transition(.opacity.combined(with: .scale).animation(.brightEaseInOut))
             }
         } content: {

@@ -34,6 +34,7 @@ nonisolated class ImageNames {
     static let waterTileV5 = "water_tile_v5"
     static let weightTileV5 = "weight_tile_v5"
     static let wellbeingTileV5 = "wellbeing_tile_v5"
+    static let customiseTileV5 = "customise_tile_v5"
     static let sleepInfoV4 = "sleep_info_v4"
     static let waterIconV5 = "water_icon_v5"
     static let weightIconV4 = "weight_icon_v4"

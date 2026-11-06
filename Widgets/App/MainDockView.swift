@@ -21,23 +21,20 @@ struct MainDockView: View {
     @State private var lighthouseDetent = PresentationDetent.large
     @State private var lighthousePrompt: String?
     @State private var isMenuExpanded = false
-    @State private var plusMenu = TabPlusOverlayController()
 
     var body: some View {
         ZStack(alignment: .bottom) {
             tabView
             plusOverlayButton
-            TabPlusOverlayHost(controller: plusMenu)
         }
         // The plus is a tab of its own: undo the switch to it with the tab bar's
-        // animations off, so it never shows, then open the plus menu instead.
+        // animations off, so it never shows.
         .onChange(of: selectedTab) { oldTab, newTab in
             if newTab == .add {
                 UITabBar.setAnimationsEnabled(false)
                 selectedTab = oldTab
                 DispatchQueue.main.async {
                     UITabBar.setAnimationsEnabled(true)
-                    openPlusMenu()
                 }
             }
         }
@@ -51,7 +48,7 @@ struct MainDockView: View {
 
     // Lighthouse at full height over the whole app; dropping it below full closes it.
     private var lighthouseScreen: some View {
-        LighthouseTray(detent: $lighthouseDetent, initialPrompt: lighthousePrompt) {
+        LighthouseTray(detent: $lighthouseDetent, focusesOnOpen: true, initialPrompt: lighthousePrompt) {
             showingLighthouse = false
         }
         .presentationBackground(.thinMaterial)
@@ -64,37 +61,26 @@ struct MainDockView: View {
         .onDisappear { lighthousePrompt = nil }
     }
 
-    // Laid over the system plus tab: a tap opens the plus menu, a hold opens Lighthouse.
+    // Laid over the system plus tab: a hold opens Lighthouse.
     private var plusOverlayButton: some View {
-        Button {
-            openPlusMenu()
-        } label: {
-            Color.clear
-                .frame(width: Constants.plusTargetWidth, height: Constants.plusTargetHeight)
-                .contentShape(Rectangle())
-        }
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: Constants.holdDuration)
-                .onEnded { _ in toggleLighthouse() }
-        )
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.trailing, .spacing4x)
-        .offset(y: isPlusHidden ? Constants.hiddenOffset : Constants.restingOffset)
-        .allowsHitTesting(!isPlusHidden)
+        Color.clear
+            .frame(width: Constants.plusTargetWidth, height: Constants.plusTargetHeight)
+            .contentShape(Rectangle())
+            .onLongPressGesture(minimumDuration: Constants.holdDuration) {
+                toggleLighthouse()
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, .spacing4x)
+            .offset(y: isPlusHidden ? Constants.hiddenOffset : Constants.restingOffset)
+            .allowsHitTesting(!isPlusHidden)
     }
 
     private var isPlusHidden: Bool {
         selectedTab == .home && isMenuExpanded
     }
 
-    private func openPlusMenu() {
-        guard !showingLighthouse else { return }
-        plusMenu.open()
-    }
-
     private func toggleLighthouse() {
         BrightHaptic.medium.play()
-        plusMenu.dismissImmediately()
         if showingLighthouse {
             showingLighthouse = false
         } else {

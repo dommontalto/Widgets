@@ -48,7 +48,7 @@ struct LighthouseSettingsSheet: View {
                             )
                         }
 
-                        BrightPillButton(Constants.deleteChatsTitle, color: .defaultRed, buttonSize: .large) {}
+                        BrightPillButton(Constants.deleteChatsTitle, systemImage: "trash", color: .defaultRed.opacity(.veryMinimalOpacity), textColor: .defaultRed, buttonSize: .large) {}
                             .frame(maxWidth: .infinity)
                             .padding(.top, .spacing3x)
                     }

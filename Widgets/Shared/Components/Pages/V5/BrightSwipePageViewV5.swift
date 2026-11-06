@@ -665,8 +665,8 @@ private struct SwipePagePillRow: View {
                     image: pages[i].image,
                     systemImage: pages[i].systemImage,
                     isSelected: isSelected,
-                    selectedTint: .swipePagePillGreen,
-                    selectedFill: .defaultBrightGreen,
+                    selectedTint: .defaultSkyBlue,
+                    selectedFill: .defaultSkyBlue,
                     buttonSize: .medium,
                     action: { onPillTap(i) }
                 )

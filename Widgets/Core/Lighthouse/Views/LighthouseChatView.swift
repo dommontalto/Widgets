@@ -327,7 +327,7 @@ struct LighthouseChatView: View {
     }
 
     private enum Constants {
-        static let tierCornerRadius: CGFloat = 5
+        static let tierCornerRadius: CGFloat = 6
         static let quickActions = [
             BrightChatExample("bell.badge.waveform", "Create alerts"),
             BrightChatExample("person.fill.checkmark.and.xmark", "Check In"),

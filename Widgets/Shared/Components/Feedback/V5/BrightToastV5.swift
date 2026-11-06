@@ -253,7 +253,7 @@ private struct BrightToastV5: View {
                 .contentTransition(.numericText())
                 .brightShimmerV5(isActive: kind == .loading)
         }
-        .padding(.vertical, .spacing1x)
+        .padding(.vertical, .spacing05x)
         .padding(.leading, .spacing105x)
         .padding(.trailing, .spacing2x)
     }
@@ -416,7 +416,7 @@ private enum Constants {
     static let islandWidth: CGFloat = 100
     static let islandHeight: CGFloat = 33
     static let islandInset: CGFloat = 5
-    static let pillHeight: CGFloat = 44
+    static let pillHeight: CGFloat = 36
     static let orbSize: CGFloat = 28
     static let iconSize: CGFloat = 30
     static let orbExitScale: CGFloat = 0.6

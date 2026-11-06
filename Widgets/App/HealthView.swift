@@ -96,7 +96,6 @@ struct HealthView: View {
                         .buttonStyle(.borderedProminent)
                         .buttonBorderShape(.circle)
                         .tint(.defaultGreen)
-                        .foregroundStyle(Color.defaultBlack)
                     }
                 }
             }
@@ -232,7 +231,7 @@ private enum HomePage: Int, CaseIterable {
     var systemImage: String {
         switch self {
         case .health: "heart.fill"
-        case .waypoint: "safari.fill"
+        case .waypoint: "arrow.up.forward"
         case .explore: "map.fill"
         }
     }

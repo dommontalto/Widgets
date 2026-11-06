@@ -114,16 +114,27 @@ enum VaultDemo {
 
     static let ranking = VaultRankingData.demo
 
-    // One bundled lab report that every demo document opens.
+    // One bundled lab report that every demo document opens, except X-rays, which carry their own DICOM scan.
     static let documentURL = Bundle.main.url(forResource: "vault_demo_report", withExtension: "pdf")
 
+    // Sample scans: vault_demo_xray_chest.dcm from https://github.com/tensorflow/io (NIH chest X-ray),
+    // vault_demo_xray_leg.dcm from https://github.com/pydicom/pydicom-data (RG3_UNCI.dcm),
+    // vault_demo_xray_tamarin.dcm and vault_demo_mri_head.dcm from https://github.com/notZaki/DICOMSamples.
+    static func documentURL(for document: VaultDocumentSummary) -> URL? {
+        guard let filename = document.sourceFilename else { return documentURL }
+        return Bundle.main.url(forResource: filename, withExtension: nil)
+    }
+
     static var documents: [VaultDocumentSummary] {
-        let items: [(daysAgo: Int, lab: String, category: VaultDocumentCategory)] = [
-            (12, "LabCorp", .bloodWork), (40, "Imaging Associates", .mri), (68, "Quest Diagnostics", .bloodWork),
-            (95, "Royal North Shore Hospital", .ecg), (190, "LabCorp", .bloodWork), (240, "Laverty Pathology", .bloodWork),
-            (305, "Sonic Healthcare", .clinicalNotes), (380, "Australian Clinical Labs", .bloodWork), (450, "23andMe", .dna),
-            (520, "Quest Diagnostics", .bloodWork), (610, "Douglass Hanly Moir", .bloodWork), (700, "Imaging Associates", .xrays),
-            (760, "PRP Imaging", .xrays),
+        let items: [(daysAgo: Int, lab: String, category: VaultDocumentCategory, file: String?)] = [
+            (12, "LabCorp", .bloodWork, nil), (40, "Imaging Associates", .mri, nil),
+            (55, "Palo Alto Medical Foundation", .mri, "vault_demo_mri_head.dcm"), (68, "Quest Diagnostics", .bloodWork, nil),
+            (95, "Royal North Shore Hospital", .ecg, nil), (190, "LabCorp", .bloodWork, nil), (240, "Laverty Pathology", .bloodWork, nil),
+            (305, "Sonic Healthcare", .clinicalNotes, nil), (380, "Australian Clinical Labs", .bloodWork, nil), (450, "23andMe", .dna, nil),
+            (520, "Quest Diagnostics", .bloodWork, nil), (610, "Douglass Hanly Moir", .bloodWork, nil),
+            (700, "Imaging Associates", .xrays, "vault_demo_xray_chest.dcm"),
+            (760, "PRP Imaging", .xrays, "vault_demo_xray_leg.dcm"),
+            (820, "Exotic Vet Imaging", .xrays, "vault_demo_xray_tamarin.dcm"),
         ]
         return items.enumerated().map { index, item in
             let date = Calendar.current.date(byAdding: .day, value: -item.daysAgo, to: .now) ?? .now
@@ -131,7 +142,7 @@ enum VaultDemo {
                 id: "demo-report-\(index)",
                 labName: item.lab,
                 collectedAt: date,
-                sourceFilename: nil,
+                sourceFilename: item.file,
                 confirmedAt: date,
                 isGeneticReport: item.category == .dna,
                 category: item.category

@@ -22,7 +22,7 @@ struct VaultDocumentsWidget: View {
             ForEach(documents) { document in
                 BrightRowV5(
                     document.labName,
-                    subtitle: "Uploaded: \((document.confirmedAt ?? document.collectedAt).formatted(.brightDate))",
+                    subtitle: document.listSubtitle,
                     trailing: .chevron
                 ) {
                     onOpen?(document)

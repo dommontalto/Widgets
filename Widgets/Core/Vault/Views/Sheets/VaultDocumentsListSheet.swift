@@ -102,7 +102,7 @@ struct VaultDocumentsListSheet<Destination: View>: View {
                     ForEach(rows) { document in
                         BrightRowV5(
                             document.labName,
-                            subtitle: "Uploaded: \((document.confirmedAt ?? document.collectedAt).formatted(.brightDate))",
+                            subtitle: document.listSubtitle,
                             trailing: .chevron
                         ) {
                             openedDocument = document

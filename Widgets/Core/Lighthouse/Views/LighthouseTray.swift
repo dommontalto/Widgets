@@ -209,6 +209,8 @@ struct LighthouseTray: View {
                 draft = prompt
                 send()
             }
+            // A new chat rebuilds it, so it opens on the screen's starters again rather than staying folded into pills.
+            .id(chatResetCount)
             .padding(.bottom, .spacing1x)
 
             if !attachments.isEmpty {
