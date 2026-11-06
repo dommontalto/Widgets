@@ -24,16 +24,6 @@ enum LocalStorage {
         }
         set { UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: "tabPlusMenuConfiguration") }
     }
-
-    static var didViewCustomiseMenuOnboarding: Bool {
-        get { UserDefaults.standard.bool(forKey: "viewedCustomiseMenuOnboardingScreen") }
-        set { UserDefaults.standard.set(newValue, forKey: "viewedCustomiseMenuOnboardingScreen") }
-    }
-
-    static var tabPlusMenuIsExpanded: Bool {
-        get { UserDefaults.standard.object(forKey: "tabPlusMenuIsExpanded") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "tabPlusMenuIsExpanded") }
-    }
 }
 
 @discardableResult
