@@ -28,6 +28,7 @@ struct LighthouseTray: View {
     @State private var sentPrompt: String?
     @State private var isThinking = false
     @State private var showingModelSelector = false
+    @State private var keyboardField: TrayPage?
     @State private var modelLogoFrame: CGRect = .zero
     @State private var modelGlow: Double = .zero
     @State private var showingCheckIns = false
@@ -177,6 +178,12 @@ struct LighthouseTray: View {
                 onReturned: glowModelLogo,
                 onApiKeySaved: { apiKey = $0 }
             ) { model = $0; apiKey = "" }
+        }
+        .onChange(of: showingModelSelector) { _, showing in
+            if showing {
+                keyboardField = isFieldFocused ? .menu : isChatTyping ? .chat : nil
+            }
+            keepKeyboard(clearing: !showing)
         }
     }
 
@@ -430,6 +437,23 @@ struct LighthouseTray: View {
             withAnimation(.brightSnappy) { page = .chat }
         }
         run(action)
+    }
+
+    private func keepKeyboard(clearing: Bool) {
+        guard let field = keyboardField else { return }
+        if clearing { keyboardField = nil }
+        focus(field)
+        Task {
+            try? await Task.sleep(for: .seconds(Constants.focusDelay))
+            focus(field)
+        }
+    }
+
+    private func focus(_ field: TrayPage) {
+        switch field {
+        case .menu: isFieldFocused = true
+        case .chat: isChatTyping = true
+        }
     }
 
     // The selector draws its own entrance from the logo, so the cover itself appears without sliding up.
