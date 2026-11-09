@@ -15,6 +15,7 @@ struct BrightDottedLineChartWidgetV5: View {
     struct Point: Identifiable, Hashable {
         let date: Date
         let value: Double
+        var hasTime = true
 
         var id: Date { date }
     }
@@ -132,9 +133,17 @@ struct BrightDottedLineChartWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText(subtitle, size: .body2, color: .lightTextColor)
+            BrightText(shownSubtitle, size: .body2, color: .lightTextColor)
+                .contentTransition(.numericText())
+                .animation(.brightSnappy, value: shownSubtitle)
                 .lineLimit(1)
         }
+    }
+
+    private var shownSubtitle: String {
+        guard let selectedIndex, shownPoints.indices.contains(selectedIndex) else { return subtitle }
+        let point = shownPoints[selectedIndex]
+        return point.hasTime ? point.date.formatted(.brightTimestamp) : point.date.formatted(.brightDate)
     }
 
     // The held reading, or the latest.

@@ -47,7 +47,6 @@ struct BrightLineChartWidgetV5: View {
 
     @Environment(\.brightWidgetIsEmpty) private var isEmpty
     @State private var selectedDate: Date?
-    @State private var heldLabelWidth: CGFloat = 0
     // The line draws across the first time the widget shows.
     @State private var isRevealed = false
     @Namespace private var namespace
@@ -181,8 +180,9 @@ struct BrightLineChartWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText("Latest: \(isEmpty ? .brightEmptyValue : latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+            BrightText(selectedSample.map { $0.date.formatted(.brightTime) } ?? "Latest: \(isEmpty ? .brightEmptyValue : latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
                 .contentTransition(.numericText())
+                .animation(.brightSnappy, value: selectedSample?.date)
         }
     }
 
@@ -438,26 +438,6 @@ struct BrightLineChartWidgetV5: View {
                 .frame(maxWidth: .infinity, alignment: range.isRolling ? .trailing : .leading)
         }
         .lineLimit(1)
-        .opacity(selectedSample == nil ? .opaque : .zero)
-        .overlay(alignment: .leading) {
-            if let selectedSample {
-                GeometryReader { geometry in
-                    BrightText(selectedSample.date.formatted(.brightTime), size: .body5, color: color)
-                        .monospacedDigit()
-                        .fixedSize()
-                        .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
-                        .offset(x: heldLabelOffset(for: selectedSample.date, width: geometry.size.width))
-                }
-                .transition(.opacity)
-            }
-        }
-        .animation(.brightEaseInOut, value: selectedSample == nil)
-    }
-
-    // Centred on the line, but never past either end of the plot.
-    private func heldLabelOffset(for date: Date, width: CGFloat) -> CGFloat {
-        let centred = xPosition(of: date, width: width) - heldLabelWidth / 2
-        return min(max(centred, 0), max(width - heldLabelWidth, 0))
     }
 
     // MARK: - Values
@@ -516,7 +496,6 @@ struct BrightLineChartWidgetV5: View {
         let progress = latest.timeIntervalSince(start) / interval.duration
         return min(max(Int((progress * Double(lastIndex)).rounded()), 0), lastIndex)
     }
-
 
     private var current: Double {
         visibleSamples.last?.value ?? 0

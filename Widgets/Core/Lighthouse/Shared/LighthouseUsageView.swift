@@ -5,31 +5,20 @@
 
 import SwiftUI
 
-// How much of the plan's credits this period has used, on the intake gradient: the big percentage, the bar, and the
-// allowance's two ends under it.
+// How much of the plan's credits this period has used, on the intake gradient: the big percentage and the bar.
 struct LighthouseUsageView: View {
     // 0 to 1.
     let used: Double
-    var floorTitle = "0 credits"
-    var ceilingTitle = "10 M"
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing105x) {
-            VStack(alignment: .leading, spacing: .spacing1x) {
-                HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                    BrightText("\(Int((used * 100).rounded()))", size: .standout2)
-                        .monospacedDigit()
-                    BrightText(Constants.usedTitle, size: .body1, color: .lightTextColor)
-                }
-
-                bar
+        VStack(alignment: .leading, spacing: .spacing1x) {
+            HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+                BrightText("\(Int((used * 100).rounded()))", size: .standout2)
+                    .monospacedDigit()
+                BrightText(Constants.usedTitle, size: .body1, color: .lightTextColor)
             }
 
-            HStack {
-                BrightText(floorTitle, size: .body1, color: .lightTextColor)
-                Spacer(minLength: .spacing2x)
-                BrightText(ceilingTitle, size: .body1, color: .lightTextColor)
-            }
+            bar
         }
     }
 

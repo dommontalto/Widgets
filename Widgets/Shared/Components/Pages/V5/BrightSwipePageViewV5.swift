@@ -130,7 +130,6 @@ struct BrightSwipePageViewV5<Content: View>: View {
     // When `false`, the pager doesn't pad its content by the bottom safe area,
     // letting a page (e.g. Genome's full-bleed Metal strand) reach the screen
     // edge. Defaults to `true` — no effect on existing call sites.
-    let bottomSafeArea: Bool
     // Full-bleed page background. Defaults to `nil` (no background) so sheet
     // call sites keep their own; standalone screens pass `.defaultBackground`.
     let backgroundColor: Color?
@@ -176,7 +175,6 @@ struct BrightSwipePageViewV5<Content: View>: View {
         verticalScrollPosition: Binding<ScrollPosition>? = nil,
         scrollControlledPageIndex: Int? = nil,
         verticalScrollDisabledPageIndex: Int? = nil,
-        bottomSafeArea: Bool = true,
         backgroundColor: Color? = nil,
         refreshPageIndex: Int? = nil,
         onRefresh: (() async -> Void)? = nil,
@@ -207,7 +205,6 @@ struct BrightSwipePageViewV5<Content: View>: View {
         self.verticalScrollPosition = verticalScrollPosition
         self.scrollControlledPageIndex = scrollControlledPageIndex
         self.verticalScrollDisabledPageIndex = verticalScrollDisabledPageIndex
-        self.bottomSafeArea = bottomSafeArea
         self.backgroundColor = backgroundColor
         self.refreshPageIndex = refreshPageIndex
         self.onRefresh = onRefresh
@@ -256,9 +253,7 @@ struct BrightSwipePageViewV5<Content: View>: View {
                 state.preferenceOpacity = value
                 updateActiveOpacity()
             }
-            .safeAreaPadding(bottomSafeArea ? .bottom : [])
             // Room under every page's last element, so screens don't each pad their own bottom.
-            .safeAreaPadding(.bottom, BrightPageBottomRoom.height)
             .background {
                 if let backgroundColor {
                     backgroundColor.ignoresSafeArea()
@@ -665,8 +660,8 @@ private struct SwipePagePillRow: View {
                     image: pages[i].image,
                     systemImage: pages[i].systemImage,
                     isSelected: isSelected,
-                    selectedTint: .defaultSkyBlue,
-                    selectedFill: .defaultSkyBlue,
+                    selectedTint: .swipePagePillText,
+                    selectedFill: .swipePagePillBackground,
                     buttonSize: .medium,
                     action: { onPillTap(i) }
                 )

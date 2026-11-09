@@ -9,14 +9,13 @@ struct BrightSuggestionTopic: Identifiable, Hashable {
     let title: String
     let systemImage: String
     let prompts: [String]
+    var isFixed = false
 
     var id: String { title }
 }
 
-// Topic pills a chat shows above its own input instead of its suggestion chips.
 struct BrightChatTopics {
     let topics: [BrightSuggestionTopic]
-    var opensOnAppear: BrightSuggestionTopic.ID?
     let onSelect: (String) -> Void
 }
 
@@ -26,80 +25,71 @@ extension EnvironmentValues {
 
 struct BrightSuggestionsV5: View {
     var topics: [BrightSuggestionTopic] = BrightSuggestionsDemo.topics
-    var opensOnAppear: BrightSuggestionTopic.ID?
+    var count = Constants.defaultCount
     let onSelect: (String) -> Void
+
+    @State private var shown: [BrightSuggestionTopic.ID: [String]] = [:]
 
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: .spacing1x) {
                 ForEach(topics) { topic in
-                    BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {}
-                        .allowsHitTesting(false)
-                        .overlay {
-                            BrightSuggestionMenuButton(
-                                prompts: Array(topic.prompts.prefix(Constants.promptCount)),
-                                opensOnAppear: topic.id == opensOnAppear,
-                                onSelect: onSelect
-                            )
-                        }
+                    menu(for: topic)
                 }
             }
         }
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
-    }
-
-    private enum Constants {
-        static let promptCount = 3
-    }
-}
-
-// SwiftUI's Menu can't be opened from code; a UIButton's menu can, through performPrimaryAction.
-private struct BrightSuggestionMenuButton: UIViewRepresentable {
-    let prompts: [String]
-    let opensOnAppear: Bool
-    let onSelect: (String) -> Void
-
-    func makeUIView(context: Context) -> MenuButton {
-        let button = MenuButton()
-        button.showsMenuAsPrimaryAction = true
-        button.opensOnAppear = opensOnAppear
-        button.menu = menu
-        return button
-    }
-
-    func updateUIView(_ button: MenuButton, context: Context) {
-        button.menu = menu
-    }
-
-    private var menu: UIMenu {
-        UIMenu(children: prompts.map { prompt in
-            UIAction(title: prompt, image: UIImage(systemName: Constants.promptSymbol)) { _ in onSelect(prompt) }
-        })
-    }
-
-    final class MenuButton: UIButton {
-        var opensOnAppear = false
-
-        override func didMoveToWindow() {
-            super.didMoveToWindow()
-            guard window != nil, opensOnAppear else { return }
-            opensOnAppear = false
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .seconds(Constants.openDelay))
-                guard let self, self.window != nil else { return }
-                self.performPrimaryAction()
+        .onAppear {
+            for topic in topics where shown[topic.id] == nil {
+                deal(from: topic)
             }
         }
     }
 
+    private func menu(for topic: BrightSuggestionTopic) -> some View {
+        Menu {
+            ForEach(prompts(in: topic), id: \.self) { prompt in
+                Button(prompt, systemImage: Constants.promptSymbol) {
+                    onSelect(prompt)
+                }
+            }
+
+            if !topic.isFixed {
+                Divider()
+
+                Button(Constants.randomiseTitle, systemImage: Constants.randomiseSymbol) {
+                    deal(from: topic)
+                }
+                .menuActionDismissBehavior(.disabled)
+            }
+        } label: {
+            BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {}
+                .allowsHitTesting(false)
+        }
+        .menuOrder(.fixed)
+    }
+
+    private func prompts(in topic: BrightSuggestionTopic) -> [String] {
+        topic.isFixed ? Array(topic.prompts.prefix(count)) : shown[topic.id] ?? Array(topic.prompts.prefix(count))
+    }
+
+    private func deal(from topic: BrightSuggestionTopic) {
+        guard !topic.isFixed else { return }
+        let current = shown[topic.id] ?? []
+        let fresh = topic.prompts.filter { !current.contains($0) }
+        let source = fresh.count >= count ? fresh : topic.prompts
+        shown[topic.id] = Array(source.shuffled().prefix(count))
+    }
+
     private enum Constants {
-        static let openDelay: TimeInterval = 0.5
+        static let defaultCount = 3
         static let promptSymbol = "arrow.turn.down.right"
+        static let randomiseTitle = "Randomise"
+        static let randomiseSymbol = "shuffle"
     }
 }
 
-// Generic health topics, until each screen brings its own.
 enum BrightSuggestionsDemo {
     static let topics = [
         BrightSuggestionTopic(

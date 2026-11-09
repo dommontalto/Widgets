@@ -6,7 +6,7 @@
 import SwiftUI
 
 // The iOS app's side menu. What's New, DNA, My Orders and Edit Home screen work;
-// Labs, the account rows and Log out are laid out but inert.
+// Labs, the profile header, My Documents, the account rows and Log out are laid out but inert.
 struct SideMenuView: View {
     @Binding var isExpanded: Bool
     let onDNA: () -> Void
@@ -39,9 +39,9 @@ struct SideMenuView: View {
                 .staggered(at: 2, in: visibleRows)
 
             VStack(alignment: .leading, spacing: .spacing4x) {
-                item(systemImage: "person.fill", color: .defaultGreen, title: "Personal Details")
-                    .staggered(at: 3, in: visibleRows)
                 item(systemImage: "shippingbox.fill", color: .defaultYellow, title: "My Orders", action: onMyOrders)
+                    .staggered(at: 3, in: visibleRows)
+                item(systemImage: "waveform.path.ecg.text.page", color: .defaultGreen, title: "My Documents")
                     .staggered(at: 4, in: visibleRows)
                 item(image: ImageNames.sideMenuEditHomeV5, title: "Edit Home screen", action: onEditHomescreen)
                     .staggered(at: 5, in: visibleRows)
@@ -61,7 +61,7 @@ struct SideMenuView: View {
 
             Spacer(minLength: .spacing4x)
 
-            VStack(spacing: .spacing2x) {
+            VStack(spacing: .spacing1x) {
                 BrightPillButton("Log out", systemImage: "arrow.backward", buttonSize: .large) {}
 
                 versionIdentifier
@@ -95,10 +95,25 @@ struct SideMenuView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: .spacing2x) {
-            BrightText(Constants.demoName, size: .standout1)
-            BrightText(Constants.demoLifetime, size: .body3, color: .semiLightTextColor)
+        Button {} label: {
+            HStack(spacing: .spacing2x) {
+                profilePicture
+                BrightText(Constants.demoName, size: .standout1)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: Constants.chevronSize, weight: .semibold))
+                    .foregroundStyle(Color.lightTextColor)
+                Spacer(minLength: .spacing0x)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+    }
+
+    private var profilePicture: some View {
+        BrightText(Constants.demoInitials, size: .subheading, weight: .medium)
+            .frame(width: Constants.profilePictureSize, height: Constants.profilePictureSize)
+            .background(Color.defaultSheetModalCards, in: Circle())
     }
 
     private func tile(image: String, title: String, action: @escaping () -> Void) -> some View {
@@ -144,7 +159,7 @@ struct SideMenuView: View {
     }
 
     private var versionIdentifier: some View {
-        VStack(spacing: .spacing025x) {
+        HStack(spacing: .spacing1x) {
             BrightText(
                 "Build \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1.0"))",
                 size: .body5,
@@ -156,7 +171,9 @@ struct SideMenuView: View {
 
     private enum Constants {
         static let demoName = "Dom"
-        static let demoLifetime = "Lifetime user no. 1"
+        static let demoInitials = "DM"
+        static let profilePictureSize: CGFloat = 44
+        static let chevronSize: CGFloat = 16
         static let iconSize: CGFloat = 24
         static let tileSize: CGFloat = 36
         static let symbolSize: CGFloat = 20

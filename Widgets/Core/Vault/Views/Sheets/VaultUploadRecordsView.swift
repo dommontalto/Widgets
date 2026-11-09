@@ -22,6 +22,14 @@ enum VaultUploadRecordKind: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    var uploadTitle: String {
+        switch self {
+        case .prescriptions: "Upload Prescriptions"
+        case .healthRecords: "Upload Health Records"
+        case .mri: "Upload MRIs"
+        }
+    }
+
     var imageName: String {
         switch self {
         case .prescriptions: ImageNames.vaultUploadPrescriptionsV5
@@ -38,13 +46,19 @@ struct VaultUploadRecordsView: View {
     let onChooseFile: () -> Void
     let onImportFromApp: () -> Void
 
+    @State private var centredKind = VaultUploadRecordKind.healthRecords
+
     var body: some View {
         VStack(spacing: .spacing0x) {
-            VaultUploadRecordsMarquee()
+            VaultUploadRecordsMarquee(centredKind: $centredKind)
                 .padding(.top, .spacing12x + .spacing4x)
 
             VStack(spacing: .spacing3x) {
-                BrightText("Upload Records", size: .standout1)
+                BrightText(centredKind.uploadTitle, size: .standout1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .contentTransition(.numericText())
+                    .animation(.brightSnappy, value: centredKind)
 
                 BrightText("PDFs, DOCX, images & DNA files all supported", size: .body1, color: .lightTextColor)
             }
@@ -91,6 +105,7 @@ struct VaultUploadRecordsView: View {
 // middle is full size and the rest shrink, each with its name above it. A drag
 // takes over and a flick carries on with momentum before the drift picks back up.
 private struct VaultUploadRecordsMarquee: View {
+    @Binding var centredKind: VaultUploadRecordKind
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var width: CGFloat = 0
     @State private var anchorDate = Date.now
@@ -117,8 +132,9 @@ private struct VaultUploadRecordsMarquee: View {
                     item(kinds[slot % kinds.count], x: width / 2 + CGFloat(slot - kinds.count - 1) * pitch - wrapped)
                 }
             }
-            .onChange(of: centred) {
-                if isInteracting(at: context.date) { hapticTrigger += 1 }
+            .onChange(of: centred, initial: true) { old, new in
+                centredKind = kinds[((new + 1) % kinds.count + kinds.count) % kinds.count]
+                if old != new, isInteracting(at: context.date) { hapticTrigger += 1 }
             }
         }
         .frame(maxWidth: .infinity)
@@ -161,7 +177,8 @@ private struct VaultUploadRecordsMarquee: View {
     }
 
     private func item(_ kind: VaultUploadRecordKind, x: CGFloat) -> some View {
-        let distance = pitch > 0 ? min(abs(x - width / 2) / pitch, 1) : 0
+        let linear = pitch > 0 ? min(abs(x - width / 2) / pitch, 1) : 0
+        let distance = linear * linear * (3 - 2 * linear)
         let size = itemSize * (1 - (1 - Constants.sideScale) * distance)
         let centerY = Constants.labelHeight + Constants.labelGap + itemSize / 2
 
@@ -169,6 +186,7 @@ private struct VaultUploadRecordsMarquee: View {
             BrightText(kind.title, size: .subheading1, color: .semiLightTextColor)
                 .lineLimit(1)
                 .fixedSize()
+                .opacity(1 - (1 - Constants.sideLabelOpacity) * distance)
                 .frame(height: Constants.labelHeight)
                 .position(x: x, y: centerY - size / 2 - Constants.labelGap - Constants.labelHeight / 2)
 
@@ -181,10 +199,11 @@ private struct VaultUploadRecordsMarquee: View {
     }
 
     private enum Constants {
-        static let itemWidthRatio: CGFloat = 0.44
+        static let itemWidthRatio: CGFloat = 0.52
         static let pitchRatio: CGFloat = 0.46
-        static let sideScale: CGFloat = 0.76
-        static let speed: CGFloat = 40
+        static let sideScale: CGFloat = 0.6
+        static let sideLabelOpacity = 0.5
+        static let speed: CGFloat = 75
         static let labelHeight: CGFloat = .spacing4x
         static let labelGap: CGFloat = .spacing2x
         static let dragThreshold: CGFloat = 5

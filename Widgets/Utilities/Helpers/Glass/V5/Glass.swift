@@ -30,6 +30,7 @@ struct BrightGlassEffectV5: ViewModifier {
         case roundedRect
         case unevenRoundedRect(top: CGFloat, bottom: CGFloat)
         case cornerRadii(RectangleCornerRadii)
+        case bubble
     }
 
     private var unevenRect: UnevenRoundedRectangle {
@@ -70,6 +71,8 @@ struct BrightGlassEffectV5: ViewModifier {
                 content.background(.ultraThinMaterial, in: .rect(cornerRadius: cornerRadius))
             case .unevenRoundedRect, .cornerRadii:
                 content.background(.ultraThinMaterial, in: unevenRect)
+            case .bubble:
+                content.background(.ultraThinMaterial, in: BrightBubbleShapeV5(cornerRadius: cornerRadius))
             }
         }
     }
@@ -85,6 +88,8 @@ struct BrightGlassEffectV5: ViewModifier {
             Color.clear.glassEffect(glassStyle, in: .rect(cornerRadius: cornerRadius))
         case .unevenRoundedRect, .cornerRadii:
             Color.clear.glassEffect(glassStyle, in: unevenRect)
+        case .bubble:
+            Color.clear.glassEffect(glassStyle, in: BrightBubbleShapeV5(cornerRadius: cornerRadius))
         }
     }
 }

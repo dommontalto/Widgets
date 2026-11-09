@@ -8,32 +8,42 @@ import SwiftUI
 struct GenomeOrderSheet: View {
     @Bindable var viewModel: GenomeOrderViewModel
 
-    var body: some View {
-        BrightPageSheetViewV5(horizontalPadding: .spacing0x, backgroundColor: .black) {
-            ScrollView {
-                VStack(spacing: .spacing0x) {
-                    BrightPlaceholderViewV5(
-                        image: ImageNames.genomeOrderDnaHeroV5,
-                        title: "Order your DNA test",
-                        subtitle: "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test.",
-                        fillsViewport: false
-                    )
-                    .environment(\.colorScheme, .dark)
-                    .padding(.bottom, .spacing6x)
+    @State private var showsOrder = false
 
-                    GenomeOrderIncludedList()
+    var body: some View {
+        BrightPageSheetViewV5(horizontalPadding: .spacing0x, backgroundColor: .defaultSheetBackground) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: .spacing0x) {
+                    GenomeOrderHero(viewModel: viewModel)
+
+                    VStack(alignment: .leading, spacing: .spacing05x) {
+                        BrightText(Constants.title, size: .heading)
+
+                        BrightText(Constants.subtitle, size: .heading, color: .lightTextColor)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, .spacing4x)
+                    .padding(.top, .spacing6x)
+                    .padding(.bottom, .spacing4x)
+
+                    GenomeOrderFeatures()
+                        .padding(.horizontal, .spacing3x)
                 }
             }
             .scrollIndicators(.hidden)
-            .background(alignment: .top) {
-                GenomeOrderWaves()
-                    .ignoresSafeArea()
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top > Constants.orderThreshold
+            } action: { _, shows in
+                withAnimation(.brightBouncy) { showsOrder = shows }
             }
+            .ignoresSafeArea(edges: .top)
             .brightBottomButtonV5 {
-                GenomeOrderPurchaseButton(viewModel: viewModel)
+                if showsOrder {
+                    GenomeOrderPurchaseButton(viewModel: viewModel)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(isPresented: $viewModel.showingCheckout) {
                 BrightCheckoutViewV5(item: viewModel.checkoutItem, onPay: viewModel.handlePay)
                     .navigationDestination(isPresented: $viewModel.showingConfirmation) {
@@ -42,134 +52,163 @@ struct GenomeOrderSheet: View {
             }
         }
     }
+
+    private enum Constants {
+        static let title = "Order your test today"
+        static let subtitle = "Bright has partnered with The Genome Computer Company to provide streamlined access to a Whole Genome Sequence test."
+        static let orderThreshold: CGFloat = 320
+    }
 }
 
-// The order sheet and tray's backdrop: the lighter blue waves drifting slowly on uneven
-// periods so they never visibly loop, breathing brighter and dimmer while their colour
-// wash turns, sinking into black towards the bottom.
-struct GenomeOrderWaves: View {
-    // Covers its whole frame in blue rather than fading into black below the image.
-    var fills = false
+private struct GenomeOrderHero: View {
+    @Bindable var viewModel: GenomeOrderViewModel
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var strand = GenomeState()
 
     var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate * Constants.speed
-            let turn = t / Constants.washPeriod
-            Image(ImageNames.genomeOrderBackgroundV5)
-                .resizable()
-                .aspectRatio(contentMode: fills ? .fill : .fit)
-                .scaleEffect(Constants.scale + Constants.scaleSwing * sin(t / 5))
-                .rotationEffect(.degrees(Constants.rotation * sin(t / 11)))
-                .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
-                .overlay {
-                    LinearGradient(
-                        gradient: BrightWaveStyle.genome.curve,
-                        startPoint: UnitPoint(x: 0.5 - 0.5 * cos(turn), y: 0.5 - 0.5 * sin(turn)),
-                        endPoint: UnitPoint(x: 0.5 + 0.5 * cos(turn), y: 0.5 + 0.5 * sin(turn))
-                    )
-                    .blendMode(.color)
-                }
-                .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: .top)
-                .clipped()
-                .brightness(Constants.pulse * sin(t / Constants.pulsePeriod))
-                .blur(radius: 20, opaque: true)
+        ZStack {
+            BrightDNAStrandV5(state: strand)
+            GenomeRungAnnotations(state: strand)
         }
-        .overlay {
-            LinearGradient(
-                stops: [
-                    .init(color: .black.opacity(.minimalOpacity), location: 0),
-                    .init(color: .black.opacity(.veryLowOpacity), location: 0.7),
-                    .init(color: .black.opacity(fills ? .semiLowOpacity : 1), location: 1.0),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+        .allowsHitTesting(false)
+        .frame(height: Constants.height)
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .overlay(alignment: .bottom) { band }
+        .onAppear {
+            strand.distance = Constants.cameraDistance
+            strand.restDistance = Constants.cameraDistance
+            strand.isOnScreen = true
+        }
+    }
+
+    private var band: some View {
+        HStack(spacing: .spacing2x) {
+            GenomeOrderBadge()
+
+            BrightText(Constants.title, size: .heading)
+
+            Spacer(minLength: .spacing0x)
+
+            BrightPillButton(Constants.order, systemImage: "arrow.right", buttonSize: .small, isLoading: viewModel.isStartingCheckout) {
+                viewModel.handlePurchase()
+            }
+        }
+        .padding(.horizontal, .spacing4x)
+        .frame(height: Constants.bandHeight)
+        .background(alignment: .bottom) {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(Color.defaultCyan.opacity(.ultraLowOpacity))
+                .mask {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black, location: Constants.fadeStop),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+                .frame(height: Constants.bandHeight + Constants.fadeHeight)
         }
     }
 
     private enum Constants {
-        static let speed: Double = 2
-        static let scale: CGFloat = 1.15
-        static let scaleSwing: CGFloat = 0.06
-        static let rotation: Double = 3
-        static let drift: CGFloat = .spacing4x
-        // How far the waves brighten and dim either side of normal, and how slowly.
-        static let pulse: Double = 0.08
-        static let pulsePeriod: Double = 3
-        // The colour wash turns a full circle every 2π of these.
-        static let washPeriod: Double = 13
+        static let title = "Genome test"
+        static let order = "Order"
+        static let height: CGFloat = 400
+        static let bandHeight: CGFloat = 80
+        static let fadeHeight: CGFloat = .spacing8x
+        static let fadeStop: CGFloat = 0.6
+        static let cameraDistance: Float = 1.7
     }
 }
 
-struct GenomeOrderIncludedList: View {
-    private struct Panel: Identifiable {
-        let id = UUID()
-        let icon: String
-        let title: String
-        let detail: String
+private struct GenomeOrderFeatures: View {
+    private enum Icon {
+        case asset(String)
+        case symbol(String, Color)
     }
 
-    private let panels: [Panel] = [
-        Panel(icon: ImageNames.genomeOrderDnaV5,
-              title: "30x Whole Genome Sequencing",
-              detail: "Analysis of your complete 3.2B DNA letters, providing significantly more genetic information than standard DNA tests."),
-        Panel(icon: ImageNames.genomeOrderRiskV5,
-              title: "Polygenic Risk Scores",
-              detail: "Advanced genetic risk assessments for a wide range of common health conditions."),
-        Panel(icon: ImageNames.genomeOrderInsightsV5,
-              title: "Personalized Health Risk Insights",
-              detail: "Understand your genetic predisposition to common conditions including cardiovascular disease, diabetes, certain cancers, neurological conditions, and more."),
-        Panel(icon: ImageNames.genomeOrderCancerV5,
-              title: "Cancer Risk Screening",
-              detail: "Insights into inherited genetic variants associated with multiple cancer types."),
-        Panel(icon: ImageNames.genomeOrderMentalV5,
-              title: "Mental Health & Cognitive Traits",
-              detail: "Explore genetic factors linked to traits such as ADHD, anxiety, depression, sleep patterns, and cognitive performance."),
-        Panel(icon: ImageNames.genomeOrderNutritionV5,
-              title: "Nutrition & Wellness Insights",
-              detail: "Discover how your genetics may influence nutrient metabolism, food sensitivities, caffeine processing, and other wellness-related traits."),
-        Panel(icon: ImageNames.genomeOrderFitnessV5,
-              title: "Fitness & Performance Traits",
-              detail: "Learn about genetic factors related to exercise response, recovery, endurance, and strength potential."),
+    private struct Feature: Identifiable {
+        let icon: Icon
+        let title: String
+        let detail: String
+
+        var id: String { title }
+    }
+
+    private let features: [Feature] = [
+        Feature(icon: .asset(ImageNames.genomeOrderDnaV5),
+                title: "30x Whole Genome Sequencing",
+                detail: "Analysis of your complete 3.2B DNA letters, providing significantly more genetic information than standard DNA tests."),
+        Feature(icon: .asset(ImageNames.genomeOrderRiskV5),
+                title: "Polygenic Risk Scores",
+                detail: "Advanced genetic risk assessments for a wide range of common health conditions."),
+        Feature(icon: .asset(ImageNames.genomeOrderInsightsV5),
+                title: "Personalized Health Risk Insights",
+                detail: "Understand your genetic predisposition to common conditions including cardiovascular disease, diabetes, certain cancers, neurological conditions, and more."),
+        Feature(icon: .asset(ImageNames.genomeOrderCancerV5),
+                title: "Cancer Risk Screening",
+                detail: "Insights into inherited genetic variants associated with multiple cancer types."),
+        Feature(icon: .symbol("brain.filled.head.profile", .defaultPurple),
+                title: "Mental Health & Cognitive Traits",
+                detail: "Explore genetic factors linked to traits such as ADHD, anxiety, depression, sleep patterns, and cognitive performance."),
+        Feature(icon: .symbol("carrot.fill", .defaultGreen),
+                title: "Nutrition & Wellness Insights",
+                detail: "Discover how your genetics may influence nutrient metabolism, food sensitivities, caffeine processing, and other wellness-related traits."),
+        Feature(icon: .symbol("figure.cooldown", .defaultOrange),
+                title: "Fitness & Performance Traits",
+                detail: "Learn about genetic factors related to exercise response, recovery, endurance, and strength potential."),
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing3x) {
-            ForEach(Array(panels.enumerated()), id: \.element.id) { index, panel in
-                VStack(alignment: .leading, spacing: .spacing105x) {
-                    Image(panel.icon)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: .spacing4x, height: .spacing4x)
+        VStack(spacing: .spacing3x) {
+            ForEach(features) { feature in
+                VStack(alignment: .leading, spacing: .spacing2x) {
+                    HStack(spacing: .spacing1x) {
+                        icon(feature.icon)
+                            .frame(width: Constants.iconSize, height: Constants.iconSize)
 
-                    BrightText(panel.title, size: .body1, color: .white)
+                        BrightText(feature.title, size: .body2, color: .semiLightTextColor)
+                    }
 
-                    BrightText(panel.detail, size: .body3, color: .white)
+                    BrightText(feature.detail, size: .body3, color: .lightTextColor)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.spacing3x)
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-                if index < panels.count - 1 {
-                    Rectangle()
-                        .fill(Color.white.opacity(.ultraLowOpacity))
-                        .frame(height: 0.5)
-                }
+                .modifier(BrightCardModifierV5(color: .defaultSheetModalCards))
             }
         }
-        .padding(.spacing3x)
-        .modifier(BrightCardModifierV5(isGlass: true))
-        .padding(.horizontal, .spacing3x)
     }
 
+    @ViewBuilder
+    private func icon(_ icon: Icon) -> some View {
+        switch icon {
+        case .asset(let name):
+            Image(name)
+                .resizable()
+                .scaledToFit()
+        case .symbol(let name, let color):
+            Image(systemName: name)
+                .font(.system(size: Constants.symbolSize, weight: .light))
+                .foregroundStyle(color)
+        }
+    }
+
+    private enum Constants {
+        static let iconSize: CGFloat = .spacing4x
+        static let symbolSize: CGFloat = 18
+    }
 }
 
 struct GenomeOrderPurchaseButton: View {
     @Bindable var viewModel: GenomeOrderViewModel
 
     var body: some View {
-        BrightPillButton("Purchase", buttonSize: .large, isLoading: viewModel.isStartingCheckout) {
+        BrightPillButton("Order", systemImage: "arrow.right", color: .defaultGreen, buttonSize: .large, isLoading: viewModel.isStartingCheckout) {
             viewModel.handlePurchase()
         }
     }

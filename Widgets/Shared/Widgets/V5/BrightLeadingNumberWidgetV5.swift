@@ -18,6 +18,7 @@ struct BrightLeadingNumberWidgetV5: View {
     let value: Double
     let latest: Date
     var details: [Detail] = []
+    var showsTime = true
     var allowsSelection = true
 
     private var title: String { appearance.title }
@@ -73,7 +74,7 @@ struct BrightLeadingNumberWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText("Latest: \(isEmpty ? .brightEmptyValue : latest.formatted(.brightTime))", size: .body2, color: .lightTextColor)
+            BrightText("Latest: \(isEmpty ? .brightEmptyValue : showsTime ? latest.formatted(.brightTime) : latest.formatted(.brightDate))", size: .body2, color: .lightTextColor)
         }
     }
 

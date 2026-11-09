@@ -22,6 +22,7 @@ struct ProjectedRung {
 final class GenomeState {
     var yaw: Float = 0.6
     var distance: Float = 3.0           // fixed (no zoom); close framing of the strand
+    var restDistance: Float = 3.0
     var panY: Float = 0                 // scroll position along the strand
     var panVelocity: Float = 0          // momentum after releasing a scroll (world units/sec)
     var spinVelocity: Float = 0         // momentum after releasing a twist (rad/sec)
@@ -177,7 +178,7 @@ struct GenomeDataView: View {
 
 // MARK: - Rung annotations (base-pair letters, connecting line, end dots)
 
-private struct GenomeRungAnnotations: View {
+struct GenomeRungAnnotations: View {
     let state: GenomeState
 
     // Fallback base-pair strings for rungs without a genotype marker. Cycles

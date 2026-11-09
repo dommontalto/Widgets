@@ -60,18 +60,16 @@ nonisolated class ImageNames {
     static let genomeDnaV5                 = "Genome/genome_dna_v5"
     static let genomeClockV5               = "Genome/Icons/genome_clock_v5"
     static let genomeV5                    = "Genome/genome_v5"
-    static let genomeOrderBackgroundV5     = "Genome/genome_order_background_v5"
     static let genomeOrderDnaIconV5        = "Genome/Icons/genome_order_dna_icon_v5"
+    static let genomeOrderWidgetBackgroundV5 = "Genome/Order/genome_order_widget_background_v5"
+    static let genomeOrderBadgeTextureV5 = "Genome/Order/genome_order_badge_texture_v5"
+    static let genomeOrderBadgeDnaV5 = "Genome/Order/genome_order_badge_dna_v5"
 
     // Order panel
-    static let genomeOrderDnaHeroV5        = "Genome/Order/genome_order_dna_hero_v5"
     static let genomeOrderDnaV5            = "Genome/Order/genome_order_dna_v5"
     static let genomeOrderRiskV5           = "Genome/Order/genome_order_risk_v5"
     static let genomeOrderInsightsV5       = "Genome/Order/genome_order_insights_v5"
     static let genomeOrderCancerV5         = "Genome/Order/genome_order_cancer_v5"
-    static let genomeOrderMentalV5         = "Genome/Order/genome_order_mental_v5"
-    static let genomeOrderNutritionV5      = "Genome/Order/genome_order_nutrition_v5"
-    static let genomeOrderFitnessV5        = "Genome/Order/genome_order_fitness_v5"
 
     // MARK: - Exercise
 

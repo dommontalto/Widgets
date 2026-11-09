@@ -160,7 +160,7 @@ struct SleepSummaryWidget: View {
                                     stops: [
                                         .init(color: .defaultRed, location: 0),
                                         .init(color: .defaultSkyBlue, location: 0.53),
-                                        .init(color: .defaultBrightGreen, location: 1),
+                                        .init(color: .defaultGreen, location: 1),
                                     ],
                                     startPoint: .bottom,
                                     endPoint: .top
@@ -219,7 +219,7 @@ struct SleepSummaryWidget: View {
                                         stops: [
                                             .init(color: .defaultRed, location: 0),
                                             .init(color: .defaultSkyBlue, location: 0.53),
-                                            .init(color: .defaultBrightGreen, location: 1),
+                                            .init(color: .defaultGreen, location: 1),
                                         ],
                                         startPoint: .bottom,
                                         endPoint: .top

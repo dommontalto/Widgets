@@ -19,7 +19,6 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
     let showBackButton: Bool
     let backButtonCallback: (() -> Void)?
     // Set false to let content run under the home indicator, e.g. a full-bleed map.
-    let bottomSafeArea: Bool
     let path: Binding<NavigationPath>?
     let file: String?
     let trailing: Trailing
@@ -34,7 +33,6 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
-        bottomSafeArea: Bool = true,
         path: Binding<NavigationPath>? = nil,
         file: String? = #file,
         @ToolbarContentBuilder trailing: () -> Trailing,
@@ -46,7 +44,6 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
         self.showCloseButton = showCloseButton
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
-        self.bottomSafeArea = bottomSafeArea
         self.path = path
         self.file = file
         self.trailing = trailing()
@@ -67,7 +64,6 @@ struct BrightPageSheetViewV5<Content: View, Trailing: ToolbarContent>: View {
     private var stackContent: some View {
         content
                 .padding(.horizontal, horizontalPadding)
-                .safeAreaPadding(bottomSafeArea ? .bottom : [])
                 .scrollDismissesKeyboard(.interactively)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(backgroundColor.edgesIgnoringSafeArea(.all))
@@ -126,7 +122,6 @@ extension BrightPageSheetViewV5 where Trailing == EmptyToolbarContent {
         showCloseButton: Bool = true,
         showBackButton: Bool = false,
         backButtonCallback: (() -> Void)? = nil,
-        bottomSafeArea: Bool = true,
         path: Binding<NavigationPath>? = nil,
         file: String? = #file,
         @ViewBuilder content: () -> Content
@@ -137,7 +132,6 @@ extension BrightPageSheetViewV5 where Trailing == EmptyToolbarContent {
         self.showCloseButton = showCloseButton
         self.showBackButton = showBackButton
         self.backButtonCallback = backButtonCallback
-        self.bottomSafeArea = bottomSafeArea
         self.path = path
         self.file = file
         self.trailing = EmptyToolbarContent()

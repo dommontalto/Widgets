@@ -77,18 +77,20 @@ struct HealthWidgetViewV5: View {
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.weightAppearance,
                 value: HealthWidgetDemoV5.weightPoints.last?.value ?? 0,
-                latest: HealthWidgetDemoV5.weightPoints.last?.date ?? .now
+                latest: HealthWidgetDemoV5.weightPoints.last?.date ?? .now,
+                showsTime: HealthWidgetDemoV5.weightPoints.last?.hasTime ?? true
             )
         case (.heart, .vo2Number):
             BrightLeadingNumberWidgetV5(
                 appearance: HealthWidgetDemoV5.vo2MaxAppearance,
                 value: HealthWidgetDemoV5.vo2MaxPoints.last?.value ?? 0,
-                latest: HealthWidgetDemoV5.vo2MaxPoints.last?.date ?? .now
+                latest: HealthWidgetDemoV5.vo2MaxPoints.last?.date ?? .now,
+                showsTime: HealthWidgetDemoV5.vo2MaxPoints.last?.hasTime ?? true
             )
         case (.weight, _):
             BrightDottedLineChartWidgetV5(
                 appearance: HealthWidgetDemoV5.weightAppearance,
-                subtitle: HealthWidgetDemoV5.anchor.formatted(.brightTimestamp),
+                subtitle: HealthWidgetDemoV5.anchor.formatted(.brightDate),
                 points: HealthWidgetDemoV5.weightPoints,
                 trend: .init(systemImage: "arrow.down", text: "0.36kg Weekly AVG"),
                 showsTrendLine: true,
@@ -99,7 +101,7 @@ struct HealthWidgetViewV5: View {
         case (.heart, .vo2Line):
             BrightDottedLineChartWidgetV5(
                 appearance: HealthWidgetDemoV5.vo2MaxAppearance,
-                subtitle: "Latest: \(HealthWidgetDemoV5.anchor.formatted(.brightTimestamp))",
+                subtitle: "Latest: \(HealthWidgetDemoV5.anchor.formatted(.brightDate))",
                 points: HealthWidgetDemoV5.vo2MaxPoints,
                 size: widget.size,
                 allowsSelection: allowsSelection

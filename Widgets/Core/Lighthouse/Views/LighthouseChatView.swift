@@ -43,10 +43,7 @@ struct LighthouseChatView: View {
     var isWhispering = false
 
     @State private var messages = [LighthouseChatMessage]()
-    // The tier picked from the pill; nil falls back to the stored choice, and
-    // it clears whenever the model or the selector sheet changes so the pill
-    // rereads what was saved there.
-    @State private var pickedTier: LighthouseModelTier?
+    @AppStorage("lighthouseSpeed") private var speed = LighthouseSpeed.adaptive
     @State private var customPrompts = [String]()
     @State private var replyIndex = 0
     @State private var replyTask: Task<Void, Never>?
@@ -83,7 +80,7 @@ struct LighthouseChatView: View {
             modelPicker: {
                 HStack(spacing: .spacing1x) {
                     modelPickerButton
-                    tierMenu
+                    speedMenu
                 }
                 .padding(.leading, .spacing1x)
             }
@@ -97,8 +94,6 @@ struct LighthouseChatView: View {
             }
         }
         .animation(.brightEaseInOut, value: messages.isEmpty)
-        .onChange(of: selectedModel) { _, _ in pickedTier = nil }
-        .onChange(of: showingModelSelector) { _, _ in pickedTier = nil }
         .safeAreaInset(edge: .top, spacing: .spacing0x) {
             Color.clear.frame(height: .spacing2x)
         }
@@ -165,55 +160,41 @@ struct LighthouseChatView: View {
         }
     }
 
-    private var tier: LighthouseModelTier {
-        pickedTier ?? selectedModel.selectedTier()
-    }
-
-    private var tierBinding: Binding<LighthouseModelTier> {
-        Binding(
-            get: { tier },
-            set: { picked in
-                pickedTier = picked
-                selectedModel.saveTier(picked)
-            }
-        )
-    }
-
-    // The current model's tiers, ticked on the one in use, in a pill.
-    private var tierMenu: some View {
+    private var speedMenu: some View {
         Menu {
-            Picker("Tier", selection: tierBinding) {
-                ForEach(selectedModel.tiers) { tier in
+            Picker("Speed", selection: $speed) {
+                ForEach(LighthouseSpeed.allCases) { speed in
                     Label {
-                        Text(tier.name)
-                        Text(tier.label)
+                        Text(speed.title)
+                        Text(speed.subtitle)
                     } icon: {
-                        EmptyView()
+                        Image(systemName: speed.symbol)
                     }
-                    .tag(tier)
+                    .tag(speed)
                 }
             }
         } label: {
-            tierPill
+            speedPill
         }
         .buttonStyle(.plain)
         .modifier(BrightGlassEffectV5(shape: .capsule))
-        .brightHapticV5(.light, trigger: tier)
+        .brightHapticV5(.light, trigger: speed)
     }
 
-    // Sized to the name in use, so the pill grows and shrinks with the tier.
-    private var tierPill: some View {
-        tierLabel(tier)
-            .padding(.horizontal, .spacing105x)
-            .frame(height: BrightButtonSizes.small.rawValue)
-            .compositingGroup()
-    }
+    private var speedPill: some View {
+        HStack(spacing: .spacing1x) {
+            Image(systemName: speed.symbol)
+                .font(.standard(size: BrightButtonSizes.small.defaultFontSize, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                .contentTransition(.symbolEffect(.replace))
 
-    private func tierLabel(_ tier: LighthouseModelTier) -> some View {
-        BrightText(tier.name, size: BrightButtonSizes.small.defaultFontSize)
-            .monospacedDigit()
-            .fixedSize()
-            .animation(.brightSnappy, value: tier)
+            BrightText(speed.title, size: BrightButtonSizes.small.defaultFontSize)
+        }
+        .fixedSize()
+        .animation(.brightSnappy, value: speed)
+        .padding(.horizontal, .spacing105x)
+        .frame(height: BrightButtonSizes.small.rawValue)
+        .compositingGroup()
     }
 
     // Also run on appear: the prompt can be set before the chat is on screen.

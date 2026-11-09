@@ -274,14 +274,14 @@ enum BrightWaveStyle {
 
     var curve: Gradient {
         switch self {
-        case .health: Gradient(colors: [.defaultBrightGreen, .defaultCyan])
+        case .health: Gradient(colors: [.defaultGreen, .defaultCyan])
         case .genome: Gradient(stops: [.init(color: .defaultWaveBlue, location: 0.33), .init(color: .defaultWaveMagenta, location: 1)])
         }
     }
 
     var border: [Color] {
         switch self {
-        case .health: [.defaultBrightGreen, .defaultSkyBlue]
+        case .health: [.defaultGreen, .defaultSkyBlue]
         case .genome: [.defaultWavePink, .defaultCards, .defaultWaveSky]
         }
     }

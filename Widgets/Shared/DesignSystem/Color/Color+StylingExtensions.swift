@@ -47,12 +47,12 @@ nonisolated extension Color {
     static let strengthColor: Color = .defaultPink
     static let cardioColor: Color = .defaultSkyBlueCyan
     static let defaultGreen = Color(light: .scoreGreenLight, dark: .scoreGreenDark)
-    static let swipePagePillGreen = Color(light: Color(hex: "#008130"), dark: .scoreGreenDark)
+    static let swipePagePillText = Color(light: Color(hex: "#008130"), dark: Color(hex: "#00FF5F"))
+    static let swipePagePillBackground = Color(light: Color(hex: "#00D54F"), dark: Color(hex: "#00FF5F"))
     
     static let defaultGrey = Color(hex: "#F2F2F7")
     
     static let defaultDarkGreen = Color(hex: "#1A3D45")
-    static let defaultBrightGreen = Color(hex: "#2FB360")
     
     static let defaultElectricBlue = Color(hex: "#506CFF")
     static let defaultSkyBlue = Color(hex: "#3DAEFF")

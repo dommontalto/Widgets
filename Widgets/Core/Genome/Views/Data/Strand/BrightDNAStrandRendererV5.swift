@@ -66,7 +66,6 @@ final class BrightDNAStrandRendererV5: NSObject, MTKViewDelegate {
     private let state: GenomeState
 
     private let autoSpin: Float = -0.16   // anti-clockwise, matching drag
-    private let restDistance: Float = 3.0
     private let focusDistance: Float = 2.55
     private let cameraTilt: Float = -.pi / 6
     private let cameraRoll: Float = -.pi / 6
@@ -87,7 +86,7 @@ final class BrightDNAStrandRendererV5: NSObject, MTKViewDelegate {
     private var lastFrame: CFTimeInterval = CACurrentMediaTime()
     // Entrance: the strand twists up from below the screen into place.
     private var introStart: CFTimeInterval?
-    private let introDuration: CFTimeInterval = 7
+    private let introDuration: CFTimeInterval = 11
     private let introTwist: Float = 4.2
 
     init?(view: MTKView, state: GenomeState) {
@@ -204,7 +203,7 @@ final class BrightDNAStrandRendererV5: NSObject, MTKViewDelegate {
             state.panY += (targetPan - state.panY) * ease
             state.distance += (focusDistance - state.distance) * ease
         } else {
-            state.distance += (restDistance - state.distance) * min(1, dt * 4)
+            state.distance += (state.restDistance - state.distance) * min(1, dt * 4)
             state.yaw += autoSpin * dt
 
             if state.spinVelocity != 0 {

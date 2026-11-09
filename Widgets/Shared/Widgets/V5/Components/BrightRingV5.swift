@@ -13,6 +13,7 @@ import SwiftUI
 // outer arc.
 struct BrightRingV5: View {
     enum Size {
+        case mini
         case extraSmall
         case small
         case medium
@@ -20,6 +21,7 @@ struct BrightRingV5: View {
 
         var diameter: CGFloat {
             switch self {
+            case .mini: .spacing6x
             case .extraSmall: .spacing9x
             case .small: .spacing10x
             case .medium: .spacing11x
@@ -31,7 +33,7 @@ struct BrightRingV5: View {
         // their holes still fit a label.
         var thicknessRatio: CGFloat {
             switch self {
-            case .extraSmall: 0.2
+            case .mini, .extraSmall: 0.2
             case .small: 0.23
             case .medium, .large: 0.28
             }

@@ -31,7 +31,6 @@ struct GenomeView: View {
             fakeLargeTitle: "DNA",
             pillAccessory: viewModel.isDemo ? AnyView(GenomeSampleTag()) : nil,
             verticalScrollDisabledPageIndex: GenomeViewTab.data.rawValue,
-            bottomSafeArea: false,
             backgroundColor: .defaultBackground,
             selectedIndex: Bindable(viewModel).selectedTabIndex
         ) { index in
@@ -105,7 +104,7 @@ struct GenomeView: View {
                         }
                         .buttonStyle(.plain)
                     } else {
-                        GenomeOrderStatusWidget(
+                        GenomeOrderCard(
                             status: viewModel.orderStatus,
                             order: viewModel.orderInfo
                         )

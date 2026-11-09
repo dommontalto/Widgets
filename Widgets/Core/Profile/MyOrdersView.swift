@@ -81,7 +81,7 @@ struct MyOrdersView: View {
                     showingGenome = true
                 }
             } else {
-                GenomeOrderStatusWidget(
+                GenomeOrderCard(
                     status: genomeViewModel.hasResults ? .ready : genomeViewModel.orderStatus,
                     order: genomeViewModel.hasResults ? nil : genomeViewModel.orderInfo
                 ) {

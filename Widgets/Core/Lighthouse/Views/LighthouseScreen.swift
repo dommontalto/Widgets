@@ -103,7 +103,6 @@ struct LighthouseScreen: View {
         chat
             .environment(\.brightChatTopics, BrightChatTopics(
                 topics: suggestionTopics,
-                opensOnAppear: hasConversation ? nil : screenTopic.id,
                 onSelect: { prompt in
                     hasConversation = true
                     sentPrompt = prompt
@@ -136,7 +135,8 @@ struct LighthouseScreen: View {
         BrightSuggestionTopic(
             title: Constants.suggestedTitle,
             systemImage: "sparkles",
-            prompts: Constants.demoStarters
+            prompts: Constants.demoStarters,
+            isFixed: true
         )
     }
 

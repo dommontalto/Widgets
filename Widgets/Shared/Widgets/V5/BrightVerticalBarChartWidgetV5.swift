@@ -92,7 +92,6 @@ struct BrightVerticalBarChartWidgetV5: View {
 
     @State private var plotWidth: CGFloat = 0
     @State private var selectedIndex: Int?
-    @State private var heldLabelWidth: CGFloat = 0
     // The bars rise from the floor the first time the widget shows.
     @State private var isRevealed = false
     @Namespace private var namespace
@@ -181,8 +180,9 @@ struct BrightVerticalBarChartWidgetV5: View {
             }
             .lineLimit(1)
 
-            BrightText(subtitle, size: .body2, color: .lightTextColor)
+            BrightText(selectedIndex.map(slotTitle) ?? subtitle, size: .body2, color: .lightTextColor)
                 .contentTransition(.numericText())
+                .animation(.brightSnappy, value: selectedIndex)
                 .lineLimit(1)
         }
     }
@@ -272,9 +272,6 @@ struct BrightVerticalBarChartWidgetV5: View {
 
                 slotLabels
                     .brightDebugBackgroundV5(.green)
-                    .opacity(range.isWeek || selectedIndex == nil ? .opaque : .zero)
-                    .overlay(alignment: .leading) { heldLabel }
-                    .animation(.brightEaseInOut, value: selectedIndex == nil)
             }
             .padding(.leading, showsGuides ? Constants.axisLabelWidth + .spacing1x : .spacing0x)
         }
@@ -506,30 +503,14 @@ struct BrightVerticalBarChartWidgetV5: View {
         }
     }
 
-    // The held day's letter rolls out into its name, kept inside the plot, while the rest
-    // fade: "F" becomes "Friday".
     private func weekdayLabel(_ index: Int, in size: CGSize) -> some View {
-        let isHeld = selectedIndex == index
-        let centre = slotCentre(index, in: size.width)
-        let halfWidth = heldLabelWidth / 2
-
-        return BrightText(
-            isHeld ? slotTitle(index) : weekdayInitial(index),
+        BrightText(
+            weekdayInitial(index),
             size: .body2,
-            color: isHeld || index == currentIndex ? .textColor : .lightTextColor
+            color: selectedIndex == index || (selectedIndex == nil && index == currentIndex) ? .textColor : .lightTextColor
         )
-        .contentTransition(.numericText())
         .fixedSize()
-        .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
-            if isHeld {
-                heldLabelWidth = width
-            }
-        }
-        .position(
-            x: isHeld ? min(max(centre, halfWidth), max(size.width - halfWidth, halfWidth)) : centre,
-            y: size.height / 2
-        )
-        .opacity(selectedIndex == nil || isHeld ? .opaque : .zero)
+        .position(x: slotCentre(index, in: size.width), y: size.height / 2)
     }
 
     // MARK: - Summary
@@ -755,21 +736,6 @@ extension BrightVerticalBarChartWidgetV5 {
             if index != nil {
                 BrightHaptic.light.play()
             }
-        }
-    }
-
-    // The held hour, centred over its bar but kept inside the plot. Weeks roll their own letters.
-    @ViewBuilder
-    private var heldLabel: some View {
-        if let selectedIndex, !range.isWeek {
-            let centred = slotCentre(selectedIndex, in: plotWidth) - heldLabelWidth / 2
-
-            BrightText(slotTitle(selectedIndex), size: .body5, color: .semiLightTextColor)
-                .monospacedDigit()
-                .fixedSize()
-                .onGeometryChange(for: CGFloat.self, of: \.size.width) { heldLabelWidth = $0 }
-                .offset(x: min(max(centred, 0), max(plotWidth - heldLabelWidth, 0)))
-                .transition(.opacity)
         }
     }
 

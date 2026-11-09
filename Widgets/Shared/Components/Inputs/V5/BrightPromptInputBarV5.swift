@@ -66,9 +66,12 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
     // Reported in the chat's input coordinate space, so a sent bubble can be
     // laid over the field it flies out of.
     var fieldFrame: Binding<CGRect>
+    var placeholders: [String]
     @ViewBuilder var modelPicker: ModelPicker
 
     @State private var nudge = 0
+    @State private var placeholderIndex = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var ownDictation = BrightDictation()
 
     private var dictation: BrightDictation {
@@ -86,6 +89,7 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
         onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
         dictation: BrightDictation? = nil,
         fieldFrame: Binding<CGRect> = .constant(.zero),
+        placeholders: [String] = [],
         @ViewBuilder modelPicker: () -> ModelPicker
     ) {
         _text = text
@@ -98,6 +102,7 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
         self.onAttach = onAttach
         self.sharedDictation = dictation
         self.fieldFrame = fieldFrame
+        self.placeholders = placeholders
         self.modelPicker = modelPicker()
     }
 
@@ -140,8 +145,12 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
     private var field: some View {
         ZStack(alignment: .leading) {
             if text.isEmpty {
-                BrightText("Ask Lighthouse", size: .subheading2, color: .lightTextColor)
+                BrightText(shownPlaceholder, size: .subheading2, color: .lightTextColor)
                     .lineLimit(1)
+                    .id(placeholderIndex)
+                    .transition(.push(from: .bottom).combined(with: .opacity))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
                     .allowsHitTesting(false)
                     .brightWiggleV5(trigger: nudge)
             }
@@ -155,9 +164,26 @@ struct BrightPromptInputBarV5<ModelPicker: View>: View {
         }
         .padding(.top, .spacing105x)
         .padding(.horizontal, .spacing1x)
+        .task(id: placeholders) { await rotatePlaceholders() }
         .onGeometryChange(for: CGRect.self) {
             $0.frame(in: .named(BrightChatSpace.input))
         } action: { fieldFrame.wrappedValue = $0 }
+    }
+
+    private var shownPlaceholder: String {
+        placeholderIndex == 0 || placeholders.isEmpty ? Constants.placeholder : placeholders[(placeholderIndex - 1) % placeholders.count]
+    }
+
+    private func rotatePlaceholders() async {
+        placeholderIndex = 0
+        guard !placeholders.isEmpty, !reduceMotion else { return }
+        while !Task.isCancelled {
+            do { try await Task.sleep(for: .seconds(Constants.placeholderInterval)) } catch { return }
+            guard text.isEmpty, !isFocused.wrappedValue else { continue }
+            withAnimation(.brightSnappy) {
+                placeholderIndex = (placeholderIndex + 1) % (placeholders.count + 1)
+            }
+        }
     }
 
     private var attachmentStrip: some View {
@@ -304,6 +330,8 @@ private enum Constants {
     static let maxLines = 8
     static let thumbnailSize: CGFloat = .spacing10x
     static let removeSize: CGFloat = .spacing3x
+    static let placeholder = "Ask Lighthouse"
+    static let placeholderInterval: TimeInterval = 4
 }
 
 extension BrightPromptInputBarV5 where ModelPicker == EmptyView {
@@ -317,7 +345,8 @@ extension BrightPromptInputBarV5 where ModelPicker == EmptyView {
         onStop: @escaping () -> Void,
         onAttach: @escaping (BrightChatAttachmentSource) -> Void = { _ in },
         dictation: BrightDictation? = nil,
-        fieldFrame: Binding<CGRect> = .constant(.zero)
+        fieldFrame: Binding<CGRect> = .constant(.zero),
+        placeholders: [String] = []
     ) {
         self.init(
             text: text,
@@ -329,7 +358,8 @@ extension BrightPromptInputBarV5 where ModelPicker == EmptyView {
             onStop: onStop,
             onAttach: onAttach,
             dictation: dictation,
-            fieldFrame: fieldFrame
+            fieldFrame: fieldFrame,
+            placeholders: placeholders
         ) {
             EmptyView()
         }

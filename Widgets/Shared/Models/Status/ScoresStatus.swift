@@ -32,7 +32,7 @@ enum ScoresStatus: String, TabDisplayable {
     var color: Color {
         switch self {
         case .optimal:
-            Color.defaultBrightGreen
+            Color.defaultGreen
         case .subOptimal:
             Color.defaultOrange
         case .low, .high:

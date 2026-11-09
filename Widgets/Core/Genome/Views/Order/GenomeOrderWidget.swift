@@ -9,72 +9,55 @@ struct GenomeOrderWidget: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Color.clear
-            .frame(maxWidth: .infinity)
-            .frame(height: 156)
-            .background {
-                background
-            }
-            .overlay {
-                content
-            }
-            .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
-            .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius))
-            .modifier(BrightCardModifierV5(clipContent: false))
+        HStack(spacing: .spacing2x) {
+            GenomeOrderBadge()
+
+            BrightText(Constants.title, size: .body1, color: .white)
+                .lineLimit(1)
+
+            Spacer(minLength: .spacing0x)
+
+            BrightRoundButton(systemImage: "chevron.right", size: .small) {}
+                .allowsHitTesting(false)
+        }
+        .padding(.horizontal, .spacing3x)
+        .frame(maxWidth: .infinity)
+        .frame(height: Constants.height)
+        .background { background }
+        .environment(\.colorScheme, .dark)
+        .clipShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: .cardCornerRadius, style: .continuous))
     }
 
     // Slow drift on uneven periods so the motion never visibly loops.
     private var background: some View {
         TimelineView(.animation(paused: reduceMotion)) { context in
             let t = context.date.timeIntervalSinceReferenceDate * Constants.speed
-            Image(ImageNames.genomeOrderBackgroundV5)
+            Image(ImageNames.genomeOrderWidgetBackgroundV5)
                 .resizable()
                 .scaledToFill()
-                .scaleEffect(Constants.scale + Constants.scaleSwing * sin(t / 5))
-                .rotationEffect(.degrees(Constants.rotation * sin(t / 11)))
-                .offset(x: Constants.drift * sin(t / 7), y: Constants.drift * 0.6 * cos(t / 9))
-                .overlay {
-                    LinearGradient(gradient: BrightWaveStyle.genome.curve, startPoint: .topLeading, endPoint: .bottomTrailing)
-                        .blendMode(.color)
-                }
-                .blur(radius: 10, opaque: true)
-                // The order sheet's fall-off: the waves sink into black towards the bottom.
-                .overlay {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .black.opacity(.minimalOpacity), location: 0),
-                            .init(color: .black.opacity(.veryLowOpacity), location: 0.5),
-                            .init(color: .black, location: 1.0),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
+                .frame(width: Constants.imageSize.width, height: Constants.imageSize.height)
+                .rotationEffect(.degrees(Constants.rotation + Constants.rotationSwing * sin(t / 11)))
+                .offset(
+                    x: Constants.imageOffset.width + Constants.drift * sin(t / 7),
+                    y: Constants.imageOffset.height + Constants.drift * 0.6 * cos(t / 9)
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .blur(radius: Constants.blur, opaque: true)
         }
         .background(Color.black)
     }
 
-    private var content: some View {
-        VStack(spacing: .spacing2x) {
-            Image(ImageNames.genomeOrderDnaIconV5)
-
-            BrightText(
-                "Don’t have genetic data available?\nOrder your testing kit today.",
-                size: .body1,
-                color: .white
-            )
-            .multilineTextAlignment(.center)
-        }
-        .environment(\.colorScheme, .dark)
-        .padding(.spacing4x)
-    }
-
     private enum Constants {
+        static let title = "Order a DNA test today"
+        static let height: CGFloat = 76
+        static let imageSize = CGSize(width: 369.5, height: 461.9)
+        static let imageOffset = CGSize(width: 4.5, height: 9.4)
+        static let rotation: Double = -15
+        static let rotationSwing: Double = 2
         static let speed: Double = 2
-        static let scale: CGFloat = 1.25
-        static let scaleSwing: CGFloat = 0.08
-        static let rotation: Double = 4
-        static let drift: CGFloat = .spacing4x
+        static let drift: CGFloat = .spacing1x
+        static let blur: CGFloat = 2.75
     }
 }
 

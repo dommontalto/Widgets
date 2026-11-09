@@ -169,7 +169,7 @@ struct GenomeCategoryMarker: Codable, Identifiable, Hashable {
     var scoreColor: Color {
         guard let score else { return .lightTextColor }
         if score >= 0 { return .defaultSkyBlue }
-        if score > -0.5 { return .defaultBrightGreen }
+        if score > -0.5 { return .defaultGreen }
         return .defaultBrightViolet
     }
 }
@@ -214,7 +214,7 @@ struct GenomeContributor: Codable, Identifiable, Hashable {
     var scoreColor: Color {
         guard let score else { return .lightTextColor }
         if score >= 0 { return Color.defaultSkyBlue }
-        if score > -0.5 { return Color.defaultBrightGreen }
+        if score > -0.5 { return Color.defaultGreen }
         return Color.defaultBrightViolet
     }
 }
@@ -304,7 +304,7 @@ enum GenomeEvidenceLevel: String {
 
     var color: Color {
         switch self {
-        case .high: Color.defaultBrightGreen
+        case .high: Color.defaultGreen
         case .moderate: Color.defaultYellow
         case .low: Color.defaultCyan
         case .exploratory: Color.lightTextColor

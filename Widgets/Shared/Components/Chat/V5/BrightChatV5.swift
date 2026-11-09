@@ -392,9 +392,10 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 BrightText(text, size: .subheading, color: .white)
                     .lineSpacing(.lineSpacingMedium)
                     .multilineTextAlignment(.leading)
-                    .padding(.horizontal, .spacing2x)
+                    .padding(.leading, .spacing2x)
+                    .padding(.trailing, .spacing2x + BrightBubbleShapeV5.tailWidth)
                     .padding(.vertical, .spacing105x)
-                    .modifier(BrightGlassEffectV5(shape: .roundedRect, tint: .defaultSkyBlue, interactive: false))
+                    .modifier(BrightGlassEffectV5(shape: .bubble, tint: .defaultSkyBlue, interactive: false))
             }
         }
     }
@@ -485,7 +486,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
     private var inputCard: some View {
         VStack(spacing: .spacing0x) {
             if let topics {
-                BrightSuggestionsV5(topics: topics.topics, opensOnAppear: topics.opensOnAppear, onSelect: topics.onSelect)
+                BrightSuggestionsV5(topics: topics.topics, onSelect: topics.onSelect)
                     .padding(.bottom, .spacing1x)
             } else if let suggestions, !suggestions.isEmpty {
                 suggestionChips(suggestions)
@@ -502,7 +503,8 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 onStop: onStop,
                 onAttach: onAttach,
                 dictation: dictation,
-                fieldFrame: $flight.fieldFrame
+                fieldFrame: $flight.fieldFrame,
+                placeholders: topics?.topics.flatMap(\.prompts) ?? []
             ) {
                 modelPicker
             }

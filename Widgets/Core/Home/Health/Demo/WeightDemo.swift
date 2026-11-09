@@ -41,7 +41,7 @@ extension HealthWidgetDemoV5 {
     // Each pair is how many days ago, and the reading.
     private static func readings(_ days: [(Int, Double)]) -> [BrightDottedLineChartWidgetV5.Point] {
         days.map { daysAgo, value in
-            BrightDottedLineChartWidgetV5.Point(date: anchor.addingTimeInterval(-Double(daysAgo) * 24 * 60 * 60), value: value)
+            BrightDottedLineChartWidgetV5.Point(date: anchor.addingTimeInterval(-Double(daysAgo) * 24 * 60 * 60), value: value, hasTime: false)
         }
     }
 }

@@ -12,7 +12,6 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
     let scrollableTitle: Bool
     let horizontalPadding: CGFloat
     let backgroundColor: Color?
-    let bottomSafeArea: Bool
     let infoButton: (() -> Void)?
     let file: String?
     let toolbar: Toolbar
@@ -35,7 +34,6 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
         scrollableTitle: Bool = true,
         horizontalPadding: CGFloat = .spacing3x,
         backgroundColor: Color? = nil,
-        bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
         file: String? = #file,
         @ToolbarContentBuilder toolbar: () -> Toolbar,
@@ -45,7 +43,6 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
         self.scrollableTitle = scrollableTitle
         self.horizontalPadding = horizontalPadding
         self.backgroundColor = backgroundColor
-        self.bottomSafeArea = bottomSafeArea
         self.infoButton = infoButton
         self.file = file
         self.toolbar = toolbar()
@@ -75,9 +72,7 @@ struct BrightPageViewV5<Content: View, Toolbar: ToolbarContent>: View {
             }
         }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .safeAreaPadding(bottomSafeArea ? .bottom : [])
             // Room under every page's last element, so screens don't each pad their own bottom.
-            .safeAreaPadding(.bottom, BrightPageBottomRoom.height)
             .scrollDismissesKeyboard(.interactively)
             .background((backgroundColor ?? pageBackground).edgesIgnoringSafeArea(.all))
             .onTapGesture {
@@ -124,7 +119,6 @@ extension BrightPageViewV5 where Toolbar == EmptyToolbarContent {
         scrollableTitle: Bool = true,
         horizontalPadding: CGFloat = .spacing3x,
         backgroundColor: Color? = nil,
-        bottomSafeArea: Bool = true,
         infoButton: (() -> Void)? = nil,
         file: String? = #file,
         @ViewBuilder content: () -> Content
@@ -133,7 +127,6 @@ extension BrightPageViewV5 where Toolbar == EmptyToolbarContent {
         self.scrollableTitle = scrollableTitle
         self.horizontalPadding = horizontalPadding
         self.backgroundColor = backgroundColor
-        self.bottomSafeArea = bottomSafeArea
         self.infoButton = infoButton
         self.file = file
         toolbar = EmptyToolbarContent()
@@ -171,11 +164,4 @@ struct EmptyToolbarContent: ToolbarContent {
             EmptyView()
         }
     }
-}
-
-// Added under a page's content by the page containers, on top of the page's own
-// padding. Safe-area padding rather than a content margin, so only the page's own
-// scroll view picks it up, not sideways rows nested inside it.
-enum BrightPageBottomRoom {
-    static let height: CGFloat = .spacing3x
 }

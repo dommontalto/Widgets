@@ -16,7 +16,7 @@ struct VaultDatapointsWidget: View {
     var datapoints: [VaultCompletenessDatapoint] = []
     var onExpand: (() -> Void)?
 
-    private static let topColor: Color = .defaultBrightGreen
+    private static let topColor: Color = .defaultGreen
     private static let bottomColor: Color = .defaultCyan
     private static let legendFill = LinearGradient(colors: [topColor, bottomColor], startPoint: .top, endPoint: .bottom)
 
@@ -118,7 +118,7 @@ struct VaultDatapointsWidget: View {
                     BrightRingV5(
                         progress: total == 0 ? 0 : Double(filled) / Double(total),
                         color: Self.topColor,
-                        size: .extraSmall
+                        size: .mini
                     )
 
                     HStack(alignment: .firstTextBaseline, spacing: .spacing0x) {
@@ -126,8 +126,6 @@ struct VaultDatapointsWidget: View {
                         BrightText("/\(total)", size: .standout3, color: .lightTextColor)
                     }
                 }
-
-                BrightText("Recorded datapoints", size: .body2, color: .lightTextColor)
             }
 
             Spacer()
