@@ -44,6 +44,7 @@ extension FormatStyle where Self == Date.FormatStyle {
     static var brightWeekday: Self { bright.weekday(.wide) }
     static var brightWeekdayShort: Self { bright.weekday(.abbreviated) }
     static var brightWeekdayInitial: Self { bright.weekday(.narrow) }
+    static var brightMonthInitial: Self { bright.month(.narrow) }
 
     private static var bright: Self { Date.FormatStyle(locale: .bright) }
 }

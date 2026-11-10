@@ -140,36 +140,32 @@ struct BrightChartV5v2Period: Hashable {
         }
     }
 
-    var axisDates: [Date] {
+    func isLabelled(_ slot: Date) -> Bool {
+        let calendar = Self.calendar
         switch range {
-        case .day: dates(every: 6, of: .hour)
-        case .week: dates(every: 1, of: .day)
-        case .month: dates(every: 7, of: .day)
-        case .threeMonths: dates(every: 1, of: .month)
-        case .year: dates(every: 3, of: .month)
+        case .day: return calendar.component(.hour, from: slot) % 12 == 0
+        case .week, .year: return true
+        case .month: return (calendar.component(.day, from: slot) - 1) % 7 == 0
+        case .threeMonths: return startsMonth(slot)
         }
     }
 
-    func middle(of slot: Date) -> Date {
-        let next = Self.calendar.date(byAdding: bucket, value: 1, to: slot) ?? slot
-        return slot.addingTimeInterval(next.timeIntervalSince(slot) / 2)
-    }
-
-    func slotContainsNow(_ slot: Date, now: Date = .now) -> Bool {
+    func isNow(_ slot: Date, now: Date = .now) -> Bool {
         let next = Self.calendar.date(byAdding: bucket, value: 1, to: slot) ?? slot
         return slot <= now && now < next
     }
 
-    func startsMonth(_ date: Date) -> Bool {
-        Self.calendar.dateInterval(of: .month, for: date)?.start == date
+    func startsMonth(_ slot: Date) -> Bool {
+        Self.calendar.component(.day, from: slot) == 1 && Self.calendar.component(.hour, from: slot) == 0
     }
 
-    func axisLabel(for date: Date) -> String {
+    func axisLabel(for slot: Date) -> String {
         switch range {
-        case .day: date.formatted(.brightHour)
-        case .week: date.formatted(.brightWeekdayInitial)
-        case .month: date.formatted(.brightDay)
-        case .threeMonths, .year: date.formatted(.brightMonth)
+        case .day: slot.formatted(.brightHour)
+        case .week: slot.formatted(.brightWeekdayInitial)
+        case .month: slot.formatted(.brightDay)
+        case .threeMonths: slot.formatted(.brightMonth)
+        case .year: slot.formatted(.brightMonthInitial)
         }
     }
 
@@ -186,8 +182,9 @@ struct BrightChartV5v2Period: Hashable {
 }
 
 // A detail graph that pages back through fixed calendar periods: swipe right for the
-// period before. The current period keeps its full width, so the days still to come
-// stay empty.
+// period before. The current period keeps its full width, so the slots still to come
+// stay empty. Slots are plotted by their place in the period (0, 1, 2…), so the bars
+// and the dot row beneath share one scale.
 struct BrightChartV5v2: View {
     let type: BrightChartV5v2Type
     @Binding var range: BrightChartV5v2Range
@@ -221,6 +218,8 @@ struct BrightChartV5v2: View {
         }
     }
 
+    // MARK: - Header
+
     private func header(for period: BrightChartV5v2Period) -> some View {
         let values = points(period).map(\.value)
         let average = values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
@@ -230,7 +229,7 @@ struct BrightChartV5v2: View {
                 .font(.standard(size: .body4, weight: .medium))
                 .foregroundStyle(Color.lightTextColor)
 
-            HStack(alignment: .center) {
+            HStack {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
                     Text(average.map { "\(Int($0.rounded()))" } ?? "--")
                         .font(.standard(size: .huge2, weight: .semibold))
@@ -276,126 +275,210 @@ struct BrightChartV5v2: View {
         .sensoryFeedback(.selection, trigger: range)
     }
 
+    // MARK: - Chart
+
     private func chart(for period: BrightChartV5v2Period) -> some View {
-        let values = points(period)
-        let latest = period.end > .now ? values.last : nil
-        let slotMiddles = Dictionary(uniqueKeysWithValues: period.buckets.map { (period.middle(of: $0), $0) })
+        let slots = period.buckets
+        let xDomain = xDomain(slotCount: slots.count, period: period)
 
-        return Chart {
-            switch type {
-            case .bar:
-                ForEach(values) { point in
-                    BarMark(
-                        x: .value("Date", point.date, unit: period.bucket),
-                        y: .value(unit, point.value),
-                        width: .ratio(Constants.barWidthRatio)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(colors: [tint, tint.opacity(.lowOpacity)], startPoint: .top, endPoint: .bottom)
-                    )
-                    .clipShape(Capsule())
-                }
+        return VStack(alignment: .leading, spacing: .spacing05x) {
+            HStack(spacing: .spacing1x) {
+                plot(plotted(period, slots: slots), slots: slots, period: period, xDomain: xDomain)
 
-            case .line:
-                ForEach(values) { point in
-                    AreaMark(
-                        x: .value("Date", period.middle(of: point.date)),
-                        yStart: .value("Floor", domain.lowerBound),
-                        yEnd: .value(unit, point.value)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(colors: [tint.opacity(.semiLowOpacity), .clear], startPoint: .top, endPoint: .bottom)
-                    )
-                    .interpolationMethod(.catmullRom)
-
-                    LineMark(x: .value("Date", period.middle(of: point.date)), y: .value(unit, point.value))
-                        .foregroundStyle(tint)
-                        .lineStyle(StrokeStyle(lineWidth: Constants.lineWidth))
-                        .interpolationMethod(.catmullRom)
-                }
-
-            case .dotted:
-                ForEach(values) { point in
-                    LineMark(x: .value("Date", period.middle(of: point.date)), y: .value(unit, point.value))
-                        .foregroundStyle(tint.opacity(.semiLowOpacity))
-                        .lineStyle(StrokeStyle(lineWidth: Constants.hairline))
-
-                    PointMark(x: .value("Date", period.middle(of: point.date)), y: .value(unit, point.value))
-                        .foregroundStyle(tint)
-                        .symbolSize(Constants.dotArea)
-                }
+                guideColumn
             }
 
-            if type != .bar, let latest {
-                BrightSelectorV5(date: period.middle(of: latest.date), value: latest.value)
-            }
-        }
-        .chartXScale(domain: period.start ... period.end)
-        .chartYScale(domain: domain)
-        .chartXAxis {
-            AxisMarks(values: period.range == .month ? [] : period.buckets.filter(period.startsMonth)) { _ in
-                AxisGridLine(stroke: .brightDashedLineV5)
-                    .foregroundStyle(Color.lightTextColor)
-            }
-
-            // Placed at each slot's middle rather than `centered`, which can't centre the
-            // last slot as it has no next value to measure to.
-            AxisMarks(values: Array(slotMiddles.keys)) { value in
-                AxisValueLabel(anchor: .top, collisionResolution: .disabled) {
-                    if let middle = value.as(Date.self), let slotStart = slotMiddles[middle] {
-                        slot(slotStart, in: period)
-                    }
-                }
-            }
-        }
-        .chartYAxis {
-            AxisMarks(position: .trailing, values: [domain.lowerBound, domain.upperBound]) { value in
-                AxisValueLabel {
-                    if let number = value.as(Double.self) {
-                        Text("\(Int(number))")
-                            .font(.standard(size: .body5, weight: .regular))
-                            .foregroundStyle(Color.lightTextColor)
-                            .monospacedDigit()
-                    }
-                }
-            }
+            axis(slots: slots, period: period, xDomain: xDomain)
+                .padding(.trailing, Constants.guideWidth + .spacing1x)
         }
         .padding(.top, .spacing1x)
-        .padding(.bottom, .spacing1x)
     }
 
-    // A dot under every bar, ticked taller where it carries a label, and bright for the
-    // slot holding now.
-    private func slot(_ date: Date, in period: BrightChartV5v2Period) -> some View {
-        let isLabelled = period.axisDates.contains(date)
-        let isCurrent = period.slotContainsNow(date)
+    private func plot(_ plotted: [Plotted], slots: [Date], period: BrightChartV5v2Period, xDomain: ClosedRange<Double>) -> some View {
+        Chart {
+            switch type {
+            case .bar: bars(plotted, period: period)
+            case .line: line(plotted)
+            case .dotted: dots(plotted)
+            }
 
-        return VStack(spacing: .spacing05x) {
-            Capsule()
-                .fill(isCurrent ? Color.textColor : Color.lightTextColor)
-                .frame(width: .spacing05x, height: isLabelled ? Constants.labelTickHeight : .spacing05x)
-                .frame(height: Constants.labelTickHeight)
-
-            if isLabelled {
-                Text(period.axisLabel(for: date))
-                    .font(.standard(size: period.range == .week ? .body2 : .body5, weight: .regular))
-                    .foregroundStyle(
-                        period.range == .week
-                            ? (isCurrent ? Color.textColor : Color.lightTextColor)
-                            : Color.semiLightTextColor
-                    )
-                    .lineLimit(1)
-                    .fixedSize()
+            if type != .bar, period.end > .now, let latest = plotted.last {
+                BrightSelectorV5(x: latest.x, value: latest.value)
             }
         }
+        .chartXScale(domain: xDomain)
+        .chartYScale(domain: domain)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+    }
+
+    @ChartContentBuilder
+    private func bars(_ plotted: [Plotted], period: BrightChartV5v2Period) -> some ChartContent {
+        let half: Double = barFraction(period) / 2
+        ForEach(plotted) { point in
+            bar(point, half: half)
+        }
+    }
+
+    private func bar(_ point: Plotted, half: Double) -> some ChartContent {
+        RectangleMark(
+            xStart: .value("Start", point.x - half),
+            xEnd: .value("End", point.x + half),
+            yStart: .value("Floor", domain.lowerBound),
+            yEnd: .value("Value", point.value)
+        )
+        .foregroundStyle(tint)
+        .clipShape(Capsule())
+    }
+
+    @ChartContentBuilder
+    private func line(_ plotted: [Plotted]) -> some ChartContent {
+        let fill = LinearGradient(colors: [tint.opacity(.semiLowOpacity), .clear], startPoint: .top, endPoint: .bottom)
+        ForEach(plotted) { point in
+            AreaMark(x: .value("Slot", point.x), yStart: .value("Floor", domain.lowerBound), yEnd: .value("Value", point.value))
+                .foregroundStyle(fill)
+                .interpolationMethod(.catmullRom)
+        }
+        ForEach(plotted) { point in
+            LineMark(x: .value("Slot", point.x), y: .value("Value", point.value))
+                .foregroundStyle(tint)
+                .lineStyle(StrokeStyle(lineWidth: Constants.lineWidth))
+                .interpolationMethod(.catmullRom)
+        }
+    }
+
+    @ChartContentBuilder
+    private func dots(_ plotted: [Plotted]) -> some ChartContent {
+        ForEach(plotted) { point in
+            LineMark(x: .value("Slot", point.x), y: .value("Value", point.value))
+                .foregroundStyle(tint.opacity(.semiLowOpacity))
+                .lineStyle(StrokeStyle(lineWidth: Constants.hairline))
+        }
+        ForEach(plotted) { point in
+            PointMark(x: .value("Slot", point.x), y: .value("Value", point.value))
+                .symbol {
+                    Circle()
+                        .fill(tint)
+                        .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
+                }
+        }
+    }
+
+    // The top of the scale and zero, at the plot's two ends.
+    private var guideColumn: some View {
+        VStack(alignment: .leading) {
+            guideLabel(domain.upperBound)
+            Spacer(minLength: .spacing0x)
+            guideLabel(domain.lowerBound)
+        }
+        .frame(width: Constants.guideWidth, alignment: .leading)
+    }
+
+    private func guideLabel(_ value: Double) -> some View {
+        Text("\(Int(value))")
+            .font(.standard(size: .body5, weight: .regular))
+            .foregroundStyle(Color.lightTextColor)
+            .monospacedDigit()
+    }
+
+    // A dot under every slot, ticked taller where it carries a label, laid out on the
+    // plot's own scale.
+    private func axis(slots: [Date], period: BrightChartV5v2Period, xDomain: ClosedRange<Double>) -> some View {
+        let isLettered = period.range == .week || period.range == .year
+        let isHours = period.range == .day
+
+        return VStack(alignment: .leading, spacing: .spacing05x) {
+            GeometryReader { geometry in
+                ForEach(slots.indices, id: \.self) { index in
+                    tick(slots[index], period: period)
+                        .position(x: x(of: index, in: xDomain, width: geometry.size.width), y: Constants.labelTickHeight / 2)
+                }
+            }
+            .frame(height: Constants.labelTickHeight)
+
+            Text("M")
+                .font(.standard(size: isLettered ? .body2 : .body5, weight: .regular))
+                .hidden()
+                .frame(maxWidth: .infinity)
+                .overlay {
+                    GeometryReader { geometry in
+                        ForEach(slots.indices.filter { period.isLabelled(slots[$0]) }, id: \.self) { index in
+                            label(slots[index], period: period, isLettered: isLettered)
+                                // The hours read rightwards from their tick; the rest centre on it.
+                                .frame(width: isHours ? .spacing05x : nil, alignment: .leading)
+                                .position(x: x(of: index, in: xDomain, width: geometry.size.width), y: geometry.size.height / 2)
+                        }
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func tick(_ slot: Date, period: BrightChartV5v2Period) -> some View {
+        let isLabelled = period.isLabelled(slot)
+        let isNow = period.isNow(slot)
+
+        if period.range == .year {
+            Circle()
+                .fill(isNow ? Color.textColor : Color.lightTextColor)
+                .frame(width: .spacing1x, height: .spacing1x)
+        } else if period.range == .day {
+            Capsule()
+                .fill(isNow ? Color.defaultCyan : isLabelled ? Color.textColor : Color.lightTextColor)
+                .frame(width: .spacing05x, height: isLabelled || isNow ? Constants.labelTickHeight : .spacing05x)
+        } else {
+            Capsule()
+                .fill(isNow ? Color.textColor : Color.lightTextColor)
+                .frame(width: .spacing05x, height: isLabelled ? Constants.labelTickHeight : .spacing05x)
+        }
+    }
+
+    private func label(_ slot: Date, period: BrightChartV5v2Period, isLettered: Bool) -> some View {
+        Text(period.axisLabel(for: slot))
+            .font(.standard(size: isLettered ? .body2 : .body5, weight: .regular))
+            .foregroundStyle(isLettered ? (period.isNow(slot) ? Color.textColor : Color.lightTextColor) : Color.semiLightTextColor)
+            .lineLimit(1)
+            .fixedSize()
+    }
+
+    // MARK: - Layout
+
+    private struct Plotted: Identifiable {
+        let x: Double
+        let value: Double
+        var id: Double { x }
+    }
+
+    private func plotted(_ period: BrightChartV5v2Period, slots: [Date]) -> [Plotted] {
+        let indices = Dictionary(uniqueKeysWithValues: slots.enumerated().map { ($1, $0) })
+        return points(period).compactMap { point in
+            indices[point.date].map { Plotted(x: Double($0), value: point.value) }
+        }
+    }
+
+    private func barFraction(_ period: BrightChartV5v2Period) -> Double {
+        period.range == .day ? Constants.hourBarFraction : Constants.dayBarFraction
+    }
+
+    // Runs from the first bar's leading edge to the last one's trailing edge (or the first
+    // point to the last), so the plot lines up with the header above it.
+    private func xDomain(slotCount: Int, period: BrightChartV5v2Period) -> ClosedRange<Double> {
+        let inset = type == .bar ? barFraction(period) / 2 : 0
+        return -inset ... Double(max(slotCount - 1, 1)) + inset
+    }
+
+    private func x(of index: Int, in xDomain: ClosedRange<Double>, width: CGFloat) -> CGFloat {
+        (Double(index) - xDomain.lowerBound) / (xDomain.upperBound - xDomain.lowerBound) * width
     }
 
     private enum Constants {
-        static let chartHeight: CGFloat = 280
-        static let barWidthRatio: CGFloat = 0.6
-        static let lineWidth: CGFloat = 1.5
+        static let chartHeight: CGFloat = 300
+        static let guideWidth: CGFloat = 26
+        static let hourBarFraction: CGFloat = 0.6
+        static let dayBarFraction: CGFloat = 0.48
+        static let lineWidth: CGFloat = 1
         static let hairline: CGFloat = 0.5
-        static let dotArea: CGFloat = 28
+        static let dotDiameter: CGFloat = 7
         static let labelTickHeight: CGFloat = 7
     }
 }

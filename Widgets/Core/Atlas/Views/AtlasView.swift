@@ -43,7 +43,7 @@ struct AtlasView: View {
         switch type {
         case .bar: .defaultGreen
         case .line: .defaultRed
-        case .dotted: .defaultCyan
+        case .dotted: .defaultRed
         }
     }
 }
