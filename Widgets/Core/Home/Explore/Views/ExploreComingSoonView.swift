@@ -72,7 +72,7 @@ struct ExploreComingSoonView: View {
         static let sandSize: CGFloat = .spacing10x * 3
         static let sandGrains: Float = 40000
         static let canvasScale: Float = 1.8
-        static let dockClearance: CGFloat = .spacing1x
+        static let dockClearance: CGFloat = .spacing4x
     }
 }
 

@@ -10,6 +10,7 @@ import SwiftUI
 extension EnvironmentValues {
     // Bumping it plays every widget's reveal again.
     @Entry var brightRevealReplay = 0
+    @Entry var brightRevealHeld = false
 }
 
 // Turns `isRevealed` on with a bounce the first time a widget appears, so it can grow its
@@ -20,11 +21,16 @@ private struct BrightRevealV5: ViewModifier {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.brightRevealReplay) private var replay
+    @Environment(\.brightRevealHeld) private var isHeld
 
     func body(content: Content) -> some View {
         content
             .onAppear {
-                guard !isRevealed else { return }
+                guard !isRevealed, !isHeld else { return }
+                reveal()
+            }
+            .onChange(of: isHeld) { _, held in
+                guard !held, !isRevealed else { return }
                 reveal()
             }
             .onChange(of: replay) {

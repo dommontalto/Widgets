@@ -259,6 +259,10 @@ struct HealthWidgetGridV5: View {
     @State private var containerWidth: CGFloat = 0
     @State private var viewport: CGRect = .zero
     @State private var jigglePhase = false
+    @State private var shownCount = 0
+    @State private var hasShownAll = false
+    @State private var isRampReleased = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Resets when the touch ends or is cancelled; `onEnded` only fires on the first.
     @GestureState private var isHoldingResizeHandle = false
 
@@ -271,7 +275,9 @@ struct HealthWidgetGridV5: View {
 
         ZStack(alignment: .topLeading) {
             ForEach(Array(layout.widgets.enumerated()), id: \.element.id) { index, widget in
-                tile(widget, index: index, cellSize: cellSize)
+                if hasShownAll || reduceMotion || index < shownCount {
+                    tile(widget, index: index, cellSize: cellSize)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -286,6 +292,18 @@ struct HealthWidgetGridV5: View {
             return bounds.offsetBy(dx: origin.x, dy: origin.y)
         } action: {
             viewport = $0
+        }
+        .task {
+            try? await Task.sleep(for: Constants.entranceDelay)
+            for count in 1 ... max(layout.widgets.count, 1) {
+                withAnimation(Constants.entrance) {
+                    shownCount = count
+                }
+                try? await Task.sleep(for: Constants.entranceStagger)
+            }
+            hasShownAll = true
+            try? await Task.sleep(for: Constants.entranceSettle)
+            isRampReleased = true
         }
         .onChange(of: isHoldingResizeHandle) { _, isHolding in
             if !isHolding {
@@ -308,6 +326,13 @@ struct HealthWidgetGridV5: View {
         }
     }
 
+    private func entranceEdge(for widget: HealthWidgetItemV5, column: Int) -> Edge {
+        if widget.size.columns >= HealthWidgetGridMetricsV5.columns {
+            return .bottom
+        }
+        return column == 0 ? .leading : .trailing
+    }
+
     private var isJiggling: Bool {
         editor.isEditing && !editor.isShowingSheet
     }
@@ -326,6 +351,7 @@ struct HealthWidgetGridV5: View {
             let growsLeading = resize?.growsLeading ?? (position.col > 0)
 
             HealthWidgetViewV5(widget: widget, allowsSelection: !editor.isEditing)
+                .environment(\.brightRevealHeld, !isRampReleased && !reduceMotion)
                 .frame(width: frame.width, height: frame.height)
                 .contentShape(.rect(cornerRadius: .cardCornerRadius))
                 .overlay(alignment: .topTrailing) {
@@ -345,7 +371,14 @@ struct HealthWidgetGridV5: View {
                 .offset(x: origin.x, y: origin.y)
                 .zIndex(drag == nil && resize == nil ? 0 : 1)
                 .animation(drag == nil && resize == nil ? .brightSpring : nil, value: position)
-                .transition(.scale(scale: Constants.removedScale).combined(with: .opacity))
+                .transition(
+                    .asymmetric(
+                        insertion: hasShownAll
+                            ? .scale(scale: Constants.removedScale).combined(with: .opacity)
+                            : .move(edge: entranceEdge(for: widget, column: position.col)).combined(with: .opacity),
+                        removal: .scale(scale: Constants.removedScale).combined(with: .opacity)
+                    )
+                )
                 .onTapGesture {
                     guard editor.isEditing, editor.dragging == nil, editor.resizing == nil else { return }
                     BrightHaptic.medium.play()
@@ -412,6 +445,10 @@ struct HealthWidgetGridV5: View {
     }
 
     private enum Constants {
+        static let entranceDelay: Duration = .milliseconds(200)
+        static let entranceStagger: Duration = .milliseconds(60)
+        static let entrance: Animation = .spring(response: 0.5, dampingFraction: 0.82)
+        static let entranceSettle: Duration = .milliseconds(450)
         static let liftedScale: CGFloat = 1.05
         static let removedScale: CGFloat = 0.92
         static let liftedShadowRadius: CGFloat = 10
