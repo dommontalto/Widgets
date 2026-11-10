@@ -157,6 +157,7 @@ struct LighthouseChatView: View {
                 .scaledToFill()
                 .frame(width: BrightButtonSizes.small.rawValue, height: BrightButtonSizes.small.rawValue)
                 .clipShape(Circle())
+                .lighthouseModelSheen(selectedModel.tint)
         }
     }
 

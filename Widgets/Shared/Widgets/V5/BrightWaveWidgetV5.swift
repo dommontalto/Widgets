@@ -13,6 +13,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
     let emptySubtitle: String
     var unit = "percentile"
     var style = BrightWaveStyle.health
+    var comparison: BrightWaveComparison?
     @ViewBuilder var accessory: () -> Accessory
 
     @State private var heldFraction: Double?
@@ -40,7 +41,13 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
             chart
                 .padding(.top, .spacing2x)
 
-            if hasData, delta != 0 {
+            if let comparison {
+                if hasData {
+                    comparisonRow(comparison)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, .spacing4x)
+                }
+            } else if hasData, delta != 0 {
                 deltaRow
                     .frame(maxWidth: .infinity)
                     .padding(.top, .spacing4x)
@@ -59,10 +66,18 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .spacing1x) {
-            BrightText(title, size: .heading, weight: .medium)
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: .spacing2x) {
+                BrightText(title, size: .heading, weight: .medium)
+                    .lineLimit(1)
 
-            if hasData {
+                if comparison != nil, hasData, delta != 0 {
+                    Spacer(minLength: .spacing0x)
+
+                    deltaRow
+                }
+            }
+
+            if hasData, comparison == nil {
                 HStack(spacing: .spacing1x) {
                     Image(systemName: "checkmark.circle.fill")
                         .symbolRenderingMode(.palette)
@@ -78,7 +93,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
                     }
                 }
                 .animation(.brightEaseInOut, value: shownValue)
-            } else {
+            } else if !hasData {
                 BrightText(emptySubtitle, size: .body1, color: .lightTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -96,7 +111,7 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let userX = isPlaced ? xPosition(userFraction, width: width) : width
-            let lineX = isPlaced ? xPosition(heldFraction ?? userFraction, width: width) : width
+            let lineX = !hasData ? 0 : isPlaced ? xPosition(heldFraction ?? userFraction, width: width) : width
 
             VStack(spacing: .spacing0x) {
                 youMarker
@@ -150,19 +165,17 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
         return ZStack(alignment: .leading) {
             Color.textColor.opacity(.finalBossUltraLowOpacity)
 
-            // Blurred up to the line and sharp after it; until the result is
-            // placed the line waits at the trailing edge, so it opens leftward.
             Group {
                 BellCurve()
                     .fill(fill)
-                    .blur(radius: WaveConstants.glowBlur)
-                    .opacity(.lowOpacity)
                     .mask(alignment: .leading) {
                         Rectangle().frame(width: max(lineX, 0))
                     }
 
                 BellCurve()
                     .fill(fill)
+                    .blur(radius: WaveConstants.glowBlur)
+                    .opacity(.lowOpacity)
                     .mask(alignment: .trailing) {
                         Rectangle().frame(width: max(width - lineX, 0))
                     }
@@ -210,6 +223,25 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
                 .monospacedDigit()
                 .contentTransition(.numericText())
         }
+    }
+
+    private func comparisonRow(_ comparison: BrightWaveComparison) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+            Image(systemName: "heart.fill")
+                .font(.standardSFPro(size: .body2, weight: .regular))
+                .foregroundStyle(Color.defaultRed)
+
+            BrightText(comparison.lead, size: .body2, color: .lightTextColor)
+
+            BrightText("\(shownValue)%", size: .body2)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            BrightText(comparison.trail, size: .body2, color: .lightTextColor)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .animation(.brightEaseInOut, value: shownValue)
     }
 
     private func xPosition(_ fraction: Double, width: CGFloat) -> CGFloat {
@@ -263,9 +295,24 @@ struct BrightWaveWidgetV5<Accessory: View>: View {
 }
 
 extension BrightWaveWidgetV5 where Accessory == EmptyView {
-    init(title: String, fraction: Double?, delta: Double = 0, emptySubtitle: String, unit: String = "percentile", style: BrightWaveStyle = .health) {
-        self.init(title: title, fraction: fraction, delta: delta, emptySubtitle: emptySubtitle, unit: unit, style: style) { EmptyView() }
+    init(
+        title: String,
+        fraction: Double?,
+        delta: Double = 0,
+        emptySubtitle: String,
+        unit: String = "percentile",
+        style: BrightWaveStyle = .health,
+        comparison: BrightWaveComparison? = nil
+    ) {
+        self.init(title: title, fraction: fraction, delta: delta, emptySubtitle: emptySubtitle, unit: unit, style: style, comparison: comparison) {
+            EmptyView()
+        }
     }
+}
+
+struct BrightWaveComparison {
+    let lead: String
+    let trail: String
 }
 
 enum BrightWaveStyle {

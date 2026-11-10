@@ -208,7 +208,7 @@ struct GenomeOrderPurchaseButton: View {
     @Bindable var viewModel: GenomeOrderViewModel
 
     var body: some View {
-        BrightPillButton("Order", systemImage: "arrow.right", color: .defaultGreen, buttonSize: .large, isLoading: viewModel.isStartingCheckout) {
+        BrightPillButton("Order", systemImage: "arrow.right", buttonSize: .large, selectedTint: .swipePagePillText, selectedFill: .swipePagePillBackground, isLoading: viewModel.isStartingCheckout) {
             viewModel.handlePurchase()
         }
     }

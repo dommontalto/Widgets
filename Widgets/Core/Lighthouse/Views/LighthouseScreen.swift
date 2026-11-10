@@ -154,8 +154,8 @@ struct LighthouseScreen: View {
                 imageName: ImageNames.lighthouseWhisperV5,
                 size: .large,
                 fontSize: .huge,
-                color: isWhispering ? .defaultSkyBlue : nil,
-                imageColor: isWhispering ? .white : nil,
+                color: isWhispering ? .defaultGreen : nil,
+                imageColor: isWhispering ? .black : nil,
                 onTapCallback: toggleWhisper
             )
             .accessibilityLabel(Constants.whisperTitle)

@@ -30,7 +30,7 @@ struct LighthouseThinkingInline: View {
             header
 
             VStack(alignment: .leading, spacing: .spacing0x) {
-                if isExpanded {
+                if isExpanded, isFinished {
                     stepList
                         .transition(.softDrop)
                 }
@@ -53,8 +53,6 @@ struct LighthouseThinkingInline: View {
         }
     }
 
-    // While it thinks, one step at a time in the same spot, each new one replacing the last. Finished and opened,
-    // every step it took, one under the other.
     private var stepList: some View {
         VStack(alignment: .leading, spacing: .spacing0x) {
             Group {
@@ -64,13 +62,6 @@ struct LighthouseThinkingInline: View {
                             chip(step, isCurrent: false)
                         }
                     }
-                } else if let current = steps.prefix(revealedCount).last {
-                    ZStack(alignment: .leading) {
-                        chip(current, isCurrent: true)
-                            .id(current.id)
-                            .transition(.opacity.combined(with: .softBlur))
-                    }
-                    .animation(.brightSpring, value: current.id)
                 }
             }
             .padding(.leading, Constants.iconInset)
@@ -143,8 +134,14 @@ struct LighthouseThinkingInline: View {
     }
 
     private var thinkingTitle: some View {
-        BrightText(Constants.thinkingTitle, size: .body1)
-            .brightShimmerV5()
+        let current = steps.prefix(revealedCount).last
+        return ZStack(alignment: .leading) {
+            BrightText(current?.title ?? Constants.thinkingTitle, size: .body1)
+                .brightShimmerV5()
+                .id(current?.id)
+                .transition(.opacity.combined(with: .softBlur))
+        }
+        .animation(.brightSpring, value: current?.id)
     }
 
     private func chip(_ step: LighthouseThoughtStep, isCurrent: Bool) -> some View {

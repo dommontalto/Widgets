@@ -43,6 +43,8 @@ struct VaultView: View {
     @State private var detailData: VaultMarkerDetailData?
     @State private var viewModel = VaultViewModel()
     @State private var openedPage: VaultPage?
+    @State private var genomeViewModel = GenomeViewModel()
+    @State private var genomeOrderViewModel = GenomeOrderViewModel()
 
     var body: some View {
         BrightSwipePageViewV5(
@@ -82,6 +84,12 @@ struct VaultView: View {
         .onAppear { viewModel.loadIfNeeded() }
         .sheet(item: $detailData) { data in
             VaultMarkerDetailSheet(data: data)
+        }
+        .sheet(
+            isPresented: $genomeOrderViewModel.showingOrderSheet,
+            onDismiss: { genomeOrderViewModel.handleOrderSheetDismissed() }
+        ) {
+            GenomeOrderSheet(viewModel: genomeOrderViewModel)
         }
         .sheet(item: $openedPage) { page in
             switch page {
@@ -165,6 +173,13 @@ struct VaultView: View {
                 VaultDatapointsWidget(datapoints: viewModel.completeness?.datapoints ?? []) {
                     openedPage = .datapoints
                 }
+            }
+
+            if genomeViewModel.orderStatus == .none, !genomeViewModel.hasResults {
+                Button { genomeOrderViewModel.handleOrderTapped() } label: {
+                    GenomeOrderWidget()
+                }
+                .buttonStyle(.plain)
             }
 
             if !viewModel.documents.isEmpty {

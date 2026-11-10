@@ -103,6 +103,7 @@ struct LighthouseModelWheel: View {
                     .lineLimit(1)
 
                 icon(of: choice)
+                    .lighthouseModelSheen(choice.model?.tint ?? .clear)
                     .modifier(LighthouseModelGlow(color: choice.model?.tint ?? .clear, amount: isSelected ? glow : .zero))
                     .frame(width: Constants.tileWidth, height: Constants.tileWidth)
                     .opacity(isSelected ? .opaque : .lowOpacity)

@@ -84,6 +84,7 @@ struct LighthouseMenuView: View {
                     .scaledToFill()
                     .frame(width: Constants.tierImageSize, height: Constants.tierImageSize)
                     .clipShape(Circle())
+                    .lighthouseModelSheen(model.tint)
 
                 BrightText(model.selectedTier().name, size: .heading, color: .semiLightTextColor)
             }
@@ -284,9 +285,9 @@ struct LighthouseMenuView: View {
             BrightPillButton(
                 Constants.newChatTitle,
                 systemImage: "bubble.left",
-                color: .defaultSkyBlue,
-                textColor: .white,
                 buttonSize: .large,
+                selectedTint: .swipePagePillText,
+                selectedFill: .swipePagePillBackground,
                 onTapCallback: onNewChat
             )
         }

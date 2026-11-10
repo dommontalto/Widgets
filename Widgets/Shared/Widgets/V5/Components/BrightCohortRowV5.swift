@@ -8,6 +8,7 @@ import SwiftUI
 struct BrightCohortRowV5: View {
     @Binding var gender: String
     @Binding var ageRange: String
+    var cohortSize: Int?
 
     static let genderOptions = ["men", "women"]
     static let ageOptions = ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
@@ -19,12 +20,18 @@ struct BrightCohortRowV5: View {
                 .foregroundStyle(Color.textColor, Color.lightTextColor, Color.textColor.opacity(.semiLowOpacity))
                 .font(.standardSFPro(size: .subheading2, weight: .regular))
 
-            BrightText("Cohort:", size: .body2, color: .semiLightTextColor)
-                .lineLimit(1)
-
             menu(selection: $gender, options: Self.genderOptions) { $0 == "women" ? "Female" : "Male" }
 
             menu(selection: $ageRange, options: Self.ageOptions) { $0.replacingOccurrences(of: "-", with: "–") }
+
+            if let cohortSize {
+                BrightText("Cohort: \(cohortSize.formatted()) users", size: .body2, color: .lightTextColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .animation(.brightBouncy, value: cohortSize)
+            }
         }
     }
 
@@ -44,7 +51,7 @@ struct BrightCohortRowV5: View {
                 }
             }
         } label: {
-            BrightText(title(selection.wrappedValue), size: .body4)
+            BrightText(title(selection.wrappedValue), size: .body3)
                 .contentTransition(.numericText())
                 .lineLimit(1)
                 .padding(.horizontal, .spacing105x)
@@ -59,7 +66,7 @@ struct BrightCohortRowV5: View {
 }
 
 #Preview {
-    BrightCohortRowV5(gender: .constant("men"), ageRange: .constant("25-34"))
+    BrightCohortRowV5(gender: .constant("men"), ageRange: .constant("25-34"), cohortSize: 12_540)
         .padding()
         .background(Color.defaultBackground)
 }

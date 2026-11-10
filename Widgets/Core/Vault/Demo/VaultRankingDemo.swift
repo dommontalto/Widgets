@@ -16,7 +16,8 @@ extension VaultRankingData {
             VaultRankingCohortAxis(axis: "age", value: "18-24"),
         ],
         histogramBinIndex: nil,
-        summaryText: nil
+        summaryText: nil,
+        cohortNAvg: 12_540
     )
 
     static func demo(cohort: String) -> VaultRankingData {
@@ -26,7 +27,8 @@ extension VaultRankingData {
             delta7d: Double(seed % 61) / 10 - 3,
             cohortAxes: nil,
             histogramBinIndex: nil,
-            summaryText: nil
+            summaryText: nil,
+            cohortNAvg: 8_000 + seed % 9_000
         )
     }
 }

@@ -125,8 +125,6 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
     // TODO: Decide whether to delete custom prompt creation.
 //    @State private var isAddingPrompt = false
 //    @State private var newPromptText = ""
-    @State private var chipsScrollProgress: CGFloat = 0
-    @State private var chipsScrollable = false
 //    @FocusState private var isNewPromptFocused: Bool
     // True when the drag in flight began with the keyboard up, so the swipe
     // that puts it away can't also dismiss the chat.
@@ -604,39 +602,7 @@ struct BrightChatV5<Payload, Response: View, ModelPicker: View>: View {
                 .padding(.bottom, .spacing2x)
             }
             .scrollClipDisabled()
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
-                let maxOffset = max(0, geo.contentSize.width - geo.containerSize.width)
-                guard maxOffset > 0 else { return 0 }
-                return min(1, max(0, geo.contentOffset.x / maxOffset))
-            } action: { _, newValue in
-                chipsScrollProgress = newValue
-            }
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                geo.contentSize.width > geo.containerSize.width
-            } action: { _, newValue in
-                chipsScrollable = newValue
-            }
-            .mask {
-                HStack(spacing: .spacing0x) {
-                    LinearGradient(
-                        stops: [
-                            .init(
-                                color: .black.opacity(chipsScrollable ? (1.0 - min(
-                                    CGFloat(1.0),
-                                    chipsScrollProgress * 6.0
-                                )) : 1.0),
-                                location: 0
-                            ),
-                            .init(color: .black, location: 1),
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(width: Constants.chipsFadeWidth)
-
-                    Color.black
-                }
-            }
+            .brightHorizontalBlurV5()
         }
     }
 
@@ -715,7 +681,6 @@ private enum Constants {
     static let sentImageSize: CGFloat = .spacing12x + .spacing8x
     static let exampleSwapEvery: TimeInterval = 3
 
-    static let chipsFadeWidth: CGFloat = 30
 //    static let newPromptMinWidth: CGFloat = 120
     static let dismissDragDistance: CGFloat = 20
     static let dismissThreshold: CGFloat = 50

@@ -13,6 +13,7 @@ struct VaultRankingData {
     let cohortAxes: [VaultRankingCohortAxis]?
     let histogramBinIndex: Int?
     let summaryText: String?
+    var cohortNAvg: Int?
 }
 
 struct VaultRankingCohortAxis {

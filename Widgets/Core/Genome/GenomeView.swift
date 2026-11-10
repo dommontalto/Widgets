@@ -94,7 +94,8 @@ struct GenomeView: View {
                     title: "Genetic Risk Percentile",
                     fraction: viewModel.riskPercentile.map { Double($0.value) / 100 },
                     emptySubtitle: "Your percentile appears once your results are in",
-                    style: .genome
+                    style: .genome,
+                    comparison: BrightWaveComparison(lead: "Your genetic risk is higher than", trail: "of people")
                 )
 
                 if !viewModel.hasResults {

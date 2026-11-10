@@ -32,7 +32,8 @@ struct GenomeCategoryView: View {
                         title: "Genetic Risk Percentile",
                         fraction: Double(percentileBar.value) / 100,
                         emptySubtitle: "",
-                        style: .genome
+                        style: .genome,
+                        comparison: BrightWaveComparison(lead: "Your genetic risk is higher than", trail: "of people")
                     )
 
                     if let description = percentileBar.displayDescription {

@@ -40,6 +40,7 @@ struct BrightSuggestionsV5: View {
         }
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, .spacing3x, for: .scrollContent)
+        .brightHorizontalBlurV5()
         .onAppear {
             for topic in topics where shown[topic.id] == nil {
                 deal(from: topic)
@@ -64,7 +65,7 @@ struct BrightSuggestionsV5: View {
                 .menuActionDismissBehavior(.disabled)
             }
         } label: {
-            BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {}
+            BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true, selectedTint: .swipePagePillText, selectedFill: .swipePagePillBackground) {}
                 .allowsHitTesting(false)
         }
         .menuOrder(.fixed)

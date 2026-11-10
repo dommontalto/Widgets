@@ -15,6 +15,7 @@ struct VaultSummaryWidget: View {
     @State private var ageRange = "18-24"
     @State private var topPct: Double?
     @State private var delta7d: Double = 0
+    @State private var cohortSize: Int?
 
     private var fraction: Double? {
         (topPct ?? ranking?.topPct ?? fallbackTopPercent).map { 1 - $0 / 100 }
@@ -25,9 +26,10 @@ struct VaultSummaryWidget: View {
             title: "Global Health Ranking",
             fraction: fraction,
             delta: delta7d,
-            emptySubtitle: "Your ranking appears once your data syncs"
+            emptySubtitle: "Your ranking appears once your data syncs",
+            comparison: BrightWaveComparison(lead: "Your health is better than", trail: "of users")
         ) {
-            BrightCohortRowV5(gender: $gender, ageRange: $ageRange)
+            BrightCohortRowV5(gender: $gender, ageRange: $ageRange, cohortSize: cohortSize)
         }
         .onChange(of: ranking?.topPct, initial: true) { _, _ in
             seedFromRanking()
@@ -40,6 +42,7 @@ struct VaultSummaryWidget: View {
         guard let ranking else { return }
         topPct = ranking.topPct
         delta7d = ranking.delta7d ?? 0
+        cohortSize = ranking.cohortNAvg
         for axis in ranking.cohortAxes ?? [] {
             switch axis.axis?.lowercased() {
             case "sex":
@@ -63,6 +66,7 @@ struct VaultSummaryWidget: View {
         withAnimation(.brightBouncy) {
             topPct = result.topPct ?? topPct
             delta7d = result.delta7d ?? delta7d
+            cohortSize = result.cohortNAvg ?? cohortSize
         }
     }
 }
