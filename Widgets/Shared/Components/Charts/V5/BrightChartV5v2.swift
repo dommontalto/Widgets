@@ -51,6 +51,17 @@ enum BrightChartV5v2Range: String, CaseIterable, Identifiable {
         }
     }
 
+    // What the trend beside the range pill compares against, for the current period.
+    var trendSuffix: String {
+        switch self {
+        case .day: "TODAY"
+        case .week: "THIS WEEK"
+        case .month: "THIS MONTH"
+        case .threeMonths: "3 MONTHS"
+        case .year: "THIS YEAR"
+        }
+    }
+
     var pageCount: Int {
         switch self {
         case .day: 30
@@ -159,6 +170,14 @@ struct BrightChartV5v2Period: Hashable {
         Self.calendar.component(.day, from: slot) == 1 && Self.calendar.component(.hour, from: slot) == 0
     }
 
+    func slotTitle(_ slot: Date) -> String {
+        switch range {
+        case .day: slot.formatted(.brightHour)
+        case .week, .month, .threeMonths: slot.formatted(.brightDate)
+        case .year: slot.formatted(.brightMonth)
+        }
+    }
+
     func axisLabel(for slot: Date) -> String {
         switch range {
         case .day: slot.formatted(.brightHour)
@@ -197,6 +216,7 @@ struct BrightChartV5v2: View {
     let points: (BrightChartV5v2Period) -> [BrightChartV5v2Point]
 
     @State private var offset = 0
+    @State private var selectedIndex: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -215,23 +235,33 @@ struct BrightChartV5v2: View {
         }
         .onChange(of: range) {
             offset = 0
+            selectedIndex = nil
+        }
+        .onChange(of: offset) {
+            selectedIndex = nil
+        }
+        .onChange(of: type) {
+            selectedIndex = nil
         }
     }
 
     // MARK: - Header
 
     private func header(for period: BrightChartV5v2Period) -> some View {
-        let values = points(period).map(\.value)
-        let average = values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
+        let average = average(of: period)
+        let slots = period.buckets
+        let held = selectedIndex.flatMap { index in plotted(period, slots: slots).first { Int($0.x) == index } }
+        let shown = held?.value ?? average
 
         return VStack(alignment: .leading, spacing: .spacing05x) {
-            Text("Average")
+            Text(held.map { period.slotTitle(slots[Int($0.x)]) } ?? "Average")
                 .font(.standard(size: .body4, weight: .medium))
                 .foregroundStyle(Color.lightTextColor)
+                .contentTransition(.numericText())
 
             HStack {
                 HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
-                    Text(average.map { "\(Int($0.rounded()))" } ?? "--")
+                    Text(shown.map { "\(Int($0.rounded()))" } ?? "--")
                         .font(.standard(size: .huge2, weight: .semibold))
                         .foregroundStyle(Color.textColor)
                         .contentTransition(.numericText())
@@ -243,6 +273,10 @@ struct BrightChartV5v2: View {
 
                 Spacer()
 
+                if held == nil {
+                    trend(average: average)
+                }
+
                 rangeMenu
             }
 
@@ -251,6 +285,32 @@ struct BrightChartV5v2: View {
                 .foregroundStyle(Color.semiLightTextColor)
         }
         .animation(.brightEaseInOut, value: offset)
+        .animation(.brightSnappy, value: selectedIndex)
+    }
+
+    // The change from the period before, as a percentage of it.
+    @ViewBuilder
+    private func trend(average: Double?) -> some View {
+        let previous = self.average(of: BrightChartV5v2Period(range: range, offset: offset - 1))
+        if let average, let previous, previous > 0 {
+            let change = (average - previous) / previous * 100
+            HStack(spacing: .spacing05x) {
+                Image(systemName: change >= 0 ? "arrow.up" : "arrow.down")
+                Text("\(Int(abs(change).rounded()))%")
+                    .contentTransition(.numericText())
+                if offset == 0 {
+                    Text(range.trendSuffix)
+                }
+            }
+            .font(.standard(size: .body3, weight: .medium))
+            .foregroundStyle(Color.semiLightTextColor)
+            .lineLimit(1)
+        }
+    }
+
+    private func average(of period: BrightChartV5v2Period) -> Double? {
+        let values = points(period).map(\.value)
+        return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
     }
 
     private var rangeMenu: some View {
@@ -302,10 +362,11 @@ struct BrightChartV5v2: View {
             case .dotted: dots(plotted)
             }
 
-            if type != .bar, period.end > .now, let latest = plotted.last {
-                BrightSelectorV5(x: latest.x, value: latest.value)
+            if type != .bar, let marked = marked(in: plotted, period: period) {
+                BrightSelectorV5(x: marked.x, value: marked.value)
             }
         }
+        .chartXSelection(value: selection(in: plotted))
         .chartXScale(domain: xDomain)
         .chartYScale(domain: domain)
         .chartXAxis(.hidden)
@@ -329,6 +390,7 @@ struct BrightChartV5v2: View {
         )
         .foregroundStyle(tint)
         .clipShape(Capsule())
+        .opacity(selectedIndex == nil || selectedIndex == Int(point.x) ? .opaque : .ultraLowOpacity)
     }
 
     @ChartContentBuilder
@@ -349,6 +411,11 @@ struct BrightChartV5v2: View {
 
     @ChartContentBuilder
     private func dots(_ plotted: [Plotted]) -> some ChartContent {
+        let fill = LinearGradient(colors: [tint.opacity(.semiLowOpacity), .clear], startPoint: .top, endPoint: .bottom)
+        ForEach(plotted) { point in
+            AreaMark(x: .value("Slot", point.x), yStart: .value("Floor", domain.lowerBound), yEnd: .value("Value", point.value))
+                .foregroundStyle(fill)
+        }
         ForEach(plotted) { point in
             LineMark(x: .value("Slot", point.x), y: .value("Value", point.value))
                 .foregroundStyle(tint.opacity(.semiLowOpacity))
@@ -390,7 +457,7 @@ struct BrightChartV5v2: View {
         return VStack(alignment: .leading, spacing: .spacing05x) {
             GeometryReader { geometry in
                 ForEach(slots.indices, id: \.self) { index in
-                    tick(slots[index], period: period)
+                    tick(slots[index], period: period, isSelected: index == selectedIndex)
                         .position(x: x(of: index, in: xDomain, width: geometry.size.width), y: Constants.labelTickHeight / 2)
                 }
             }
@@ -414,13 +481,13 @@ struct BrightChartV5v2: View {
     }
 
     @ViewBuilder
-    private func tick(_ slot: Date, period: BrightChartV5v2Period) -> some View {
-        let isLabelled = period.isLabelled(slot)
-        let isNow = period.isNow(slot)
+    private func tick(_ slot: Date, period: BrightChartV5v2Period, isSelected: Bool) -> some View {
+        let isLabelled = period.isLabelled(slot) || isSelected
+        let isNow = period.isNow(slot) && !isSelected
 
         if period.range == .year {
             Circle()
-                .fill(isNow ? Color.textColor : Color.lightTextColor)
+                .fill(isNow || isSelected ? Color.textColor : Color.lightTextColor)
                 .frame(width: .spacing1x, height: .spacing1x)
         } else if period.range == .day {
             Capsule()
@@ -428,8 +495,34 @@ struct BrightChartV5v2: View {
                 .frame(width: .spacing05x, height: isLabelled || isNow ? Constants.labelTickHeight : .spacing05x)
         } else {
             Capsule()
-                .fill(isNow ? Color.textColor : Color.lightTextColor)
+                .fill(isNow || isSelected ? Color.textColor : Color.lightTextColor)
                 .frame(width: .spacing05x, height: isLabelled ? Constants.labelTickHeight : .spacing05x)
+        }
+    }
+
+    // MARK: - Holding
+
+    // The held point, or else the latest one while its period is still running.
+    private func marked(in plotted: [Plotted], period: BrightChartV5v2Period) -> Plotted? {
+        if let selectedIndex {
+            return plotted.first { Int($0.x) == selectedIndex }
+        }
+        return period.end > .now ? plotted.last : nil
+    }
+
+    // Snaps to the nearest slot with a reading, so empty ones are passed over.
+    private func selection(in plotted: [Plotted]) -> Binding<Double?> {
+        Binding {
+            selectedIndex.map(Double.init)
+        } set: { position in
+            let index = position.flatMap { position in
+                plotted.min { abs($0.x - position) < abs($1.x - position) }.map { Int($0.x) }
+            }
+            guard index != selectedIndex else { return }
+            selectedIndex = index
+            if index != nil {
+                BrightHaptic.light.play()
+            }
         }
     }
 
