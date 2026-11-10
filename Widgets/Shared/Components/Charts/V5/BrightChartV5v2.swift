@@ -285,7 +285,7 @@ struct BrightChartV5v2: View {
                 .foregroundStyle(Color.semiLightTextColor)
         }
         .animation(.brightEaseInOut, value: offset)
-        .animation(.brightSnappy, value: selectedIndex)
+        .animation(.brightEaseInOut, value: selectedIndex)
     }
 
     // The change from the period before, as a percentage of it.
@@ -371,6 +371,7 @@ struct BrightChartV5v2: View {
         .chartYScale(domain: domain)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
+        .animation(.brightEaseInOut, value: selectedIndex)
     }
 
     @ChartContentBuilder
@@ -428,6 +429,7 @@ struct BrightChartV5v2: View {
                         .fill(tint)
                         .frame(width: Constants.dotDiameter, height: Constants.dotDiameter)
                 }
+                .opacity(selectedIndex == nil || selectedIndex == Int(point.x) ? .opaque : .ultraLowOpacity)
         }
     }
 
@@ -462,6 +464,7 @@ struct BrightChartV5v2: View {
                 }
             }
             .frame(height: Constants.labelTickHeight)
+            .animation(.brightEaseInOut, value: selectedIndex)
 
             Text("M")
                 .font(.standard(size: isLettered ? .body2 : .body5, weight: .regular))
