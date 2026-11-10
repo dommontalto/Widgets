@@ -94,7 +94,9 @@ struct MainDockView: View {
             }
 
             Tab(value: MainDockTab.atlas) {
-                emptyPage
+                NavigationStack {
+                    AtlasView()
+                }
             } label: {
                 tabLabel("Atlas", selected: ImageNames.atlasTabIconSelectedV5, unselected: ImageNames.atlasTabIconUnselectedV5, tab: .atlas)
             }
