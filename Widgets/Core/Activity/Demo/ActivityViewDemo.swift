@@ -10,6 +10,7 @@ import SwiftUI
 enum ActivityMetric: String, CaseIterable, Identifiable {
     case totalEnergy
     case activeEnergy
+    case exerciseEnergy
     case restingEnergy
     case steps
 
@@ -19,6 +20,7 @@ enum ActivityMetric: String, CaseIterable, Identifiable {
         switch self {
         case .totalEnergy: HealthWidgetDemoV5.totalEnergy
         case .activeEnergy: HealthWidgetDemoV5.activeEnergy
+        case .exerciseEnergy: HealthWidgetDemoV5.exerciseEnergy
         case .restingEnergy: HealthWidgetDemoV5.restingEnergy
         case .steps: ActivityViewDemo.steps
         }
@@ -27,6 +29,43 @@ enum ActivityMetric: String, CaseIterable, Identifiable {
     var title: String { bars.appearance.title }
 
     var unit: String { bars.appearance.unit ?? "Steps" }
+
+    // The hours so far today against the same hours yesterday. With a resting part, active and resting
+    // are compared apart, as the bars draw them.
+    var comparisons: [ActivityComparison] {
+        let hours = 0 ... HealthWidgetDemoV5.currentHour
+        let yesterday = Self.dayScale(for: Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now)
+        let unit = bars.appearance.unit
+        let today = hours.map { bars.hourly[$0] }
+        guard let rest = bars.hourlyRest else {
+            let tint = self.tint
+            let active = today.filter { $0 > 0 }
+            return [
+                ActivityComparison(title: "Total", systemImage: bars.appearance.systemImage, tint: tint, unit: unit, values: today, yesterday: yesterday, measure: .total),
+                ActivityComparison(title: "AVG", systemImage: bars.appearance.systemImage, tint: tint, unit: unit, values: today, yesterday: yesterday, measure: .average),
+                ActivityComparison(title: "Peak", systemImage: "arrow.up", tint: tint, unit: unit, values: today, yesterday: yesterday, measure: .peak),
+                ActivityComparison(title: "Active Hours", systemImage: "clock.fill", tint: tint, unit: "hrs", values: active.map { _ in 1 }, yesterday: 1, measure: .total),
+            ]
+        }
+        let resting = hours.map { rest[$0] }
+        let active = zip(today, resting).map(-)
+        return [ActivityComparison.Measure.total, .average, .peak].flatMap { measure in
+            let lead = switch measure {
+            case .total: "Total"
+            case .average: "AVG"
+            case .peak: "Peak"
+            }
+            let image = measure == .peak ? "arrow.up" : "flame.fill"
+            return [
+                ActivityComparison(title: "\(lead) Active", systemImage: image, tint: .defaultOrange, unit: unit, values: active, yesterday: yesterday, measure: measure),
+                ActivityComparison(title: "\(lead) Resting", systemImage: image, tint: .defaultCyan, unit: unit, values: resting, yesterday: yesterday, measure: measure),
+            ]
+        }
+    }
+
+    func format(_ value: Double) -> String {
+        bars.appearance.format(value)
+    }
 
     var tint: Color {
         switch bars.fill {
@@ -47,9 +86,7 @@ enum ActivityMetric: String, CaseIterable, Identifiable {
                 return BrightChartV5v2Point(date: point.date, value: value, rest: restShare.map { value * $0 })
             }
         }
-        let isToday = calendar.isDateInToday(period.start)
-        let day = calendar.ordinality(of: .day, in: .era, for: period.start) ?? 0
-        let scale = isToday ? 1 : Constants.dayScaleRange.lowerBound + Self.noise(day) * (Constants.dayScaleRange.upperBound - Constants.dayScaleRange.lowerBound)
+        let scale = Self.dayScale(for: period.start)
         return period.buckets.compactMap { date in
             guard date <= .now else { return nil }
             let hour = calendar.component(.hour, from: date)
@@ -79,6 +116,14 @@ enum ActivityMetric: String, CaseIterable, Identifiable {
         return ceil(value / step) * step
     }
 
+    // Today is the widget's own hours; any other day is them a little higher or lower, the same each time.
+    private static func dayScale(for date: Date) -> Double {
+        let calendar = BrightChartV5v2Period.calendar
+        guard !calendar.isDateInToday(date) else { return 1 }
+        let day = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
+        return Constants.dayScaleRange.lowerBound + noise(day) * (Constants.dayScaleRange.upperBound - Constants.dayScaleRange.lowerBound)
+    }
+
     private static func noise(_ seed: Int) -> Double {
         let x = sin(Double(seed) * 12.9898) * 43_758.5453
         return x - floor(x)
@@ -88,6 +133,47 @@ enum ActivityMetric: String, CaseIterable, Identifiable {
         static let seededAverage = 60.0
         static let seededMax = 100.0
         static let dayScaleRange = 0.8 ... 1.2
+    }
+}
+
+// One tile of the sheet's comparison: a figure from today's hours, and how far it is from yesterday's,
+// whose hours are today's scaled by `yesterday`.
+struct ActivityComparison: Identifiable {
+    enum Measure {
+        case total
+        case average
+        case peak
+    }
+
+    let title: String
+    let systemImage: String
+    let tint: Color
+    let unit: String?
+    let values: [Double]
+    let yesterday: Double
+    let measure: Measure
+
+    var id: String { title }
+
+    var value: Double {
+        figure(values)
+    }
+
+    var change: Double {
+        value - figure(values.map { $0 * yesterday })
+    }
+
+    var changeSystemImage: String {
+        change > 0 ? "arrow.up.right" : change < 0 ? "arrow.down.right" : "arrow.right"
+    }
+
+    private func figure(_ values: [Double]) -> Double {
+        guard !values.isEmpty else { return 0 }
+        switch measure {
+        case .total: return values.reduce(0, +)
+        case .average: return values.reduce(0, +) / Double(values.count)
+        case .peak: return values.max() ?? 0
+        }
     }
 }
 

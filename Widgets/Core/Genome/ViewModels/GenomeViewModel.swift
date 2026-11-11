@@ -20,9 +20,9 @@ enum GenomeViewTab: Int, CaseIterable, TabDisplayable {
 
     var systemImage: String {
         switch self {
-        case .summary: "ellipsis.calendar"
+        case .summary: "text.line.2.summary"
         case .categories: "folder.fill"
-        case .data: "chart.xyaxis.line"
+        case .data: "graph.2d"
         }
     }
 }

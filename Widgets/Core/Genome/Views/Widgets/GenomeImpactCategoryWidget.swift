@@ -26,10 +26,10 @@ private struct GenomeCategoryCard: View {
     }
 
     private var builtCard: some View {
-        BrightCardGridItemV5(category.title, subtitle: "\(category.markerCount) markers") {
+        BrightCardGridItemV5(category.title, value: "\(category.markerCount)", unit: markersUnit) {
             Image(category.imageName)
                 .resizable()
-                .frame(width: .spacing6x, height: .spacing6x)
+                .scaledToFit()
         } titleAccessory: {
             if category.categoryState == .partial {
                 Circle()
@@ -39,11 +39,15 @@ private struct GenomeCategoryCard: View {
         }
     }
 
+    private var markersUnit: String {
+        category.markerCount == 1 ? "marker" : "markers"
+    }
+
     private var pendingCard: some View {
-        BrightCardGridItemV5(category.title, subtitle: "\(category.markerCount) markers") {
-            RoundedRectangle(cornerRadius: .squareCornerRadius)
+        BrightCardGridItemV5(category.title, value: "\(category.markerCount)", unit: markersUnit) {
+            Circle()
                 .fill(Color.defaultMainGrey.opacity(.lowOpacity))
-                .frame(width: .spacing6x, height: .spacing6x)
+                .aspectRatio(1, contentMode: .fit)
         }
         .redacted(reason: .placeholder)
     }

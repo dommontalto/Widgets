@@ -43,11 +43,11 @@ enum BrightChartV5v2Range: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .day: "Day"
-        case .week: "Week"
-        case .month: "Month"
+        case .day: "Daily"
+        case .week: "Weekly"
+        case .month: "Monthly"
         case .threeMonths: "3 Months"
-        case .year: "Year"
+        case .year: "Yearly"
         }
     }
 
@@ -69,6 +69,20 @@ enum BrightChartV5v2Range: String, CaseIterable, Identifiable {
         case .month: 24
         case .threeMonths: 8
         case .year: 3
+        }
+    }
+}
+
+// What the header leads with: each slot's average, or everything in the period added up, for
+// amounts such as energy or steps.
+enum BrightChartV5v2Headline {
+    case average
+    case total
+
+    var title: String {
+        switch self {
+        case .average: "Average"
+        case .total: "Total"
         }
     }
 }
@@ -208,8 +222,11 @@ struct BrightChartV5v2Period: Hashable {
 // stay empty. Slots are plotted by their place in the period (0, 1, 2…), so the bars
 // and the dot row beneath share one scale.
 struct BrightChartV5v2: View {
-    let type: BrightChartV5v2Type
+    @Binding var type: BrightChartV5v2Type
+    // More than one shows a toggle between them in the header.
+    var types: [BrightChartV5v2Type] = [.bar, .line]
     @Binding var range: BrightChartV5v2Range
+    var headline = BrightChartV5v2Headline.average
     var tint: Color = .defaultGreen
     var unit = "Val"
     var domain: ClosedRange<Double> = 0...100
@@ -220,6 +237,7 @@ struct BrightChartV5v2: View {
 
     @State private var offset = 0
     @State private var selectedIndex: Int?
+    @Namespace private var typeNamespace
 
     var body: some View {
         VStack(alignment: .leading, spacing: .spacing2x) {
@@ -252,12 +270,13 @@ struct BrightChartV5v2: View {
 
     private func header(for period: BrightChartV5v2Period) -> some View {
         let average = average(of: period)
+        let lead = headline == .total ? total(of: period) : average
         let slots = period.buckets
         let held = selectedIndex.flatMap { index in plotted(period, slots: slots).first { Int($0.x) == index } }
-        let shown = held?.value ?? average
+        let shown = held?.value ?? lead
 
         return VStack(alignment: .leading, spacing: .spacing05x) {
-            Text(held.map { period.slotTitle(slots[Int($0.x)]) } ?? "Average")
+            Text(held.map { period.slotTitle(slots[Int($0.x)]) } ?? headline.title)
                 .font(.standard(size: .body4, weight: .medium))
                 .foregroundStyle(Color.lightTextColor)
                 .contentTransition(.numericText())
@@ -276,11 +295,15 @@ struct BrightChartV5v2: View {
 
                 Spacer()
 
-                if held == nil {
+                if held == nil, headline == .average {
                     trend(average: average)
                 }
 
                 rangeMenu
+
+                if types.count > 1 {
+                    typePicker
+                }
             }
 
             Text(period.title)
@@ -311,6 +334,43 @@ struct BrightChartV5v2: View {
         }
     }
 
+    private func total(of period: BrightChartV5v2Period) -> Double? {
+        let values = points(period).map(\.value)
+        return values.isEmpty ? nil : values.reduce(0, +)
+    }
+
+    // The selected type sits on a glass pill that slides between them.
+    private var typePicker: some View {
+        HStack(spacing: .spacing0x) {
+            ForEach(types) { option in
+                Button {
+                    type = option
+                } label: {
+                    Image(systemName: option.systemImage)
+                        .font(.standard(size: .body2, weight: .medium))
+                        .foregroundStyle(type == option ? Color.textColor : Color.lightTextColor)
+                        .frame(width: Constants.typeButtonWidth, height: Constants.typeButtonHeight)
+                        .background {
+                            if type == option {
+                                Capsule()
+                                    .fill(Color.clear)
+                                    .modifier(BrightGlassEffectV5())
+                                    .matchedGeometryEffect(id: Constants.typeSelectionID, in: typeNamespace)
+                            }
+                        }
+                        .contentShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(option.title)
+                .accessibilityAddTraits(type == option ? .isSelected : [])
+            }
+        }
+        .padding(.spacing025x)
+        .background(Capsule().fill(Color.defaultCards))
+        .animation(.brightSnappy, value: type)
+        .brightHapticV5(.light, trigger: type)
+    }
+
     private func average(of period: BrightChartV5v2Period) -> Double? {
         let values = points(period).map(\.value)
         return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
@@ -335,7 +395,7 @@ struct BrightChartV5v2: View {
             .padding(.vertical, .spacing1x)
             .modifier(BrightGlassEffectV5())
         }
-        .sensoryFeedback(.selection, trigger: range)
+        .brightHapticV5(.light, trigger: range)
     }
 
     // MARK: - Chart
@@ -613,13 +673,17 @@ struct BrightChartV5v2: View {
         static let activeSolidShare = 0.35
         static let dotDiameter: CGFloat = 7
         static let labelTickHeight: CGFloat = 7
+        static let typeButtonWidth: CGFloat = .spacing5x
+        static let typeButtonHeight: CGFloat = .spacing4x
+        static let typeSelectionID = "type"
     }
 }
 
 #Preview {
+    @Previewable @State var type = BrightChartV5v2Type.bar
     @Previewable @State var range = BrightChartV5v2Range.week
 
-    BrightChartV5v2(type: .bar, range: $range) { period in
+    BrightChartV5v2(type: $type, range: $range) { period in
         period.buckets.filter { $0 <= .now }.map { BrightChartV5v2Point(date: $0, value: .random(in: 30...90)) }
     }
     .padding(.vertical, .spacing3x)

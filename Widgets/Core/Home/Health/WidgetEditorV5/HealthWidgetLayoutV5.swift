@@ -118,7 +118,7 @@ enum HealthWidgetKindV5: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var styles: [HealthWidgetStyleV5] {
         switch self {
-        case .activity: [.totalEnergyBars, .activeEnergyBars]
+        case .activity: [.totalEnergyBars, .activeEnergyBars, .exerciseEnergyBars]
         case .exercise: [.exerciseSplits]
         case .heart: [.heartLine, .heartNumber, .vo2Line, .vo2Number]
         case .intake: [.intakeBars, .intakeRing, .intakeMeter]
@@ -300,6 +300,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // MARK: Activity
     case totalEnergyBars
     case activeEnergyBars
+    case exerciseEnergyBars
 
     // MARK: Exercise
     case exerciseSplits
@@ -398,7 +399,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
 
     var family: Family {
         switch self {
-        case .totalEnergyBars, .activeEnergyBars: .bar
+        case .totalEnergyBars, .activeEnergyBars, .exerciseEnergyBars: .bar
         case .exerciseSplits: .exercise
         case .heartLine: .line
         case .heartNumber: .number
@@ -465,7 +466,7 @@ enum HealthWidgetStyleV5: String, CaseIterable, Codable, Hashable, Identifiable 
     // The ranges it can be set to, the first being where it starts; always at least one.
     var ranges: [BrightWidgetRangeV5] {
         switch self {
-        case .totalEnergyBars, .activeEnergyBars: [.today, .rolling12h, .week]
+        case .totalEnergyBars, .activeEnergyBars, .exerciseEnergyBars: [.today, .rolling12h, .week]
         case .exerciseSplits: [.latest]
         case .heartLine: [.rolling1h, .rolling6h, .rolling12h, .fixed6h, .fixed12h]
         case .heartNumber: [.latest]

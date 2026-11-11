@@ -30,6 +30,13 @@ extension HealthWidgetDemoV5 {
         daily: [480, 390, 605, 403, 343, 435]
     )
 
+    static let exerciseEnergy = BarMetric(
+        appearance: BrightWidgetAppearanceV5(title: "Exercise Energy", systemImage: "figure.run", tint: .defaultPink, unit: "Cal"),
+        fill: .solid(.defaultPink),
+        hourly: activeHours.indices.map { workoutHours.contains($0) ? activeHours[$0] : 0 },
+        daily: [320, 0, 410, 280, 0, 350]
+    )
+
     static let restingEnergy = BarMetric(
         appearance: BrightWidgetAppearanceV5(title: "Resting Energy", systemImage: "flame.fill", tint: .defaultCyan, unit: "Cal"),
         fill: .solid(.defaultCyan),
@@ -40,6 +47,6 @@ extension HealthWidgetDemoV5 {
     // Total Energy is these two added up, so its orange lands on the same hours as Active Energy.
     private static let activeHours: [Double] = [0, 0, 6, 0, 0, 10, 45, 120, 55, 50, 30, 20, 60, 35, 25, 28, 100, 150, 70, 30, 20, 15, 10, 5]
     private static let restingHours: [Double] = [40, 42, 38, 40, 41, 44, 48, 52, 50, 70, 82, 64, 68, 74, 80, 72, 62, 60, 58, 56, 55, 54, 52, 50]
-    // Hours spent wholly in a workout, drawn all orange.
+    // Hours spent wholly in a workout: drawn all orange in Total Energy, and Exercise Energy's only bars.
     private static let workoutHours: Set<Int> = [7, 17]
 }

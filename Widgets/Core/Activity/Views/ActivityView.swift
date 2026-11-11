@@ -99,6 +99,7 @@ struct ActivityView: View {
     }
 }
 
+// A widget opened up: its graph over any period, then today's figures against yesterday's.
 private struct ActivityChartSheet: View {
     let metric: ActivityMetric
 
@@ -107,27 +108,56 @@ private struct ActivityChartSheet: View {
 
     var body: some View {
         BrightPageSheetViewV5(title: metric.title, horizontalPadding: .spacing0x) {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("Type", selection: $type) {
-                        ForEach(BrightChartV5v2Type.allCases) { type in
-                            Label(type.title, systemImage: type.systemImage).tag(type)
-                        }
-                    }
-                } label: {
-                    Label(type.title, systemImage: type.systemImage)
-                        .labelStyle(.iconOnly)
-                }
-            }
-        } content: {
             ScrollView {
-                BrightChartV5v2(type: type, range: $range, tint: metric.tint, unit: metric.unit, domain: metric.domain(for: range)) { period in
-                    metric.points(for: period, type: type)
+                VStack(alignment: .leading, spacing: .spacing5x) {
+                    BrightChartV5v2(
+                        type: $type,
+                        range: $range,
+                        headline: .total,
+                        tint: metric.tint,
+                        unit: metric.unit,
+                        domain: metric.domain(for: range)
+                    ) { period in
+                        metric.points(for: period, type: type)
+                    }
+
+                    BrightDividerV5()
+
+                    comparison
+                        .padding(.horizontal, .spacing3x)
                 }
                 .padding(.bottom, .viewPaddingBottom)
             }
         }
-        .sensoryFeedback(.selection, trigger: type)
+    }
+
+    private var comparison: some View {
+        BrightWidgetTitleV5(icon: .symbol("arrow.left.arrow.right"), title: "Comparison") {
+            VStack(alignment: .leading, spacing: .spacing2x) {
+                BrightText("Today vs yesterday", size: .body3, color: .lightTextColor)
+
+                BrightCardGridV5 {
+                    ForEach(metric.comparisons) { tile in
+                        BrightCardGridItemV5(
+                            tile.title,
+                            value: format(tile.value, unit: tile.unit),
+                            unit: tile.unit,
+                            detail: [format(abs(tile.change), unit: tile.unit), tile.unit].compactMap { $0 }.joined(separator: " "),
+                            detailSystemImage: tile.changeSystemImage
+                        ) {
+                            Image(systemName: tile.systemImage)
+                                .font(.standard(size: .subheading, weight: .regular))
+                                .foregroundStyle(tile.tint)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Hours count whole; everything else in the metric's own style.
+    private func format(_ value: Double, unit: String?) -> String {
+        unit == "hrs" ? "\(Int(value.rounded()))" : metric.format(value)
     }
 }
 

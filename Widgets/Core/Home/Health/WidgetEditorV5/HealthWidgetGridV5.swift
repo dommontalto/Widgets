@@ -210,6 +210,8 @@ struct HealthWidgetViewV5: View {
             }
         case (.activity, .activeEnergyBars):
             barChart(HealthWidgetDemoV5.activeEnergy)
+        case (.activity, .exerciseEnergyBars):
+            barChart(HealthWidgetDemoV5.exerciseEnergy)
         case (.activity, _):
             barChart(HealthWidgetDemoV5.totalEnergy)
         }

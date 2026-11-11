@@ -19,43 +19,74 @@ struct BrightCardGridV5<Content: View>: View {
     }
 }
 
-// A card for the grid: a 36pt mark up top, then a title and a dimmer subtitle.
+// A card for the grid: a small mark beside the title, then a large value with its unit and a
+// dimmer line under it, on the page's own colour inside a hairline outline.
 struct BrightCardGridItemV5<Icon: View, Accessory: View>: View {
     let title: String
-    let subtitle: String
+    let value: String?
+    let unit: String?
+    let detail: String?
+    let detailSystemImage: String?
     let color: Color
     let icon: Icon
     let titleAccessory: Accessory
 
     init(
         _ title: String,
-        subtitle: String,
-        color: Color = .defaultCards,
+        value: String? = nil,
+        unit: String? = nil,
+        detail: String? = nil,
+        detailSystemImage: String? = nil,
+        color: Color = .clear,
         @ViewBuilder icon: () -> Icon,
         @ViewBuilder titleAccessory: () -> Accessory
     ) {
         self.title = title
-        self.subtitle = subtitle
+        self.value = value
+        self.unit = unit
+        self.detail = detail
+        self.detailSystemImage = detailSystemImage
         self.color = color
         self.icon = icon()
         self.titleAccessory = titleAccessory()
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .spacing1x) {
-            icon
-                .frame(height: Constants.iconSize)
+        VStack(alignment: .leading, spacing: .spacing05x) {
+            HStack(spacing: .spacing1x) {
+                icon
+                    .frame(height: Constants.iconSize)
 
-            VStack(alignment: .leading, spacing: .spacing05x) {
-                HStack(spacing: .spacing1x) {
-                    BrightText(title, size: .subheading2)
+                BrightText(title, size: .subheading)
+                    .lineLimit(1)
+
+                titleAccessory
+            }
+
+            if let value {
+                HStack(alignment: .firstTextBaseline, spacing: .spacing05x) {
+                    BrightText(value, size: .huge2)
+                        .monospacedDigit()
                         .lineLimit(1)
 
-                    titleAccessory
+                    if let unit {
+                        BrightText(unit, size: .heading, color: .lightTextColor)
+                            .lineLimit(1)
+                    }
                 }
+            }
 
-                BrightText(subtitle, size: .body3, color: .lightTextColor)
-                    .lineLimit(1)
+            if let detail {
+                HStack(spacing: .spacing05x) {
+                    if let detailSystemImage {
+                        Image(systemName: detailSystemImage)
+                            .font(.standard(size: .heading, weight: .regular))
+                            .foregroundStyle(Color.lightTextColor)
+                    }
+
+                    BrightText(detail, size: .heading, color: .lightTextColor)
+                        .lineLimit(1)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -67,26 +98,28 @@ struct BrightCardGridItemV5<Icon: View, Accessory: View>: View {
 extension BrightCardGridItemV5 where Accessory == EmptyView {
     init(
         _ title: String,
-        subtitle: String,
-        color: Color = .defaultCards,
+        value: String? = nil,
+        unit: String? = nil,
+        detail: String? = nil,
+        detailSystemImage: String? = nil,
+        color: Color = .clear,
         @ViewBuilder icon: () -> Icon
     ) {
-        self.init(title, subtitle: subtitle, color: color, icon: icon) { EmptyView() }
+        self.init(title, value: value, unit: unit, detail: detail, detailSystemImage: detailSystemImage, color: color, icon: icon) { EmptyView() }
     }
 }
 
 // Outside the structs: a generic type cannot hold static stored properties.
 private enum Constants {
-    static let iconSize: CGFloat = .spacing6x
+    static let iconSize: CGFloat = .spacing3x
 }
 
 #Preview {
     BrightCardGridV5 {
         ForEach(["Heart", "Sleep", "Metabolism"], id: \.self) { title in
-            BrightCardGridItemV5(title, subtitle: "12 markers") {
+            BrightCardGridItemV5(title, value: "12", unit: "markers") {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: .spacing5x))
-                    .frame(width: .spacing6x, height: .spacing6x)
+                    .foregroundStyle(Color.defaultRed)
             }
         }
     }
