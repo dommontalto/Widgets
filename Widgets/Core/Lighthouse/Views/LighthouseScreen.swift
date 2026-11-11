@@ -45,6 +45,7 @@ struct LighthouseScreen: View {
             }
             .toolbar(.hidden, for: .navigationBar)
         }
+        .overlay { dictationGlow }
         .onChange(of: isMenuOpen) { _, isMenuOpen in
             guard isMenuOpen else { return }
             isTyping = false
@@ -138,6 +139,20 @@ struct LighthouseScreen: View {
             prompts: Constants.demoStarters,
             isFixed: true
         )
+    }
+
+    // Rises from the bottom edge with the voice while dictating.
+    private var dictationGlow: some View {
+        VoiceGlow(
+            type: .mobile,
+            levelProvider: { dictation.audioLevel },
+            active: dictation.isListening,
+            cornerRadius: Double(CGFloat.screenCornerRadius)
+        ) {
+            Color.clear
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 
     private var veil: some View {

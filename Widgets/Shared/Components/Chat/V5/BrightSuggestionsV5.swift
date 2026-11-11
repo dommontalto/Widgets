@@ -65,7 +65,7 @@ struct BrightSuggestionsV5: View {
                 .menuActionDismissBehavior(.disabled)
             }
         } label: {
-            BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true, selectedTint: .swipePagePillText, selectedFill: .swipePagePillBackground) {}
+            BrightTagV5(title: topic.title, systemImage: topic.systemImage, isSelected: true) {}
                 .allowsHitTesting(false)
         }
         .menuOrder(.fixed)

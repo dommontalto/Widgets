@@ -384,18 +384,11 @@ struct HealthWidgetGridV5: View {
                     BrightHaptic.medium.play()
                     editor.editingWidget = widget
                 }
-                .simultaneousGesture(openGesture(for: widget), isEnabled: !editor.isEditing)
+                .brightWidgetTapV5(isEnabled: !editor.isEditing) {
+                    onOpen(widget)
+                }
                 .gesture(editor.isEditing ? dragGesture(for: widget, cellSize: cellSize) : nil)
         }
-    }
-
-    private func openGesture(for widget: HealthWidgetItemV5) -> some Gesture {
-        LongPressGesture(minimumDuration: Constants.openMaxPressDuration)
-            .exclusively(before: TapGesture())
-            .onEnded { value in
-                guard case .second = value else { return }
-                onOpen(widget)
-            }
     }
 
     private func dragGesture(for widget: HealthWidgetItemV5, cellSize: CGFloat) -> some Gesture {
@@ -453,7 +446,6 @@ struct HealthWidgetGridV5: View {
         static let removedScale: CGFloat = 0.92
         static let liftedShadowRadius: CGFloat = 10
         static let dragMinimumDistance: CGFloat = 5
-        static let openMaxPressDuration: Double = 0.3
         static let jiggleInterval: Duration = .milliseconds(130)
     }
 }

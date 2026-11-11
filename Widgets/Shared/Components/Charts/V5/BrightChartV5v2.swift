@@ -77,6 +77,9 @@ struct BrightChartV5v2Point: Identifiable {
     var id: Date { date }
     let date: Date
     let value: Double
+    // The share spent at rest, drawn in the tint in front; the rest of the bar rises behind
+    // it in orange, fading down into it. Zero makes the whole bar orange.
+    var rest: Double?
 }
 
 // A fixed calendar period: a whole day, week, month, quarter of three months ending with
@@ -382,16 +385,48 @@ struct BrightChartV5v2: View {
         }
     }
 
+    @ChartContentBuilder
     private func bar(_ point: Plotted, half: Double) -> some ChartContent {
-        RectangleMark(
-            xStart: .value("Start", point.x - half),
-            xEnd: .value("End", point.x + half),
-            yStart: .value("Floor", domain.lowerBound),
-            yEnd: .value("Value", point.value)
+        let opacity: Double = selectedIndex == nil || selectedIndex == Int(point.x) ? .opaque : .ultraLowOpacity
+        if let rest = point.rest, rest < point.value {
+            RectangleMark(
+                xStart: .value("Start", point.x - half),
+                xEnd: .value("End", point.x + half),
+                yStart: .value("Floor", domain.lowerBound),
+                yEnd: .value("Value", point.value)
+            )
+            .foregroundStyle(activeFill(value: point.value, rest: rest))
+            .clipShape(Capsule())
+            .opacity(opacity)
+        }
+        if (point.rest ?? point.value) > 0 {
+            RectangleMark(
+                xStart: .value("Start", point.x - half),
+                xEnd: .value("End", point.x + half),
+                yStart: .value("Floor", domain.lowerBound),
+                yEnd: .value("Value", min(point.rest ?? point.value, point.value))
+            )
+            .foregroundStyle(tint)
+            .clipShape(Capsule())
+            .opacity(opacity)
+        }
+    }
+
+    // Solid at the top, melting away where the resting part begins.
+    private func activeFill(value: Double, rest: Double) -> LinearGradient {
+        guard rest > 0 else {
+            return LinearGradient(colors: [.defaultOrange], startPoint: .top, endPoint: .bottom)
+        }
+        let restTop = (value - rest) / max(value - domain.lowerBound, 1)
+        return LinearGradient(
+            stops: [
+                .init(color: .defaultOrange, location: 0),
+                .init(color: .defaultOrange, location: restTop * Constants.activeSolidShare),
+                .init(color: .defaultOrange.opacity(.zero), location: restTop),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
         )
-        .foregroundStyle(tint)
-        .clipShape(Capsule())
-        .opacity(selectedIndex == nil || selectedIndex == Int(point.x) ? .opaque : .ultraLowOpacity)
     }
 
     @ChartContentBuilder
@@ -542,13 +577,14 @@ struct BrightChartV5v2: View {
     private struct Plotted: Identifiable {
         let x: Double
         let value: Double
+        var rest: Double?
         var id: Double { x }
     }
 
     private func plotted(_ period: BrightChartV5v2Period, slots: [Date]) -> [Plotted] {
         let indices = Dictionary(uniqueKeysWithValues: slots.enumerated().map { ($1, $0) })
         return points(period).compactMap { point in
-            indices[point.date].map { Plotted(x: Double($0), value: point.value) }
+            indices[point.date].map { Plotted(x: Double($0), value: point.value, rest: point.rest) }
         }
     }
 
@@ -574,6 +610,7 @@ struct BrightChartV5v2: View {
         static let dayBarFraction: CGFloat = 0.48
         static let lineWidth: CGFloat = 1
         static let hairline: CGFloat = 0.5
+        static let activeSolidShare = 0.35
         static let dotDiameter: CGFloat = 7
         static let labelTickHeight: CGFloat = 7
     }

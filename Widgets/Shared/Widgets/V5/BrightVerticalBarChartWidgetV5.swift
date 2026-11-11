@@ -17,6 +17,9 @@ struct BrightVerticalBarChartWidgetV5: View {
         let value: Double?
         // This slot's own limit, such as the day's calorie allowance, in place of the chart's target.
         var target: Double?
+        // The share spent at rest, drawn in the fill in front; the rest of the bar rises
+        // behind it in orange, fading down into it. Zero makes the whole bar orange.
+        var rest: Double?
         // Parts stacked from the floor up, such as the day's carbs, fat and protein. Their
         // colours blend into each other, with a mark where each one meets the next.
         var segments: [Segment] = []
@@ -290,7 +293,7 @@ struct BrightVerticalBarChartWidgetV5: View {
 
                 ForEach(bars) { bar in
                     if let value = bar.value, value > 0, !isEmpty {
-                        barShape(bar, value: isRevealed ? value : 0, target: bar.target ?? target, width: barWidth, plotHeight: height)
+                        barShape(bar, value: isRevealed ? value : 0, rest: bar.rest.map { isRevealed ? $0 : 0 }, target: bar.target ?? target, width: barWidth, plotHeight: height)
                             .opacity(selectedIndex == nil || selectedIndex == bar.index ? .opaque : .ultraLowOpacity)
                             .offset(x: slotCentre(bar.index, in: width) - barWidth / 2)
                             .frame(height: height, alignment: .bottom)
@@ -319,8 +322,10 @@ struct BrightVerticalBarChartWidgetV5: View {
     }
 
     @ViewBuilder
-    private func barShape(_ bar: Bar, value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
-        if bar.segments.isEmpty {
+    private func barShape(_ bar: Bar, value: Double, rest: Double?, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
+        if let rest {
+            restingBar(value: value, rest: rest, width: width, plotHeight: plotHeight)
+        } else if bar.segments.isEmpty {
             singleBar(value: value, target: target, width: width, plotHeight: plotHeight)
         } else {
             segmentedBar(bar.segments, value: value, width: width, plotHeight: plotHeight)
@@ -353,6 +358,39 @@ struct BrightVerticalBarChartWidgetV5: View {
         }
         .frame(width: width, height: height)
         .clipShape(barOutline)
+    }
+
+    private func restingBar(value: Double, rest: Double, width: CGFloat, plotHeight: CGFloat) -> some View {
+        let height = max(plotHeight - yPosition(of: value, height: plotHeight), width)
+        // Before the reveal both are zero, so the stub shows in the fill rather than orange.
+        let restHeight = rest >= value ? height : rest > 0 ? min(max(plotHeight - yPosition(of: rest, height: plotHeight), width), height) : 0
+        let activeHeight = height - restHeight
+
+        return ZStack(alignment: .bottom) {
+            Color.defaultOrange
+                .mask(
+                    LinearGradient(
+                        stops: restHeight > 0
+                            ? [
+                                .init(color: .black, location: 0),
+                                .init(color: .black, location: activeHeight * Constants.activeSolidShare / height),
+                                .init(color: .clear, location: activeHeight / height),
+                            ]
+                            : [.init(color: .black, location: 0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: width, height: height)
+                .clipShape(barOutline)
+
+            if restHeight > 0 {
+                barFill(plotHeight: plotHeight)
+                    .frame(width: width, height: restHeight, alignment: .bottom)
+                    .clipShape(barOutline)
+            }
+        }
+        .frame(width: width, height: height)
     }
 
     private func singleBar(value: Double, target: Double?, width: CGFloat, plotHeight: CGFloat) -> some View {
@@ -691,6 +729,7 @@ struct BrightVerticalBarChartWidgetV5: View {
         static let extremeOffset: CGFloat = .spacing3x
         static let weekBarCornerRadius: CGFloat = 6
         static let targetBlend: CGFloat = .spacing4x
+        static let activeSolidShare: CGFloat = 0.35
         static let targetMarkHeight: CGFloat = .spacing05x
         static let segmentMarkHeight: CGFloat = 2
         static let risingGreenStop = 0.24

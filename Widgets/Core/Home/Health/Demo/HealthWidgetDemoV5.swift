@@ -20,6 +20,8 @@ enum HealthWidgetDemoV5 {
         // The week's bars where they differ from the hours'.
         var weekFill: BrightVerticalBarChartWidgetV5.Fill?
         let hourly: [Double]
+        // Each hour's calories at rest, drawn in the fill with the active ones in orange behind.
+        var hourlyRest: [Double]?
         // The six days before today, oldest first and ending yesterday. Today is the sum of
         // its hours so far, so the week, the day and the rings always agree.
         let daily: [Double]
@@ -41,13 +43,18 @@ enum HealthWidgetDemoV5 {
                 // Wraps into yesterday, which the demo treats as the same day again.
                 return (0 ..< range.slotCount).map { index in
                     let hour = (HealthWidgetDemoV5.currentHour - (range.slotCount - 1) + index + 24) % 24
-                    return BrightVerticalBarChartWidgetV5.Bar(index: index, value: hourly[hour])
+                    return BrightVerticalBarChartWidgetV5.Bar(index: index, value: hourly[hour], rest: hourlyRest?[hour])
                 }
             }
             let start = Calendar.current.component(.hour, from: range.interval(endingAt: HealthWidgetDemoV5.anchor).start)
             let current = HealthWidgetDemoV5.currentHour - start
             return (0 ..< range.slotCount).map { index in
-                BrightVerticalBarChartWidgetV5.Bar(index: index, value: index <= current ? hourly[(start + index) % 24] : nil)
+                let hour = (start + index) % 24
+                return BrightVerticalBarChartWidgetV5.Bar(
+                    index: index,
+                    value: index <= current ? hourly[hour] : nil,
+                    rest: index <= current ? hourlyRest?[hour] : nil
+                )
             }
         }
 

@@ -20,6 +20,7 @@ struct MainDockView: View {
     @State private var showingLighthouse = false
     @State private var lighthousePrompt: String?
     @State private var isMenuExpanded = false
+    @State private var plusFrame = CGRect.zero
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -44,8 +45,8 @@ struct MainDockView: View {
 
     // Lighthouse at full height over the whole app.
     private var lighthouseScreen: some View {
-        LighthouseScreen(initialPrompt: lighthousePrompt) {
-            showingLighthouse = false
+        LighthouseWaveCover(source: plusFrame, onClosed: { present(false) }) { close in
+            LighthouseScreen(initialPrompt: lighthousePrompt, onClose: close)
         }
         .presentationBackground(.clear)
         .onDisappear { lighthousePrompt = nil }
@@ -56,6 +57,14 @@ struct MainDockView: View {
         Color.clear
             .frame(width: Constants.plusTargetWidth, height: Constants.plusTargetHeight)
             .contentShape(Rectangle())
+            .background {
+                // Read on appear as well as on change, so the wave knows where the plus is before it ever moves.
+                GeometryReader { geometry in
+                    Color.clear
+                        .onAppear { plusFrame = geometry.frame(in: .global) }
+                        .onChange(of: geometry.frame(in: .global)) { _, frame in plusFrame = frame }
+                }
+            }
             .onLongPressGesture(minimumDuration: Constants.holdDuration) {
                 BrightHaptic.medium.play()
                 openLighthouse(nil)
@@ -72,7 +81,14 @@ struct MainDockView: View {
 
     private func openLighthouse(_ action: LighthouseAction?) {
         lighthousePrompt = action?.prompt
-        showingLighthouse = true
+        present(true)
+    }
+
+    // The wave brings Lighthouse in and takes it away, so the cover itself neither slides up nor down.
+    private func present(_ isPresented: Bool) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { showingLighthouse = isPresented }
     }
 
     private var tabView: some View {

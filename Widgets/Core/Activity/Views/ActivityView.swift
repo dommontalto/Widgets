@@ -70,8 +70,7 @@ struct ActivityView: View {
                     size: .medium
                 )
                 .frame(height: widgetHeight)
-                .contentShape(.rect)
-                .onTapGesture {
+                .brightWidgetTapV5 {
                     openedMetric = metric
                 }
             }
@@ -122,8 +121,8 @@ private struct ActivityChartSheet: View {
             }
         } content: {
             ScrollView {
-                BrightChartV5v2(type: type, range: $range, tint: metric.tint, unit: metric.unit) { period in
-                    BrightChartV5v2Demo.points(for: period, type: type)
+                BrightChartV5v2(type: type, range: $range, tint: metric.tint, unit: metric.unit, domain: metric.domain(for: range)) { period in
+                    metric.points(for: period, type: type)
                 }
                 .padding(.bottom, .viewPaddingBottom)
             }
