@@ -12,8 +12,7 @@ struct WaypointView: View {
 
     @State private var state = WaypointState.hasAdjustments
     @State private var shownGroup: WaypointAdjustmentGroup?
-
-    private let bearing = WaypointBearing.north
+    @State private var correction = WaypointCorrection.decrease
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -30,7 +29,6 @@ struct WaypointView: View {
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing4x)
         .padding(.bottom, .spacing12x)
-        .overlay(alignment: .topTrailing) { statePicker }
         .sheet(item: $shownGroup) { group in
             WaypointAdjustmentGroupSheet(group: group)
                 .presentationDetents([.large])
@@ -79,11 +77,12 @@ struct WaypointView: View {
             .multilineTextAlignment(.center)
 
             // Edge to edge, past the page's own margins.
-            WaypointMap()
+            WaypointMap(correction: $correction)
                 .padding(.horizontal, -.spacing3x)
 
             VStack(spacing: .spacing1x) {
-                BrightText(bearing.status, size: .subheading2, color: bearing.color)
+                BrightText(correction.bearing.status, size: .subheading2, color: correction.bearing.color)
+                    .contentTransition(.opacity)
 
                 HStack(spacing: .spacing05x) {
                     Image(systemName: "arrow.forward")
@@ -93,9 +92,9 @@ struct WaypointView: View {
                 }
                 .foregroundStyle(Color.lightTextColor)
             }
-            .padding(.top, .spacing6x)
+            .padding(.top, -.spacing2x)
+            .animation(.brightEaseInOut, value: correction)
         }
-        .padding(.bottom, .spacing4x)
     }
 
     private var summary: some View {
@@ -172,34 +171,6 @@ struct WaypointView: View {
         )
     }
 
-    // MARK: - Debug
-
-    private var statePicker: some View {
-        Menu {
-            Section("State") {
-                ForEach(WaypointState.allCases) { option in
-                    Button {
-                        state = option
-                    } label: {
-                        Label {
-                            Text(option.title)
-                        } icon: {
-                            if option == state {
-                                Image(systemName: "checkmark")
-                            } else {
-                                Image(systemName: option.symbol)
-                            }
-                        }
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "ladybug.fill")
-                .padding(.spacing2x)
-        }
-        .padding(.trailing, .spacing1x)
-    }
-
     private func checkIn() {
         onCheckIn()
     }
@@ -209,28 +180,10 @@ struct WaypointView: View {
     }
 }
 
-private enum WaypointState: CaseIterable, Identifiable {
+private enum WaypointState {
     case noCheckInYet
     case noAdjustments
     case hasAdjustments
-
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .noCheckInYet: "No check-in yet"
-        case .noAdjustments: "No adjustments"
-        case .hasAdjustments: "Has adjustments"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .noCheckInYet: "circle.dashed"
-        case .noAdjustments: "checkmark.circle"
-        case .hasAdjustments: "arrow.up.arrow.down.circle"
-        }
-    }
 
     var summary: String {
         switch self {

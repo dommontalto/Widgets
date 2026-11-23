@@ -131,6 +131,18 @@ struct WaypointTerrain {
         return rolling * (1 - Constants.climbShare) + climb * Constants.climbShare
     }
 
+    // How tall the range standing past the edge of the contours is at a bearing, 0...1.
+    // Sampled round a circle so it joins up with itself, and folded so the high
+    // points come to sharp peaks.
+    static func peak(bearing: Double, ring: Int) -> Double {
+        let shift = Double(ring) * Constants.octaveShift
+        let x = cos(bearing) * Constants.peakFrequency + shift
+        let y = sin(bearing) * Constants.peakFrequency - shift
+        let folded = 1 - abs(noise(x, y) * 2 - 1)
+        let detail = noise(x * Constants.peakDetail, y * Constants.peakDetail)
+        return folded * folded * (1 - Constants.peakDetailShare) + detail * Constants.peakDetailShare
+    }
+
     private static func coordinate(_ index: Int) -> Double {
         Double(index) * Constants.step - Constants.radius
     }
@@ -226,5 +238,8 @@ struct WaypointTerrain {
         static let climbStart: Double = -320
         static let climbLength: Double = 820
         static let climbShare: Double = 0.3
+        static let peakFrequency: Double = 2.2
+        static let peakDetail: Double = 2.7
+        static let peakDetailShare: Double = 0.25
     }
 }

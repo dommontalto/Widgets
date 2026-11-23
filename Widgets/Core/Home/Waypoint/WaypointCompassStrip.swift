@@ -7,152 +7,126 @@
 
 import SwiftUI
 
-// A compass tape that slides as the map turns. The lit stretch runs from where the
-// last block drifted to back to north, and the hatching marks the bearings where
-// strain ran high.
+// The bar over the map: a track running from too little to too much, with a pill
+// showing where the chosen load leaves the user between the two. The north marker
+// above it slides and turns as the map is turned, and sits dead centre when north
+// is up.
 struct WaypointCompassStrip: View, Animatable {
     var heading: Double
-    var drift: Double = -18
-    var strain: ClosedRange<Double> = -81 ... -54
+    // -1 at the low end of the track, 1 at the high end.
+    var load: Double
+    var loadColor: Color = .defaultCyan
+    var zoneColor: Color = .defaultYellow
+    var lowTitle = "Sedentary"
+    var highTitle = "Excessive"
 
+    // How far the map turns between each haptic tick.
     static let degreesPerTick: Double = 9
-    static let pointsPerDegree: Double = Constants.tickSpacing / degreesPerTick
 
-    var animatableData: Double {
-        get { heading }
-        set { heading = newValue }
+    var animatableData: AnimatablePair<Double, Double> {
+        get { AnimatablePair(heading, load) }
+        set {
+            heading = newValue.first
+            load = newValue.second
+        }
     }
 
     var body: some View {
-        VStack(spacing: .spacing0x) {
-            Canvas { context, size in
-                drawBand(&context, size: size)
-            }
-            .frame(height: Constants.bandHeight)
-            .mask {
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: Constants.edgeFade),
-                        .init(color: .black, location: 1 - Constants.edgeFade),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            }
+        VStack(spacing: .spacing1x) {
+            northMarker
 
-            Canvas { context, size in
-                drawTicks(&context, size: size)
+            track
+
+            HStack(spacing: .spacing2x) {
+                BrightText(lowTitle, size: .body4, color: .semiLightTextColor)
+
+                Spacer(minLength: .spacing0x)
+
+                BrightText(highTitle, size: .body4, color: .semiLightTextColor)
             }
-            .frame(height: Constants.tickRowHeight)
+            .padding(.horizontal, Constants.inset)
         }
+        .padding(.horizontal, .spacing3x)
     }
 
-    // How far along the tape a bearing sits from the centre, taking the short way round.
-    private func offset(_ bearing: Double) -> Double {
-        (bearing - heading).remainder(dividingBy: 360) * Self.pointsPerDegree
+    private var northMarker: some View {
+        HStack(spacing: .spacing05x) {
+            Image(systemName: "location.north.fill")
+                .font(.standardSFPro(size: .subheading2, weight: .regular))
+                .foregroundStyle(Color.textColor)
+                .rotationEffect(.degrees(-turn))
+
+            BrightText("N", size: .subheading2)
+        }
+        .offset(x: -CGFloat(turn * Constants.pointsPerDegree))
+        .opacity(min((Constants.halfTurn - abs(turn)) / Constants.fadeDegrees, 1))
     }
 
-    private func drawBand(_ context: inout GraphicsContext, size: CGSize) {
-        let centre = Double(size.width) / 2
-        let height = Double(size.height)
+    private var track: some View {
+        Capsule()
+            .strokeBorder(Color.textColor.opacity(Constants.outlineOpacity), lineWidth: Constants.outlineWidth)
+            .frame(height: Constants.trackHeight)
+            .overlay {
+                GeometryReader { proxy in
+                    let travel = (proxy.size.width - Constants.pillWidth) / 2 - Constants.inset
 
-        context.fill(
-            Path(CGRect(origin: .zero, size: size)),
-            with: .color(Color.defaultCyan.opacity(Constants.bandOpacity))
-        )
+                    ZStack {
+                        HStack(spacing: Constants.inset) {
+                            zone
+                            tick
 
-        let strainStart = centre + offset(strain.lowerBound)
-        let strainEnd = strainStart + (strain.upperBound - strain.lowerBound) * Self.pointsPerDegree
-        var hatching = Path()
-        var x = strainStart - Constants.hatchLean
-        while x < strainEnd {
-            hatching.move(to: CGPoint(x: x, y: height))
-            hatching.addLine(to: CGPoint(x: x + Constants.hatchLean, y: 0))
-            x += Constants.hatchSpacing
-        }
-        context.drawLayer { layer in
-            layer.clip(to: Path(CGRect(x: strainStart, y: 0, width: strainEnd - strainStart, height: height)))
-            layer.stroke(
-                hatching,
-                with: .linearGradient(
-                    Gradient(stops: [
-                        .init(color: Color.defaultYellow.opacity(.zero), location: 0),
-                        .init(color: Color.defaultYellow.opacity(Constants.hatchOpacity), location: Constants.hatchFade),
-                        .init(color: Color.defaultYellow.opacity(Constants.hatchOpacity), location: 1 - Constants.hatchFade),
-                        .init(color: Color.defaultYellow.opacity(.zero), location: 1),
-                    ]),
-                    startPoint: CGPoint(x: strainStart, y: 0),
-                    endPoint: CGPoint(x: strainEnd, y: 0)
-                ),
-                lineWidth: Constants.hatchWidth
-            )
-        }
+                            Spacer(minLength: .spacing0x)
 
-        let driftX = centre + offset(drift)
-        let northX = driftX - drift * Self.pointsPerDegree
-        context.fill(
-            Path(CGRect(x: min(driftX, northX), y: 0, width: abs(northX - driftX), height: height)),
-            with: .linearGradient(
-                Gradient(colors: [.defaultCyan, Color.defaultCyan.opacity(.zero)]),
-                startPoint: CGPoint(x: driftX, y: 0),
-                endPoint: CGPoint(x: northX, y: 0)
-            )
-        )
-    }
+                            tick
+                            zone
+                        }
 
-    private func drawTicks(_ context: inout GraphicsContext, size: CGSize) {
-        let centre = Double(size.width) / 2
-        let middle = Double(size.height) / 2
-        let tickCount = Int(360 / Self.degreesPerTick)
-        let ticksPerQuarter = tickCount / Constants.cardinals.count
-        let driftTick = ((Int((drift / Self.degreesPerTick).rounded()) % tickCount) + tickCount) % tickCount
-
-        for tick in 0 ..< tickCount {
-            let x = centre + offset(Double(tick) * Self.degreesPerTick)
-            guard abs(x - centre) < centre + Constants.tickSpacing else { continue }
-
-            if tick % ticksPerQuarter == 0 {
-                let isNorth = tick == 0
-                context.draw(
-                    Text(Constants.cardinals[tick / ticksPerQuarter])
-                        .font(.standard(size: .subheading2, weight: .regular))
-                        .foregroundStyle(isNorth ? Color.defaultGreen : Color.lightTextColor),
-                    at: CGPoint(x: x, y: middle)
-                )
-            } else {
-                let dot = CGRect(
-                    x: x - Constants.dotRadius,
-                    y: middle - Constants.dotRadius,
-                    width: Constants.dotRadius * 2,
-                    height: Constants.dotRadius * 2
-                )
-                let opacity = tick == driftTick ? Constants.litDotOpacity : Constants.dotOpacity
-                context.fill(Path(ellipseIn: dot), with: .color(Color.textColor.opacity(opacity)))
+                        Capsule()
+                            .fill(loadColor)
+                            .frame(width: Constants.pillWidth)
+                            .offset(x: travel * CGFloat(min(max(load, -1), 1)))
+                    }
+                    .padding(Constants.inset)
+                }
             }
-        }
+    }
+
+    private var zone: some View {
+        Capsule()
+            .fill(zoneColor.opacity(Constants.zoneOpacity))
+            .frame(width: Constants.zoneWidth)
+    }
+
+    private var tick: some View {
+        Capsule()
+            .fill(Color.textColor)
+            .frame(width: Constants.tickWidth)
+    }
+
+    // The heading taken the short way round, so north never travels more than half
+    // the track in either direction.
+    private var turn: Double {
+        heading.remainder(dividingBy: 360)
     }
 
     private enum Constants {
-        static let bandHeight: CGFloat = 22
-        static let tickRowHeight: CGFloat = 22
-        static let tickSpacing: Double = 22
-        static let edgeFade: Double = 0.25
-        static let bandOpacity: Double = .veryMinimalOpacity
-        static let hatchSpacing: Double = 2.75
-        static let hatchLean: Double = 9
-        static let hatchWidth: CGFloat = 1
-        static let hatchFade: Double = 0.3
-        static let hatchOpacity: Double = .mediumOpacity
-        static let dotRadius: Double = 1.5
-        static let dotOpacity: Double = .semiLowOpacity
-        static let litDotOpacity: Double = .opaque
-        static let cardinals = ["N", "E", "S", "W"]
+        static let trackHeight: CGFloat = 25
+        static let inset: CGFloat = 4
+        static let outlineWidth: CGFloat = 0.5
+        static let outlineOpacity: Double = .minimalOpacity
+        static let pillWidth: CGFloat = 47
+        static let zoneWidth: CGFloat = 42
+        static let zoneOpacity: Double = .minimalOpacity
+        static let tickWidth: CGFloat = 3
+        static let pointsPerDegree: Double = 0.9
+        static let halfTurn: Double = 180
+        // North fades out over the last of the turn, where it would otherwise jump
+        // from one end of the track to the other.
+        static let fadeDegrees: Double = 30
     }
 }
 
 #Preview {
-    WaypointCompassStrip(heading: 0)
+    WaypointCompassStrip(heading: 0, load: 0.14)
         .background(Color.defaultBackground)
 }

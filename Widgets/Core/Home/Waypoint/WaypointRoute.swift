@@ -47,6 +47,113 @@ enum WaypointCorrection: CaseIterable, Identifiable {
         case .increase: "arrow.up"
         }
     }
+
+    var color: Color {
+        switch self {
+        case .decrease: .defaultCyan
+        case .maintain: .defaultYellow
+        case .increase: .defaultRed
+        }
+    }
+
+    // Easing off bends gently back to the milestone, holding the load carries on
+    // the way the drift was heading and misses it, and pushing harder cuts straight
+    // across.
+    var path: [CGPoint] {
+        switch self {
+        case .decrease: Self.easedPath
+        case .maintain: Self.heldPath
+        case .increase: Self.pushedPath
+        }
+    }
+
+    // Where the pill's leader line touches down beside the path.
+    var callout: CGPoint {
+        switch self {
+        case .decrease: CGPoint(x: -36, y: 136)
+        case .maintain: CGPoint(x: -55, y: 140)
+        case .increase: CGPoint(x: -30, y: 122)
+        }
+    }
+
+    var bearing: WaypointBearing {
+        switch self {
+        case .decrease: .north
+        case .maintain: .northWest
+        case .increase: .northEast
+        }
+    }
+
+    var milestoneSubtitle: String {
+        switch self {
+        case .decrease: "10 KM in 40 mins · 3 weeks"
+        case .maintain: "Out of reach at this pace"
+        case .increase: "10 KM in 40 mins · 1 week"
+        }
+    }
+
+    var strainTitle: String {
+        switch self {
+        case .decrease, .maintain: "High Strain"
+        case .increase: "Very High Strain"
+        }
+    }
+
+    var strainSubtitle: String {
+        switch self {
+        case .decrease: "Not hitting pace"
+        case .maintain: "Still not hitting pace"
+        case .increase: "Injury risk rising"
+        }
+    }
+
+    var strainColor: Color {
+        switch self {
+        case .decrease, .maintain: .defaultYellow
+        case .increase: .defaultRed
+        }
+    }
+
+    // Where the bar over the map puts its pill: 0 is the middle, 1 the excessive end.
+    var barLoad: Double {
+        switch self {
+        case .decrease: 0.14
+        case .maintain: 0.5
+        case .increase: 0.86
+        }
+    }
+
+    private static let start = CGPoint(x: -44, y: 106)
+    private static let milestone = CGPoint(x: 23, y: 137)
+
+    private static let easedPath: [CGPoint] = {
+        let bend = CGPoint(x: -35, y: 123.4)
+        let straight = CGPoint(x: -19.6, y: 133.6)
+        var path = [start]
+        path += WaypointTrack.line(from: start, to: bend)
+        path += WaypointTrack.curve(
+            from: bend,
+            control1: CGPoint(x: -31.9, y: 129.2),
+            control2: CGPoint(x: -26.1, y: 133.1),
+            to: straight
+        )
+        path += WaypointTrack.line(from: straight, to: milestone)
+        return path
+    }()
+
+    private static let heldPath: [CGPoint] = {
+        let end = CGPoint(x: -66, y: 196)
+        var path = [start]
+        path += WaypointTrack.curve(
+            from: start,
+            control1: CGPoint(x: -44, y: 136),
+            control2: CGPoint(x: -56, y: 166),
+            to: end
+        )
+        return path
+    }()
+
+    private static let pushedPath: [CGPoint] = [start] + WaypointTrack.line(from: start, to: milestone)
 }
 
 // Everything drawn on the map, in world points with the user at the origin and
@@ -58,13 +165,10 @@ struct WaypointRoute {
     let planned: [CGPoint]
     // Where they actually went.
     let drift: [CGPoint]
-    // Lighthouse's way back onto the plan.
-    let correction: [CGPoint]
     // The rest of the way to the goal.
     let ahead: [CGPoint]
 
     let user: CGPoint
-    let correctionCallout: CGPoint
     let markers: [WaypointMarker]
 }
 
@@ -77,9 +181,6 @@ extension WaypointRoute {
 
         let driftBend = CGPoint(x: -37.3, y: 25.8)
         let driftStraight = CGPoint(x: -45.5, y: 41.5)
-        let correctionStart = CGPoint(x: -44, y: 106)
-        let correctionBend = CGPoint(x: -35, y: 123.4)
-        let correctionStraight = CGPoint(x: -19.6, y: 133.6)
 
         let trailStart = CGPoint(x: 0, y: -6)
         let trail = [trailStart] + WaypointTrack.line(from: trailStart, to: CGPoint(x: 0, y: -75))
@@ -96,24 +197,12 @@ extension WaypointRoute {
         )
         drift += WaypointTrack.line(from: driftStraight, to: CGPoint(x: -45.5, y: 65.5))
 
-        var correction = [correctionStart]
-        correction += WaypointTrack.line(from: correctionStart, to: correctionBend)
-        correction += WaypointTrack.curve(
-            from: correctionBend,
-            control1: CGPoint(x: -31.9, y: 129.2),
-            control2: CGPoint(x: -26.1, y: 133.1),
-            to: correctionStraight
-        )
-        correction += WaypointTrack.line(from: correctionStraight, to: milestone)
-
         return WaypointRoute(
             trail: trail,
             planned: planned,
             drift: drift,
-            correction: correction,
             ahead: ahead,
             user: CGPoint(x: 0, y: -38),
-            correctionCallout: CGPoint(x: -36, y: 136),
             markers: [
                 WaypointMarker(
                     id: "milestone1",
