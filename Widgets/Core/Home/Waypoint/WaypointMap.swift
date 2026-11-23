@@ -7,8 +7,9 @@
 
 import SwiftUI
 
-// The waypoint bar and the terrain under it. Dragging sideways on either turns the
-// map, pinching zooms, and the two buttons tilt it into 3D and bring north back up.
+// The waypoint bar and the terrain under it. Dragging the map moves it, twisting
+// two fingers or dragging along the bar turns it, pinching zooms, and the two
+// buttons tilt it into 3D and bring it back to the user with north up.
 struct WaypointMap: View {
     var route = WaypointRoute.demo
     @Binding var correction: WaypointCorrection
@@ -22,6 +23,8 @@ struct WaypointMap: View {
     @State private var isVisible = false
     @State private var hasPlayedIntro = false
     @State private var dragStartHeading: Double?
+    @State private var dragStartFocus: CGPoint?
+    @State private var twistStartHeading: Double?
     @State private var pinchStartZoom: Double?
 
     var body: some View {
@@ -33,6 +36,8 @@ struct WaypointMap: View {
                 zoneColor: drawnCorrection.strainColor
             )
             .padding(.bottom, .spacing2x)
+            .contentShape(Rectangle())
+            .gesture(WaypointPan(sidewaysOnly: true, handle: orbit))
 
             WaypointMapScene(
                 camera: camera,
@@ -49,13 +54,14 @@ struct WaypointMap: View {
             .clipped()
             .contentShape(Rectangle())
             .onTapGesture { select(nil) }
+            .gesture(WaypointPan(sidewaysOnly: false, handle: move))
+            .simultaneousGesture(pinch)
+            .simultaneousGesture(twist)
+            .overlay(alignment: .bottomLeading) { legend }
             .overlay(alignment: .bottomTrailing) { controls }
 
             BrightDividerV5(opacity: Constants.dividerOpacity)
         }
-        .contentShape(Rectangle())
-        .gesture(WaypointOrbitPan(handle: orbit))
-        .simultaneousGesture(pinch)
         .onScrollVisibilityChange(threshold: Constants.visibleShare) { visible in
             isVisible = visible
             if visible { playIntro() }
@@ -81,7 +87,7 @@ struct WaypointMap: View {
             BrightRoundButton(
                 systemImage: "dot.scope",
                 size: .large,
-                imageColor: isTurned ? Color.defaultCyan : nil,
+                imageColor: isAway ? Color.defaultCyan : nil,
                 onTapCallback: recentre
             )
         }
@@ -105,8 +111,45 @@ struct WaypointMap: View {
         Int((camera.heading / WaypointCompassStrip.degreesPerTick).rounded(.down))
     }
 
-    private var isTurned: Bool {
+    // Turned off north or dragged off the user, so there's something to go back to.
+    private var isAway: Bool {
         abs(camera.heading.remainder(dividingBy: 360)) > Constants.turnedTolerance
+            || abs(camera.focusX) > Constants.turnedTolerance
+            || abs(camera.focusY) > Constants.turnedTolerance
+    }
+
+    private var twist: some Gesture {
+        RotateGesture()
+            .onChanged { value in
+                let start = twistStartHeading ?? camera.heading
+                twistStartHeading = start
+                camera.heading = start - value.rotation.degrees
+            }
+            .onEnded { _ in
+                twistStartHeading = nil
+            }
+    }
+
+    // What each line on the map is, since there are three of them leaving the same spot.
+    private var legend: some View {
+        VStack(alignment: .leading, spacing: .spacing05x) {
+            legendRow("Plan", color: Color.textColor.opacity(.semiLowOpacity))
+            legendRow("Your path", color: .defaultYellow)
+            legendRow("New route", color: drawnCorrection.color)
+        }
+        .padding(.leading, .spacing3x)
+        .padding(.bottom, .spacing4x)
+        .allowsHitTesting(false)
+    }
+
+    private func legendRow(_ title: String, color: Color) -> some View {
+        HStack(spacing: .spacing1x) {
+            Capsule()
+                .fill(color)
+                .frame(width: Constants.legendKeyWidth, height: Constants.legendKeyHeight)
+
+            BrightText(title, size: .body4, color: .lightTextColor)
+        }
     }
 
     private var restingZoom: Double {
@@ -132,6 +175,41 @@ struct WaypointMap: View {
         }
     }
 
+    private func move(_ pan: UIPanGestureRecognizer) {
+        let projection = WaypointProjection(camera: camera, anchor: .zero)
+
+        switch pan.state {
+        case .began:
+            dragStartFocus = CGPoint(x: camera.focusX, y: camera.focusY)
+        case .changed:
+            guard let dragStartFocus else { return }
+            let dragged = pan.translation(in: pan.view)
+            let covered = projection.groundDistance(dragged: CGSize(width: dragged.x, height: dragged.y))
+            focus(on: CGPoint(x: dragStartFocus.x - covered.x, y: dragStartFocus.y - covered.y))
+        case .ended, .cancelled:
+            let velocity = pan.velocity(in: pan.view)
+            let thrown = projection.groundDistance(dragged: CGSize(
+                width: Double(velocity.x) * Constants.throwTime,
+                height: Double(velocity.y) * Constants.throwTime
+            ))
+            withAnimation(Constants.glide) {
+                focus(on: CGPoint(x: camera.focusX - Double(thrown.x), y: camera.focusY - Double(thrown.y)))
+            }
+            dragStartFocus = nil
+        default:
+            break
+        }
+    }
+
+    // Keeps the camera within reach of the route, so the map can't be dragged off
+    // the edge of the terrain.
+    private func focus(on point: CGPoint) {
+        let distance = Double(hypot(point.x, point.y))
+        let pull = distance > Constants.reach ? Constants.reach / distance : 1
+        camera.focusX = Double(point.x) * pull
+        camera.focusY = Double(point.y) * pull
+    }
+
     private func toggle3D() {
         is3D.toggle()
         let target = is3D ? WaypointCamera.raised : WaypointCamera.flat
@@ -146,6 +224,8 @@ struct WaypointMap: View {
         withAnimation(Constants.tilt) {
             camera.heading = (camera.heading / 360).rounded() * 360
             camera.zoom = restingZoom
+            camera.focusX = 0
+            camera.focusY = 0
         }
         select(nil)
     }
@@ -181,6 +261,10 @@ struct WaypointMap: View {
         static let height: CGFloat = 480
         // How far a sideways drag has to travel to turn the map a degree.
         static let pointsPerDegree: Double = 2.4
+        // How far from the user the map can be dragged.
+        static let reach: Double = 170
+        static let legendKeyWidth: CGFloat = 12
+        static let legendKeyHeight: CGFloat = 4
         static let dividerOpacity: Double = .veryLowOpacity
         static let visibleShare: Double = 0.2
         static let minZoom: Double = 0.75
@@ -248,83 +332,47 @@ private struct WaypointMapScene: View, Animatable {
         drawTerrain(&context, projection)
         drawRadar(&context, projection, time: time)
         drawRoutes(&context, projection, time: time)
-        drawBeacons(&context, projection)
         drawDots(&context, projection, time: time)
     }
 
-    // Ranges of peaks standing round the edge of the map, furthest first so each one
-    // hides the foot of the one behind. They only exist once the map is tilted: flat,
-    // they'd be three rings on the ground.
+    // The land carrying on past the last contour, drawn as its skyline at a few
+    // distances, furthest first so each one hides the foot of the one behind. The
+    // heights come from the same terrain as the contours and the routes. Flat, they'd
+    // be rings on the ground, so they only show once the map is tilted.
     private func drawMountains(_ context: inout GraphicsContext, _ projection: WaypointProjection) {
         let raised = min(max(camera.lift, 0), 1)
         guard raised > 0 else { return }
 
-        // Fixed bearings rather than ones measured from the camera, so the peaks
-        // don't crawl as the map turns.
+        // Fixed bearings rather than ones measured from the camera, so the skyline
+        // doesn't crawl as the map turns.
         let first = Int(((camera.heading - Constants.mountainSpan) / Constants.mountainStep).rounded(.down))
         let last = Int(((camera.heading + Constants.mountainSpan) / Constants.mountainStep).rounded(.up))
-        let foot = -terrain.originHeight
 
         for ring in (0 ..< Constants.mountainRings).reversed() {
             let radius = Constants.mountainNear + Double(ring) * Constants.mountainGap
-            let tallest = Constants.mountainHeight + Double(ring) * Constants.mountainRise
-            var bands = Constants.mountainBands.map { _ in [CGPoint]() }
-            var base: [CGPoint] = []
+            var ridge: [CGPoint] = []
+            var foot: [CGPoint] = []
 
             for index in first ... last {
                 let bearing = Double(index) * Constants.mountainStep * .pi / 180
-                let x = sin(bearing) * radius
-                let y = cos(bearing) * radius
-                let height = WaypointTerrain.peak(bearing: bearing, ring: ring) * tallest
-                base.append(projection.point(x, y, height: foot))
-                for (band, share) in Constants.mountainBands.enumerated() {
-                    bands[band].append(projection.point(x, y, height: foot + height * share))
-                }
+                let point = CGPoint(x: sin(bearing) * radius, y: cos(bearing) * radius)
+                ridge.append(ground(point, projection))
+                foot.append(projection.point(Double(point.x), Double(point.y), height: -terrain.originHeight))
             }
 
             var face = Path()
-            face.addLines(bands[0] + base.reversed())
+            face.addLines(ridge + foot.reversed())
             face.closeSubpath()
             context.fill(face, with: .color(Color.defaultBackground.opacity(raised)))
 
+            var skyline = Path()
+            skyline.addLines(ridge)
             let nearness = 1 - Double(ring) / Double(Constants.mountainRings)
-            for (band, points) in bands.enumerated() {
-                var line = Path()
-                line.addLines(points)
-                let opacity = (band == 0 ? Constants.ridgeOpacity : Constants.bandOpacity) * nearness * raised
-                context.stroke(line, with: .color(Color.defaultCyan.opacity(opacity)), lineWidth: Constants.contourWidth)
-            }
-        }
-    }
-
-    // A beam of light standing on each milestone and on the goal, so they can be
-    // picked out across the terrain.
-    private func drawBeacons(_ context: inout GraphicsContext, _ projection: WaypointProjection) {
-        let shown = stage(Constants.labelsAppear, 1) * min(max(camera.lift, 0), 1)
-        guard shown > 0 else { return }
-
-        for marker in route.markers {
-            guard let rise = marker.kind.beaconRise else { continue }
-            let base = ground(marker.position, projection)
-            let top = ground(marker.position, projection, raisedBy: rise)
-            var beam = Path()
-            beam.move(to: base)
-            beam.addLine(to: top)
-
-            let shading = GraphicsContext.Shading.linearGradient(
-                Gradient(colors: [
-                    marker.tint.opacity(Constants.beaconOpacity * shown * dimming(marker.id)),
-                    marker.tint.opacity(.zero),
-                ]),
-                startPoint: base,
-                endPoint: top
+            context.stroke(
+                skyline,
+                with: .color(Color.defaultCyan.opacity(Constants.ridgeOpacity * nearness * raised)),
+                lineWidth: Constants.contourWidth
             )
-            let style = StrokeStyle(lineWidth: Constants.beaconWidth, lineCap: .round)
-            context.drawLayer { layer in
-                layer.addFilter(.blur(radius: Constants.glowBlur))
-                layer.stroke(beam, with: shading, style: style)
-            }
-            context.stroke(beam, with: shading, style: style)
         }
     }
 
@@ -353,7 +401,7 @@ private struct WaypointMapScene: View, Animatable {
         let reach = Constants.radarReach * stage(0, Constants.routesDrawn)
         guard reach > 0 else { return }
 
-        let origin = projection.point(0, 0, height: 0)
+        let origin = ground(.zero, projection)
         var wedge = Path()
         wedge.move(to: origin)
         for step in 0 ... Constants.radarSteps {
@@ -368,7 +416,7 @@ private struct WaypointMapScene: View, Animatable {
                     Color.defaultGreen.opacity(Constants.radarFar),
                 ]),
                 startPoint: origin,
-                endPoint: projection.point(0, reach, height: 0)
+                endPoint: ground(CGPoint(x: 0, y: reach), projection)
             )
         )
 
@@ -387,7 +435,7 @@ private struct WaypointMapScene: View, Animatable {
 
     private func radarPoint(_ step: Int, reach: Double, _ projection: WaypointProjection) -> CGPoint {
         let angle = (Double(step) / Double(Constants.radarSteps) * 2 - 1) * Constants.radarHalfAngle
-        return projection.point(sin(angle) * reach, cos(angle) * reach, height: 0)
+        return ground(CGPoint(x: sin(angle) * reach, y: cos(angle) * reach), projection)
     }
 
     private func drawRoutes(_ context: inout GraphicsContext, _ projection: WaypointProjection, time: TimeInterval) {
@@ -435,20 +483,6 @@ private struct WaypointMapScene: View, Animatable {
                 layer.stroke(line.path, with: shading, style: rounded)
             }
             context.stroke(line.path, with: shading, style: rounded)
-
-            // Dashes running along the suggested line, towards the milestone.
-            let dashLength = Constants.flowDash.reduce(0, +)
-            let travelled = (time * Constants.flowSpeed).truncatingRemainder(dividingBy: Double(dashLength))
-            context.stroke(
-                line.path,
-                with: wash(.defaultWhite, Constants.correctionWash, along: line),
-                style: StrokeStyle(
-                    lineWidth: Constants.flowWidth,
-                    lineCap: .round,
-                    dash: Constants.flowDash,
-                    dashPhase: -CGFloat(travelled)
-                )
-            )
         }
 
         let target = ground(drawnCorrection.callout, projection)
@@ -497,7 +531,7 @@ private struct WaypointMapScene: View, Animatable {
             }
         }
 
-        let origin = projection.point(0, 0, height: 0)
+        let origin = ground(.zero, projection)
         context.fill(circle(at: origin, radius: Constants.originRing), with: .color(.defaultBackground))
         context.fill(circle(at: origin, radius: Constants.dotRadius), with: .color(.defaultGreen))
         context.drawLayer { layer in
@@ -528,10 +562,10 @@ private struct WaypointMapScene: View, Animatable {
         )
     }
 
-    private func ground(_ point: CGPoint, _ projection: WaypointProjection, raisedBy rise: Double = 0) -> CGPoint {
+    private func ground(_ point: CGPoint, _ projection: WaypointProjection) -> CGPoint {
         let x = Double(point.x)
         let y = Double(point.y)
-        return projection.point(x, y, height: WaypointTerrain.height(x: x, y: y) - terrain.originHeight + rise)
+        return projection.point(x, y, height: WaypointTerrain.height(x: x, y: y) - terrain.originHeight)
     }
 
     // How far through one part of the intro the camera's reveal has got.
@@ -717,8 +751,7 @@ private struct WaypointMapScene: View, Animatable {
     // The goal sits past the top of the map most of the time, so its flag stops at
     // the edge and points the way instead of leaving.
     private func position(of marker: WaypointMarker, _ projection: WaypointProjection, in size: CGSize) -> CGPoint {
-        // The flag flies from the top of the goal's beacon once the map is tilted.
-        let point = ground(marker.position, projection, raisedBy: marker.kind == .goal ? marker.kind.beaconRise ?? 0 : 0)
+        let point = ground(marker.position, projection)
         guard marker.kind == .goal else { return point }
         return CGPoint(
             x: min(max(point.x, Constants.goalInset), size.width - Constants.goalInset),
@@ -734,26 +767,15 @@ private struct WaypointMapScene: View, Animatable {
         static let contourWidth: CGFloat = 1
         static let contourFlat: Double = .minimalOpacity
         static let contourLow: Double = .ultraLowOpacity
-        static let contourHigh: Double = .semiLowOpacity
+        static let contourHigh: Double = .veryLowOpacity
 
         // Degrees either side of the heading that the ranges are drawn across.
         static let mountainSpan: Double = 110
         static let mountainStep: Double = 2
-        // Kept as low as the hills inside them, and stepped well back, so they fill
-        // the distance by receding rather than by towering.
-        static let mountainRings = 5
+        static let mountainRings = 4
         static let mountainNear: Double = 540
         static let mountainGap: Double = 90
-        // In terrain heights, where the contours top out at 1.
-        static let mountainHeight: Double = 0.9
-        static let mountainRise: Double = 0.1
-        // The ridge line, then the lines drawn part-way down each face.
-        static let mountainBands: [Double] = [1, 0.66, 0.33]
         static let ridgeOpacity: Double = .lowOpacity
-        static let bandOpacity: Double = .minimalOpacity
-
-        static let beaconWidth: CGFloat = 2
-        static let beaconOpacity: Double = .mediumOpacity
 
         static let radarReach: Double = 138
         static let radarHalfAngle: Double = .pi / 3
@@ -783,9 +805,6 @@ private struct WaypointMapScene: View, Animatable {
             WaypointWashStop(location: 0.45, opacity: .opaque),
             WaypointWashStop(location: 0.85, opacity: .finalBossUltraLowOpacity),
         ]
-        static let flowWidth: CGFloat = 2
-        static let flowDash: [CGFloat] = [2, 14]
-        static let flowSpeed: Double = 22
 
         static let leaderWidth: CGFloat = 31
         static let leaderElbow: CGFloat = 14
@@ -878,15 +897,6 @@ private extension WaypointMarker.Kind {
         }
     }
 
-    // How high a beam of light stands on the marker, in terrain heights.
-    var beaconRise: Double? {
-        switch self {
-        case .milestone: 1
-        case .goal: 1.6
-        case .checkpoint, .strain: nil
-        }
-    }
-
     private enum Constants {
         static let half: CGFloat = 13
     }
@@ -894,15 +904,21 @@ private extension WaypointMarker.Kind {
 
 // MARK: - Gesture
 
-// Takes sideways drags only, so the page still scrolls when the drag is vertical,
-// and makes the pager wait until this has had its chance at a horizontal one.
-private struct WaypointOrbitPan: UIGestureRecognizerRepresentable {
+// A one-finger drag that the scroll views around the map wait for. Sideways-only,
+// it leaves vertical drags to the page, which is what the bar wants; otherwise it
+// takes every drag, so the map moves under the finger instead of the page scrolling.
+private struct WaypointPan: UIGestureRecognizerRepresentable {
+    var sidewaysOnly: Bool
     var handle: (UIPanGestureRecognizer) -> Void
 
     func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
         let pan = UIPanGestureRecognizer()
         pan.delegate = context.coordinator
-        pan.maximumNumberOfTouches = 1
+        // The map keeps hold of a drag when a second finger lands to pinch or twist;
+        // limited to one, it would let go and the page would scroll instead.
+        if sidewaysOnly {
+            pan.maximumNumberOfTouches = 1
+        }
         return pan
     }
 
@@ -911,11 +927,18 @@ private struct WaypointOrbitPan: UIGestureRecognizerRepresentable {
     }
 
     func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
-        Coordinator()
+        Coordinator(sidewaysOnly: sidewaysOnly)
     }
 
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        let sidewaysOnly: Bool
+
+        init(sidewaysOnly: Bool) {
+            self.sidewaysOnly = sidewaysOnly
+        }
+
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard sidewaysOnly else { return true }
             guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
             let velocity = pan.velocity(in: pan.view)
             return abs(velocity.x) > abs(velocity.y)

@@ -8,27 +8,36 @@
 import SwiftUI
 
 // Where the map is looked at from. Heading is degrees clockwise from north, pitch
-// is 0 looking straight down, lift is how far the terrain has risen off the page
-// and reveal is how much of the route has been drawn.
+// is 0 looking straight down, lift is how far the terrain has risen off the page,
+// reveal is how much of the route has been drawn and focus is the spot on the
+// ground the camera is held over, which is the user until the map is dragged.
 struct WaypointCamera: Equatable {
-    typealias AnimatableData = AnimatablePair<AnimatablePair<Double, Double>, AnimatablePair<Double, AnimatablePair<Double, Double>>>
+    typealias Pose = AnimatablePair<AnimatablePair<Double, Double>, AnimatablePair<Double, AnimatablePair<Double, Double>>>
+    typealias AnimatableData = AnimatablePair<Pose, AnimatablePair<Double, Double>>
 
     var heading: Double
     var pitch: Double
     var lift: Double
     var zoom: Double
     var reveal: Double
+    var focusX: Double = 0
+    var focusY: Double = 0
 
     var animatableData: AnimatableData {
         get {
-            AnimatablePair(AnimatablePair(heading, pitch), AnimatablePair(lift, AnimatablePair(zoom, reveal)))
+            AnimatablePair(
+                AnimatablePair(AnimatablePair(heading, pitch), AnimatablePair(lift, AnimatablePair(zoom, reveal))),
+                AnimatablePair(focusX, focusY)
+            )
         }
         set {
-            heading = newValue.first.first
-            pitch = newValue.first.second
-            lift = newValue.second.first
-            zoom = newValue.second.second.first
-            reveal = newValue.second.second.second
+            heading = newValue.first.first.first
+            pitch = newValue.first.first.second
+            lift = newValue.first.second.first
+            zoom = newValue.first.second.second.first
+            reveal = newValue.first.second.second.second
+            focusX = newValue.second.first
+            focusY = newValue.second.second
         }
     }
 
@@ -38,8 +47,8 @@ struct WaypointCamera: Equatable {
 }
 
 // Turns a point on the ground into a point on screen. World units are points on the
-// flat map: x runs east, y runs north, and the origin is where the user stands, which
-// stays pinned to `anchor` however the camera moves.
+// flat map: x runs east, y runs north, and the origin is where the user stands. The
+// camera's focus stays pinned to `anchor` however it turns or tilts.
 struct WaypointProjection {
     private let anchorX: Double
     private let anchorY: Double
@@ -49,6 +58,8 @@ struct WaypointProjection {
     private let sinPitch: Double
     private let zoom: Double
     private let relief: Double
+    private let focusX: Double
+    private let focusY: Double
 
     init(camera: WaypointCamera, anchor: CGPoint) {
         let heading = camera.heading * .pi / 180
@@ -61,12 +72,16 @@ struct WaypointProjection {
         sinPitch = sin(pitch)
         zoom = camera.zoom
         relief = camera.lift * Constants.relief
+        focusX = camera.focusX
+        focusY = camera.focusY
     }
 
     // `height` is relative to the ground under the user, in the terrain's 0...1 range.
     func point(_ x: Double, _ y: Double, height: Double) -> CGPoint {
-        let turnedX = x * cosHeading - y * sinHeading
-        let turnedY = x * sinHeading + y * cosHeading
+        let offsetX = x - focusX
+        let offsetY = y - focusY
+        let turnedX = offsetX * cosHeading - offsetY * sinHeading
+        let turnedY = offsetX * sinHeading + offsetY * cosHeading
         let raised = height * relief
         let up = turnedY * cosPitch + raised * sinPitch
         let depth = turnedY * sinPitch - raised * cosPitch
@@ -74,15 +89,30 @@ struct WaypointProjection {
         return CGPoint(x: anchorX + turnedX * scale, y: anchorY - up * scale)
     }
 
+    // How far across the ground a drag on screen reaches, so the map can be moved by
+    // the same amount and stay under the finger. Tilted, a drag up the screen covers
+    // more ground than one across it.
+    func groundDistance(dragged: CGSize) -> CGPoint {
+        let turnedX = Double(dragged.width) / zoom
+        let turnedY = -Double(dragged.height) / (zoom * max(cosPitch, Constants.steepestLean))
+        return CGPoint(
+            x: turnedX * cosHeading + turnedY * sinHeading,
+            y: turnedY * cosHeading - turnedX * sinHeading
+        )
+    }
+
     private enum Constants {
+        static let steepestLean: Double = 0.3
         static let relief: Double = 70
         static let eyeDistance: Double = 700
         static let nearPlane: Double = 120
     }
 }
 
-// A made-up landscape that climbs towards the goal, sliced into contour lines once
-// so each frame only has to project them.
+// A made-up landscape that climbs towards the goal. `height(x:y:)` is the one
+// definition of the ground: the contours are slices of it, taken once so each frame
+// only has to project them, and everything else drawn on the map asks it how high
+// to sit.
 struct WaypointTerrain {
     struct Level {
         let height: Double
@@ -129,18 +159,6 @@ struct WaypointTerrain {
         let rolling = min(max((total / range - 0.5) * Constants.contrast + 0.5, 0), 1)
         let climb = fade(min(max((y - Constants.climbStart) / Constants.climbLength, 0), 1))
         return rolling * (1 - Constants.climbShare) + climb * Constants.climbShare
-    }
-
-    // How tall the range standing past the edge of the contours is at a bearing, 0...1.
-    // Sampled round a circle so it joins up with itself, and folded so the high
-    // points come to sharp peaks.
-    static func peak(bearing: Double, ring: Int) -> Double {
-        let shift = Double(ring) * Constants.octaveShift
-        let x = cos(bearing) * Constants.peakFrequency + shift
-        let y = sin(bearing) * Constants.peakFrequency - shift
-        let folded = 1 - abs(noise(x, y) * 2 - 1)
-        let detail = noise(x * Constants.peakDetail, y * Constants.peakDetail)
-        return folded * folded * (1 - Constants.peakDetailShare) + detail * Constants.peakDetailShare
     }
 
     private static func coordinate(_ index: Int) -> Double {
@@ -230,7 +248,7 @@ struct WaypointTerrain {
         static let step: Double = radius * 2 / Double(cells)
         static let lowestLevel: Double = 0.14
         static let highestLevel: Double = 0.92
-        static let levelStep: Double = 0.06
+        static let levelStep: Double = 0.1
         static let wavelength: Double = 230
         static let octaves = 3
         static let octaveShift: Double = 17.3
@@ -238,8 +256,5 @@ struct WaypointTerrain {
         static let climbStart: Double = -320
         static let climbLength: Double = 820
         static let climbShare: Double = 0.3
-        static let peakFrequency: Double = 2.2
-        static let peakDetail: Double = 2.7
-        static let peakDetailShare: Double = 0.25
     }
 }
