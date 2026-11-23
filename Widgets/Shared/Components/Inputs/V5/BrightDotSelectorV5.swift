@@ -89,7 +89,7 @@ struct BrightDotSelectorV5: View {
                 .modifier(BrightGlassEffectV5(shape: .circle))
         } else {
             Capsule()
-                .fill(i == selectedIndex ? Color.textColor : Color.semiLightTextColor.opacity(0.4))
+                .fill(i == selectedIndex ? Color.textColor : Color.semiLightTextColor.opacity(.semiLowOpacity))
                 .frame(width: Self.dashWidth, height: Self.dashHeight)
         }
     }
