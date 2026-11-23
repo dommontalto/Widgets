@@ -11,9 +11,9 @@ struct WaypointView: View {
     var onCheckIn: () -> Void = {}
 
     @State private var state = WaypointState.hasAdjustments
-    @State private var bearing = WaypointBearing.north
-    @State private var bounce = WaypointBounce()
     @State private var shownGroup: WaypointAdjustmentGroup?
+
+    private let bearing = WaypointBearing.north
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -41,7 +41,7 @@ struct WaypointView: View {
 
     private var emptyState: some View {
         VStack(spacing: .spacing3x) {
-            WaypointGauge(bearing: .north, bounce: bounce, isActive: false)
+            WaypointGauge(bearing: .north, bounce: WaypointBounce(), isActive: false)
 
             BrightText("Create a goal to activate Waypoint", size: .body1)
                 .multilineTextAlignment(.center)
@@ -65,74 +65,43 @@ struct WaypointView: View {
 
             summary
 
-            BrightPillButton("View Check-in", systemImage: "doc.text.magnifyingglass", onTapCallback: checkIn)
-                .frame(maxWidth: .infinity)
-
             adjustments
         }
     }
 
     private var header: some View {
-        VStack(spacing: .spacing2x) {
+        VStack(spacing: .spacing6x) {
             VStack(spacing: .spacing05x) {
-                BrightText("Road to 20KM Program", size: .heading)
+                BrightText("21 KM under 2 hours", size: .heading)
 
                 BrightText("Last Check-in: 3 weeks ago", size: .body1, color: .lightTextColor)
             }
             .multilineTextAlignment(.center)
 
-            HStack(spacing: .spacing0x) {
-                BrightRoundButton(systemImage: "chevron.left") {
-                    step(by: -1)
-                }
-
-                Spacer(minLength: .spacing0x)
-
-                WaypointGauge(bearing: bearing, bounce: bounce)
-
-                Spacer(minLength: .spacing0x)
-
-                BrightRoundButton(systemImage: "chevron.right") {
-                    step(by: 1)
-                }
-            }
-            .padding(.top, .spacing5x)
+            // Edge to edge, past the page's own margins.
+            WaypointMap()
+                .padding(.horizontal, -.spacing3x)
 
             VStack(spacing: .spacing1x) {
-                BrightText(bearing.status, size: .body1, color: bearing.color)
-                    .contentTransition(.opacity)
+                BrightText(bearing.status, size: .subheading2, color: bearing.color)
 
                 HStack(spacing: .spacing05x) {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.standardSFPro(size: .body1, weight: .regular))
 
                     BrightText("Next check-in: Mon, 2 Oct", size: .body1, color: .lightTextColor)
                 }
                 .foregroundStyle(Color.lightTextColor)
             }
-
-            BrightPillButton("Check In", systemImage: "person.badge.clock", buttonSize: .large, onTapCallback: checkIn)
-                .padding(.top, .spacing1x)
+            .padding(.top, .spacing6x)
         }
-        .animation(.brightEaseInOut, value: bearing)
-        .brightHapticV5(.light, trigger: bearing)
-        .brightHapticV5(.impact, trigger: bounce.tick)
-    }
-
-    private func step(by offset: Int) {
-        let cases = WaypointBearing.allCases
-        let index = (cases.firstIndex(of: bearing) ?? 0) + offset
-        guard cases.indices.contains(index) else {
-            bounce = WaypointBounce(tick: bounce.tick + 1, direction: Double(offset.signum()))
-            return
-        }
-        bearing = cases[index]
+        .padding(.bottom, .spacing4x)
     }
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: .spacing105x) {
             VStack(alignment: .leading, spacing: .spacing05x) {
-                sectionTitle("sparkles", "Summary")
+                sectionTitle("sparkles.2", "Summary")
 
                 Button(action: checkIn) {
                     BrightText("Your last check-in", size: .body1, color: .defaultCyan)
@@ -184,10 +153,23 @@ struct WaypointView: View {
         BrightRowV5(
             group.title,
             icon: .symbol(group.symbol, tint: group.color),
-            trailing: .value("\(group.adjustments.count) changes")
-        ) {
-            shownGroup = group
-        }
+            action: { shownGroup = group },
+            trailing: {
+                HStack(spacing: .spacing1x) {
+                    BrightText("\(group.adjustments.count)", size: .subheading2)
+                        .monospacedDigit()
+                        .frame(width: Constants.badgeSize, height: Constants.badgeSize)
+                        .background(Color.textColor.opacity(.veryMinimalOpacity), in: Circle())
+
+                    BrightText("changes", size: .subheading2, color: .semiLightTextColor)
+
+                    Image(systemName: "chevron.forward")
+                        .font(.standardSFPro(size: .body2, weight: .medium))
+                        .foregroundStyle(Color.semiLightTextColor)
+                        .padding(.leading, .spacing1x)
+                }
+            }
+        )
     }
 
     // MARK: - Debug
@@ -220,6 +202,10 @@ struct WaypointView: View {
 
     private func checkIn() {
         onCheckIn()
+    }
+
+    private enum Constants {
+        static let badgeSize: CGFloat = 25
     }
 }
 
@@ -749,7 +735,7 @@ private extension WaypointAdjustmentGroup {
                 ]
             ),
         ]),
-        WaypointAdjustmentGroup(id: "exercise", title: "Exercise", symbol: "figure.walk", color: .defaultPink, adjustments: [
+        WaypointAdjustmentGroup(id: "exercise", title: "Exercise", symbol: "figure.cooldown", color: .defaultPink, adjustments: [
             WaypointAdjustment(
                 id: "session1",
                 title: "S&C session 1",
