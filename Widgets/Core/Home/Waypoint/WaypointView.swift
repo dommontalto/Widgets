@@ -29,6 +29,7 @@ struct WaypointView: View {
         .padding(.horizontal, .spacing3x)
         .padding(.top, .spacing4x)
         .padding(.bottom, .spacing12x)
+        .overlay(alignment: .topTrailing) { statePicker }
         .sheet(item: $shownGroup) { group in
             WaypointAdjustmentGroupSheet(group: group)
                 .presentationDetents([.large])
@@ -68,21 +69,23 @@ struct WaypointView: View {
     }
 
     private var header: some View {
-        VStack(spacing: .spacing6x) {
-            VStack(spacing: .spacing05x) {
-                BrightText("21 KM under 2 hours", size: .heading)
+        VStack(spacing: .spacing4x) {
+            // Both run edge to edge, past the page's own margins.
+            BrightWaypointV5(
+                goal: Constants.goal,
+                message: correction.bearing.status,
+                lowLabel: Constants.lowLabel,
+                highLabel: Constants.highLabel,
+                offset: correction.barLoad,
+                color: correction.color
+            )
+            .padding(.horizontal, -.spacing3x)
 
-                BrightText("Last Check-in: 3 weeks ago", size: .body1, color: .lightTextColor)
-            }
-            .multilineTextAlignment(.center)
-
-            // Edge to edge, past the page's own margins.
             WaypointMap(correction: $correction)
                 .padding(.horizontal, -.spacing3x)
 
             VStack(spacing: .spacing1x) {
-                BrightText(correction.bearing.status, size: .subheading2, color: correction.bearing.color)
-                    .contentTransition(.opacity)
+                BrightText("Last Check-in: 3 weeks ago", size: .body1, color: .lightTextColor)
 
                 HStack(spacing: .spacing05x) {
                     Image(systemName: "arrow.forward")
@@ -92,8 +95,6 @@ struct WaypointView: View {
                 }
                 .foregroundStyle(Color.lightTextColor)
             }
-            .padding(.top, -.spacing2x)
-            .animation(.brightEaseInOut, value: correction)
         }
     }
 
@@ -171,19 +172,68 @@ struct WaypointView: View {
         )
     }
 
+    // MARK: - Debug
+
+    private var statePicker: some View {
+        Menu {
+            Section("State") {
+                ForEach(WaypointState.allCases) { option in
+                    Button {
+                        state = option
+                    } label: {
+                        Label {
+                            Text(option.title)
+                        } icon: {
+                            if option == state {
+                                Image(systemName: "checkmark")
+                            } else {
+                                Image(systemName: option.symbol)
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "ladybug.fill")
+                .padding(.spacing2x)
+        }
+        .padding(.trailing, .spacing1x)
+    }
+
     private func checkIn() {
         onCheckIn()
     }
 
     private enum Constants {
         static let badgeSize: CGFloat = 25
+        static let goal = "21 KM under 2 hours"
+        static let lowLabel = "Undertrained"
+        static let highLabel = "Overtrained"
     }
 }
 
-private enum WaypointState {
+private enum WaypointState: CaseIterable, Identifiable {
     case noCheckInYet
     case noAdjustments
     case hasAdjustments
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .noCheckInYet: "No check-in yet"
+        case .noAdjustments: "No adjustments"
+        case .hasAdjustments: "Has adjustments"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .noCheckInYet: "circle.dashed"
+        case .noAdjustments: "checkmark.circle"
+        case .hasAdjustments: "arrow.up.arrow.down.circle"
+        }
+    }
 
     var summary: String {
         switch self {

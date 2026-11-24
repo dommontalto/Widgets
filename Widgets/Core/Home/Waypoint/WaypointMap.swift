@@ -7,9 +7,8 @@
 
 import SwiftUI
 
-// The waypoint bar and the terrain under it. Dragging the map moves it, twisting
-// two fingers or dragging along the bar turns it, pinching zooms, and the two
-// buttons tilt it into 3D and bring it back to the user with north up.
+// The terrain map. Dragging moves it, twisting two fingers turns it, pinching zooms,
+// and the two buttons tilt it into 3D and bring it back to the user with north up.
 struct WaypointMap: View {
     var route = WaypointRoute.demo
     @Binding var correction: WaypointCorrection
@@ -22,23 +21,12 @@ struct WaypointMap: View {
     @State private var correctionDrawn = 1.0
     @State private var isVisible = false
     @State private var hasPlayedIntro = false
-    @State private var dragStartHeading: Double?
     @State private var dragStartFocus: CGPoint?
     @State private var twistStartHeading: Double?
     @State private var pinchStartZoom: Double?
 
     var body: some View {
         VStack(spacing: .spacing0x) {
-            WaypointCompassStrip(
-                heading: camera.heading,
-                load: drawnCorrection.barLoad,
-                loadColor: drawnCorrection.color,
-                zoneColor: drawnCorrection.strainColor
-            )
-            .padding(.bottom, .spacing2x)
-            .contentShape(Rectangle())
-            .gesture(WaypointPan(sidewaysOnly: true, handle: orbit))
-
             WaypointMapScene(
                 camera: camera,
                 route: route,
@@ -54,7 +42,7 @@ struct WaypointMap: View {
             .clipped()
             .contentShape(Rectangle())
             .onTapGesture { select(nil) }
-            .gesture(WaypointPan(sidewaysOnly: false, handle: move))
+            .gesture(WaypointPan(handle: move))
             .simultaneousGesture(pinch)
             .simultaneousGesture(twist)
             .overlay(alignment: .bottomLeading) { legend }
@@ -108,7 +96,7 @@ struct WaypointMap: View {
     }
 
     private var compassTick: Int {
-        Int((camera.heading / WaypointCompassStrip.degreesPerTick).rounded(.down))
+        Int((camera.heading / Constants.degreesPerTick).rounded(.down))
     }
 
     // Turned off north or dragged off the user, so there's something to go back to.
@@ -154,25 +142,6 @@ struct WaypointMap: View {
 
     private var restingZoom: Double {
         is3D ? WaypointCamera.raised.zoom : WaypointCamera.flat.zoom
-    }
-
-    private func orbit(_ pan: UIPanGestureRecognizer) {
-        switch pan.state {
-        case .began:
-            dragStartHeading = camera.heading
-        case .changed:
-            guard let dragStartHeading else { return }
-            let dragged = Double(pan.translation(in: pan.view).x)
-            camera.heading = dragStartHeading - dragged / Constants.pointsPerDegree
-        case .ended, .cancelled:
-            let thrown = Double(pan.velocity(in: pan.view).x) * Constants.throwTime
-            withAnimation(Constants.glide) {
-                camera.heading -= thrown / Constants.pointsPerDegree
-            }
-            dragStartHeading = nil
-        default:
-            break
-        }
     }
 
     private func move(_ pan: UIPanGestureRecognizer) {
@@ -237,7 +206,7 @@ struct WaypointMap: View {
     }
 
     // Pulls the old line back to where it left the drift, then draws the new one out
-    // while the labels and the waypoint bar move over to match.
+    // while the labels move over to match.
     private func redrawCorrection() {
         withAnimation(Constants.retract) {
             correctionDrawn = 0
@@ -259,8 +228,8 @@ struct WaypointMap: View {
 
     private enum Constants {
         static let height: CGFloat = 480
-        // How far a sideways drag has to travel to turn the map a degree.
-        static let pointsPerDegree: Double = 2.4
+        // How far the map turns between each haptic tick.
+        static let degreesPerTick: Double = 9
         // How far from the user the map can be dragged.
         static let reach: Double = 170
         static let legendKeyWidth: CGFloat = 12
@@ -904,21 +873,14 @@ private extension WaypointMarker.Kind {
 
 // MARK: - Gesture
 
-// A one-finger drag that the scroll views around the map wait for. Sideways-only,
-// it leaves vertical drags to the page, which is what the bar wants; otherwise it
-// takes every drag, so the map moves under the finger instead of the page scrolling.
+// A drag that the scroll views around the map wait for, and so never get: the map
+// moves under the finger instead of the page scrolling or changing.
 private struct WaypointPan: UIGestureRecognizerRepresentable {
-    var sidewaysOnly: Bool
     var handle: (UIPanGestureRecognizer) -> Void
 
     func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
         let pan = UIPanGestureRecognizer()
         pan.delegate = context.coordinator
-        // The map keeps hold of a drag when a second finger lands to pinch or twist;
-        // limited to one, it would let go and the page would scroll instead.
-        if sidewaysOnly {
-            pan.maximumNumberOfTouches = 1
-        }
         return pan
     }
 
@@ -927,23 +889,10 @@ private struct WaypointPan: UIGestureRecognizerRepresentable {
     }
 
     func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
-        Coordinator(sidewaysOnly: sidewaysOnly)
+        Coordinator()
     }
 
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        let sidewaysOnly: Bool
-
-        init(sidewaysOnly: Bool) {
-            self.sidewaysOnly = sidewaysOnly
-        }
-
-        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-            guard sidewaysOnly else { return true }
-            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
-            let velocity = pan.velocity(in: pan.view)
-            return abs(velocity.x) > abs(velocity.y)
-        }
-
         func gestureRecognizer(
             _ gestureRecognizer: UIGestureRecognizer,
             shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer
