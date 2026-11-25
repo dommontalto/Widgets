@@ -12,8 +12,6 @@ import SwiftUI
 struct WaypointMap: View {
     var route = WaypointRoute.demo
     @Binding var correction: WaypointCorrection
-    @Binding var rain: WaypointRainStyle
-    @Binding var floating: WaypointFloatingClouds
     // Set on the copy shown full screen: it takes all the height it's given and
     // swaps the expand button for a close one.
     var fillsScreen = false
@@ -43,8 +41,6 @@ struct WaypointMap: View {
                 correction: correction,
                 drawnCorrection: drawnCorrection,
                 correctionDrawn: correctionDrawn,
-                rain: rain,
-                floating: floating,
                 isPaused: !isVisible,
                 onSelect: select,
                 onCorrect: { correction = $0 }
@@ -63,14 +59,13 @@ struct WaypointMap: View {
             .overlay(alignment: .bottomLeading) { legend }
             .overlay(alignment: .bottomTrailing) { controls }
             .overlay(alignment: .topTrailing) { sizeButton }
-            .overlay(alignment: .topLeading) { debugPicker }
 
             if !fillsScreen {
                 BrightDividerV5(opacity: Constants.dividerOpacity)
             }
         }
         .fullScreenCover(isPresented: $isExpanded) {
-            WaypointMap(route: route, correction: $correction, rain: $rain, floating: $floating, fillsScreen: true)
+            WaypointMap(route: route, correction: $correction, fillsScreen: true)
                 .background(Color.defaultBackground.ignoresSafeArea())
         }
         // Full screen there's no page scrolling it into view, so it starts as soon
@@ -128,53 +123,6 @@ struct WaypointMap: View {
         }
         .padding(.trailing, .spacing3x)
         .padding(.top, .spacing3x)
-    }
-
-    // On the map rather than the page, so it's there full screen too.
-    private var debugPicker: some View {
-        Menu {
-            Section("Rain") {
-                ForEach(WaypointRainStyle.allCases) { option in
-                    Button {
-                        rain = option
-                    } label: {
-                        Label {
-                            Text(option.title)
-                        } icon: {
-                            if option == rain {
-                                Image(systemName: "checkmark")
-                            } else {
-                                Image(systemName: option.symbol)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section("Floating clouds") {
-                ForEach(WaypointFloatingClouds.allCases) { option in
-                    Button {
-                        floating = option
-                    } label: {
-                        Label {
-                            Text(option.title)
-                        } icon: {
-                            if option == floating {
-                                Image(systemName: "checkmark")
-                            } else {
-                                Image(systemName: option.symbol)
-                            }
-                        }
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "ladybug.fill")
-                .padding(.spacing2x)
-                .contentShape(Rectangle())
-        }
-        .padding(.leading, .spacing1x)
-        .padding(.top, .spacing1x)
     }
 
     private var pinch: some Gesture {
@@ -350,7 +298,7 @@ struct WaypointMap: View {
         // How far the map turns between each haptic tick.
         static let degreesPerTick: Double = 9
         // How far from the user the map can be dragged.
-        static let reach: Double = 170
+        static let reach: Double = 300
         static let legendKeyWidth: CGFloat = 12
         static let legendKeyHeight: CGFloat = 4
         static let dividerOpacity: Double = .veryLowOpacity
@@ -378,8 +326,6 @@ private struct WaypointMapScene: View, Animatable {
     let correction: WaypointCorrection
     let drawnCorrection: WaypointCorrection
     var correctionDrawn: Double
-    let rain: WaypointRainStyle
-    let floating: WaypointFloatingClouds
     let isPaused: Bool
     let onSelect: (WaypointMarker?) -> Void
     let onCorrect: (WaypointCorrection) -> Void
@@ -578,10 +524,10 @@ private struct WaypointMapScene: View, Animatable {
 
         var tufts: [WaypointTuft] = []
         let highCount = WaypointClouds.count + WaypointClouds.bankCount
-        for index in 0 ..< highCount + floating.count {
+        for index in 0 ..< highCount + WaypointFloatingClouds.count {
             let isLow = index >= highCount
             let isBank = !isLow && index >= WaypointClouds.count
-            let reach = isLow ? floating.reach : (isBank ? WaypointClouds.bankReach : WaypointClouds.reach)
+            let reach = isLow ? WaypointFloatingClouds.reach : (isBank ? WaypointClouds.bankReach : WaypointClouds.reach)
             let isUpper = !isLow && index.isMultiple(of: 3)
             let drift = WaypointWeather.drift * (isUpper ? WaypointClouds.upperDrift : 1)
             let startX = WaypointTerrain.scatter(index, 4) * reach * 2
@@ -594,7 +540,7 @@ private struct WaypointMapScene: View, Animatable {
 
             let x = (startX + time * drift).truncatingRemainder(dividingBy: reach * 2) - reach
             let height = isLow
-                ? floating.base + WaypointTerrain.scatter(index, 6)
+                ? WaypointFloatingClouds.base + WaypointTerrain.scatter(index, 6)
                 : WaypointClouds.base + (isUpper ? WaypointClouds.layerGap : 0)
             let ahead = projection.ahead(x, y)
             guard ahead > Constants.cloudsBehind, projection.distance(x, y, height: height) > Constants.nearestCloud else { continue }
@@ -604,7 +550,7 @@ private struct WaypointMapScene: View, Animatable {
             let edge = min((1 - abs(x) / reach) * Constants.edgeFade, 1)
             let haze = 1 - Constants.hazeShare * min(max(ahead / WaypointClouds.hazeReach, 0), 1)
             let size = isLow ? 0.3 : (cover - WaypointClouds.coverLine) / (1 - WaypointClouds.coverLine)
-            let base = isLow ? floating.radius : (isBank ? WaypointClouds.bankRadius : WaypointClouds.radius)
+            let base = isLow ? WaypointFloatingClouds.radius : (isBank ? WaypointClouds.bankRadius : WaypointClouds.radius)
             tufts.append(WaypointTuft(
                 index: index,
                 x: x,
@@ -612,9 +558,10 @@ private struct WaypointMapScene: View, Animatable {
                 height: height,
                 radius: base * (0.7 + size) * (1 + WaypointTerrain.scatter(index, 9) * WaypointClouds.variety),
                 ahead: ahead,
-                opacity: edge * haze * (isLow ? floating.opacity : 1),
-                caps: isLow ? floating.caps : WaypointClouds.caps,
-                tower: isLow ? floating.tower : WaypointClouds.tower
+                opacity: edge * haze * (isLow ? WaypointFloatingClouds.opacity : 1),
+                isLow: isLow,
+                caps: isLow ? WaypointFloatingClouds.caps : WaypointClouds.caps,
+                tower: isLow ? WaypointFloatingClouds.tower : WaypointClouds.tower
             ))
         }
         return tufts.sorted { $0.ahead > $1.ahead }
@@ -632,10 +579,14 @@ private struct WaypointMapScene: View, Animatable {
             guard centre.x > -reach, centre.x < size.width + reach, centre.y > -reach, centre.y < size.height + reach else { continue }
 
             let opacity = WaypointClouds.opacity * tuft.opacity * shown
+            // The low cloud is a tone darker all through: near-black underneath, and
+            // only the grey of the sky's undersides on top.
+            let underside: Color = tuft.isLow ? .waypointStormCloud : .waypointCloudShade
+            let capTone: Color = tuft.isLow ? .waypointCloudShade : .waypointCloud
             drawPuff(
                 &context, projection,
                 x: tuft.x, y: tuft.y, height: tuft.height, radius: tuft.radius,
-                color: .waypointCloudShade, opacity: opacity, core: WaypointClouds.core,
+                color: underside, opacity: opacity, core: WaypointClouds.core,
                 roundness: Constants.cloudRoundness
             )
             // Caps heaped on the underside, each one higher, further in and smaller than
@@ -653,7 +604,7 @@ private struct WaypointMapScene: View, Animatable {
                     height: tuft.height + Constants.capRise + tuft.tower * rise,
                     radius: tuft.radius * (Constants.capSize + WaypointTerrain.scatter(seed, 23) * Constants.capVariety)
                         * (1 - rise * Constants.capTaper),
-                    color: .waypointCloud, opacity: opacity * Constants.capOpacity, core: Constants.capCore,
+                    color: capTone, opacity: opacity * Constants.capOpacity, core: Constants.capCore,
                     roundness: Constants.cloudRoundness
                 )
             }
@@ -734,36 +685,35 @@ private struct WaypointMapScene: View, Animatable {
     // Rain falling to the ground it lands on, leaning with the wind. It's thickest
     // under the banks of cloud, and the drops nearest the camera are longer, wider
     // and brighter than the ones further off. A drop spends most of its turn
-    // falling; in the styles that splash, it spends the rest as a ring spreading
-    // over the ground where it landed.
+    // falling and the rest as a ring spreading over the ground where it landed.
     private func drawRain(_ context: inout GraphicsContext, _ projection: WaypointProjection, time: TimeInterval) {
         let shown = stage(Constants.labelsAppear, 1) * raised
         guard shown > 0 else { return }
 
-        let fallShare = rain.hasSplashes ? Constants.fallShare : 1
+        let fallShare = Constants.fallShare
         var nearStreaks = Path()
         var farStreaks = Path()
         var freshRings = Path()
         var fadingRings = Path()
 
-        for drop in 0 ..< rain.dropCount {
+        for drop in 0 ..< WaypointRain.dropCount {
             let startX = (WaypointTerrain.scatter(drop, 1) * 2 - 1) * Constants.rainReach
             let y = (WaypointTerrain.scatter(drop, 2) * 2 - 1) * Constants.rainReach
             // The cover is read where the cloud over this spot started out, since the
             // clouds have drifted on from there.
             let cover = WaypointTerrain.cover(x: startX - time * WaypointWeather.drift, y: y)
-            guard cover > WaypointClouds.coverLine || WaypointTerrain.scatter(drop, 19) < rain.clearSkyShare else { continue }
+            guard cover > WaypointClouds.coverLine || WaypointTerrain.scatter(drop, 19) < WaypointRain.clearSkyShare else { continue }
 
-            let turn = (time / rain.fallTime + WaypointTerrain.scatter(drop, 3)).truncatingRemainder(dividingBy: 1)
+            let turn = (time / WaypointRain.fallTime + WaypointTerrain.scatter(drop, 3)).truncatingRemainder(dividingBy: 1)
             let fallen = min(turn / fallShare, 1)
-            let x = startX + rain.lean * fallen
+            let x = startX + WaypointRain.lean * fallen
             let floor = WaypointTerrain.height(x: x, y: y) - terrain.originHeight
 
             if turn < fallShare {
                 let height = floor + (Constants.rainCeiling - floor) * (1 - fallen)
                 let isNear = projection.scale(x, y, height: height) > Constants.nearRain
-                let length = rain.dropLength * (isNear ? Constants.nearRainLength : 1)
-                let tail = rain.lean * length / Constants.rainCeiling
+                let length = WaypointRain.dropLength * (isNear ? Constants.nearRainLength : 1)
+                let tail = WaypointRain.lean * length / Constants.rainCeiling
                 let foot = projection.point(x, y, height: height)
                 let head = projection.point(x - tail, y, height: height + length)
                 if isNear {
@@ -799,16 +749,16 @@ private struct WaypointMapScene: View, Animatable {
 
         // Pale like the clouds it falls from, not the cyan of the map's own lines.
         let color = Color.waypointCloud
-        let opacity = rain.opacity * shown
+        let opacity = WaypointRain.opacity * shown
         context.stroke(
             farStreaks,
             with: .color(color.opacity(opacity * Constants.farRainOpacity)),
-            style: StrokeStyle(lineWidth: rain.dropWidth, lineCap: .round)
+            style: StrokeStyle(lineWidth: WaypointRain.dropWidth, lineCap: .round)
         )
         context.stroke(
             nearStreaks,
             with: .color(color.opacity(opacity)),
-            style: StrokeStyle(lineWidth: rain.dropWidth + Constants.nearRainWidth, lineCap: .round)
+            style: StrokeStyle(lineWidth: WaypointRain.dropWidth + Constants.nearRainWidth, lineCap: .round)
         )
         context.stroke(freshRings, with: .color(color.opacity(opacity)), lineWidth: Constants.rainWidth)
         context.stroke(fadingRings, with: .color(color.opacity(Constants.fadingRingOpacity * shown)), lineWidth: Constants.rainWidth)
@@ -1028,7 +978,7 @@ private struct WaypointMapScene: View, Animatable {
         }
 
         if let ahead = track(route.ahead, drawn: late, projection) {
-            context.stroke(ahead.path, with: wash(.defaultGreen, Constants.aheadWash, along: ahead), style: butt)
+            context.stroke(ahead.path, with: wash(.defaultGreen, Constants.aheadWash, along: ahead), style: rounded)
         }
 
         if let drift = track(route.drift, drawn: early, projection) {
@@ -1456,9 +1406,9 @@ private struct WaypointMapScene: View, Animatable {
             WaypointWashStop(location: 1, opacity: .zero),
         ]
         static let aheadWash = [
-            WaypointWashStop(location: 0, opacity: .veryLowOpacity),
-            WaypointWashStop(location: 0.5, opacity: .veryLowOpacity),
-            WaypointWashStop(location: 1, opacity: .zero),
+            WaypointWashStop(location: 0, opacity: .semiLowOpacity),
+            WaypointWashStop(location: 0.9, opacity: .semiLowOpacity),
+            WaypointWashStop(location: 1, opacity: .veryMinimalOpacity),
         ]
         static let correctionWash = [
             WaypointWashStop(location: 0, opacity: .finalBossUltraLowOpacity),
@@ -1513,6 +1463,8 @@ private struct WaypointTuft {
     let radius: Double
     let ahead: Double
     let opacity: Double
+    // One of the dark clouds hanging low over the map, rather than part of the sky.
+    let isLow: Bool
     let caps: Int
     let tower: Double
 }
@@ -1617,11 +1569,8 @@ private struct WaypointPan: UIGestureRecognizerRepresentable {
 
 #Preview {
     @Previewable @State var correction = WaypointCorrection.decrease
-    @Previewable @State var rain = WaypointRainStyle.heavyDrops
-    @Previewable @State var floating = WaypointFloatingClouds.heaps
-
     ScrollView {
-        WaypointMap(correction: $correction, rain: $rain, floating: $floating)
+        WaypointMap(correction: $correction)
     }
     .background(Color.defaultBackground)
 }

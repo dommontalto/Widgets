@@ -8,8 +8,7 @@
 import SwiftUI
 
 // The storm over the map, which is drawn into the map itself so it hangs over the
-// terrain and turns with it: bolts coming down out of a drifting sky. How the rain
-// under it looks is a `WaypointRainStyle`.
+// terrain and turns with it: bolts coming down out of a drifting sky.
 enum WaypointWeather {
     // How fast the clouds cross the map, in points of ground a second.
     static let drift: Double = 16
@@ -71,215 +70,32 @@ enum WaypointClouds {
     static let tower: Double = 0.9
 }
 
-// The clouds that float low over the map itself, close enough to see their shadows
-// right under them. The debug menu picks which kind.
-enum WaypointFloatingClouds: CaseIterable, Identifiable {
-    // A few thin scraps.
-    case wisps
-    // Small round cumulus, a handful of them.
-    case puffs
-    // A couple of big ones that tower.
-    case heaps
-    // Lots of little ones, like sheep.
-    case flock
-    // A low, broken layer that covers most of the map.
-    case blanket
-
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .wisps: "Wisps"
-        case .puffs: "Puffs"
-        case .heaps: "Heaps"
-        case .flock: "Flock"
-        case .blanket: "Blanket"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .wisps: "wind"
-        case .puffs: "cloud"
-        case .heaps: "cloud.fill"
-        case .flock: "circle.grid.3x3"
-        case .blanket: "cloud.fog"
-        }
-    }
-
-    var count: Int {
-        switch self {
-        case .wisps: 6
-        case .puffs: 8
-        case .heaps: 4
-        case .flock: 26
-        case .blanket: 22
-        }
-    }
-
+// The clouds that float low over the map itself: a dark, broken layer close enough
+// to see its shadows right under it.
+enum WaypointFloatingClouds {
+    static let count = 22
     // How far the clouds reach either side of the user before they wrap round.
-    var reach: Double { 440 }
-
-    var base: Double {
-        switch self {
-        case .wisps: 3.4
-        case .puffs: 3
-        case .heaps: 2.6
-        case .flock: 3.2
-        case .blanket: 2.4
-        }
-    }
-
-    var radius: Double {
-        switch self {
-        case .wisps: 22
-        case .puffs: 30
-        case .heaps: 46
-        case .flock: 15
-        case .blanket: 52
-        }
-    }
-
+    static let reach: Double = 440
+    static let base: Double = 2.4
+    static let radius: Double = 52
     // How many caps are heaped on the underside, and how far up they're stacked.
-    var caps: Int {
-        switch self {
-        case .wisps: 1
-        case .puffs: 4
-        case .heaps: 7
-        case .flock: 3
-        case .blanket: 3
-        }
-    }
-
-    var tower: Double {
-        switch self {
-        case .wisps: 0.1
-        case .puffs: 0.9
-        case .heaps: 2.2
-        case .flock: 0.5
-        case .blanket: 0.4
-        }
-    }
-
-    var opacity: Double {
-        switch self {
-        case .wisps: Constants.thin
-        case .puffs, .heaps, .flock: Constants.full
-        case .blanket: Constants.soft
-        }
-    }
-
-    private enum Constants {
-        static let thin: Double = .semiLowOpacity
-        static let soft: Double = .lowOpacity
-        static let full: Double = .mediumOpacity
-    }
+    static let caps = 3
+    static let tower: Double = 0.4
+    static let opacity: Double = .mediumOpacity
 }
 
-// The ways the debug menu can draw the rain. Lengths are in terrain heights and
-// widths across the ground are in points of it.
-enum WaypointRainStyle: CaseIterable, Identifiable {
-    // Thin lines leaning with the wind.
-    case streaks
-    // Long, dense lines driven hard sideways, so the rain reads as sheets.
-    case sheets
-    // Slow specks hanging in the air.
-    case mist
-    // Fewer, fatter drops that leave a ring spreading on the ground where they land.
-    case heavyDrops
-    // Rain only under the thick cloud, falling in columns that drift along with it.
-    case shafts
-
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .streaks: "Streaks"
-        case .sheets: "Sheets"
-        case .mist: "Mist"
-        case .heavyDrops: "Heavy drops"
-        case .shafts: "Rain shafts"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .streaks: "cloud.rain"
-        case .sheets: "cloud.heavyrain"
-        case .mist: "cloud.drizzle"
-        case .heavyDrops: "drop"
-        case .shafts: "cloud.sun.rain"
-        }
-    }
-
-    var dropCount: Int {
-        switch self {
-        case .streaks: 620
-        case .sheets: 1000
-        case .mist: 1200
-        case .heavyDrops: 320
-        case .shafts: 900
-        }
-    }
-
-    var dropLength: Double {
-        switch self {
-        case .streaks: 0.1
-        case .sheets: 0.3
-        case .mist: 0.015
-        case .heavyDrops: 0.035
-        case .shafts: 0.11
-        }
-    }
-
-    var dropWidth: CGFloat {
-        switch self {
-        case .streaks, .sheets, .shafts: 1
-        case .mist: 1.5
-        case .heavyDrops: 0.6
-        }
-    }
-
+// The rain: thin, short drops that each leave a ring spreading on the ground where
+// they land. Lengths are in terrain heights and distances across the ground are in
+// points of it.
+enum WaypointRain {
+    static let dropCount = 320
+    static let dropLength: Double = 0.035
+    static let dropWidth: CGFloat = 0.6
     // The seconds a drop takes from the clouds to the ground.
-    var fallTime: Double {
-        switch self {
-        case .streaks: 0.9
-        case .sheets: 0.6
-        case .mist: 2.4
-        case .heavyDrops: 1
-        case .shafts: 0.8
-        }
-    }
-
+    static let fallTime: Double = 1
     // How far the wind carries a drop sideways on its way down.
-    var lean: Double {
-        switch self {
-        case .streaks: 14
-        case .sheets: 30
-        case .mist: 4
-        case .heavyDrops: 8
-        case .shafts: 10
-        }
-    }
-
-    var opacity: Double {
-        switch self {
-        case .streaks, .shafts: Constants.light
-        case .sheets, .mist: Constants.faint
-        case .heavyDrops: Constants.strong
-        }
-    }
-
-    var hasSplashes: Bool { self == .heavyDrops }
-
+    static let lean: Double = 8
+    static let opacity: Double = .mediumOpacity
     // The share of drops that still fall where the sky is clear.
-    var clearSkyShare: Double {
-        self == .shafts ? 0 : 0.3
-    }
-
-    private enum Constants {
-        static let faint: Double = .semiLowOpacity
-        static let light: Double = .lowOpacity
-        static let strong: Double = .mediumOpacity
-    }
+    static let clearSkyShare: Double = 0.3
 }

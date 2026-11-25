@@ -177,6 +177,8 @@ nonisolated extension Color {
     // darker grey of its heavy patches.
     static let waypointCloud = Color(light: Color(hex: "#AEB7C2"), dark: Color(hex: "#D5DAE1"))
     static let waypointCloudShade = Color(light: Color(hex: "#5F6873"), dark: Color(hex: "#4B525C"))
+    // The underside of the low, heavy cloud that hangs over the map itself.
+    static let waypointStormCloud = Color(light: Color(hex: "#3D444D"), dark: Color(hex: "#2A2F37"))
     // The storm sky behind them, from overhead down to the haze on the horizon, which
     // is also what far-off land and low fog fade into.
     static let waypointSky = Color(light: Color(hex: "#8A9BAE"), dark: Color(hex: "#05070D"))

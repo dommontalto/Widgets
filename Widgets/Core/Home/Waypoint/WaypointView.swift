@@ -13,8 +13,6 @@ struct WaypointView: View {
     @State private var state = WaypointState.hasAdjustments
     @State private var shownGroup: WaypointAdjustmentGroup?
     @State private var correction = WaypointCorrection.decrease
-    @State private var rain = WaypointRainStyle.heavyDrops
-    @State private var floating = WaypointFloatingClouds.puffs
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -83,7 +81,7 @@ struct WaypointView: View {
             )
             .padding(.horizontal, -.spacing3x)
 
-            WaypointMap(correction: $correction, rain: $rain, floating: $floating)
+            WaypointMap(correction: $correction)
                 .padding(.horizontal, -.spacing3x)
 
             VStack(spacing: .spacing1x) {

@@ -176,16 +176,41 @@ extension WaypointRoute {
     static let demo: WaypointRoute = {
         let origin = CGPoint.zero
         let milestone = CGPoint(x: 23, y: 137)
-        let goal = CGPoint(x: 4, y: 266)
-        let lineEnd = CGPoint(x: 4, y: 241)
+        // The way on from the first milestone winds across the hills to the goal, a
+        // milestone at each turn.
+        let turns = [
+            CGPoint(x: 78, y: 196),
+            CGPoint(x: 44, y: 262),
+            CGPoint(x: -52, y: 300),
+            CGPoint(x: -104, y: 368),
+            CGPoint(x: -34, y: 424),
+            CGPoint(x: 62, y: 442),
+        ]
+        let goal = CGPoint(x: 104, y: 486)
+        let targets = ["12 KM in 55 mins", "14 KM in 68 mins", "16 KM in 80 mins", "18 KM in 95 mins", "19 KM in 105 mins", "20 KM in 112 mins"]
 
         let driftBend = CGPoint(x: -37.3, y: 25.8)
         let driftStraight = CGPoint(x: -45.5, y: 41.5)
 
-        let trailStart = CGPoint(x: 0, y: -6)
-        let trail = [trailStart] + WaypointTrack.line(from: trailStart, to: CGPoint(x: 0, y: -75))
+        let trail = WaypointTrack.spline(through: [
+            CGPoint(x: 0, y: -6),
+            CGPoint(x: 6, y: -70),
+            CGPoint(x: -18, y: -140),
+            CGPoint(x: -8, y: -215),
+        ])
         let planned = [origin] + WaypointTrack.line(from: origin, to: milestone)
-        let ahead = [milestone] + WaypointTrack.line(from: milestone, to: lineEnd)
+        let ahead = WaypointTrack.spline(through: [milestone] + turns + [goal])
+
+        let checkpoints = turns.enumerated().map { index, turn in
+            WaypointMarker(
+                id: "milestone\(index + 2)",
+                kind: .checkpoint,
+                title: "Milestone \(index + 2)",
+                subtitle: targets[index],
+                detail: "Unlocks after Milestone \(index + 1)",
+                position: turn
+            )
+        }
 
         var drift = [origin]
         drift += WaypointTrack.line(from: origin, to: driftBend)
@@ -213,22 +238,6 @@ extension WaypointRoute {
                     position: milestone
                 ),
                 WaypointMarker(
-                    id: "milestone2",
-                    kind: .checkpoint,
-                    title: "Milestone 2",
-                    subtitle: "15 KM in 65 mins",
-                    detail: "Unlocks after Milestone 1",
-                    position: CGPoint(x: 16.7, y: 171.7)
-                ),
-                WaypointMarker(
-                    id: "milestone3",
-                    kind: .checkpoint,
-                    title: "Milestone 3",
-                    subtitle: "18 KM in 85 mins",
-                    detail: "Unlocks after Milestone 2",
-                    position: CGPoint(x: 10.3, y: 206.3)
-                ),
-                WaypointMarker(
                     id: "strain",
                     kind: .strain,
                     title: "High Strain",
@@ -240,11 +249,11 @@ extension WaypointRoute {
                     id: "goal",
                     kind: .goal,
                     title: "21 KM under 2 hours",
-                    subtitle: "3 Milestones away",
+                    subtitle: "\(turns.count + 1) Milestones away",
                     detail: "On pace for 2 h 9 min today",
                     position: goal
                 ),
-            ]
+            ] + checkpoints
         )
     }()
 }
@@ -275,6 +284,36 @@ private enum WaypointTrack {
                 y: a * Double(from.y) + b * Double(control1.y) + c * Double(control2.y) + d * Double(to.y)
             )
         }
+    }
+
+    // A smooth line through every one of `knots`, bending at each instead of turning
+    // a corner. Includes the first.
+    static func spline(through knots: [CGPoint]) -> [CGPoint] {
+        guard let first = knots.first else { return [] }
+        var points = [first]
+        for index in 0 ..< knots.count - 1 {
+            let before = knots[max(index - 1, 0)]
+            let from = knots[index]
+            let to = knots[index + 1]
+            let after = knots[min(index + 2, knots.count - 1)]
+            for step in 1 ... Constants.steps {
+                let t = Double(step) / Double(Constants.steps)
+                points.append(CGPoint(
+                    x: bend(Double(before.x), Double(from.x), Double(to.x), Double(after.x), t),
+                    y: bend(Double(before.y), Double(from.y), Double(to.y), Double(after.y), t)
+                ))
+            }
+        }
+        return points
+    }
+
+    // One coordinate of a Catmull-Rom curve between `from` and `to`.
+    private static func bend(_ before: Double, _ from: Double, _ to: Double, _ after: Double, _ t: Double) -> Double {
+        let a = 2 * from
+        let b = (to - before) * t
+        let c = (2 * before - 5 * from + 4 * to - after) * t * t
+        let d = (3 * from - before - 3 * to + after) * t * t * t
+        return (a + b + c + d) / 2
     }
 
     private enum Constants {
