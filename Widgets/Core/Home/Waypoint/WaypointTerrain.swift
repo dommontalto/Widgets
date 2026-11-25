@@ -42,8 +42,12 @@ struct WaypointCamera: Equatable {
     }
 
     static let flat = WaypointCamera(heading: 0, pitch: 0, lift: 0, zoom: 1, reveal: 1)
-    static let raised = WaypointCamera(heading: 0, pitch: 52, lift: 1, zoom: 1.15, reveal: 1)
-    static let intro = WaypointCamera(heading: -50, pitch: 52, lift: 0, zoom: 1.15, reveal: 0)
+    // Tilted far enough over that the horizon, and the sky above it, are in view.
+    static let raised = WaypointCamera(heading: 0, pitch: 64, lift: 1, zoom: 1.4, reveal: 1)
+    static let intro = WaypointCamera(heading: -50, pitch: 64, lift: 0, zoom: 1.4, reveal: 0)
+    // The same tilt from further back, for the map at its size on the page: there's
+    // less height to work with, and this keeps a strip of sky in it.
+    static let raisedOnPage = WaypointCamera(heading: 0, pitch: 64, lift: 1, zoom: 0.95, reveal: 1)
 }
 
 // Turns a point on the ground into a point on screen. World units are points on the
@@ -80,6 +84,30 @@ struct WaypointProjection {
     func point(_ x: Double, _ y: Double, height: Double) -> CGPoint {
         let spot = placed(x, y, height: height)
         return CGPoint(x: anchorX + spot.across * spot.scale, y: anchorY - spot.up * spot.scale)
+    }
+
+    // Where flat ground runs out and the sky starts, once the camera is tilted enough
+    // to have a horizon.
+    var horizonY: Double? {
+        guard sinPitch > Constants.steepestLean else { return nil }
+        return anchorY - zoom * Constants.eyeDistance * cosPitch / sinPitch
+    }
+
+    // The way the camera faces along the ground.
+    var forward: (x: Double, y: Double) {
+        (sinHeading, cosHeading)
+    }
+
+    // How far in front of the spot the camera is held over a point is; behind is negative.
+    func ahead(_ x: Double, _ y: Double) -> Double {
+        (x - focusX) * sinHeading + (y - focusY) * cosHeading
+    }
+
+    // How far a point is from the eye along its line of sight, which runs out as the
+    // point comes level with the camera and then passes behind it.
+    func distance(_ x: Double, _ y: Double, height: Double) -> Double {
+        let turnedY = ahead(x, y)
+        return Constants.eyeDistance + turnedY * sinPitch - height * relief * cosPitch
     }
 
     // How many points on screen one point of ground covers at a spot, for sizing
@@ -127,12 +155,15 @@ struct WaypointProjection {
 struct WaypointTerrain {
     struct Level {
         let height: Double
-        // x0, y0, x1, y1 for each piece of the contour.
-        let segments: [Double]
+        // x0, y0, x1, y1 for each piece of the contour, sorted by how its slope takes
+        // the sun: facing away, side on, and facing it.
+        let segments: [[Double]]
     }
 
     let levels: [Level]
     let originHeight: Double
+    // The low ground, where fog settles.
+    let fogSpots: [CGPoint]
 
     static let demo = WaypointTerrain()
 
@@ -153,6 +184,23 @@ struct WaypointTerrain {
         }
         self.levels = levels
         originHeight = Self.height(x: 0, y: 0)
+
+        var fogSpots: [CGPoint] = []
+        for row in stride(from: 0, to: count, by: Constants.fogGrid) {
+            for column in stride(from: 0, to: count, by: Constants.fogGrid) {
+                let x = Self.coordinate(column)
+                let y = Self.coordinate(row)
+                guard samples[row * count + column] < Constants.fogLine, x * x + y * y < Constants.fogReach * Constants.fogReach else { continue }
+                fogSpots.append(CGPoint(x: x, y: y))
+            }
+        }
+        self.fogSpots = fogSpots
+    }
+
+    // How much cloud is over a spot, 0...1: a slow pattern of thick banks and clear
+    // gaps that the cloud field and the rain under it both read.
+    static func cover(x: Double, y: Double) -> Double {
+        noise(x / Constants.coverScale + Constants.octaveShift, y / Constants.coverScale - Constants.octaveShift)
     }
 
     static func height(x: Double, y: Double) -> Double {
@@ -184,8 +232,8 @@ struct WaypointTerrain {
 
     // Marching squares: each grid cell the level passes through gives one or two
     // straight pieces of the contour.
-    private static func contour(at level: Double, samples: [Double], count: Int) -> [Double] {
-        var segments: [Double] = []
+    private static func contour(at level: Double, samples: [Double], count: Int) -> [[Double]] {
+        var segments: [[Double]] = [[], [], []]
         let step = Constants.step
 
         for row in 0 ..< count - 1 {
@@ -213,16 +261,23 @@ struct WaypointTerrain {
                 let north = [x0 + crossing(level, northWest, northEast) * step, y0 + step]
                 let west = [x0, y0 + crossing(level, southWest, northWest) * step]
 
-                switch corners {
-                case 1, 14: segments += west + south
-                case 2, 13: segments += south + east
-                case 3, 12: segments += west + east
-                case 4, 11: segments += east + north
-                case 6, 9: segments += south + north
-                case 7, 8: segments += west + north
-                case 5: segments += west + north + south + east
-                default: segments += west + south + east + north
+                let pieces: [Double] = switch corners {
+                case 1, 14: west + south
+                case 2, 13: south + east
+                case 3, 12: west + east
+                case 4, 11: east + north
+                case 6, 9: south + north
+                case 7, 8: west + north
+                case 5: west + north + south + east
+                default: west + south + east + north
                 }
+
+                // Ground that falls away towards the sun is a slope turned to face it.
+                let slopeX = ((southEast + northEast) - (southWest + northWest)) / (2 * step)
+                let slopeY = ((northWest + northEast) - (southWest + southEast)) / (2 * step)
+                let facing = -(slopeX * WaypointSun.x + slopeY * WaypointSun.y)
+                let light = facing > Constants.litSlope ? 2 : (facing < -Constants.litSlope ? 0 : 1)
+                segments[light] += pieces
             }
         }
         return segments
@@ -273,5 +328,11 @@ struct WaypointTerrain {
         static let climbStart: Double = -320
         static let climbLength: Double = 820
         static let climbShare: Double = 0.3
+        // The rise per point of ground past which a slope counts as lit or in shade.
+        static let litSlope: Double = 0.0012
+        static let coverScale: Double = 700
+        static let fogGrid = 4
+        static let fogLine: Double = 0.34
+        static let fogReach: Double = 460
     }
 }
