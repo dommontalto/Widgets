@@ -12,6 +12,13 @@ import SwiftUI
 struct WaypointMap: View {
     var route = WaypointRoute.demo
     @Binding var correction: WaypointCorrection
+    @Binding var rain: WaypointRainStyle
+    // Set on the copy shown full screen: it takes all the height it's given and
+    // swaps the expand button for a close one.
+    var fillsScreen = false
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var isExpanded = false
 
     @State private var camera = WaypointCamera.intro
     @State private var is3D = true
@@ -34,12 +41,17 @@ struct WaypointMap: View {
                 correction: correction,
                 drawnCorrection: drawnCorrection,
                 correctionDrawn: correctionDrawn,
+                rain: rain,
                 isPaused: !isVisible,
                 onSelect: select,
                 onCorrect: { correction = $0 }
             )
-            .frame(height: Constants.height)
+            .frame(height: fillsScreen ? nil : Constants.height)
+            .frame(maxHeight: fillsScreen ? .infinity : nil)
             .clipped()
+            // Full screen the terrain runs under the status bar and the home indicator;
+            // the buttons laid over it still keep clear of them.
+            .ignoresSafeArea(edges: fillsScreen ? .all : [])
             .contentShape(Rectangle())
             .onTapGesture { select(nil) }
             .gesture(WaypointPan(handle: move))
@@ -47,8 +59,23 @@ struct WaypointMap: View {
             .simultaneousGesture(twist)
             .overlay(alignment: .bottomLeading) { legend }
             .overlay(alignment: .bottomTrailing) { controls }
+            .overlay(alignment: .topTrailing) { sizeButton }
+            .overlay(alignment: .topLeading) { debugPicker }
 
-            BrightDividerV5(opacity: Constants.dividerOpacity)
+            if !fillsScreen {
+                BrightDividerV5(opacity: Constants.dividerOpacity)
+            }
+        }
+        .fullScreenCover(isPresented: $isExpanded) {
+            WaypointMap(route: route, correction: $correction, rain: $rain, fillsScreen: true)
+                .background(Color.defaultBackground.ignoresSafeArea())
+        }
+        // Full screen there's no page scrolling it into view, so it starts as soon
+        // as it's shown.
+        .onAppear {
+            guard fillsScreen else { return }
+            isVisible = true
+            playIntro()
         }
         .onScrollVisibilityChange(threshold: Constants.visibleShare) { visible in
             isVisible = visible
@@ -81,6 +108,50 @@ struct WaypointMap: View {
         }
         .padding(.trailing, .spacing3x)
         .padding(.bottom, .spacing4x)
+    }
+
+    private var sizeButton: some View {
+        BrightRoundButton(
+            systemImage: fillsScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
+            size: .large
+        ) {
+            if fillsScreen {
+                dismiss()
+            } else {
+                isExpanded = true
+            }
+        }
+        .padding(.trailing, .spacing3x)
+        .padding(.top, .spacing3x)
+    }
+
+    // On the map rather than the page, so it's there full screen too.
+    private var debugPicker: some View {
+        Menu {
+            Section("Rain") {
+                ForEach(WaypointRainStyle.allCases) { option in
+                    Button {
+                        rain = option
+                    } label: {
+                        Label {
+                            Text(option.title)
+                        } icon: {
+                            if option == rain {
+                                Image(systemName: "checkmark")
+                            } else {
+                                Image(systemName: option.symbol)
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "ladybug.fill")
+                .padding(.spacing2x)
+                .contentShape(Rectangle())
+        }
+        .padding(.leading, .spacing1x)
+        .padding(.top, .spacing1x)
     }
 
     private var pinch: some Gesture {
@@ -256,6 +327,7 @@ private struct WaypointMapScene: View, Animatable {
     let correction: WaypointCorrection
     let drawnCorrection: WaypointCorrection
     var correctionDrawn: Double
+    let rain: WaypointRainStyle
     let isPaused: Bool
     let onSelect: (WaypointMarker?) -> Void
     let onCorrect: (WaypointCorrection) -> Void
@@ -280,8 +352,10 @@ private struct WaypointMapScene: View, Animatable {
 
             ZStack {
                 TimelineView(.animation(paused: isPaused)) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+
                     Canvas { context, _ in
-                        draw(&context, projection, time: timeline.date.timeIntervalSinceReferenceDate)
+                        draw(&context, projection, time: time)
                     }
                 }
 
@@ -302,6 +376,241 @@ private struct WaypointMapScene: View, Animatable {
         drawRadar(&context, projection, time: time)
         drawRoutes(&context, projection, time: time)
         drawDots(&context, projection, time: time)
+        // The rain and the lightning come out of the clouds, so the clouds go over them.
+        drawRain(&context, projection, time: time)
+        drawLightning(&context, projection, time: time)
+        drawClouds(&context, projection, time: time)
+    }
+
+    // Bolts come down from the cloud base every so often: jagged, forked half-way,
+    // lighting the sky around their tops, and flickering twice before they fade. They
+    // strike the ground of the map, so they stand in the terrain like everything else.
+    private func drawLightning(_ context: inout GraphicsContext, _ projection: WaypointProjection, time: TimeInterval) {
+        guard camera.reveal >= 1 else { return }
+
+        let strike = Int((time / WaypointWeather.strikeEvery).rounded(.down))
+        let age = time - Double(strike) * WaypointWeather.strikeEvery
+        guard age < Constants.strikeLength, WaypointTerrain.scatter(strike, 14) < WaypointWeather.strikeChance else { return }
+
+        let brightness: Double = if age < Constants.flickerStart {
+            1
+        } else if age < Constants.flickerEnd {
+            0
+        } else {
+            1 - (age - Constants.flickerEnd) / (Constants.strikeLength - Constants.flickerEnd)
+        }
+        guard brightness > 0 else { return }
+
+        for bolt in 0 ..< WaypointWeather.bolts {
+            drawBolt(&context, projection, seed: strike * Constants.boltSeeds + bolt, time: time, brightness: brightness)
+        }
+    }
+
+    // Where a cloud is right now, the height of its base, and how solid it is: clouds
+    // thin out towards the edge of the sky they leave by and the one they come back
+    // in at.
+    private func cloudSpot(_ cloud: Int, time: TimeInterval) -> (x: Double, y: Double, base: Double, edge: Double) {
+        let drifted = WaypointTerrain.scatter(cloud, 4) * Constants.skyReach * 2 + time * WaypointWeather.drift
+        let x = drifted.truncatingRemainder(dividingBy: Constants.skyReach * 2) - Constants.skyReach
+        let y = (WaypointTerrain.scatter(cloud, 5) * 2 - 1) * Constants.skyReach
+        let base = WaypointClouds.base + WaypointTerrain.scatter(cloud, 6) * WaypointClouds.layerDepth
+        let edge = min((1 - abs(x) / Constants.skyReach) * Constants.edgeFade, 1)
+        return (x, y, base, edge)
+    }
+
+    // The cloud a bolt comes out of: one picked by the seed, or the next one along
+    // that's fully there, so lightning never starts from a cloud that has faded out.
+    private func strikingCloud(seed: Int, time: TimeInterval) -> (x: Double, y: Double, base: Double, edge: Double)? {
+        let first = Int(WaypointTerrain.scatter(seed, 10) * Double(WaypointClouds.cloudCount))
+        for offset in 0 ..< WaypointClouds.cloudCount {
+            let spot = cloudSpot((first + offset) % WaypointClouds.cloudCount, time: time)
+            if spot.edge >= 1 { return spot }
+        }
+        return nil
+    }
+
+    private func drawBolt(
+        _ context: inout GraphicsContext,
+        _ projection: WaypointProjection,
+        seed: Int,
+        time: TimeInterval,
+        brightness: Double
+    ) {
+        guard let cloud = strikingCloud(seed: seed, time: time) else { return }
+        // From somewhere under the cloud's base, straight down to the ground below it.
+        let x = cloud.x + (WaypointTerrain.scatter(seed, 11) * 2 - 1) * WaypointClouds.baseSpread * Constants.strikeSpread
+        let y = cloud.y
+        let top = cloud.base
+        let floor = WaypointTerrain.height(x: x, y: y) - terrain.originHeight
+        let forkStart = Constants.boltSteps / 2
+        // Forks to one side or the other.
+        let forkSide: Double = WaypointTerrain.scatter(seed, 15) < 0.5 ? -1 : 1
+
+        var bolt = Path()
+        var fork = Path()
+        for step in 0 ... Constants.boltSteps {
+            let isEnd = step == 0 || step == Constants.boltSteps
+            let stepSeed = seed * Constants.boltSteps * 2 + step
+            let stepX = x + (isEnd ? 0 : (WaypointTerrain.scatter(stepSeed, 12) * 2 - 1) * Constants.boltJitter)
+            let stepY = y + (isEnd ? 0 : (WaypointTerrain.scatter(stepSeed, 13) * 2 - 1) * Constants.boltJitter)
+            let height = top + (floor - top) * Double(step) / Double(Constants.boltSteps)
+            let point = projection.point(stepX, stepY, height: height)
+
+            if step == 0 {
+                bolt.move(to: point)
+            } else {
+                bolt.addLine(to: point)
+            }
+
+            if step == forkStart {
+                fork.move(to: point)
+            } else if step > forkStart, step <= forkStart + Constants.forkSteps {
+                let spread = Double(step - forkStart) * Constants.forkSpread * forkSide
+                fork.addLine(to: projection.point(stepX + spread, stepY, height: height))
+            }
+        }
+
+        let crown = projection.point(x, y, height: top)
+        context.fill(
+            circle(at: crown, radius: Constants.flashRadius),
+            with: .radialGradient(
+                Gradient(colors: [
+                    Color.defaultBlue.opacity(Constants.flashOpacity * brightness),
+                    Color.defaultBlue.opacity(.zero),
+                ]),
+                center: crown,
+                startRadius: 0,
+                endRadius: Constants.flashRadius
+            )
+        )
+
+        let glow = StrokeStyle(lineWidth: Constants.boltGlowWidth, lineCap: .round, lineJoin: .round)
+        context.drawLayer { layer in
+            layer.addFilter(.blur(radius: Constants.glowBlur))
+            layer.stroke(bolt, with: .color(Color.defaultBlue.opacity(brightness)), style: glow)
+        }
+        context.stroke(
+            bolt,
+            with: .color(Color.defaultCyan.opacity(brightness)),
+            style: StrokeStyle(lineWidth: Constants.boltWidth, lineCap: .round, lineJoin: .round)
+        )
+        context.stroke(
+            fork,
+            with: .color(Color.defaultCyan.opacity(brightness)),
+            style: StrokeStyle(lineWidth: Constants.forkWidth, lineCap: .round, lineJoin: .round)
+        )
+    }
+
+    // Rain falling from the clouds to the ground it lands on, leaning with the wind.
+    // A drop spends most of its turn falling; in the styles that splash, it spends the
+    // rest as a ring spreading over the ground where it landed.
+    private func drawRain(_ context: inout GraphicsContext, _ projection: WaypointProjection, time: TimeInterval) {
+        let shown = stage(Constants.labelsAppear, 1)
+        guard shown > 0 else { return }
+
+        let fallShare = rain.hasSplashes ? Constants.fallShare : 1
+        var streaks = Path()
+        var freshRings = Path()
+        var fadingRings = Path()
+
+        for drop in 0 ..< rain.dropCount {
+            var startX = (WaypointTerrain.scatter(drop, 1) * 2 - 1) * Constants.skyReach
+            var y = (WaypointTerrain.scatter(drop, 2) * 2 - 1) * Constants.skyReach
+            var top = WaypointClouds.base
+            if rain.fallsFromClouds {
+                let cloud = cloudSpot(drop % WaypointClouds.cloudCount, time: time)
+                guard cloud.edge >= 1 else { continue }
+                startX = cloud.x + (WaypointTerrain.scatter(drop, 1) * 2 - 1) * Constants.shaftWidth
+                y = cloud.y + (WaypointTerrain.scatter(drop, 2) * 2 - 1) * Constants.shaftWidth
+                top = cloud.base
+            }
+
+            let turn = (time / rain.fallTime + WaypointTerrain.scatter(drop, 3)).truncatingRemainder(dividingBy: 1)
+            let fallen = min(turn / fallShare, 1)
+            let x = startX + rain.lean * fallen
+            let floor = WaypointTerrain.height(x: x, y: y) - terrain.originHeight
+
+            if turn < fallShare {
+                let height = floor + (top - floor) * (1 - fallen)
+                let tail = rain.lean * rain.dropLength / top
+                streaks.move(to: projection.point(x, y, height: height))
+                streaks.addLine(to: projection.point(x - tail, y, height: height + rain.dropLength))
+            } else {
+                let grown = (turn - fallShare) / (1 - fallShare)
+                let radius = Constants.splashSize * grown
+                var ring = Path()
+                for step in 0 ..< Constants.splashSteps {
+                    let angle = Double(step) / Double(Constants.splashSteps) * 2 * .pi
+                    let point = projection.point(x + cos(angle) * radius, y + sin(angle) * radius, height: floor)
+                    if step == 0 {
+                        ring.move(to: point)
+                    } else {
+                        ring.addLine(to: point)
+                    }
+                }
+                ring.closeSubpath()
+                if grown < Constants.splashFadeAt {
+                    freshRings.addPath(ring)
+                } else {
+                    fadingRings.addPath(ring)
+                }
+            }
+        }
+
+        let color = Color.defaultCyan
+        context.stroke(
+            streaks,
+            with: .color(color.opacity(rain.opacity * shown)),
+            style: StrokeStyle(lineWidth: rain.dropWidth, lineCap: .round)
+        )
+        context.stroke(freshRings, with: .color(color.opacity(rain.opacity * shown)), lineWidth: Constants.rainWidth)
+        context.stroke(fadingRings, with: .color(color.opacity(Constants.fadingRingOpacity * shown)), lineWidth: Constants.rainWidth)
+    }
+
+    // The clouds, each a clump of soft puffs drifting east. Where a puff sits between
+    // its cloud's base and top decides how far out it can be, which is what makes a
+    // heap narrow as it rises and a storm cloud spread into an anvil, and whether
+    // it's the darker grey of the underside. The dark ones are drawn first, so the
+    // lit tops sit over them. Flat, with nothing raised, the clouds lie on the map
+    // as haze.
+    private func drawClouds(_ context: inout GraphicsContext, _ projection: WaypointProjection, time: TimeInterval) {
+        let shown = stage(Constants.labelsAppear, 1)
+        guard shown > 0 else { return }
+
+        for isDark in [true, false] {
+            let tone: Color = isDark ? .waypointCloudShade : .waypointCloud
+
+            for cloud in 0 ..< WaypointClouds.cloudCount {
+                let spot = cloudSpot(cloud, time: time)
+                let x = spot.x
+                let y = spot.y
+                let base = spot.base
+                let opacity = WaypointClouds.opacity * spot.edge * shown
+
+                for puff in 0 ..< WaypointClouds.puffsPerCloud {
+                    let seed = cloud * WaypointClouds.puffsPerCloud + puff
+                    let rise = WaypointTerrain.scatter(seed, 17)
+                    guard (rise < WaypointClouds.darkShare) == isDark else { continue }
+
+                    let spread = WaypointClouds.baseSpread + (WaypointClouds.topSpread - WaypointClouds.baseSpread) * rise
+                    let puffX = x + (WaypointTerrain.scatter(seed, 7) * 2 - 1) * spread
+                    let puffY = y + (WaypointTerrain.scatter(seed, 8) * 2 - 1) * spread * WaypointClouds.depthShare
+                    let height = base + rise * WaypointClouds.tower
+                    let centre = projection.point(puffX, puffY, height: height)
+                    let radius = WaypointClouds.puffRadius * (1 + WaypointTerrain.scatter(seed, 9) * Constants.puffVariety)
+                        * projection.scale(puffX, puffY, height: height)
+                    context.fill(
+                        circle(at: centre, radius: CGFloat(radius)),
+                        with: .radialGradient(
+                            Gradient(colors: [tone.opacity(opacity), tone.opacity(.zero)]),
+                            center: centre,
+                            startRadius: CGFloat(radius * WaypointClouds.core),
+                            endRadius: CGFloat(radius)
+                        )
+                    )
+                }
+            }
+        }
     }
 
     // The land carrying on past the last contour, drawn as its skyline at a few
@@ -746,6 +1055,39 @@ private struct WaypointMapScene: View, Animatable {
         static let mountainGap: Double = 90
         static let ridgeOpacity: Double = .lowOpacity
 
+        // How far the sky reaches either side of the user.
+        static let skyReach: Double = 320
+        static let edgeFade: Double = 4
+        // How much bigger than the smallest a cloud's largest puffs are.
+        static let puffVariety: Double = 0.8
+        static let rainWidth: CGFloat = 1
+        // The share of a drop's turn spent falling, when the rest is its splash.
+        static let fallShare: Double = 0.7
+        static let splashSize: Double = 11
+        static let splashSteps = 10
+        static let splashFadeAt: Double = 0.5
+        static let fadingRingOpacity: Double = .veryLowOpacity
+        // How far either side of its cloud's middle a shaft of rain reaches.
+        static let shaftWidth: Double = 12
+
+        static let strikeLength: Double = 0.5
+        // Keeps the bolts of one strike, and of the next, from landing in the same place.
+        static let boltSeeds = 7
+        static let flickerStart: Double = 0.08
+        static let flickerEnd: Double = 0.15
+        // How far out from the middle of its cloud, as a share of the cloud's width, a
+        // bolt can start.
+        static let strikeSpread: Double = 0.5
+        static let boltSteps = 9
+        static let boltJitter: Double = 13
+        static let forkSteps = 3
+        static let forkSpread: Double = 10
+        static let boltWidth: CGFloat = 2
+        static let forkWidth: CGFloat = 1
+        static let boltGlowWidth: CGFloat = 6
+        static let flashRadius: CGFloat = 190
+        static let flashOpacity: Double = .veryLowOpacity
+
         static let radarReach: Double = 138
         static let radarHalfAngle: Double = .pi / 3
         static let radarSteps = 24
@@ -904,9 +1246,10 @@ private struct WaypointPan: UIGestureRecognizerRepresentable {
 
 #Preview {
     @Previewable @State var correction = WaypointCorrection.decrease
+    @Previewable @State var rain = WaypointRainStyle.heavyDrops
 
     ScrollView {
-        WaypointMap(correction: $correction)
+        WaypointMap(correction: $correction, rain: $rain)
     }
     .background(Color.defaultBackground)
 }

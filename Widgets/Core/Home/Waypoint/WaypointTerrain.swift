@@ -78,6 +78,17 @@ struct WaypointProjection {
 
     // `height` is relative to the ground under the user, in the terrain's 0...1 range.
     func point(_ x: Double, _ y: Double, height: Double) -> CGPoint {
+        let spot = placed(x, y, height: height)
+        return CGPoint(x: anchorX + spot.across * spot.scale, y: anchorY - spot.up * spot.scale)
+    }
+
+    // How many points on screen one point of ground covers at a spot, for sizing
+    // things that are drawn there rather than projected corner by corner.
+    func scale(_ x: Double, _ y: Double, height: Double) -> Double {
+        placed(x, y, height: height).scale
+    }
+
+    private func placed(_ x: Double, _ y: Double, height: Double) -> (across: Double, up: Double, scale: Double) {
         let offsetX = x - focusX
         let offsetY = y - focusY
         let turnedX = offsetX * cosHeading - offsetY * sinHeading
@@ -86,7 +97,7 @@ struct WaypointProjection {
         let up = turnedY * cosPitch + raised * sinPitch
         let depth = turnedY * sinPitch - raised * cosPitch
         let scale = zoom * Constants.eyeDistance / max(Constants.eyeDistance + depth, Constants.nearPlane)
-        return CGPoint(x: anchorX + turnedX * scale, y: anchorY - up * scale)
+        return (turnedX, up, scale)
     }
 
     // How far across the ground a drag on screen reaches, so the map can be moved by
@@ -159,6 +170,12 @@ struct WaypointTerrain {
         let rolling = min(max((total / range - 0.5) * Constants.contrast + 0.5, 0), 1)
         let climb = fade(min(max((y - Constants.climbStart) / Constants.climbLength, 0), 1))
         return rolling * (1 - Constants.climbShare) + climb * Constants.climbShare
+    }
+
+    // A fixed 0...1 value for a pair of numbers, for scattering things over the land
+    // the same way every frame.
+    static func scatter(_ index: Int, _ salt: Int) -> Double {
+        lattice(index, salt)
     }
 
     private static func coordinate(_ index: Int) -> Double {

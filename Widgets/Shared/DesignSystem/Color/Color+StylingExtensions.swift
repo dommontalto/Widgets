@@ -171,6 +171,13 @@ nonisolated extension Color {
     // frosting. Light mode has nothing to darken against, so it stays clear.
     static let sideMenuDim = Color(light: .clear, dark: .black.opacity(.lowOpacity))
 
+    // Waypoint
+
+    // The clouds over the Waypoint map: the pale grey most of a cloud is, and the
+    // darker grey of its heavy patches.
+    static let waypointCloud = Color(light: Color(hex: "#AEB7C2"), dark: Color(hex: "#D5DAE1"))
+    static let waypointCloudShade = Color(light: Color(hex: "#5F6873"), dark: Color(hex: "#4B525C"))
+
     // Dark enough to carry white text over a light screen; in dark mode the
     // screen already is, so the glass is left untinted to show through.
     static let toastGlassTint = Color(light: .black, dark: .clear)
